@@ -1,0 +1,44 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "main",
+            "request": "launch",
+            "type": "dart",
+            "program": "example/ansi_escape_codes_example.dart",
+        },
+        {
+            "name": "sgr",
+            "request": "launch",
+            "type": "dart",
+            "program": "example/sgr.dart",
+        },
+        {
+            "name": "colors256",
+            "request": "launch",
+            "type": "dart",
+            "program": "example/colors256.dart",
+        },
+        {
+            "name": "rgb",
+            "request": "launch",
+            "type": "dart",
+            "program": "example/rgb.dart",
+        },
+        {
+            "name": "control",
+            "request": "launch",
+            "type": "dart",
+            "program": "example/control.dart",
+        },
+        {
+            "name": "links",
+            "request": "launch",
+            "type": "dart",
+            "program": "example/links.dart",
+        },
+    ]
+}
