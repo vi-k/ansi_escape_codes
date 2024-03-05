@@ -20,12 +20,12 @@ Future<void> main() async {
     ..write(ansi.clearBuf);
   await Future<void>.delayed(const Duration(milliseconds: pause));
 
-  stdout.write('${ansi.cursorPos(1, 1)}Cursor Position');
+  stdout.write('${ansi.cursorPosTo(1, 1)}Cursor Position');
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 20; i++) {
     final col = random.nextInt(20) + 1;
     final row = random.nextInt(10) + 2;
-    stdout.write('${ansi.cursorPos(row, col)}*');
+    stdout.write('${ansi.cursorPosTo(row, col)}*');
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));
@@ -33,20 +33,20 @@ Future<void> main() async {
   stdout
     ..writeln()
     ..write(
-      '${ansi.cursorHVPos(1, 21)}Horizontal Vertical Position',
+      '${ansi.cursorHVPosTo(1, 21)}Horizontal Vertical Position',
     );
 
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 20; i++) {
     final col = random.nextInt(20) + 21;
     final row = random.nextInt(10) + 2;
-    stdout.write('${ansi.cursorHVPos(row, col)}*');
+    stdout.write('${ansi.cursorHVPosTo(row, col)}*');
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));
 
   stdout
-    ..write(ansi.cursorPos(12, 1))
+    ..write(ansi.cursorPosTo(12, 1))
     ..write('Cursor up/Cursor down');
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 10; i++) {
@@ -93,7 +93,7 @@ Future<void> main() async {
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 20; i++) {
     final col = random.nextInt(50) + 31;
-    stdout.write('${ansi.cursorHPos(col)}*');
+    stdout.write('${ansi.cursorHPosN(col)}*');
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));

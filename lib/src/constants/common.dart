@@ -8,3 +8,6 @@ const String esc = '\x1B';
 
 const String osc = '$esc]'; // OSC (Operating System Command)
 const String st = '$esc\\'; // ST (String Terminator)
+
+const String saveCursor = '${esc}7'; // DEC Save Cursor
+const String restoreCursor = '${esc}8'; // DEC Restore Cursor

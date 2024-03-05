@@ -27,12 +27,15 @@ const String cursorPrevLine = '$cursorPrevLineOpen$cursorPrevLineClose';
 const String cursorPrevLineOpen = csi;
 const String cursorPrevLineClose = 'F';
 
+const String cursorHVPos = '$cursorHVPosOpen$cursorHVPosClose';
 const String cursorHVPosOpen = csi;
 const String cursorHVPosClose = 'f';
 
+const String cursorHPos = '$cursorHPosOpen$cursorHPosClose';
 const String cursorHPosOpen = csi;
 const String cursorHPosClose = 'G';
 
+const String cursorPos = '$cursorPosOpen$cursorPosClose';
 const String cursorPosOpen = csi;
 const String cursorPosClose = 'H';
 

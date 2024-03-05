@@ -12,12 +12,13 @@ String cursorNextLineN(int n) => '$cursorNextLineOpen$n$cursorNextLineClose';
 
 String cursorPrevLineN(int n) => '$cursorPrevLineOpen$n$cursorPrevLineClose';
 
-String cursorHVPos(int row, int col) =>
+String cursorHVPosTo(int row, int col) =>
     '$cursorHVPosOpen$row;$col$cursorHVPosClose';
 
-String cursorHPos(int n) => '$cursorHPosOpen$n$cursorHPosClose';
+String cursorHPosN(int n) => '$cursorHPosOpen$n$cursorHPosClose';
 
-String cursorPos(int row, int col) => '$cursorPosOpen$row;$col$cursorPosClose';
+String cursorPosTo(int row, int col) =>
+    '$cursorPosOpen$row;$col$cursorPosClose';
 
 String scrollUpN(int n) => '$scrollUpOpen$n$scrollUpClose';
 

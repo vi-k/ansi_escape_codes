@@ -1,6 +1,6 @@
 name: ansi_escape_codes
 description: Yet another package for ANSI escape codes.
-version: 1.0.0
+version: 1.1.0
 homepage: https://github.com/vi-k/ansi_escape_codes
 
 environment:

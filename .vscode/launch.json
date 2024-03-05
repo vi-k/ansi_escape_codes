@@ -40,5 +40,11 @@
             "type": "dart",
             "program": "example/links.dart",
         },
+        {
+            "name": "progress_indicator",
+            "request": "launch",
+            "type": "dart",
+            "program": "example/progress_indicator.dart",
+        },
     ]
 }
