@@ -1,8 +1,9 @@
 # ansi_escape_codes
 
-This is yet another package of many for [ANSI escape codes](https://en.wikipedia.org/wiki/ANSI_escape_code). It differs from the
-others only in that it focuses on using **constants** rather than functions or
-methods.
+This is yet another package of many for
+[ANSI escape codes](https://en.wikipedia.org/wiki/ANSI_escape_code). It differs
+from the others only in that it focuses on using **constants** rather than
+functions or methods.
 
 ```dart
 const text = '${fgGreen}Lorem$fgDefault'
@@ -59,12 +60,10 @@ print(text);
 A template for using a color from a 256-color table:
 
 ```dart
-print('$fg256Open$n$fg256Close');
-print('$bg256Open$n$bg256Close');
-print('$underline256Open$n$underline256Close');
+'$fg256Open$n$fg256Close' // n: 0..255
+'$bg256Open$n$bg256Close'
+'$underline256Open$n$underline256Close'
 ```
-
-Where `n` is a number from 0 to 255 or a color from the following table:
 
 |  Number | Name                                        |
 |--------:|:--------------------------------------------|
@@ -135,12 +134,10 @@ And you can also use ready-made functions:
 A template for using a RGB color:
 
 ```dart
-print('$fgRgbOpen$r;$g;$b$fgRgbClose');
-print('$bgRgbOpen$r;$g;$b$bgRgbClose');
-print('$underlineRgbOpen$r;$g;$b$underlineRgbClose');
+'$fgRgbOpen$r;$g;$b$fgRgbClose' // r,g,b: 0..255
+'$bgRgbOpen$r;$g;$b$bgRgbClose'
+'$underlineRgbOpen$r;$g;$b$underlineRgbClose'
 ```
-
-Where `r`, `g` and `b` are numbers from 0 to 255.
 
 You can also use ready-made functions:
 
@@ -152,9 +149,10 @@ String underlineRgb(int r, int g, int b);
 
 ## Control sequences
 
-| Description    | Usage |
-|:---------------|:------|
-| cursor up      | `'$cursorUpOpen$n$cursorUpClose'` or `cursorUp` for 1 line or `cursorUpN(int n)` |
-| cursor down    | `'$cursorDownOpen$n$cursorDownClose'` or `cursorDown`for 1 line  or `cursorDownN(int n)` for 1 line |
-| cursor forward | `'$cursorForwardOpen$n$cursorForwardClose'` or `cursorForward` for 1 column or `cursorForwardN(int n)` |
-| cursor back    | `'$cursorBackOpen$n$cursorBackClose'` or `cursorBack` for 1 column or `cursorBackN(int n)` |
+| Description    | Usage                                                                                             |
+|:---------------|:--------------------------------------------------------------------------------------------------|
+| cursor up      | `'$cursorUpOpen$n$cursorUpClose'` or `cursorUp` for n=1 or `cursorUpN(int n)`                     |
+| cursor down    | `'$cursorDownOpen$n$cursorDownClose'` or `cursorDown`for n=1 or `cursorDownN(int n)`              |
+| cursor forward | `'$cursorForwardOpen$n$cursorForwardClose'` or `cursorForward` for n=1 or `cursorForwardN(int n)` |
+| cursor back    | `'$cursorBackOpen$n$cursorBackClose'` or `cursorBack` for n=1 or `cursorBackN(int n)`             |
+| ...            | ...                                                                                               |
