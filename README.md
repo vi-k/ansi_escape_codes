@@ -14,11 +14,11 @@ const text = '${fgGreen}Lorem$fgDefault'
     ' $fg256Open$gray13${fg256Close}consectetur$fgDefault'
     ' $fg256Open$gray17${fg256Close}adipiscing$fgDefault'
     ' ${fgRgbOpen}249;105;14${fgRgbClose}elit,$fgDefault'
-    ' ${bold}sed ${normalIntensity}do ${faint}eiusmod$reset'
+    ' ${bold}sed$notBoldNotFaint do ${faint}eiusmod$notBoldNotFaint'
     ' ${italic}tempor$notItalic'
     '$underline256Yellow'
     ' ${underline}incididunt$notUnderlined'
-    ' ${strike}ut$notStrike'
+    ' ${strike}ut$notStriked'
     ' ${subscript}labore$notSuperscriptNotSubscript'
     ' et'
     ' ${superscript}dolore$notSuperscriptNotSubscript'
@@ -46,7 +46,6 @@ print(text);
 | fgMagenta       | bgMagenta       |
 | fgCyan          | bgCyan          |
 | fgWhite         | bgWhite         |
-| fgDefault       | bgDefault       |
 | fgBrightBlack   | bgBrightBlack   |
 | fgBrightRed     | bgBrightRed     |
 | fgBrightGreen   | bgBrightGreen   |
@@ -161,22 +160,22 @@ You can reset the set color with `fgDefault`, `bgDefault` and
 
 ## Control sequences
 
-| Default constant | Template                                       | Function                          | Description                                                                |
-|:-----------------|:-----------------------------------------------|:----------------------------------|:---------------------------------------------------------------------------|
-| `cursorUp`       | `{cursorUpOpen}[n]{cursorUpClose}`             | `cursorUpN(int n)`                | Moves the cursor up `n` (default `1`) lines.                               |
-| `cursorDown`     | `{cursorDownOpen}[n]{cursorDownClose}`         | `cursorDownN(int n)`              | Moves the cursor down `n` (default `1`) lines.                             |
-| `cursorForward`  | `{cursorForwardOpen}[n]{cursorForwardClose}`   | `cursorForwardN(int n)`           | Moves the cursor forward `n` (default `1`) cells.                          |
-| `cursorBack`     | `{cursorBackOpen}[n]{cursorBackClose}`         | `cursorBackN(int n)`              | Moves the cursor back `n` (default `1`) cells.                             |
-| `cursorNextLine` | `{cursorNextLineOpen}[n]{cursorNextLineClose}` | `cursorNextLineN(int n)`          | Moves cursor to beginning of the line `n` (default `1`) lines down.        |
-| `cursorPrevLine` | `{cursorPrevLineOpen}[n]{cursorPrevLineClose}` | `cursorPrevLineN(int n)`          | Moves cursor to beginning of the line `n` (default `1`) lines up.          |
-| `cursorHPos`     | `{cursorHPosOpen}[n]{cursorHPosClose}`         | `cursorHPosN(int n)`              | Moves the cursor to column `n` (default `1`).                              |
-| `cursorPos`      | `{cursorPosOpen}[n]{cursorPosClose}`           | `cursorPosTo(int row, int col)`   | Moves the cursor to `row` and `column`. The values are 1-based, and default to `1` (top left corner) if omitted. |
-| `cursorHVPos`    | `{cursorHVPosOpen}[n]{cursorHVPosClose}`       | `cursorHVPosTo(int row, int col)` | Same as `cursorPos`, but counts as a format effector function (like `cr` or `lf`) rather than an editor function (like `cursorUp` or `cursorNextLine`). This can lead to different handling in certain terminal modes. |
-| `clearScreen…`   | `{clearScreenOpen}[n]{clearScreenClose}`       |                                   | Clears part of the screen. If `n` is `0` (or missing), clear from cursor to end of screen (`clearScreenToEnd`). If `n` is `1`, clear from cursor to beginning of the screen (`clearScreenToBegin`). If `n` is `2`, clear entire screen and moves cursor to upper left (`clearScreen`). If `n` is `3`, clear entire screen and delete all lines saved in the scrollback buffer (`clearScreenWithBuf`). |
-| `eraseLine…`     | `{eraseLineOpen}[n]{eraseLineClose}`           |                                   | Erases part of the line. If `n` is `0` (or missing), clear from cursor to the end of the line (`eraseLineToEnd`). If `n` is `1`, clear from cursor to beginning of the line (`eraseLineToBegin`). If `n` is `2`, clear entire line (`eraseLine`). Cursor position does not change. |
-| `scrollUp`       | `{scrollUpOpen}[n]{scrollUpClose}`             | `scrollUpN(int n)`                | Scroll whole page up by `n` (default `1`) lines. New lines are added at the bottom. |
-| `scrollDown`     | `{scrollDownOpen}[n]{scrollDownClose}`         | `scrollDownN(int n)`              | Scroll whole page down by `n` (default `1`) lines. New lines are added at the top. |
-| `hideCursor`     |                                                |                                   | Shows the cursor.                                                          |
-| `showCursor`     |                                                |                                   | Hides the cursor.                                                          |
-| `saveCursor`     |                                                |                                   | Saves the cursor position, encoding shift state and formatting attributes. |
-| `restoreCursor`  |                                                |                                   | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
+| Default constant | Template                                       | Function                  | Description                                                                |
+|:-----------------|:-----------------------------------------------|:--------------------------|:---------------------------------------------------------------------------|
+| `cursorUp`       | `{cursorUpOpen}[n]{cursorUpClose}`             | `cursorUpN(n)`            | Moves the cursor up `n` (default `1`) lines.                               |
+| `cursorDown`     | `{cursorDownOpen}[n]{cursorDownClose}`         | `cursorDownN(n)`          | Moves the cursor down `n` (default `1`) lines.                             |
+| `cursorForward`  | `{cursorForwardOpen}[n]{cursorForwardClose}`   | `cursorForwardN(n)`       | Moves the cursor forward `n` (default `1`) cells.                          |
+| `cursorBack`     | `{cursorBackOpen}[n]{cursorBackClose}`         | `cursorBackN(n)`          | Moves the cursor back `n` (default `1`) cells.                             |
+| `cursorNextLine` | `{cursorNextLineOpen}[n]{cursorNextLineClose}` | `cursorNextLineN(n)`      | Moves cursor to beginning of the line `n` (default `1`) lines down.        |
+| `cursorPrevLine` | `{cursorPrevLineOpen}[n]{cursorPrevLineClose}` | `cursorPrevLineN(n)`      | Moves cursor to beginning of the line `n` (default `1`) lines up.          |
+| `cursorHPos`     | `{cursorHPosOpen}[n]{cursorHPosClose}`         | `cursorHPosN(n)`          | Moves the cursor to column `n` (default `1`).                              |
+| `cursorPos`      | `{cursorPosOpen}[n]{cursorPosClose}`           | `cursorPosTo(row, col)`   | Moves the cursor to `row` and `column`. The values are 1-based, and default to `1` (top left corner) if omitted. |
+| `cursorHVPos`    | `{cursorHVPosOpen}[n]{cursorHVPosClose}`       | `cursorHVPosTo(row, col)` | Same as `cursorPos`, but counts as a format effector function (like `cr` or `lf`) rather than an editor function (like `cursorUp` or `cursorNextLine`). This can lead to different handling in certain terminal modes. |
+| `clearScreen…`   | `{clearScreenOpen}[n]{clearScreenClose}`       |                           | Clears part of the screen. If `n` is `0` (or missing), clear from cursor to end of screen (`clearScreenToEnd`). If `n` is `1`, clear from cursor to beginning of the screen (`clearScreenToBegin`). If `n` is `2`, clear entire screen and moves cursor to upper left (`clearScreen`). If `n` is `3`, clear entire screen and delete all lines saved in the scrollback buffer (`clearScreenWithBuf`). |
+| `eraseLine…`     | `{eraseLineOpen}[n]{eraseLineClose}`           |                           | Erases part of the line. If `n` is `0` (or missing), clear from cursor to the end of the line (`eraseLineToEnd`). If `n` is `1`, clear from cursor to beginning of the line (`eraseLineToBegin`). If `n` is `2`, clear entire line (`eraseLine`). Cursor position does not change. |
+| `scrollUp`       | `{scrollUpOpen}[n]{scrollUpClose}`             | `scrollUpN(n)`            | Scroll whole page up by `n` (default `1`) lines. New lines are added at the bottom. |
+| `scrollDown`     | `{scrollDownOpen}[n]{scrollDownClose}`         | `scrollDownN(n)`          | Scroll whole page down by `n` (default `1`) lines. New lines are added at the top. |
+| `hideCursor`     |                                                |                           | Shows the cursor.                                                          |
+| `showCursor`     |                                                |                           | Hides the cursor.                                                          |
+| `saveCursor`     |                                                |                           | Saves the cursor position, encoding shift state and formatting attributes. |
+| `restoreCursor`  |                                                |                           | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |

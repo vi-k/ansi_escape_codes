@@ -9,7 +9,7 @@ void main() {
       ' $fg256Open$gray13${fg256Close}consectetur$fgDefault'
       ' $fg256Open$gray17${fg256Close}adipiscing$fgDefault'
       ' ${fgRgbOpen}249;105;14${fgRgbClose}elit,$fgDefault'
-      ' ${bold}sed ${normalIntensity}do ${faint}eiusmod$reset'
+      ' ${bold}sed$notBoldNotFaint do ${faint}eiusmod$notBoldNotFaint'
       ' ${italic}tempor$notItalic'
       '$underline256Yellow'
       ' ${underline}incididunt$notUnderlined'
