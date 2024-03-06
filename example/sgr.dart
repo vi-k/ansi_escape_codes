@@ -94,13 +94,13 @@ void main() {
     ..writeln()
     ..writeln(
       'Superscipt: '
-      '${ansi.superscript} Superscript ${ansi.notSuperscriptNotSubscript}'
+      '${ansi.superscript} Superscript ${ansi.notSuperscriptedNotSubscripted}'
       ' / Not superscript ${ansi.reset}',
     )
     ..writeln()
     ..writeln(
       'Subscript: '
-      '${ansi.subscript} Subscript ${ansi.notSuperscriptNotSubscript}'
+      '${ansi.subscript} Subscript ${ansi.notSuperscriptedNotSubscripted}'
       ' / Not subscript ${ansi.reset}',
     );
 }

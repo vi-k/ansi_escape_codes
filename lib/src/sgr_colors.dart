@@ -136,9 +136,9 @@ String bg256(int color) {
 ///
 /// Compatibility:
 /// - +vscode
-/// - +mac Terminal
-/// - +mac iTerm2
-/// - +as
+/// - -mac Terminal
+/// - -mac iTerm2
+/// - ?as
 ///
 /// 256-color table see in the [colors256.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/colors256.dart).
 /// See also predefined constants starting with `underline256*` in the
@@ -153,9 +153,9 @@ const String underline256Open = '${csi}58;5;';
 ///
 /// Compatibility:
 /// - +vscode
-/// - +mac Terminal
-/// - +mac iTerm2
-/// - +as
+/// - -mac Terminal
+/// - -mac iTerm2
+/// - ?as
 ///
 /// 256-color table see in the [colors256.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/colors256.dart).
 /// See also predefined constants starting with `underline256*` in the

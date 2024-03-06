@@ -151,7 +151,7 @@ const String rapidBlink = '${csi}6$sgr';
 /// Same as [invert].
 ///
 /// Compatibility:
-/// +- -vscode (does not invert the default colors)
+/// - +-vscode (does not invert the default colors)
 /// - +mac Terminal
 /// - +mac iTerm2
 /// - +as
@@ -166,7 +166,7 @@ const String reverse = '${csi}7$sgr';
 /// Same as [reverse].
 ///
 /// Compatibility:
-/// +- -vscode (does not invert the default colors)
+/// - +-vscode (does not invert the default colors)
 /// - +mac Terminal
 /// - +mac iTerm2
 /// - +as
@@ -472,7 +472,7 @@ const String notOverlined = '${csi}55$sgr';
 /// - -mac iTerm2
 /// - -as
 ///
-/// See also [subscript] and [notSuperscriptNotSubscript].
+/// See also [subscript] and [notSuperscriptedNotSubscripted].
 const String superscript = '${csi}73$sgr';
 
 /// Subscript.
@@ -483,7 +483,7 @@ const String superscript = '${csi}73$sgr';
 /// - -mac iTerm2
 /// - -as
 ///
-/// See also [superscript] and [notSuperscriptNotSubscript].
+/// See also [superscript] and [notSuperscriptedNotSubscripted].
 const String subscript = '${csi}74$sgr';
 
 /// Neither superscript nor subscript.
@@ -493,4 +493,4 @@ const String subscript = '${csi}74$sgr';
 /// - -mac Terminal
 /// - -mac iTerm2
 /// - -as
-const String notSuperscriptNotSubscript = '${csi}75$sgr';
+const String notSuperscriptedNotSubscripted = '${csi}75$sgr';
