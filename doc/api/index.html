@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="generator" content="made with love by dartdoc 8.0.3">
+  <meta name="description" content="ansi_escape_codes API docs, for the Dart programming language.">
+  <title>ansi_escape_codes - Dart API docs</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="static-assets/github.css?v1">
+  <link rel="stylesheet" href="static-assets/styles.css?v1">
+  <link rel="icon" href="static-assets/favicon.png?v1">
+
+  
+</head>
+
+
+<body data-base-href="" data-using-base-href="false" class="light-theme">
+
+<div id="overlay-under-drawer"></div>
+
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="https://github.com/vi-k/ansi_escape_codes">ansi_escape_codes package</a></li>
+  </ol>
+  <div class="self-name">ansi_escape_codes</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <div class="toggle" id="theme-button">
+    <label for="theme">
+      <input type="checkbox" id="theme" value="light-theme">
+      <span id="dark-theme-button" class="material-symbols-outlined">
+        brightness_4
+      </span>
+      <span id="light-theme-button" class="material-symbols-outlined">
+        brightness_5
+      </span>
+    </label>
+  </div>
+</header>
+<main>
+
+  <div id="dartdoc-main-content" class="main-content">
+      
+<section class="desc markdown">
+  <h1 id="readme">README</h1>
+<p>This is yet another package of many for
+<a href="https://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape codes</a>. It differs
+from the others only in that it focuses on using <strong>constants</strong> rather than
+functions or methods.</p>
+<pre class="language-dart"><code class="language-dart">const text = '${fgGreen}Lorem$fgDefault'
+    ' $fgYellow${bgBrightBlack}ipsum$fgDefault$bgDefault'
+    ' $fg256Open$red${fg256Close}dolor$fgDefault'
+    ' $fg256Open$rgb531${fg256Close}sit$fgDefault'
+    ' $fg256Open$gray9${fg256Close}amet,$fgDefault'
+    ' $fg256Open$gray13${fg256Close}consectetur$fgDefault'
+    ' $fg256Open$gray17${fg256Close}adipiscing$fgDefault'
+    ' ${fgRgbOpen}249;105;14${fgRgbClose}elit,$fgDefault'
+    ' ${bold}sed ${normalIntensity}do ${faint}eiusmod$reset'
+    ' ${italic}tempor$notItalic'
+    '$underline256Yellow'
+    ' ${underline}incididunt$notUnderlined'
+    ' ${strike}ut$notStrike'
+    ' ${subscript}labore$notSuperscriptNotSubscript'
+    ' et'
+    ' ${superscript}dolore$notSuperscriptNotSubscript'
+    '${underlineRgbOpen}128;255;128$underlineRgbClose'
+    ' ${underline}magna$notUnderlined'
+    '$underlineDefault'
+    ' ${underline}aliqua$notUnderlined.';
+
+print(text);
+</code></pre>
+<h2 id="colors">Colors</h2>
+<h3 id="standarts-16-colors">Standarts 16 colors</h3>
+<p><a href="https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit">en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit</a></p>
+<table>
+<thead>
+<tr>
+<th align="left">Foreground</th>
+<th align="left">Background</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">fgBlack</td>
+<td align="left">bgBlack</td>
+</tr>
+<tr>
+<td align="left">fgRed</td>
+<td align="left">bgRed</td>
+</tr>
+<tr>
+<td align="left">fgGreen</td>
+<td align="left">bgGreen</td>
+</tr>
+<tr>
+<td align="left">fgYellow</td>
+<td align="left">bgYellow</td>
+</tr>
+<tr>
+<td align="left">fgBlue</td>
+<td align="left">bgBlue</td>
+</tr>
+<tr>
+<td align="left">fgMagenta</td>
+<td align="left">bgMagenta</td>
+</tr>
+<tr>
+<td align="left">fgCyan</td>
+<td align="left">bgCyan</td>
+</tr>
+<tr>
+<td align="left">fgWhite</td>
+<td align="left">bgWhite</td>
+</tr>
+<tr>
+<td align="left">fgDefault</td>
+<td align="left">bgDefault</td>
+</tr>
+<tr>
+<td align="left">fgBrightBlack</td>
+<td align="left">bgBrightBlack</td>
+</tr>
+<tr>
+<td align="left">fgBrightRed</td>
+<td align="left">bgBrightRed</td>
+</tr>
+<tr>
+<td align="left">fgBrightGreen</td>
+<td align="left">bgBrightGreen</td>
+</tr>
+<tr>
+<td align="left">fgBrightYellow</td>
+<td align="left">bgBrightYellow</td>
+</tr>
+<tr>
+<td align="left">fgBrightBlue</td>
+<td align="left">bgBrightBlue</td>
+</tr>
+<tr>
+<td align="left">fgBrightMagenta</td>
+<td align="left">bgBrightMagenta</td>
+</tr>
+<tr>
+<td align="left">fgBrightCyan</td>
+<td align="left">bgBrightCyan</td>
+</tr>
+<tr>
+<td align="left">fgBrightWhite</td>
+<td align="left">bgBrightWhite</td>
+</tr>
+</tbody>
+</table>
+<h3 id="256-color-table">256-color table</h3>
+<p><a href="https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit">en.wikipedia.org/wiki/ANSI_escape_code#8-bit</a></p>
+<p>Templates for using a color from a 256-color table:</p>
+<pre class="language-dart"><code class="language-dart">'$fg256Open$color$fg256Close' // Foreground
+'$bg256Open$color$bg256Close' // Background
+'$underline256Open$color$underline256Close' // Underline
+</code></pre>
+<p>Where <code>color</code> is the color number from the 256-color table. You can use
+predefined values from the following table:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Number</th>
+<th align="left">Name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="right">0</td>
+<td align="left">black</td>
+</tr>
+<tr>
+<td align="right">1</td>
+<td align="left">red</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td align="left">green</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td align="left">yellow</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td align="left">blue</td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td align="left">magenta</td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td align="left">cyan</td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td align="left">white</td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td align="left">highBlack</td>
+</tr>
+<tr>
+<td align="right">9</td>
+<td align="left">highRed</td>
+</tr>
+<tr>
+<td align="right">10</td>
+<td align="left">highGreen</td>
+</tr>
+<tr>
+<td align="right">11</td>
+<td align="left">highYellow</td>
+</tr>
+<tr>
+<td align="right">12</td>
+<td align="left">highBlue</td>
+</tr>
+<tr>
+<td align="right">13</td>
+<td align="left">highMagenta</td>
+</tr>
+<tr>
+<td align="right">14</td>
+<td align="left">highCyan</td>
+</tr>
+<tr>
+<td align="right">15</td>
+<td align="left">highWhite</td>
+</tr>
+<tr>
+<td align="right">16-231</td>
+<td align="left">rgb<strong>NNN</strong>, where N are numbers from 0 to 5</td>
+</tr>
+<tr>
+<td align="right">232-255</td>
+<td align="left">gray<strong>N</strong>, where N is a number from 0 to 23</td>
+</tr>
+</tbody>
+</table>
+<p>You don't have to use templates and take the predefined values from the
+following table:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Number</th>
+<th align="left">Name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="right">0</td>
+<td align="left">(fg/bg/underline)256Black</td>
+</tr>
+<tr>
+<td align="right">1</td>
+<td align="left">(fg/bg/underline)256Red</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td align="left">(fg/bg/underline)256Green</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td align="left">(fg/bg/underline)256Yellow</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td align="left">(fg/bg/underline)256Blue</td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td align="left">(fg/bg/underline)256Magenta</td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td align="left">(fg/bg/underline)256Cyan</td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td align="left">(fg/bg/underline)256White</td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td align="left">(fg/bg/underline)256HighBlack</td>
+</tr>
+<tr>
+<td align="right">9</td>
+<td align="left">(fg/bg/underline)256HighRed</td>
+</tr>
+<tr>
+<td align="right">10</td>
+<td align="left">(fg/bg/underline)256HighGreen</td>
+</tr>
+<tr>
+<td align="right">11</td>
+<td align="left">(fg/bg/underline)256HighYellow</td>
+</tr>
+<tr>
+<td align="right">12</td>
+<td align="left">(fg/bg/underline)256HighBlue</td>
+</tr>
+<tr>
+<td align="right">13</td>
+<td align="left">(fg/bg/underline)256HighMagenta</td>
+</tr>
+<tr>
+<td align="right">14</td>
+<td align="left">(fg/bg/underline)256HighCyan</td>
+</tr>
+<tr>
+<td align="right">15</td>
+<td align="left">(fg/bg/underline)256HighWhite</td>
+</tr>
+<tr>
+<td align="right">16..231</td>
+<td align="left">(fg/bg/underline)256R<strong>N</strong>G<strong>N</strong>B<strong>N</strong>, where N are numbers from 0 to 5</td>
+</tr>
+<tr>
+<td align="right">232..255</td>
+<td align="left">(fg/bg/underline)256Gray<strong>N</strong>, where N is a number from 0 to 23</td>
+</tr>
+</tbody>
+</table>
+<p>You can use the following functions to dynamically generate a value:</p>
+<ul>
+<li>
+<p>for colors:</p>
+<pre class="language-dart"><code class="language-dart">int rgb(int r, int g, int b);
+int gray(int level);
+</code></pre>
+<p>Where <code>r</code>, <code>g</code>, <code>b</code> are values from 0 to 5. And <code>level</code> is a value from 0 to
+23.</p>
+</li>
+<li>
+<p>for ANSI escape code:</p>
+<pre class="language-dart"><code class="language-dart">String fg256(int color);
+String bg256(int color);
+String underline256(int color);
+</code></pre>
+</li>
+</ul>
+<h3 id="rgb-colors">RGB colors</h3>
+<p><a href="https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit">en.wikipedia.org/wiki/ANSI_escape_code#24-bit</a></p>
+<p>A template for using a RGB color:</p>
+<pre class="language-dart"><code class="language-dart">'$fgRgbOpen$r;$g;$b$fgRgbClose'
+'$bgRgbOpen$r;$g;$b$bgRgbClose'
+'$underlineRgbOpen$r;$g;$b$underlineRgbClose'
+</code></pre>
+<p>Where <code>r</code>, <code>g</code>, <code>b</code> are values from 0 to 255.</p>
+<p>You can use the following functions to dynamically generate a value:</p>
+<pre class="language-dart"><code class="language-dart">String fgRgb(int r, int g, int b);
+String bgRgb(int r, int g, int b);
+String underlineRgb(int r, int g, int b);
+</code></pre>
+<h3 id="reset-color">Reset color</h3>
+<p>You can reset the set color with <code>fgDefault</code>, <code>bgDefault</code> and
+<code>underlineColorDefault</code>. Or with <code>reset</code>, which will turn off all attributes.</p>
+<h2 id="control-sequences">Control sequences</h2>
+<table>
+<thead>
+<tr>
+<th align="left">Default constant</th>
+<th align="left">Template</th>
+<th align="left">Function</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left"><code>cursorUp</code></td>
+<td align="left"><code>cursorUpOpen[n]cursorUpClose</code></td>
+<td align="left"><code>cursorUpN(int n)</code></td>
+<td align="left">Moves the cursor up <code>n</code> (default <code>1</code>) lines.</td>
+</tr>
+<tr>
+<td align="left"><code>cursorDown</code></td>
+<td align="left"><code>cursorDownOpen[n]cursorDownClose</code></td>
+<td align="left"><code>cursorDownN(int n)</code></td>
+<td align="left">Moves the cursor down <code>n</code> (default <code>1</code>) lines.</td>
+</tr>
+<tr>
+<td align="left"><code>cursorForward</code></td>
+<td align="left"><code>cursorForwardOpen[n]cursorForwardClose</code></td>
+<td align="left"><code>cursorForwardN(int n)</code></td>
+<td align="left">Moves the cursor forward <code>n</code> (default <code>1</code>) cells.</td>
+</tr>
+<tr>
+<td align="left"><code>cursorBack</code></td>
+<td align="left"><code>cursorBackOpen[n]cursorBackClose</code></td>
+<td align="left"><code>cursorBackN(int n)</code></td>
+<td align="left">Moves the cursor back <code>n</code> (default <code>1</code>) cells.</td>
+</tr>
+<tr>
+<td align="left"><code>cursorNextLine</code></td>
+<td align="left"><code>cursorNextLineOpen[n]cursorNextLineClose</code></td>
+<td align="left"><code>cursorNextLineN(int n)</code></td>
+<td align="left">Moves cursor to beginning of the line <code>n</code> (default <code>1</code>) lines down.</td>
+</tr>
+<tr>
+<td align="left"><code>cursorPrevLine</code></td>
+<td align="left"><code>cursorPrevLineOpen[n]cursorPrevLineClose</code></td>
+<td align="left"><code>cursorPrevLineN(int n)</code></td>
+<td align="left">Moves cursor to beginning of the line <code>n</code> (default <code>1</code>) lines up.</td>
+</tr>
+<tr>
+<td align="left"><code>cursorHPos</code></td>
+<td align="left"><code>cursorHPosOpen[n]cursorHPosClose</code></td>
+<td align="left"><code>cursorHPosN(int n)</code></td>
+<td align="left">Moves the cursor to column <code>n</code> (default <code>1</code>).</td>
+</tr>
+<tr>
+<td align="left"><code>cursorPos</code></td>
+<td align="left"><code>cursorPosOpen[n]cursorPosClose</code></td>
+<td align="left"><code>cursorPosTo(int row, int col)</code></td>
+<td align="left">Moves the cursor to <code>row</code> and <code>column</code>. The values are 1-based, and default to <code>1</code> (top left corner) if omitted.</td>
+</tr>
+<tr>
+<td align="left"><code>cursorHVPos</code></td>
+<td align="left"><code>cursorHVPosOpen[n]cursorHVPosClose</code></td>
+<td align="left"><code>cursorHVPosTo(int row, int col)</code></td>
+<td align="left">Same as <code>cursorPos</code>, but counts as a format effector function (like <code>cr</code> or <code>lf</code>) rather than an editor function (like <code>cursorUp</code> or <code>cursorNextLine</code>). This can lead to different handling in certain terminal modes.</td>
+</tr>
+<tr>
+<td align="left"><code>clearScreen…</code></td>
+<td align="left"><code>clearScreenOpen[n]clearScreenClose</code></td>
+<td align="left"></td>
+<td align="left">Clears part of the screen. If <code>n</code> is <code>0</code> (or missing), clear from cursor to end of screen (<code>clearScreenToEnd</code>). If <code>n</code> is <code>1</code>, clear from cursor to beginning of the screen (<code>clearScreenToBegin</code>). If <code>n</code> is <code>2</code>, clear entire screen and moves cursor to upper left (<code>clearScreen</code>). If <code>n</code> is <code>3</code>, clear entire screen and delete all lines saved in the scrollback buffer (<code>clearScreenWithBuf</code>).</td>
+</tr>
+<tr>
+<td align="left"><code>eraseLine…</code></td>
+<td align="left"><code>eraseLineOpen[n]eraseLineClose</code></td>
+<td align="left"></td>
+<td align="left">Erases part of the line. If <code>n</code> is <code>0</code> (or missing), clear from cursor to the end of the line (<code>eraseLineToEnd</code>). If <code>n</code> is <code>1</code>, clear from cursor to beginning of the line (<code>eraseLineToBegin</code>). If <code>n</code> is <code>2</code>, clear entire line (<code>eraseLine</code>). Cursor position does not change.</td>
+</tr>
+<tr>
+<td align="left"><code>scrollUp</code></td>
+<td align="left"><code>scrollUpOpen[n]scrollUpClose</code></td>
+<td align="left"><code>scrollUpN(int n)</code></td>
+<td align="left">Scroll whole page up by <code>n</code> (default <code>1</code>) lines. New lines are added at the bottom.</td>
+</tr>
+<tr>
+<td align="left"><code>scrollDown</code></td>
+<td align="left"><code>scrollDownOpen[n]scrollDownClose</code></td>
+<td align="left"><code>scrollDownN(int n)</code></td>
+<td align="left">Scroll whole page down by <code>n</code> (default <code>1</code>) lines. New lines are added at the top.</td>
+</tr>
+<tr>
+<td align="left"><code>hideCursor</code></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Shows the cursor.</td>
+</tr>
+<tr>
+<td align="left"><code>showCursor</code></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Hides the cursor.</td>
+</tr>
+<tr>
+<td align="left"><code>saveCursor</code></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Saves the cursor position, encoding shift state and formatting attributes.</td>
+</tr>
+<tr>
+<td align="left"><code>restoreCursor</code></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Restores the cursor position, encoding shift state and formatting attributes from the previous <code>saveCursor</code> if any, otherwise resets these all to their defaults.</td>
+</tr>
+</tbody>
+</table>
+</section>
+
+
+      <section class="summary">
+          <h2>Libraries</h2>
+        <dl>
+          <dt id="ansi_escape_codes">
+  <span class="name"><a href="ansi_escape_codes/ansi_escape_codes-library.html">ansi_escape_codes</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+        </dl>
+      </section>
+
+  </div> <!-- /.main-content -->
+
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="https://github.com/vi-k/ansi_escape_codes">ansi_escape_codes package</a></li>
+</ol>
+
+
+    <h5 class="hidden-xs"><span class="package-name">ansi_escape_codes</span> <span class="package-kind">package</span></h5>
+    <ol>
+      <li class="section-title">Libraries</li>
+      <li><a href="ansi_escape_codes/ansi_escape_codes-library.html">ansi_escape_codes</a></li>
+</ol>
+
+  </div>
+
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div>
+
+</main>
+
+<footer>
+  <span class="no-break">
+    ansi_escape_codes
+      1.2.0
+  </span>
+
+  
+</footer>
+
+
+
+<script src="static-assets/highlight.pack.js?v1"></script>
+<script src="static-assets/docs.dart.js"></script>
+
+
+
+</body>
+
+</html>
+

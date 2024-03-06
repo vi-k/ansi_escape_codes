@@ -16,8 +16,8 @@ Future<void> main() async {
   stdout.write('Erase in display');
   await Future<void>.delayed(const Duration(milliseconds: pause));
   stdout
-    ..write(ansi.clear)
-    ..write(ansi.clearBuf);
+    ..write(ansi.clearScreen)
+    ..write(ansi.clearScreenWithBuf);
   await Future<void>.delayed(const Duration(milliseconds: pause));
 
   stdout.write('${ansi.cursorPosTo(1, 1)}Cursor Position');

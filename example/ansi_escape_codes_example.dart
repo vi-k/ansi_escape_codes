@@ -11,13 +11,16 @@ void main() {
       ' ${fgRgbOpen}249;105;14${fgRgbClose}elit,$fgDefault'
       ' ${bold}sed ${normalIntensity}do ${faint}eiusmod$reset'
       ' ${italic}tempor$notItalic'
-      ' ${strike}incididunt$notStrike'
-      ' ${underline}ut$notUnderlined'
+      '$underline256Yellow'
+      ' ${underline}incididunt$notUnderlined'
+      ' ${strike}ut$notStriked'
       ' ${subscript}labore$notSuperscriptNotSubscript'
       ' et'
       ' ${superscript}dolore$notSuperscriptNotSubscript'
-      ' ${blink}magna$notBlinking'
-      ' ${invert}aliqua.$notInverted';
+      '${underlineRgbOpen}128;255;128$underlineRgbClose'
+      ' ${underline}magna$notUnderlined'
+      '$underlineDefault'
+      ' ${underline}aliqua$notUnderlined.';
 
   print(text);
 }

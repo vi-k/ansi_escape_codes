@@ -27,7 +27,7 @@ void main() {
       '${ansi.notUnderlined}${ansi.reset}'
       ' | '
       '${ansi.underline} Test '
-      '${ansi.underlineColorDefault} Test '
+      '${ansi.underlineDefault} Test '
       '${ansi.reset}',
     )
     ..writeln()
@@ -58,13 +58,13 @@ void main() {
     ..writeln()
     ..writeln(
       'Hide:'
-      ' ${ansi.hide} Hidden ${ansi.notHide}'
+      ' ${ansi.hide} Hidden ${ansi.notHidden}'
       ' / Not hidden ${ansi.reset}',
     )
     ..writeln()
     ..writeln(
       'Strike: '
-      '${ansi.strike} Strike ${ansi.notStrike}'
+      '${ansi.strike} Strike ${ansi.notStriked}'
       ' / Not strike ${ansi.reset}',
     )
     ..writeln()
