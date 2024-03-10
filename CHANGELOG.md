@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.3.1
+
+- Add add several functions to the utilities.
+
 ## 1.3.0
 
 - Update example.

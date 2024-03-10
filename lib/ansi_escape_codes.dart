@@ -8,3 +8,4 @@ export 'src/current_cursor_pos.dart';
 export 'src/etc.dart';
 export 'src/sgr.dart';
 export 'src/sgr_colors.dart';
+export 'src/utils/utils.dart';
