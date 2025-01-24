@@ -89,7 +89,7 @@ Templates for using a color from a 256-color table:
 Where `colorIndex` is the color index from the 256-color table. You can use
 predefined values from the following table:
 
-|  Number | Name        | Comment |
+|   Index | Name        | Comment |
 |--------:|:------------|:--------|
 |       0 | black       |         |
 |       1 | red         |         |
@@ -119,7 +119,7 @@ print('$fg256Open$highYellow$fg256Close$bg256Open$green$bg256Close Yellow text o
 You don't have to use templates and take the predefined values from the
 following table:
 
-|   Number | Name                            | Comment |
+|    Index | Name                            | Comment |
 |---------:|:--------------------------------|:--------|
 |        0 | (fg/bg/underline)256Black       |         |
 |        1 | (fg/bg/underline)256Red         |         |
