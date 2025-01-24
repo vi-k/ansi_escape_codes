@@ -68,33 +68,47 @@ print('$fgBrightYellow$bgGreen Yellow text on green field $reset');
 
 Templates for using a color from a 256-color table:
 
-- Foreground: `${fg256Open}${colorIndex}${fg256Close}`
-- Background: `${bg256Open}${colorIndex}${bg256Close}`
-- Underline: `${underline256Open}${colorIndex}${underline256Close}`
+- Foreground:
+
+  ```dart
+  '${fg256Open}${colorIndex}${fg256Close}'
+  ```
+
+- Background:
+
+  ```dart
+  '${bg256Open}${colorIndex}${bg256Close}'
+  ```
+
+- Underline:
+
+  ```dart
+  '${underline256Open}${colorIndex}${underline256Close}'
+  ```
 
 Where `colorIndex` is the color index from the 256-color table. You can use
 predefined values from the following table:
 
-|  Number | Name        |
-|--------:|:------------|
-|       0 | black       |
-|       1 | red         |
-|       2 | green       |
-|       3 | yellow      |
-|       4 | blue        |
-|       5 | magenta     |
-|       6 | cyan        |
-|       7 | white       |
-|       8 | highBlack   |
-|       9 | highRed     |
-|      10 | highGreen   |
-|      11 | highYellow  |
-|      12 | highBlue    |
-|      13 | highMagenta |
-|      14 | highCyan    |
-|      15 | highWhite   |
-|  16-231 | rgb**NNN**, where N are numbers from 0 to 5 (6 × 6 × 6 cube (216 colors): 16 + 36 × r + 6 × g + b) |
-| 232-255 | gray**N**, where N is a number from 0 to 23 (grayscale from dark to light in 24 steps) |
+|  Number | Name        | Comment |
+|--------:|:------------|:--------|
+|       0 | black       |         |
+|       1 | red         |         |
+|       2 | green       |         |
+|       3 | yellow      |         |
+|       4 | blue        |         |
+|       5 | magenta     |         |
+|       6 | cyan        |         |
+|       7 | white       |         |
+|       8 | highBlack   |         |
+|       9 | highRed     |         |
+|      10 | highGreen   |         |
+|      11 | highYellow  |         |
+|      12 | highBlue    |         |
+|      13 | highMagenta |         |
+|      14 | highCyan    |         |
+|      15 | highWhite   |         |
+|  16-231 | rgb**NNN**  | N are numbers from 0 to 5 (6 × 6 × 6 cube (216 colors): 16 + 36 × r + 6 × g + b) |
+| 232-255 | gray**N**   | N is a number from 0 to 23 (grayscale from dark to light in 24 steps) |
 
 Example:
 
@@ -105,26 +119,26 @@ print('$fg256Open$highYellow$fg256Close$bg256Open$green$bg256Close Yellow text o
 You don't have to use templates and take the predefined values from the
 following table:
 
-|   Number | Name                            |
-|---------:|:--------------------------------|
-|        0 | (fg/bg/underline)256Black       |
-|        1 | (fg/bg/underline)256Red         |
-|        2 | (fg/bg/underline)256Green       |
-|        3 | (fg/bg/underline)256Yellow      |
-|        4 | (fg/bg/underline)256Blue        |
-|        5 | (fg/bg/underline)256Magenta     |
-|        6 | (fg/bg/underline)256Cyan        |
-|        7 | (fg/bg/underline)256White       |
-|        8 | (fg/bg/underline)256HighBlack   |
-|        9 | (fg/bg/underline)256HighRed     |
-|       10 | (fg/bg/underline)256HighGreen   |
-|       11 | (fg/bg/underline)256HighYellow  |
-|       12 | (fg/bg/underline)256HighBlue    |
-|       13 | (fg/bg/underline)256HighMagenta |
-|       14 | (fg/bg/underline)256HighCyan    |
-|       15 | (fg/bg/underline)256HighWhite   |
-|  16..231 | (fg/bg/underline)256Rgb**NNN**, where N are numbers from 0 to 5 (6 × 6 × 6 cube (216 colors): 16 + 36 × r + 6 × g + b) |
-| 232..255 | (fg/bg/underline)256Gray**N**, where N is a number from 0 to 23 (grayscale from dark to light in 24 steps) |
+|   Number | Name                            | Comment |
+|---------:|:--------------------------------|:--------|
+|        0 | (fg/bg/underline)256Black       |         |
+|        1 | (fg/bg/underline)256Red         |         |
+|        2 | (fg/bg/underline)256Green       |         |
+|        3 | (fg/bg/underline)256Yellow      |         |
+|        4 | (fg/bg/underline)256Blue        |         |
+|        5 | (fg/bg/underline)256Magenta     |         |
+|        6 | (fg/bg/underline)256Cyan        |         |
+|        7 | (fg/bg/underline)256White       |         |
+|        8 | (fg/bg/underline)256HighBlack   |         |
+|        9 | (fg/bg/underline)256HighRed     |         |
+|       10 | (fg/bg/underline)256HighGreen   |         |
+|       11 | (fg/bg/underline)256HighYellow  |         |
+|       12 | (fg/bg/underline)256HighBlue    |         |
+|       13 | (fg/bg/underline)256HighMagenta |         |
+|       14 | (fg/bg/underline)256HighCyan    |         |
+|       15 | (fg/bg/underline)256HighWhite   |         |
+|  16..231 | (fg/bg/underline)256Rgb**NNN**  | N are numbers from 0 to 5 (6 × 6 × 6 cube (216 colors): 16 + 36 × r + 6 × g + b) |
+| 232..255 | (fg/bg/underline)256Gray**N**   | N is a number from 0 to 23 (grayscale from dark to light in 24 steps) |
 
 Example:
 
@@ -172,9 +186,22 @@ You can use the following functions:
 
 Templates for using a RGB color:
 
-- Foreground: `${fgRgbOpen}${r};${g};${b}${fgRgbClose}`
-- Background: `${bgRgbOpen}${r};${g};${b}${bgRgbClose}`
-- Underline: `${underlineRgbOpen}${r};${g};${b}${underlineRgbClose}`
+- Foreground:
+
+  ```dart
+  '${fgRgbOpen}${r};${g};${b}${fgRgbClose}'
+  ```
+
+- Background:
+
+  ```dart
+  '${bgRgbOpen}${r};${g};${b}${bgRgbClose}`'
+  ```
+
+- Underline:
+  ```dart
+  '${underlineRgbOpen}${r};${g};${b}${underlineRgbClose}'
+  ```
 
 Where `r`, `g`, `b` are values from 0 to 255.
 
