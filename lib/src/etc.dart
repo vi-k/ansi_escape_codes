@@ -8,8 +8,8 @@ const String saveCursor = '${esc}7';
 /// Restores the cursor.
 ///
 /// Restores the cursor position, encoding shift state and formatting
-/// attributes from the previous DECSC if any, otherwise resets these all to
-/// their defaults.
+/// attributes from the previous [saveCursor] if any, otherwise resets these
+/// all to their defaults.
 const String restoreCursor = '${esc}8';
 
 /// Link.

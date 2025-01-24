@@ -62,11 +62,11 @@ print(text);
 
 Templates for using a color from a 256-color table:
 
-- Foreground: `{fg256Open}{color}{fg256Close}`
-- Background: `{bg256Open}{color}{bg256Close}`
-- Underline: `{underline256Open}{color}{underline256Close}`
+- Foreground: `${fg256Open}${colorIndex}${fg256Close}`
+- Background: `${bg256Open}${colorIndex}${bg256Close}`
+- Underline: `${underline256Open}${colorIndex}${underline256Close}`
 
-Where `color` is the color number from the 256-color table. You can use
+Where `colorIndex` is the color index from the 256-color table. You can use
 predefined values from the following table:
 
 |  Number | Name        |
@@ -116,22 +116,28 @@ following table:
 
 You can use the following functions to dynamically generate a value:
 
-- for colors:
+- for RGB colors:
 
   ```dart
   int rgb(int r, int g, int b);
+  ```
+
+  Where `r`, `g`, `b` are values from 0 to 5.
+
+- for grayscale:
+
+  ```dart
   int gray(int level);
   ```
 
-  Where `r`, `g`, `b` are values from 0 to 5. And `level` is a value from 0 to
-  23.
+  Where `level` is a value from 0 to 23.
 
-- for ANSI escape code:
+- for color indices:
 
   ```dart
-  String fg256(int color);
-  String bg256(int color);
-  String underline256(int color);
+  String fg256(int colorIndex);
+  String bg256(int colorIndex);
+  String underline256(int colorIndex);
   ```
 
 ### RGB colors
@@ -140,9 +146,9 @@ You can use the following functions to dynamically generate a value:
 
 Templates for using a RGB color:
 
-- Foreground: `{fgRgbOpen}{r};{g};{b}{fgRgbClose}`
-- Background: `{bgRgbOpen}{r};{g};{b}{bgRgbClose}`
-- Underline: `{underlineRgbOpen}{r};{g};{b}{underlineRgbClose}`
+- Foreground: `${fgRgbOpen}${r};${g};${b}${fgRgbClose}`
+- Background: `${bgRgbOpen}${r};${g};${b}${bgRgbClose}`
+- Underline: `${underlineRgbOpen}${r};${g};${b}${underlineRgbClose}`
 
 Where `r`, `g`, `b` are values from 0 to 255.
 
@@ -161,22 +167,22 @@ You can reset the set color with `fgDefault`, `bgDefault` and
 
 ## Control sequences
 
-| Default constant | Template                                       | Function                  | Description                                                                         |
-|:-----------------|:-----------------------------------------------|:--------------------------|:------------------------------------------------------------------------------------|
-| `cursorUp`       | `{cursorUpOpen}[n]{cursorUpClose}`             | `cursorUpN(n)`            | Moves the cursor up `n` (default `1`) lines.                                        |
-| `cursorDown`     | `{cursorDownOpen}[n]{cursorDownClose}`         | `cursorDownN(n)`          | Moves the cursor down `n` (default `1`) lines.                                      |
-| `cursorForward`  | `{cursorForwardOpen}[n]{cursorForwardClose}`   | `cursorForwardN(n)`       | Moves the cursor forward `n` (default `1`) cells.                                   |
-| `cursorBack`     | `{cursorBackOpen}[n]{cursorBackClose}`         | `cursorBackN(n)`          | Moves the cursor back `n` (default `1`) cells.                                      |
-| `cursorNextLine` | `{cursorNextLineOpen}[n]{cursorNextLineClose}` | `cursorNextLineN(n)`      | Moves cursor to beginning of the line `n` (default `1`) lines down.                 |
-| `cursorPrevLine` | `{cursorPrevLineOpen}[n]{cursorPrevLineClose}` | `cursorPrevLineN(n)`      | Moves cursor to beginning of the line `n` (default `1`) lines up.                   |
-| `cursorHPos`     | `{cursorHPosOpen}[n]{cursorHPosClose}`         | `cursorHPosN(n)`          | Moves the cursor to column `n` (default `1`).                                       |
-| `cursorPos`      | `{cursorPosOpen}[n]{cursorPosClose}`           | `cursorPosTo(row, col)`   | Moves the cursor to `row` and `column`. The values are 1-based, and default to `1` (top left corner) if omitted. |
-| `cursorHVPos`    | `{cursorHVPosOpen}[n]{cursorHVPosClose}`       | `cursorHVPosTo(row, col)` | Same as `cursorPos`, but counts as a format effector function (like `cr` or `lf`) rather than an editor function (like `cursorUp` or `cursorNextLine`). This can lead to different handling in certain terminal modes. |
-| `clearScreen…`   | `{clearScreenOpen}[n]{clearScreenClose}`       |                           | Clears part of the screen. If `n` is `0` (or missing), clear from cursor to end of screen (`clearScreenToEnd`). If `n` is `1`, clear from cursor to beginning of the screen (`clearScreenToBegin`). If `n` is `2`, clear entire screen and moves cursor to upper left (`clearScreen`). If `n` is `3`, clear entire screen and delete all lines saved in the scrollback buffer (`clearScreenWithBuf`). |
-| `eraseLine…`     | `{eraseLineOpen}[n]{eraseLineClose}`           |                           | Erases part of the line. If `n` is `0` (or missing), clear from cursor to the end of the line (`eraseLineToEnd`). If `n` is `1`, clear from cursor to beginning of the line (`eraseLineToBegin`). If `n` is `2`, clear entire line (`eraseLine`). Cursor position does not change. |
-| `scrollUp`       | `{scrollUpOpen}[n]{scrollUpClose}`             | `scrollUpN(n)`            | Scroll whole page up by `n` (default `1`) lines. New lines are added at the bottom. |
-| `scrollDown`     | `{scrollDownOpen}[n]{scrollDownClose}`         | `scrollDownN(n)`          | Scroll whole page down by `n` (default `1`) lines. New lines are added at the top.  |
-| `hideCursor`     |                                                |                           | Shows the cursor.                                                                   |
-| `showCursor`     |                                                |                           | Hides the cursor.                                                                   |
-| `saveCursor`     |                                                |                           | Saves the cursor position, encoding shift state and formatting attributes.          |
-| `restoreCursor`  |                                                |                           | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
+| Default constant | Template                                               | Function                  | Description                                                                         |
+|:-----------------|:-------------------------------------------------------|:--------------------------|:------------------------------------------------------------------------------------|
+| `cursorUp`       | `${cursorUpOpen}[${n}]${cursorUpClose}`                | `cursorUpN(n)`            | Moves the cursor up `n` (default `1`) lines.                                        |
+| `cursorDown`     | `${cursorDownOpen}[${n}]${cursorDownClose}`            | `cursorDownN(n)`          | Moves the cursor down `n` (default `1`) lines.                                      |
+| `cursorForward`  | `${cursorForwardOpen}[${n}]${cursorForwardClose}`      | `cursorForwardN(n)`       | Moves the cursor forward `n` (default `1`) cells.                                   |
+| `cursorBack`     | `${cursorBackOpen}[${n}]${cursorBackClose}`            | `cursorBackN(n)`          | Moves the cursor back `n` (default `1`) cells.                                      |
+| `cursorNextLine` | `${cursorNextLineOpen}[${n}]${cursorNextLineClose}`    | `cursorNextLineN(n)`      | Moves cursor to beginning of the line `n` (default `1`) lines down.                 |
+| `cursorPrevLine` | `${cursorPrevLineOpen}[${n}]${cursorPrevLineClose}`    | `cursorPrevLineN(n)`      | Moves cursor to beginning of the line `n` (default `1`) lines up.                   |
+| `cursorHPos`     | `${cursorHPosOpen}[${n}]${cursorHPosClose}`            | `cursorHPosN(n)`          | Moves the cursor to column `n` (default `1`).                                       |
+| `cursorPos`      | `${cursorPosOpen}[${row};${col}]${cursorPosClose}`     | `cursorPosTo(row, col)`   | Moves the cursor to `row` and `col`. The values are 1-based, and default to `1` (top left corner) if omitted. |
+| `cursorHVPos`    | `${cursorHVPosOpen}[${row};${col}]${cursorHVPosClose}` | `cursorHVPosTo(row, col)` | Same as `cursorPos`, but counts as a format effector function (like `cr` or `lf`) rather than an editor function (like `cursorUp` or `cursorNextLine`). This can lead to different handling in certain terminal modes. |
+| `clearScreen…`   | `${clearScreenOpen}[${n}]${clearScreenClose}`          |                           | Clears part of the screen. If `n` is `0` (or missing), clear from cursor to end of screen (`clearScreenToEnd`). If `n` is `1`, clear from cursor to beginning of the screen (`clearScreenToBegin`). If `n` is `2`, clear entire screen and moves cursor to upper left (`clearScreen`). If `n` is `3`, clear entire screen and delete all lines saved in the scrollback buffer (`clearScreenWithBuf`). |
+| `eraseLine…`     | `${eraseLineOpen}[${n}]${eraseLineClose}`              |                           | Erases part of the line. If `n` is `0` (or missing), clear from cursor to the end of the line (`eraseLineToEnd`). If `n` is `1`, clear from cursor to beginning of the line (`eraseLineToBegin`). If `n` is `2`, clear entire line (`eraseLine`). Cursor position does not change. |
+| `scrollUp`       | `${scrollUpOpen}[${n}]${scrollUpClose}`                | `scrollUpN(n)`            | Scroll whole page up by `n` (default `1`) lines. New lines are added at the bottom. |
+| `scrollDown`     | `${scrollDownOpen}[${n}]${scrollDownClose}`            | `scrollDownN(n)`          | Scroll whole page down by `n` (default `1`) lines. New lines are added at the top.  |
+| `hideCursor`     |                                                        |                           | Shows the cursor.                                                                   |
+| `showCursor`     |                                                        |                           | Hides the cursor.                                                                   |
+| `saveCursor`     |                                                        |                           | Saves the cursor position, encoding shift state and formatting attributes.          |
+| `restoreCursor`  |                                                        |                           | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |

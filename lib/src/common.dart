@@ -1,18 +1,22 @@
+/// Bell.
 const String bel = '\x07';
 
+/// Backspace (\b).
 const String backspace = '\x08';
 
+/// Tabulation (\t).
 const String tab = '\x09';
 
-/// Line Feed.
+/// Line feed (\n).
 const String lf = '\x0A';
 
-/// Form Feed.
+/// Form feed (\f).
 const String ff = '\x0C';
 
-/// Carriage Return.
+/// Carriage return (\r).
 const String cr = '\x0D';
 
+/// Escape.
 const String esc = '\x1B';
 
 /// OSC (Operating System Command).

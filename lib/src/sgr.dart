@@ -1,6 +1,6 @@
 import 'csi.dart';
 
-/// SGR (Select Graphic Rendition): CSI {n} m
+/// SGR (Select Graphic Rendition): `$csi{n}m`.
 const String sgr = 'm';
 
 /// Reset or normal.

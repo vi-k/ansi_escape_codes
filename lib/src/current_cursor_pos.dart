@@ -24,8 +24,8 @@ Future<(int, int)> currentCursorPos(Stdout stdout, Stdin stdin) async {
 
     final cursorSeqF = stream.first.timeout(const Duration(milliseconds: 100));
 
-    // Отправляя в stdout команду CSI 6n, в stdin получаем координаты
-    // в виде CSI {n};{m} R
+    // By sending the CSI 6n command to stdout, we get the coordinates in stdin
+    // as CSI {n};{m} R.
     stdout.write('${csi}6n');
     cursorSeq = await cursorSeqF;
 
