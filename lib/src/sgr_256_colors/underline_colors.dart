@@ -1,7 +1,7 @@
 import '../csi.dart';
 import '../sgr.dart';
 import 'assert.dart';
-import '256_color_table.dart';
+import 'sgr_256_color_table.dart';
 
 //
 // ANSI escape codes for underline from 256-color table.
@@ -20,9 +20,8 @@ import '256_color_table.dart';
 /// - -mac iTerm2
 /// - ?as
 ///
-/// 256-color table see in the [colors256.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/colors256.dart).
-/// See also predefined constants starting with `underline256*` in the
-/// [colors256_underline.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/colors256_underline.dart).
+/// See color indexes in the
+/// [sgr_256_color_table.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/sgr_256_color_table.dart).
 ///
 /// See also [underline256].
 const String underline256Open = '${csi}58;5;';
@@ -37,7 +36,7 @@ const String underline256Open = '${csi}58;5;';
 /// - -mac iTerm2
 /// - ?as
 ///
-/// See color indices in the
+/// See color indexes in the
 /// [256_color_table.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/256_color_table.dart).
 ///
 /// See also [underline256].

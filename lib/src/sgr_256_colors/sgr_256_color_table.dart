@@ -5,7 +5,7 @@ const _colorComponentAssert = 'The color component must be in the range 0..5';
 //
 
 //
-// Standard color indices.
+// Standard color indexes.
 //
 
 /// Black index from 256-color table.
@@ -33,7 +33,7 @@ const int cyan = 6;
 const int white = 7;
 
 //
-// High intensity color indices.
+// High intensity color indexes.
 //
 
 /// High black index from 256-color table.
@@ -61,7 +61,7 @@ const int highCyan = 14;
 const int highWhite = 15;
 
 //
-// RGB color indices.
+// RGB color indexes.
 
 // 6 × 6 × 6 cube (216 colors): 16 + 36 × r + 6 × g + b (r,g,b = 0..5).
 //
@@ -715,7 +715,7 @@ const int rgb554 = 230;
 const int rgb555 = 231;
 
 //
-// Grayscale indices.
+// Grayscale indexes.
 //
 // Gray colors from dark to light in 24 steps.
 //

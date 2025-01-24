@@ -56,6 +56,10 @@ print(text);
 | fgBrightCyan    | bgBrightCyan    |
 | fgBrightWhite   | bgBrightWhite   |
 
+```
+print('$fgBrightYellow$bgGreen Yellow text on green field $reset');
+```
+
 ### 256-color table
 
 <https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit>
@@ -90,6 +94,12 @@ predefined values from the following table:
 |  16-231 | rgb**NNN**, where N are numbers from 0 to 5 (6 × 6 × 6 cube (216 colors): 16 + 36 × r + 6 × g + b) |
 | 232-255 | gray**N**, where N is a number from 0 to 23 (grayscale from dark to light in 24 steps) |
 
+Example:
+
+```
+print('$fg256Open$highYellow$fg256Close$bg256Open$green$bg256Close Yellow text on green field $fgDefault');
+```
+
 You don't have to use templates and take the predefined values from the
 following table:
 
@@ -114,30 +124,44 @@ following table:
 |  16..231 | (fg/bg/underline)256Rgb**NNN**, where N are numbers from 0 to 5 (6 × 6 × 6 cube (216 colors): 16 + 36 × r + 6 × g + b) |
 | 232..255 | (fg/bg/underline)256Gray**N**, where N is a number from 0 to 23 (grayscale from dark to light in 24 steps) |
 
-You can use the following functions to dynamically generate a value:
+Example:
 
-- for RGB colors:
+```
+print('$fg256HighYellow$bg256Green Yellow text on green field $reset');
+print('$fg256Rgb550$bg256Rgb240 Yellow text on green field $reset');
+```
+
+You can use the following functions:
+
+- to get color indexes:
 
   ```dart
   int rgb(int r, int g, int b);
-  ```
-
-  Where `r`, `g`, `b` are values from 0 to 5.
-
-- for grayscale:
-
-  ```dart
   int gray(int level);
   ```
 
-  Where `level` is a value from 0 to 23.
+  Where `r`, `g`, `b` are values from 0 to 5. And where `level` is a value
+  from 0 to 23.
 
-- for color indices:
+  Example:
+
+  ```
+  print('$fg256Open${rgb(5, 5, 0)}$fg256Close$bg256Open${rgb(2, 4, 0)}$bg256Close Yellow text on green field $reset');
+  print('$fg256Open${gray(16)}$fg256Close$bg256Open${gray(8)}$bg256Close Gray text on gray field $reset');
+  ```
+
+- to set the color:
 
   ```dart
   String fg256(int colorIndex);
   String bg256(int colorIndex);
   String underline256(int colorIndex);
+  ```
+
+  Example:
+
+  ```
+  print('${fg256(highYellow)}${bg256(green)} Yellow text on green field $reset');
   ```
 
 ### RGB colors
@@ -158,6 +182,12 @@ You can use the following functions to dynamically generate a value:
 String fgRgb(int r, int g, int b);
 String bgRgb(int r, int g, int b);
 String underlineRgb(int r, int g, int b);
+```
+
+Example:
+
+```
+print('${fgRgb(255, 255, 0)}${bgRgb(128, 192, 0)} Yellow text on green field $reset');
 ```
 
 ### Reset color

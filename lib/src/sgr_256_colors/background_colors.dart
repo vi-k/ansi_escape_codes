@@ -1,7 +1,7 @@
 import '../csi.dart';
 import '../sgr.dart';
 import 'assert.dart';
-import '256_color_table.dart';
+import 'sgr_256_color_table.dart';
 
 //
 // ANSI escape codes for background from 256-color table.
@@ -20,8 +20,8 @@ import '256_color_table.dart';
 /// - +mac iTerm2
 /// - +as
 ///
-/// See color indices in the
-/// [256_color_table.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/sgr_256_colors/256_color_table.dart).
+/// See color indexes in the
+/// [sgr_256_color_table.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/sgr_256_colors/sgr_256_color_table.dart).
 ///
 /// See also [bg256].
 const String bg256Open = '${csi}48;5;';

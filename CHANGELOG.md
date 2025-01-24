@@ -1,15 +1,9 @@
 # CHANGELOG
 
-## 1.3.2
+## 1.3.0-1.3.2
 
 - Prepare for publication.
-
-## 1.3.1
-
-- Add add several functions to the utilities.
-
-## 1.3.0
-
+- Add several functions to the utilities.
 - Update example.
 - Refactor constant name.
 
