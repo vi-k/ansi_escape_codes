@@ -56,7 +56,9 @@ print(text);
 | fgBrightCyan    | bgBrightCyan    |
 | fgBrightWhite   | bgBrightWhite   |
 
-```
+Example:
+
+```dart
 print('$fgBrightYellow$bgGreen Yellow text on green field $reset');
 ```
 
@@ -96,7 +98,7 @@ predefined values from the following table:
 
 Example:
 
-```
+```dart
 print('$fg256Open$highYellow$fg256Close$bg256Open$green$bg256Close Yellow text on green field $fgDefault');
 ```
 
@@ -126,7 +128,7 @@ following table:
 
 Example:
 
-```
+```dart
 print('$fg256HighYellow$bg256Green Yellow text on green field $reset');
 print('$fg256Rgb550$bg256Rgb240 Yellow text on green field $reset');
 ```
@@ -145,7 +147,7 @@ You can use the following functions:
 
   Example:
 
-  ```
+  ```dart
   print('$fg256Open${rgb(5, 5, 0)}$fg256Close$bg256Open${rgb(2, 4, 0)}$bg256Close Yellow text on green field $reset');
   print('$fg256Open${gray(16)}$fg256Close$bg256Open${gray(8)}$bg256Close Gray text on gray field $reset');
   ```
@@ -160,7 +162,7 @@ You can use the following functions:
 
   Example:
 
-  ```
+  ```dart
   print('${fg256(highYellow)}${bg256(green)} Yellow text on green field $reset');
   ```
 
@@ -186,7 +188,7 @@ String underlineRgb(int r, int g, int b);
 
 Example:
 
-```
+```dart
 print('${fgRgb(255, 255, 0)}${bgRgb(128, 192, 0)} Yellow text on green field $reset');
 ```
 
