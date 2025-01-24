@@ -1,5 +1,3 @@
-# CHANGELOG
-
 ## 1.3.0-1.3.2
 
 - Prepare for publication.
