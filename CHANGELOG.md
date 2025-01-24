@@ -1,6 +1,5 @@
-## 1.3.0-1.3.2
+## 1.3.0-1.3.1
 
-- Prepare for publication.
 - Add several functions to the utilities.
 - Update example.
 - Refactor constant name.
