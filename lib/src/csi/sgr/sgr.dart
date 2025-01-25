@@ -1,7 +1,5 @@
-import 'csi.dart';
-
-/// SGR (Select Graphic Rendition): `$csi{n}m`.
-const String sgr = 'm';
+import '../../escape_sequences/escape_sequences.dart';
+import '../csi.dart';
 
 /// Reset or normal.
 ///

@@ -5,35 +5,50 @@ This is yet another package of many for
 from the others only in that it focuses on using **constants** rather than
 functions or methods.
 
+Since version 1.4.0, analysis has also been added.
+
+## Usage
+
 ```dart
-const text = '${fgBrightGreen}Lorem$fgDefault'
-    ' ${fgGreen}ipsum$fgDefault'
-    ' $bgBrightBlack${fgWhite}dolor$fgDefault$bgDefault'
-    ' $bgBrightWhite${fgBlack}sit$fgDefault$bgDefault'
-    ' $fg256Open$highRed${fg256Close}amet$fgDefault,'
-    ' ${fg256Red}consectetur$fgDefault'
-    ' ${bgRgbOpen}249;105;14$bgRgbClose${fgRgbOpen}64;48;32$fgRgbClose'
-    'adipiscing $invert elit,$notInverted$fgDefault$bgDefault'
-    ' ${italic}sed$notItalic'
+const text =
+    // 4-bit colors.
+    '${ansi.fgBrightGreen}Lorem'
+    ' ${ansi.fgGreen}ipsum'
+    ' ${ansi.bgBrightBlack}${ansi.fgWhite}dolor${ansi.bgDefault}'
+    ' ${ansi.bgBrightWhite}${ansi.fgBlack}sit${ansi.bgDefault}'
+    // 8-bit colors.
+    ' ${ansi.fg256HighRed}amet,'
+    ' ${ansi.fg256Red}consectetur${ansi.fgDefault}'
+    // 24-bit colors.
+    ' ${ansi.bgRgbOpen}249;105;14${ansi.bgRgbClose}'
+    '${ansi.fgRgbOpen}64;48;32${ansi.fgRgbClose}'
+    'adipiscing'
+    // Inverted colors.
+    ' ${ansi.invert} elit,${ansi.notInverted}'
+    '${ansi.fgDefault}${ansi.bgDefault}'
+    // Italic.
+    ' ${ansi.italic}sed${ansi.notItalic}'
     ' do'
-    ' ${bold}eiusmod$notBoldNotFaint'
-    ' ${faint}tempor$notBoldNotFaint'
-    '$fgCyan'
+    // Bold and faint.
+    ' ${ansi.bold}eiusmod${ansi.notBoldNotFaint}'
+    ' ${ansi.faint}tempor${ansi.notBoldNotFaint}'
+    '${ansi.fgCyan}'
     ' incididunt'
-    ' ${increasedIntensity}ut$normalIntensity'
-    ' ${decreasedIntensity}labore$normalIntensity'
-    '$fgDefault'
-    ' ${underline}et$notUnderlined'
-    ' ${strike}dolore$notStriked'
-    ' ${fg256Gray10}magna$fgDefault'
-    ' ${fg256Gray17}aliqua$fgDefault.';
+    ' ${ansi.increasedIntensity}ut${ansi.normalIntensity}'
+    ' ${ansi.decreasedIntensity}labore${ansi.normalIntensity}'
+    '${ansi.fgDefault}'
+    // Etc.
+    ' ${ansi.underline}et${ansi.notUnderlined}'
+    ' ${ansi.strike}dolore${ansi.notStriked}'
+    ' ${ansi.hide}magna${ansi.notHidden}'
+    ' ${ansi.blink}aliqua${ansi.notBlinking}.';
 
 print(text);
 ```
 
-## Colors
+### Colors
 
-### Standarts 16 colors
+#### 4-bit colors
 
 <https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit>
 
@@ -62,7 +77,7 @@ Example:
 print('$fgBrightYellow$bgGreen Yellow text on green field $reset');
 ```
 
-### 256-color table
+#### 8-bit colors (256-color table)
 
 <https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit>
 
@@ -180,7 +195,7 @@ You can use the following functions:
   print('${fg256(highYellow)}${bg256(green)} Yellow text on green field $reset');
   ```
 
-### RGB colors
+#### 24-bit colors (RGB)
 
 <https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit>
 
@@ -219,12 +234,12 @@ Example:
 print('${fgRgb(255, 255, 0)}${bgRgb(128, 192, 0)} Yellow text on green field $reset');
 ```
 
-### Reset color
+#### Reset color
 
 You can reset the set color with `fgDefault`, `bgDefault` and
 `underlineColorDefault`. Or with `reset`, which will turn off all attributes.
 
-## Control sequences
+### Control sequences
 
 | Default constant | Template                                               | Function                  | Description                                                                         |
 |:-----------------|:-------------------------------------------------------|:--------------------------|:------------------------------------------------------------------------------------|
@@ -245,3 +260,37 @@ You can reset the set color with `fgDefault`, `bgDefault` and
 | `showCursor`     |                                                        |                           | Hides the cursor.                                                                   |
 | `saveCursor`     |                                                        |                           | Saves the cursor position, encoding shift state and formatting attributes.          |
 | `restoreCursor`  |                                                        |                           | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
+
+## Analysis
+
+You can find out if a string contains escape sequences by using the has method
+`hasEscapeSequences` and others.
+
+With the `removeEscapeSequences` method and others, you can remove all escape
+sequences from a string, converting it to plain text.
+
+Find all escape sequences in a string using the `allEscapeSequences` method and
+others.
+
+Finally, you can convert the escape sequence into a readable form using the
+`showEscapeSequences` method:
+
+```dart
+const text =
+    '${ansi.fgBrightGreen}Lorem ${ansi.fgGreen}ipsum...';
+print(ansi.showEscapeSequences(text));
+```
+
+```
+[CSI 92 SGR]Lorem [CSI 32 SGR]ipsum...
+```
+
+Escape sequences can also be recognized:
+
+```dart
+print(ansi.showEscapeSequences(text, recognizeSequences: true));
+```
+
+```
+[fgBrightGreen]Lorem [fgGreen]ipsum...
+```

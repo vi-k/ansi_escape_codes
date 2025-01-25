@@ -183,7 +183,7 @@ linter:
     # overridden_fields: true # [recommended]
     package_api_docs: true # DO provide doc comments for all public APIs.
     # package_prefixed_library_names: true # [core]
-    parameter_assignments: true
+    # parameter_assignments: true
     # prefer_adjacent_string_concatenation: true # [recommended]
     prefer_asserts_in_initializer_lists: true
     prefer_asserts_with_message: true

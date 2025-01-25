@@ -1,3 +1,14 @@
+## 1.4.0
+
+- Add analysis escape sequences (showEscapeSequences).
+- Add all control codes (0x00-0x1F).
+
+## 1.3.2
+
+- Refactor methods: allSgr, foregroundColors, backgroundColors.
+- Add methods: allCsi, removeCsi, removeSgr, removeForegroundColors,
+  removeBackgroundColors. Mark the methods as experimental.
+
 ## 1.3.0-1.3.1
 
 - Add several functions to the utilities.

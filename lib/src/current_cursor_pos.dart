@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'csi.dart';
+import 'escape_sequences/escape_sequences.dart';
 
 /// Returns the current cursor position if possible.
 ///

@@ -8,5 +8,5 @@ void main() {
   stdout
     ..writeln(url)
     ..writeln(ansi.link(url))
-    ..writeln(ansi.link(url, 'Go to pub.dev'));
+    ..writeln(ansi.link(url, text: 'Go to pub.dev'));
 }

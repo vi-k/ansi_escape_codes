@@ -1,5 +1,5 @@
-import 'csi.dart';
-import 'sgr.dart';
+import '../../escape_sequences/escape_sequences.dart';
+import '../csi.dart';
 
 //
 // Standard colors.

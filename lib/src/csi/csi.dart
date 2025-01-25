@@ -1,7 +1,5 @@
-import 'common.dart';
-
-/// CSI (Control Sequence Introducer).
-const String csi = '$esc[';
+import '../control_codes/control_codes.dart';
+import '../escape_sequences/escape_sequences.dart';
 
 /// Opening tag for [cursorUp] and [cursorUpN].
 ///
@@ -335,6 +333,9 @@ const String scrollDown = '$scrollDownOpen$scrollDownClose';
 ///
 /// See [scrollDownOpen], [scrollDownClose] and [scrollDown].
 String scrollDownN(int n) => '$scrollDownOpen$n$scrollDownClose';
+
+/// SGR (Select Graphic Rendition): `$csi{n}m`.
+const String sgr = 'm';
 
 /// Shows the cursor.
 const String showCursor = '$csi?25h';
