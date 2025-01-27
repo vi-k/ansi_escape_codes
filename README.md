@@ -278,35 +278,40 @@ You can reset the set color with `fgDefault`, `bgDefault` and
 
 ## Analysis
 
-### Methods `has...`
+### `has...()`
 
 With the `hasEscapeSequences`, `hasCsi`, `hasSgr`, `hasForegroundColor` and
 `hasBackgroundColor` methods you can find out if the escape sequences are
 contained in the text:
 
 ```dart
-print(hasEscapeSequences('${fgRed}ERROR$reset'));
-// true
+hasEscapeSequences('${fgRed}ERROR$reset'); // true
 ```
 
-### Method `showEscapeSequences`.
+### `showEscapeSequences()`
 
 You can convert the escape sequence into a readable form using the
 `showEscapeSequences` method:
 
 ```dart
 print(showEscapeSequences('${fgRed}ERROR$reset'));
-// CSI 31 SGR]ERROR[CSI 0 SGR]
+```
+
+```
+CSI 31 SGR]ERROR[CSI 0 SGR]
 ```
 
 Escape sequences can also be recognized:
 
 ```dart
 print(showEscapeSequences('${fgRed}ERROR$reset', recognizeSequences: true));
-// [fgRed]ERROR[reset]
 ```
 
-### Method `showControlCodes`.
+```
+[fgRed]ERROR[reset]
+```
+
+### `showControlCodes()`
 
 You can convert the control codes (0x00-0x1F and 0x7F) into a readable form
 using the `showControlCodes` method:
@@ -317,45 +322,51 @@ print(showControlCodes(text));
 print(showControlCodes(text, preferStyle: ControlCodeStyle.abbr));
 print(showControlCodes(text, preferStyle: ControlCodeStyle.emoji));
 print(showControlCodes(text, preferStyle: ControlCodeStyle.charCode));
-// Title\nKey:\tValue
-// Title[LF]Key:[HT]Value
-// Title␊Key:␉Value
-// Title\x0AKey:\x09Value
 ```
 
-### Methods `remove...`
+```
+Title\nKey:\tValue
+Title[LF]Key:[HT]Value
+Title␊Key:␉Value
+Title\x0AKey:\x09Value
+```
+
+### `remove...()`
 
 With the `removeEscapeSequences`, `removeCsi`, `removeSgr`,
 `removeForegroundColor` and `removeBackgroundColor` methods, you can remove
-escape sequences from the text.
+escape sequences from the text:
 
 ```dart
 const text = '${fgRed}ERROR$reset';
 print(showEscapeSequences(text));
 print(showEscapeSequences(removeEscapeSequences(text)));
-// CSI 31 SGR]ERROR[CSI 0 SGR]
-// ERROR
 ```
 
-### Methods `all...`
+```
+CSI 31 SGR]ERROR[CSI 0 SGR]
+ERROR
+```
 
-Find all escape sequences in a string using the `allEscapeSequences` method and
-others.
+### `all...()`
 
 With the `allEscapeSequences`, `allCsi`, `allSgr`, `foregroundColors` and
 `backgroundColors` methods you can get a list of all escape sequences in the
-text.
+text:
 
 ```dart
 allEscapeSequences('${fgRed}ERROR$reset')).forEach(print);
-// Match(code: [CSI 31 SGR], recognize: [fgRed], start: 0, end: 5)
-// Match(code: [CSI 0 SGR], recognize: [reset], start: 10, end: 14)
 ```
 
-### Methods `handle...`
+```
+Match(code: [CSI 31 SGR], recognize: [fgRed], start: 0, end: 5)
+Match(code: [CSI 0 SGR], recognize: [reset], start: 10, end: 14)
+```
+
+### `handle...()`
 
 With the `handleEscapeSequences` and `handlePlainText` methods, you can handle
-escape sequences and plain text as you see fit.
+escape sequences and plain text as you see fit:
 
 ```dart
 print(
@@ -365,7 +376,10 @@ print(
     handlePlainText: showControlCodes,
   ),
 );
-// (ansi escape code)Title(ansi escape code)\nKey:\tValue
 ```
 
-The `handlePlainText` method handles only plain text
+```
+(ansi escape code)Title(ansi escape code)\nKey:\tValue
+```
+
+The `handlePlainText` method handles only plain text.
