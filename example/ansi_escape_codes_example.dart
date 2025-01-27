@@ -1,54 +1,51 @@
-// ignore_for_file: lines_longer_than_80_chars
-
-import 'package:ansi_escape_codes/ansi_escape_codes.dart' as ansi;
-import 'package:ansi_escape_codes/src/analysis/show_escape_sequences.dart';
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
 void main() {
   const text =
       // 4-bit colors.
-      '${ansi.fgBrightGreen}Lorem'
-      ' ${ansi.fgGreen}ipsum'
-      ' ${ansi.bgBrightBlack}${ansi.fgWhite}dolor${ansi.bgDefault}'
-      ' ${ansi.bgBrightWhite}${ansi.fgBlack}sit${ansi.bgDefault}'
+      '${fgBrightGreen}Lorem'
+      ' ${fgGreen}ipsum'
+      ' $bgBrightBlack${fgWhite}dolor$bgDefault'
+      ' $bgBrightWhite${fgBlack}sit$bgDefault'
       // 8-bit colors.
-      ' ${ansi.fg256HighRed}amet,'
-      ' ${ansi.fg256Red}consectetur${ansi.fgDefault}'
+      ' ${fg256HighRed}amet,'
+      ' ${fg256Red}consectetur$fgDefault'
       // 24-bit colors.
-      ' ${ansi.bgRgbOpen}249;105;14${ansi.bgRgbClose}'
-      '${ansi.fgRgbOpen}64;48;32${ansi.fgRgbClose}'
+      ' ${bgRgbOpen}249;105;14$bgRgbClose'
+      '${fgRgbOpen}64;48;32$fgRgbClose'
       'adipiscing'
       // Inverted colors.
-      ' ${ansi.invert} elit,${ansi.notInverted}'
-      '${ansi.fgDefault}${ansi.bgDefault}'
+      ' $invert elit,$notInverted'
+      '$fgDefault$bgDefault'
       // Italic.
-      ' ${ansi.italic}sed${ansi.notItalic}'
+      ' ${italic}sed$notItalic'
       ' do'
       // Bold and faint.
-      ' ${ansi.bold}eiusmod${ansi.notBoldNotFaint}'
-      ' ${ansi.faint}tempor${ansi.notBoldNotFaint}'
-      '${ansi.fgCyan}'
+      ' ${bold}eiusmod$notBoldNotFaint'
+      ' ${faint}tempor$notBoldNotFaint'
+      '$fgCyan'
       ' incididunt'
-      ' ${ansi.increasedIntensity}ut${ansi.normalIntensity}'
-      ' ${ansi.decreasedIntensity}labore${ansi.normalIntensity}'
-      '${ansi.fgDefault}'
+      ' ${increasedIntensity}ut$normalIntensity'
+      ' ${decreasedIntensity}labore$normalIntensity'
+      '$fgDefault'
       // Etc.
-      ' ${ansi.underline}et${ansi.notUnderlined}'
-      ' ${ansi.strike}dolore${ansi.notStriked}'
-      ' ${ansi.hide}magna${ansi.notHidden}'
-      ' ${ansi.blink}aliqua${ansi.notBlinking}.';
+      ' ${underline}et$notUnderlined'
+      ' ${strike}dolore$notStriked'
+      ' ${hide}magna$notHidden'
+      ' ${blink}aliqua$notBlinking.';
 
   print(text);
 
-  print(ansi.removeBackgroundColors(text));
-  print(ansi.removeEscapeSequences(text));
+  print(removeBackgroundColors(text));
+  print(removeEscapeSequences(text));
   print(
-    ansi.showEscapeSequences(
+    showEscapeSequences(
       text,
       recognizeSequences: true,
     ),
   );
   print(
-    ansi.handleEscapeSequences(
+    handleEscapeSequences(
       text,
       (seq) => '$seq${showEscapeSequences(seq, recognizeSequences: true)}',
     ),
