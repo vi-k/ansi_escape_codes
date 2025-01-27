@@ -298,7 +298,7 @@ print(showEscapeSequences('${fgRed}ERROR$reset'));
 ```
 
 ```
-CSI 31 SGR]ERROR[CSI 0 SGR]
+[CSI 31 SGR]ERROR[CSI 0 SGR]
 ```
 
 Escape sequences can also be recognized:
