@@ -1,6 +1,6 @@
 name: ansi_escape_codes
 description: Yet another package for ANSI escape sequences. It differs from the others only in that it focuses on using constants rather than functions or methods.
-version: 1.4.0
+version: 1.4.1
 homepage: https://github.com/vi-k/ansi_escape_codes
 
 environment:

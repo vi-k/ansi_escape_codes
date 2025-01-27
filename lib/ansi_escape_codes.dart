@@ -1,3 +1,4 @@
+export 'src/analysis/handle.dart';
 export 'src/analysis/has.dart';
 export 'src/analysis/match.dart';
 export 'src/analysis/remove.dart';

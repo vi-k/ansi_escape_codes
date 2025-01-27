@@ -1,3 +1,7 @@
+## 1.4.1
+
+- Add handleEscapeSequences and handlePlainText.
+
 ## 1.4.0
 
 - Add analysis escape sequences (showEscapeSequences).

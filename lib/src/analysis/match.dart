@@ -32,7 +32,7 @@ List<Match> backgroundColors(String text) => backgroundRe
     .map((e) => Match._(e[0]!, e.start, e.end))
     .toList();
 
-/// A regular expression match for escape sequencess.
+/// A regular expression match for escape sequences.
 @experimental
 final class Match {
   const Match._(this.code, this.start, this.end);

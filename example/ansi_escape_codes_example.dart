@@ -1,6 +1,7 @@
 // ignore_for_file: lines_longer_than_80_chars
 
 import 'package:ansi_escape_codes/ansi_escape_codes.dart' as ansi;
+import 'package:ansi_escape_codes/src/analysis/show_escape_sequences.dart';
 
 void main() {
   const text =
@@ -46,5 +47,10 @@ void main() {
       recognizeSequences: true,
     ),
   );
-  print(ansi.showEscapeSequences(text));
+  print(
+    ansi.handleEscapeSequences(
+      text,
+      (seq) => '$seq${showEscapeSequences(seq, recognizeSequences: true)}',
+    ),
+  );
 }
