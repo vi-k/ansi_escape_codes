@@ -40,7 +40,7 @@ Future<void> main() async {
 
   await progressTest(
     'Cursor absolute position',
-    ansi.cursorHPos,
+    ansi.cursorHPosToBegin,
   );
 
   await progressTest(

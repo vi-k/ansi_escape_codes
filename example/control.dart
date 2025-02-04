@@ -93,7 +93,7 @@ Future<void> main() async {
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 20; i++) {
     final col = random.nextInt(50) + 31;
-    stdout.write('${ansi.cursorHPosN(col)}*');
+    stdout.write('${ansi.cursorHPosTo(col)}*');
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));
