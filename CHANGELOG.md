@@ -1,3 +1,10 @@
+## 2.0.0
+
+- Shift the focus of the package to parsing.
+- Add parsers: `AnsiParser` и `AnsiStackedParser`.
+- Add their corresponding functions to intercept the `print` function using
+  zones: `ansiParser` and `ansiStackedParser`.
+
 ## 1.4.1
 
 - Add handleEscapeSequences and handlePlainText.

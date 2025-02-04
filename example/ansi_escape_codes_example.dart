@@ -151,7 +151,6 @@ void main() {
 
   stdout.writeln();
 
-  // const text4 = '${italic}i1 ${italic}i2 ${notItalic}i1 ${notItalic}notItalic';
   const text4 = ' 1 '
       '$bg256Rgb500$italic 2 '
       '$bg256Rgb550$italic 3 '
@@ -167,14 +166,11 @@ void main() {
     defaultState: const AnsiPlainState(
       foregroundColor: AnsiForeground256(rgb555),
       backgroundColor: AnsiBackground256(rgb320),
-      // italic: true,
+      italic: true,
     ),
     // ignore: invalid_use_of_visible_for_testing_member
     debugForTest: true,
     output: print,
   );
   printer2.print(text4);
-  // printer.print(text4);
-
-  print('$csi?1049h aaaa $csi?1049l');
 }
