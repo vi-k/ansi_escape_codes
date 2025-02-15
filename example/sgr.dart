@@ -1,270 +1,284 @@
-import 'dart:io';
+// ignore_for_file: lines_longer_than_80_chars
 
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
 void main() {
-  stdout
-    // Bold and faint.
-    ..writeln(
-      'Bold: ${bold}Bold$neitherBoldNorFaint / Normal$reset',
-    )
-    ..writeln()
-    ..writeln(
-      'Faint: ${faint}Faint$neitherBoldNorFaint / Normal$reset',
-    )
-    ..writeln()
-    // Italic.
-    ..writeln(
-      'Italic: ${italic}Italic$notItalic / Not italic$reset',
-    )
-    ..writeln()
-    // Underline.
-    ..writeln('Underline:')
-    ..writeln('  No colors:')
-    ..writeln(
-      '    Not underlined'
-      ' / ${underline}Underlined$notUnderlined'
-      ' / Not underlined$reset',
-    )
-    ..writeln('  underline256Yellow:')
-    ..writeln(
-      '    Not underlined'
-      ' / $underline256Yellow${underline}Underlined$notUnderlined'
-      ' / Not underlined$reset',
-    )
-    ..writeln('  underline256Red:')
-    ..writeln(
-      '    Not underlined'
-      ' / $underline256Red${underline}Underlined$notUnderlined'
-      ' / Not underlined$reset',
-    )
-    ..writeln('  underlineRgb(255, 128, 0): ')
-    ..writeln(
-      '    Not underlined'
-      ' / ${underlineRgb(255, 128, 0)}${underline}Underlined$notUnderlined'
-      ' / Not underlined$reset',
-    )
-    ..writeln('  Transition:')
-    ..writeln(
-      '    $underline default'
-      ' $underline256Magenta underline256Magenta'
-      ' ${underlineRgb(0, 255, 0)} underlineRgb(0, 255, 0)'
-      ' $underline256Cyan underline256Cyan'
-      ' $underlineDefault default'
-      ' $notUnderlined / Not underlined$reset',
-    )
-    ..writeln()
-    // Blink and rapid blink.
-    ..writeln(
-      'Blink: ${blink}Blink$notBlinking / Not blink$reset',
-    )
-    ..writeln()
-    ..writeln(
-      'Rapid blink: ${rapidBlink}Blink$notBlinking / Not blink$reset',
-    )
-    ..writeln()
-    // Reverse.
-    ..writeln('Reverse:')
-    ..writeln('  No colors:')
-    ..writeln('    Not reversed '
-        '$reverse Reversed $notReversed Not reversed $reset')
-    ..writeln('  Background (bgBlue):')
-    ..writeln('    $bgBlue Not reversed '
-        '$reverse Reversed $notReversed Not reversed $reset')
-    ..writeln('  Background (bg256Blue):')
-    ..writeln('    $bg256Blue Not reversed '
-        '$reverse Reversed $notReversed Not reversed $reset')
-    ..writeln('  Background (bg256Rgb005):')
-    ..writeln('    $bg256Rgb005 Not reversed '
-        '$reverse Reversed $notReversed Not reversed $reset')
-    ..writeln('  Background (bgRgb(0,0,255)):')
-    ..writeln('    ${bgRgb(0, 0, 255)} Not reversed '
-        '$reverse Reversed $notReversed Not reversed $reset')
-    ..writeln('  Foreground (fgYellow):')
-    ..writeln('    $fgYellow Not reversed '
-        '$reverse Reversed $notReversed Not reversed $reset')
-    ..writeln('  Foreground (fg256Yellow):')
-    ..writeln('    $fg256Yellow Not reversed '
-        '$reverse Reversed $notReversed Not reversed $reset')
-    ..writeln('  Foreground (fg256Rgb550):')
-    ..writeln('    $fg256Rgb550 Not reversed '
-        '$reverse Reversed $notReversed Not reversed $reset')
-    ..writeln('  Foreground (fgRgb(255,255,0)):')
-    ..writeln('    ${fgRgb(255, 255, 0)} Not reversed '
-        '$reverse Reversed $notReversed Not reversed $reset')
-    ..writeln('  Background (bgBlue) + Foreground (fgYellow):')
-    ..writeln('    $bgBlue$fgYellow Not reversed '
-        '$reverse Reversed $notReversed Not reversed $reset')
-    ..writeln('  Background (bg256Blue) + Foreground (fg256Yellow):')
-    ..writeln('    $bg256Blue$fg256Yellow Not reversed '
-        '$reverse Reversed $notReversed Not reversed $reset')
-    ..writeln('  Background (bg256Rgb005) + Foreground (fg256550):')
-    ..writeln('    $bg256Rgb005$fg256Rgb550 Not reversed '
-        '$reverse Reversed $notReversed Not reversed $reset')
-    ..writeln('  Background (bgRgb(0,0,255)) + Foreground (fgRgb(255,255,0)):')
-    ..writeln('    ${bgRgb(0, 0, 255)}${fgRgb(255, 255, 0)} Not reversed '
-        '$reverse Reversed $notReversed Not reversed $reset')
-    ..writeln()
-    // Conceal.
-    ..writeln(
-      'Conceal:'
-      ' $conceal Conceal $reveal'
-      ' / Reveal $reset',
-    )
-    ..writeln()
-    // Crossed out.
-    ..writeln(
-      'Crossed out: '
-      '$crossedOut Crossed out $notCrossedOut'
-      ' / Not crossed out $reset',
-    )
-    ..writeln()
-    ..writeln(
-      '  Crossed out + underline: '
-      '${crossedOut}Crossed out / ${underline}Underline$reset',
-    )
-    ..writeln()
-    ..writeln(
-      '  Underline + crossed out: '
-      '${underline}Underline / ${crossedOut}Crossed out$reset',
-    )
-    ..writeln()
-    // Doubly undelined.
-    ..writeln(
-      'Doubly undelined: '
-      '$doublyUnderlined Underlined $notUnderlined'
-      ' / Not underlined $reset',
-    )
-    ..writeln('  No colors:')
-    ..writeln(
-      '    Not underlined'
-      ' / ${doublyUnderlined}Underlined$notUnderlined'
-      ' / Not underlined$reset',
-    )
-    ..writeln('  underline256Yellow:')
-    ..writeln(
-      '    Not underlined'
-      ' / $underline256Yellow${doublyUnderlined}Underlined$notUnderlined'
-      ' / Not underlined$reset',
-    )
-    ..writeln('  underline256Red:')
-    ..writeln(
-      '    Not underlined'
-      ' / $underline256Red${doublyUnderlined}Underlined$notUnderlined'
-      ' / Not underlined$reset',
-    )
-    ..writeln('  underlineRgb(255, 128, 0): ')
-    ..writeln(
-      '    Not underlined'
-      ' / ${underlineRgb(255, 128, 0)}${doublyUnderlined}Underlined$notUnderlined'
-      ' / Not underlined$reset',
-    )
-    ..writeln('  Transition:')
-    ..writeln(
-      '    $doublyUnderlined default'
-      ' $underline256Magenta underline256Magenta'
-      ' ${underlineRgb(0, 255, 0)} underlineRgb(0, 255, 0)'
-      ' $underline256Cyan underline256Cyan'
-      ' $underlineDefault default'
-      ' $notUnderlined / Not underlined$reset',
-    )
-    ..writeln()
-    // Framed and encircled.
-    ..writeln(
-      'Framed: '
-      '$framed Framed $neitherFramedNorEncircled'
-      ' / Not framed $reset',
-    )
-    ..writeln()
-    ..writeln(
-      '  Colors (default + fg256Green):'
-      ' $framed Fra${fg256Green}med $reset',
-    )
-    ..writeln()
-    ..writeln(
-      'Encircled: '
-      '$encircled Encircled $neitherFramedNorEncircled'
-      ' / Not encircled $reset',
-    )
-    ..writeln()
-    ..writeln(
-      '  Colors (default + fg256Cyan):'
-      ' $encircled Enci${fg256Cyan}rcled $reset',
-    )
-    ..writeln()
-    // Overlined.
-    ..writeln(
-      'Overlined: '
-      '$overlined Overlined $notOverlined'
-      ' / Not overlined $reset',
-    )
-    ..writeln()
-    ..writeln(
-      '  Overlined + underline: '
-      '${overlined}Overlined / ${underline}Underline$reset',
-    )
-    ..writeln()
-    ..writeln(
-      '  Underline + overlined: '
-      '${underline}Underline / ${overlined}Overlined$reset',
-    )
-    ..writeln()
-    ..writeln(
-      '  Overlined + crossed out: '
-      '${overlined}Overlined / ${crossedOut}Crossed out$reset',
-    )
-    ..writeln()
-    ..writeln(
-      '  Crossed out + overlined: '
-      '${crossedOut}Crossed out / ${overlined}Overlined$reset',
-    )
-    ..writeln()
-    ..writeln('  No colors:')
-    ..writeln(
-      '    Not overlined'
-      ' / ${overlined}Overlined$notOverlined'
-      ' / Not overlined$reset',
-    )
-    ..writeln('  underline256Yellow:')
-    ..writeln(
-      '    Not overlined'
-      ' / $underline256Yellow${overlined}Overlined$notOverlined'
-      ' / Not overlined$reset',
-    )
-    ..writeln('  underline256Red:')
-    ..writeln(
-      '    Not overlined'
-      ' / $underline256Red${overlined}Overlined$notOverlined'
-      ' / Not overlined$reset',
-    )
-    ..writeln('  underlineRgb(255, 128, 0): ')
-    ..writeln(
-      '    Not overlined'
-      ' / ${underlineRgb(255, 128, 0)}${overlined}Overlined$notOverlined'
-      ' / Not overlined$reset',
-    )
-    ..writeln('  Transition:')
-    ..writeln(
-      '    $overlined default'
-      ' $underline256Magenta underline256Magenta'
-      ' ${underlineRgb(0, 255, 0)} underlineRgb(0, 255, 0)'
-      ' $underline256Cyan underline256Cyan'
-      ' $underlineDefault default'
-      ' $notOverlined / Not overlined$reset',
-    )
-    ..writeln()
-    // Superscipt and Subscript.
-    ..writeln(
-      'Superscipt: '
-      '$superscript Superscript'
-      ' $netherSuperscriptedNorSubscripted'
-      ' / Not superscript $reset',
-    )
-    ..writeln()
-    ..writeln(
-      'Subscript: '
-      '$subscript Subscript'
-      ' $netherSuperscriptedNorSubscripted'
-      ' / Not subscript $reset',
-    );
+  // Bold and faint.
+  print('Bold/faint:');
+  print('  No colors:');
+  print(
+    '    Normal'
+    ' / ${bold}Bold$resetBoldAndFaint'
+    ' / ${faint}Faint$resetBoldAndFaint'
+    ' / $bold${faint}Bold+faint$resetBoldAndFaint'
+    ' / $faint${bold}Faint+bold$resetBoldAndFaint'
+    ' / Normal$reset',
+  );
+  print('  With colors:');
+  print(
+    '    $bgGreen${fgYellow}Normal'
+    ' / ${bold}Bold$resetBoldAndFaint'
+    ' / ${faint}Faint$resetBoldAndFaint'
+    ' / $bold${faint}Bold+faint$resetBoldAndFaint'
+    ' / $faint${bold}Faint+bold$resetBoldAndFaint'
+    ' / Normal$reset',
+  );
+
+  // Italicized.
+  print('Italicized: ');
+  print(
+    '    Normal'
+    ' / ${italicized}Italicized$resetItalicized'
+    ' / Normal$reset',
+  );
+
+  // Underlined.
+  print('Underlined:');
+  print('  No colors:');
+  print(
+    '    Normal'
+    ' / ${underlined}Underlined$resetUnderlined'
+    ' / Normal$reset',
+  );
+  print('  underline256Yellow:');
+  print(
+    '    Normal'
+    ' / $underline256Yellow${underlined}Underlined$resetUnderlined'
+    ' / Normal$reset',
+  );
+  print('  underline256Red:');
+  print(
+    '    Normal'
+    ' / $underline256Red${underlined}Underlined$resetUnderlined'
+    ' / Normal$reset',
+  );
+  print('  underlineRgb(255, 128, 0): ');
+  print(
+    '    Normal'
+    ' / ${underlineRgb(255, 128, 0)}${underlined}Underlined$resetUnderlined'
+    ' / Normal$reset',
+  );
+  print('  Transition:');
+  print(
+    '    Normal'
+    ' / $underlined default'
+    ' $underline256Magenta underline256Magenta'
+    ' ${underlineRgb(0, 255, 0)} underlineRgb(0, 255, 0)'
+    ' $underline256Cyan underline256Cyan'
+    ' $resetUnderlineColor default $resetUnderlined'
+    ' / Normal$reset',
+  );
+
+  // Doubly undelined.
+  print('Doubly undelined:');
+  print('  No colors:');
+  print(
+    '    Normal'
+    ' / ${doublyUnderlined}Underlined$resetUnderlined'
+    ' / Normal$reset',
+  );
+  print('  underline256Yellow:');
+  print(
+    '    Normal'
+    ' / $underline256Yellow${doublyUnderlined}Underlined$resetUnderlined'
+    ' / Normal$reset',
+  );
+  print('  underline256Red:');
+  print(
+    '    Normal'
+    ' / $underline256Red${doublyUnderlined}Underlined$resetUnderlined'
+    ' / Normal$reset',
+  );
+  print('  underlineRgb(255, 128, 0): ');
+  print(
+    '    Normal'
+    ' / ${underlineRgb(255, 128, 0)}${doublyUnderlined}Underlined$resetUnderlined'
+    ' / Normal$reset',
+  );
+  print('  Transition:');
+  print(
+    '    Normal'
+    ' / $doublyUnderlined default'
+    ' $underline256Magenta underline256Magenta'
+    ' ${underlineRgb(0, 255, 0)} underlineRgb(0, 255, 0)'
+    ' $underline256Cyan underline256Cyan'
+    ' $resetUnderlineColor default $resetUnderlined'
+    ' / Normal$reset',
+  );
+
+  // Blinking.
+  print('Blinking:');
+  print('    Normal'
+      ' / ${slowlyBlinking}Slowly blinking$resetBlinking'
+      ' / ${rapidlyBlinking}Rapidly blinking$resetBlinking'
+      ' / Normal$reset');
+
+  // Reverse.
+  print('Negative:');
+  print('  No colors:');
+  print(
+    '     Normal '
+    '$negative Negative $resetNegative'
+    ' Normal $reset',
+  );
+  print('  Background (bgGreen):');
+  print(
+    '    $bgGreen Normal '
+    '$negative Negative $resetNegative'
+    ' Normal $reset',
+  );
+  print('  Background (bg256Green):');
+  print(
+    '    $bg256Green Normal '
+    '$negative Negative $resetNegative'
+    ' Normal $reset',
+  );
+  print('  Background (bg256Rgb050):');
+  print(
+    '    $bg256Rgb050 Normal '
+    '$negative Negative $resetNegative'
+    ' Normal $reset',
+  );
+  print('  Background (bgRgb(0,255,255)):');
+  print(
+    '    ${bgRgb(0, 255, 0)} Normal '
+    '$negative Negative $resetNegative'
+    ' Normal $reset',
+  );
+  print('  Foreground (fgYellow):');
+  print(
+    '    $fgYellow Normal '
+    '$negative Negative $resetNegative'
+    ' Normal $reset',
+  );
+  print('  Foreground (fg256Yellow):');
+  print(
+    '    $fg256Yellow Normal '
+    '$negative Negative $resetNegative'
+    ' Normal $reset',
+  );
+  print('  Foreground (fg256Rgb550):');
+  print(
+    '    $fg256Rgb550 Normal '
+    '$negative Negative $resetNegative'
+    ' Normal $reset',
+  );
+  print('  Foreground (fgRgb(255,255,0)):');
+  print(
+    '    ${fgRgb(255, 255, 0)} Normal '
+    '$negative Negative $resetNegative'
+    ' Normal $reset',
+  );
+  print('  Background (bgGreen) + foreground (fgYellow):');
+  print(
+    '    $bgGreen$fgYellow Normal '
+    '$negative Negative $resetNegative'
+    ' Normal $reset',
+  );
+  print('  Background (bg256Green) + foreground (fg256Yellow):');
+  print(
+    '    $bg256Green$fg256Yellow Normal '
+    '$negative Negative $resetNegative'
+    ' Normal $reset',
+  );
+  print('  Background (bg256Rgb050) + foreground (fg256Rgb550):');
+  print(
+    '    $bg256Rgb050$fg256Rgb550 Normal '
+    '$negative Negative $resetNegative'
+    ' Normal $reset',
+  );
+  print('  Background (bgRgb(0,255,0)) + foreground (fgRgb(255,255,0)):');
+  print(
+    '    ${bgRgb(0, 255, 0)}${fgRgb(255, 255, 0)} Normal '
+    '$negative Negative $resetNegative'
+    ' Normal $reset',
+  );
+
+  // Conceal.
+  print('Conceal:');
+  print(
+    '  Normal'
+    ' / $concealed Conceal $resetConcealed'
+    ' / Normal $reset',
+  );
+
+  // Crossed out.
+  print('Crossed out:');
+  print(
+    '  Normal'
+    ' / $crossedOut Crossed out $resetCrossedOut'
+    ' / $crossedOut${underlined}Crossed out+underlined$resetUnderlined$resetCrossedOut'
+    ' / $underlined${crossedOut}Underlined+crossed out$resetCrossedOut$resetUnderlined'
+    ' / Normal $reset',
+  );
+
+  // Framed and encircled.
+  print('Framed: ');
+  print(
+    '  Normal'
+    ' / $framed Framed $resetFramedAndEncircled'
+    ' / $framed Framed$fg256Green+colors $resetFg$resetFramedAndEncircled'
+    ' / Normal $reset',
+  );
+  print('Encircled: ');
+  print(
+    '  Normal'
+    ' / $encircled Encircled $resetFramedAndEncircled'
+    ' / $encircled Encircled$fg256Green+colors $resetFg$resetFramedAndEncircled'
+    ' / Normal $reset',
+  );
+
+  // Overlined.
+  print('Overlined: ');
+  print('  No colors:');
+  print(
+    '    Normal'
+    ' / $overlined Overlined $resetOverlined'
+    ' / $overlined${underlined}Overlined+underlined$resetUnderlined$resetOverlined'
+    ' / $overlined${crossedOut}Overlined+crossed out$resetCrossedOut$resetOverlined'
+    ' / $overlined$underlined${crossedOut}Overlined+underlined+crossed out$resetCrossedOut$resetUnderlined$resetOverlined'
+    ' / Normal $reset',
+  );
+  print('  underline256Yellow:');
+  print(
+    '    ${underline256Yellow}Normal'
+    ' / $overlined Overlined $resetOverlined'
+    ' / $overlined${underlined}Overlined+underlined$resetUnderlined$resetOverlined'
+    ' / $overlined${crossedOut}Overlined+crossed out$resetCrossedOut$resetOverlined'
+    ' / $overlined$underlined${crossedOut}Overlined+underlined+crossed out$resetCrossedOut$resetUnderlined$resetOverlined'
+    ' / Normal $reset',
+  );
+  print('  underlineRgb(255, 128, 0): ');
+  print(
+    '    ${underlineRgb(255, 128, 0)}Normal'
+    ' / $overlined Overlined $resetOverlined'
+    ' / $overlined${underlined}Overlined+underlined$resetUnderlined$resetOverlined'
+    ' / $overlined${crossedOut}Overlined+crossed out$resetCrossedOut$resetOverlined'
+    ' / $overlined$underlined${crossedOut}Overlined+underlined+crossed out$resetCrossedOut$resetUnderlined$resetOverlined'
+    ' / Normal $reset',
+  );
+  print('  Transition:');
+  print(
+    '    Normal'
+    ' / $overlined default'
+    ' $underline256Magenta underline256Magenta'
+    ' ${underlineRgb(0, 255, 0)} underlineRgb(0, 255, 0)'
+    ' $underline256Cyan underline256Cyan'
+    ' $resetUnderlineColor default $resetOverlined'
+    ' / Normal$reset',
+  );
+
+  // Superscipt and Subscript.
+  print('Superscipt: ');
+  print(
+    '    Normal'
+    ' / $superscripted Superscript $resetSuperAndSubscripted'
+    ' / Normal $reset',
+  );
+  print('Subscript: ');
+  print(
+    '    Normal'
+    ' / $subscripted Subscript $resetSuperAndSubscripted'
+    ' / Normal $reset',
+  );
 }

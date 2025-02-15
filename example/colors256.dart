@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:ansi_escape_codes/ansi_escape_codes.dart' as ansi;
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+import 'package:ansi_escape_codes/controls.dart';
 
 void main() {
   stdout
@@ -13,16 +14,16 @@ void main() {
     if (i % 8 == 0) stdout.writeln();
 
     stdout
-      ..write(ansi.fg256(i % 8 == 7 ? ansi.minGray : ansi.maxGray))
-      ..write(ansi.fg256Open)
-      ..write(i % 8 == 7 ? ansi.minGray : ansi.maxGray)
-      ..write(ansi.fg256Close)
-      ..write(ansi.bg256(i))
+      ..write(fg256(i % 8 == 7 ? GRAY0 : GRAY23))
+      ..write(fg256Open)
+      ..write(i % 8 == 7 ? GRAY0 : GRAY23)
+      ..write(fg256Close)
+      ..write(bg256(i))
       ..write(s)
-      ..write(ansi.reset)
-      ..write(ansi.fg256(i))
+      ..write(reset)
+      ..write(fg256(i))
       ..write(s)
-      ..write(ansi.reset);
+      ..write(reset);
   }
   stdout
     ..writeln()
@@ -41,19 +42,19 @@ void main() {
       stdout.write('\ng=$g ');
 
       for (var b = 0; b < 6; b++) {
-        final c = ansi.rgb(r, g, b);
+        final c = rgb(r, g, b);
         final s = ' ${'$c'.padLeft(3, '0')} ';
 
         stdout
           ..write(
-            ansi.fg256(g >= 3 ? ansi.minGray : ansi.maxGray),
+            fg256(g >= 3 ? GRAY0 : GRAY23),
           )
-          ..write(ansi.bg256(c))
+          ..write(bg256(c))
           ..write(s)
-          ..write(ansi.reset)
-          ..write(ansi.fg256(c))
+          ..write(reset)
+          ..write(fg256(c))
           ..write(s)
-          ..write(ansi.reset);
+          ..write(reset);
       }
     }
     stdout.writeln();
@@ -61,7 +62,7 @@ void main() {
 
   stdout.writeln('\nGrayscale colors:');
   for (var i = 0; i < 24; i++) {
-    final c = ansi.gray(i);
+    final c = gray(i);
     final s = ' ${'$c'.padLeft(3, '0')} ';
 
     if (i % 8 == 0) {
@@ -74,13 +75,13 @@ void main() {
     }
 
     stdout
-      ..write(ansi.fg256(i >= 16 ? ansi.minGray : ansi.maxGray))
-      ..write(ansi.bg256(c))
+      ..write(fg256(i >= 16 ? GRAY0 : GRAY23))
+      ..write(bg256(c))
       ..write(s)
-      ..write(ansi.reset)
-      ..write(ansi.fg256(c))
+      ..write(reset)
+      ..write(fg256(c))
       ..write(s)
-      ..write(ansi.reset);
+      ..write(reset);
   }
   stdout.writeln();
 }

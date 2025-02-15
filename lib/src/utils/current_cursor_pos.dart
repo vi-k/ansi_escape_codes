@@ -1,10 +1,16 @@
 import 'dart:io';
 
-import '../values/escape_codes.dart';
+import '../controls/c1.dart';
+import '../controls/csi.dart';
+import '../parsing/control_functions/control_sequences.dart';
 
 /// Returns the current cursor position if possible.
 ///
 /// This is Device Status Report.
+///
+/// By sending the CSI 6 n ([ControlSequencesFunctions.DSR]) command to
+/// stdout, we get the coordinates in stdin as CSI n;m R
+/// ([ControlSequencesFunctions.CPR]).
 Future<(int, int)> currentCursorPos(Stdout stdout, Stdin stdin) async {
   const errorText = 'Device Status Report not supported';
   List<int> cursorSeq;
@@ -24,9 +30,7 @@ Future<(int, int)> currentCursorPos(Stdout stdout, Stdin stdin) async {
 
     final cursorSeqF = stream.first.timeout(const Duration(milliseconds: 100));
 
-    // By sending the CSI 6n command to stdout, we get the coordinates in stdin
-    // as CSI {n};{m} R.
-    stdout.write('${csi}6n');
+    stdout.write('${CSI}6$DSR');
     cursorSeq = await cursorSeqF;
 
     stdin
@@ -39,7 +43,7 @@ Future<(int, int)> currentCursorPos(Stdout stdout, Stdin stdin) async {
     );
   }
 
-  // ESC [n;mR
+  // CPR = CSI n;m R = ESC[ n;m R
   if (cursorSeq.length < 6 ||
           cursorSeq[0] != 27 || // ESC
           cursorSeq[1] != 91 || // [

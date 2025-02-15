@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:ansi_escape_codes/ansi_escape_codes.dart' as ansi;
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+import 'package:ansi_escape_codes/controls.dart';
 
 void main() {
   for (var n = 1; n < 8; n++) {
@@ -17,16 +18,14 @@ void main() {
 
         stdout
           ..write(
-            ansi.fg256(
-              r >= 224 && g >= 224 && b >= 224 ? ansi.minGray : ansi.maxGray,
-            ),
+            fg256(r >= 224 && g >= 224 && b >= 224 ? GRAY0 : GRAY23),
           )
-          ..write(ansi.bgRgb(r, g, b))
+          ..write(bgRgb(r, g, b))
           ..write(s)
-          ..write(ansi.reset)
-          ..write(ansi.fgRgb(r, g, b))
+          ..write(reset)
+          ..write(fgRgb(r, g, b))
           ..write(s)
-          ..write(ansi.reset);
+          ..write(reset);
       }
     }
     stdout.writeln();

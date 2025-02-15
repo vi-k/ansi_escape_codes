@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:ansi_escape_codes/ansi_escape_codes.dart' as ansi;
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
 Future<void> main() async {
   const pause = 500;
@@ -13,19 +13,17 @@ Future<void> main() async {
     ..writeln('dart run example/control.dart');
   await Future<void>.delayed(const Duration(seconds: 2));
 
-  stdout.write('Erase in display');
+  stdout.write('Erase in page');
   await Future<void>.delayed(const Duration(milliseconds: pause));
-  stdout
-    ..write(ansi.clearScreen)
-    ..write(ansi.clearScreenWithBuf);
+  stdout.write(erasePage);
   await Future<void>.delayed(const Duration(milliseconds: pause));
 
-  stdout.write('${ansi.cursorPosTo(1, 1)}Cursor Position');
+  stdout.write('${cursorPosTo(1, 1)}Cursor Position');
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 20; i++) {
     final col = random.nextInt(20) + 1;
     final row = random.nextInt(10) + 2;
-    stdout.write('${ansi.cursorPosTo(row, col)}*');
+    stdout.write('${cursorPosTo(row, col)}*');
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));
@@ -33,28 +31,28 @@ Future<void> main() async {
   stdout
     ..writeln()
     ..write(
-      '${ansi.cursorHVPosTo(1, 21)}Horizontal Vertical Position',
+      '${cursorHVPosTo(1, 21)}Horizontal Vertical Position',
     );
 
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 20; i++) {
     final col = random.nextInt(20) + 21;
     final row = random.nextInt(10) + 2;
-    stdout.write('${ansi.cursorHVPosTo(row, col)}*');
+    stdout.write('${cursorHVPosTo(row, col)}*');
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));
 
   stdout
-    ..write(ansi.cursorPosTo(12, 1))
+    ..write(cursorPosTo(12, 1))
     ..write('Cursor up/Cursor down');
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 10; i++) {
-    stdout.write(ansi.cursorUp);
+    stdout.write(cursorUp);
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   for (var i = 0; i < 10; i++) {
-    stdout.write(ansi.cursorDown);
+    stdout.write(cursorDown);
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));
@@ -64,11 +62,11 @@ Future<void> main() async {
     ..write('Cursor forward/Cursor back');
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 10; i++) {
-    stdout.write(ansi.cursorForward);
+    stdout.write(cursorRight);
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   for (var i = 0; i < 10; i++) {
-    stdout.write(ansi.cursorBack);
+    stdout.write(cursorLeft);
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));
@@ -78,11 +76,11 @@ Future<void> main() async {
     ..write('Cursor next line/Cursor previous line');
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 10; i++) {
-    stdout.write(ansi.cursorNextLine);
+    stdout.write(cursorNextLine);
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   for (var i = 0; i < 10; i++) {
-    stdout.write(ansi.cursorPrevLine);
+    stdout.write(cursorPrevLine);
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));
@@ -93,7 +91,7 @@ Future<void> main() async {
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 20; i++) {
     final col = random.nextInt(50) + 31;
-    stdout.write('${ansi.cursorHPosTo(col)}*');
+    stdout.write('${cursorHPosTo(col)}*');
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));
@@ -103,16 +101,16 @@ Future<void> main() async {
     ..write('Erase in line');
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 8; i++) {
-    stdout.write(ansi.cursorBack);
+    stdout.write(cursorLeft);
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));
-  stdout.write(ansi.eraseLineToBegin);
+  stdout.write(eraseInLineToBegin);
   await Future<void>.delayed(const Duration(milliseconds: pause));
-  stdout.write(ansi.eraseLineToEnd);
+  stdout.write(eraseInLineToEnd);
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 5; i++) {
-    stdout.write(ansi.cursorBack);
+    stdout.write(cursorLeft);
     await Future<void>.delayed(const Duration(milliseconds: delay));
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));
@@ -121,19 +119,19 @@ Future<void> main() async {
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 10; i++) {
     await Future<void>.delayed(const Duration(milliseconds: delay));
-    stdout.write(ansi.scrollDown);
+    stdout.write(scrollDown);
   }
   stdout.write('up');
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 20; i++) {
     await Future<void>.delayed(const Duration(milliseconds: delay));
-    stdout.write(ansi.scrollUp);
+    stdout.write(scrollUp);
   }
   stdout.write('down');
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 10; i++) {
     await Future<void>.delayed(const Duration(milliseconds: delay));
-    stdout.write(ansi.scrollDown);
+    stdout.write(scrollDown);
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));
 
@@ -142,7 +140,7 @@ Future<void> main() async {
       ..writeln()
       ..write('Device Status Report: ');
     await Future<void>.delayed(const Duration(milliseconds: pause));
-    final pos = await ansi.currentCursorPos(stdout, stdin);
+    final pos = await currentCursorPos(stdout, stdin);
     stdout.writeln(pos);
     await Future<void>.delayed(const Duration(milliseconds: pause));
     // ignore: avoid_catching_errors
@@ -153,9 +151,9 @@ Future<void> main() async {
   stdout.write('Hide the cursor/Show the cursor');
   for (var i = 0; i < 3; i++) {
     await Future<void>.delayed(const Duration(milliseconds: pause));
-    stdout.write(ansi.hideCursor);
+    stdout.write(hideCursor);
     await Future<void>.delayed(const Duration(milliseconds: pause));
-    stdout.write(ansi.showCursor);
+    stdout.write(showCursor);
   }
   await Future<void>.delayed(const Duration(milliseconds: pause));
 }

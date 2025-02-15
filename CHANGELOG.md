@@ -1,9 +1,10 @@
 ## 2.0.0
 
 - Shift the focus of the package to parsing.
-- Add parsers: `AnsiParser` и `AnsiStackedParser`.
+- Add parser.
+- Add printer.
 - Add their corresponding functions to intercept the `print` function using
-  zones: `ansiParser` and `ansiStackedParser`.
+  zones: `runZonedAnsiParser`.
 
 ## 1.4.1
 

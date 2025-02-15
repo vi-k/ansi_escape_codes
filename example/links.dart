@@ -1,12 +1,12 @@
 import 'dart:io';
 
-import 'package:ansi_escape_codes/ansi_escape_codes.dart' as ansi;
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
 void main() {
   const url = 'https://pub.dev/packages/ansi_escape_codes';
 
   stdout
     ..writeln(url)
-    ..writeln(ansi.link(url))
-    ..writeln(ansi.link(url, text: 'Go to pub.dev'));
+    ..writeln(link(url))
+    ..writeln(link(url, text: 'Go to pub.dev'));
 }
