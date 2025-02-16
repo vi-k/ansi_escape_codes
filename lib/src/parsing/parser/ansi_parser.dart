@@ -226,12 +226,11 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
     final buf = StringBuffer();
 
     for (final m in matches) {
-      final result = switch (m.entity) {
-        EscapeCode() => '',
-        Text(:final string) => string,
-      };
-
-      buf.write(result);
+      switch (m.entity) {
+        case Text(:final string):
+          buf.write(string);
+        case EscapeCode():
+      }
     }
 
     return buf.toString();

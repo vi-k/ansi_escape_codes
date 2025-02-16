@@ -35,7 +35,7 @@ are a few key features:
 
     2.3. [AnsiPrinter](#printer)
 
-    2.4. [AnsiPrinter with stack](#stacked_printer)
+    2.4. [Stacked AnsiPrinter](#stacked_printer)
 
 <a id="control_functions"></a>
 ## 1. Control function constants and predefined values
@@ -117,7 +117,7 @@ print('\t\r\n' == '$HT$CR$LF'); // true
 ### 1.2. Control functions ESC Fe (C1 set)
 
 These control functions are represented by 2-character escape sequences
-of the form [ESC] Fe, where [ESC] is represented by code 0x1B and Fe is
+of the form ESC Fe, where ESC is represented by code 0x1B and Fe is
 represented by codes from 0x40 to 0x5F.
 
 Some control functions from the C1 set:
@@ -197,25 +197,25 @@ print('${CSI}3$SGR Italicized text ${CSI}0$SGR');
 Predefined values replace the use of control functions with the style used in
 Dart.
 
-| Goal                  | Template                                       | Function                          | Default constant | Description                                                                 |
-|:----------------------|:-----------------------------------------------|:----------------------------------|:-----------------|:----------------------------------------------------------------------------|
-| Cursor up             | `${cursorUpOpen}$n$cursorUpClose`              | `cursorUpN(int n)`                | `cursorUp`       | Moves the cursor up `n` (default 1) lines.                                  |
-| Cursor down           | `${cursorDownOpen}$n$cursorDownClose`          | `cursorDownN(int n)`              | `cursorDown`     | Moves the cursor down `n` (default 1) lines.                                |
-| Cursor forward        | `${cursorRightOpen}$n$cursorRightClose`        | `cursorRightN(int n)`             | `cursorRight`    | Moves the cursor right `n` (default 1) characters.                          |
-| Cursor back           | `${cursorLeftOpen}$n$cursorLeftClose`          | `cursorLeftN(int n)`              | `cursorLeft`     | Moves the cursor left `n` (default 1) characters.                           |
-| Cursor next line      | `${cursorNextLineOpen}$n$cursorNextLineClose`  | `cursorNextLineN(int n)`          | `cursorNextLine` | Moves cursor to beginning of the line `n` (default 1) lines down.           |
-| Cursor prev line      | `${cursorPrevLineOpen}$n$cursorPrevLineClose`  | `cursorPrevLineN(int n)`          | `cursorPrevLine` | Moves cursor to beginning of the line `n` (default 1) lines up.             |
-| Cursor horizontal pos | `${cursorHPosOpen}$n$cursorHPosClose`          | `cursorHPosN(int n)`              | `cursorHPos`     | Moves the cursor to column `n` (default 1).                                 |
-| Cursor pos            | `${cursorPosOpen}$row;$col$cursorPosClose`     | `cursorPosTo(int row, int col)`   | `cursorPos`      | Moves the cursor to `row` and `col`.                                        |
-| Cursor hv pos         | `${cursorHVPosOpen}$row;$col$cursorHVPosClose` | `cursorHVPosTo(int row, int col)` | `cursorHVPos`    | Same as `cursorPos`, just with some differences.                            |
-| Erase in page         | `${eraseInPageOpen}$s$eraseInPageClose`        |                                   | `eraseInPage…`   | Erases part of the page: `s`=0 (or missing) - to end (`eraseInPageToEnd`), `s`=1 - to beginning (`eraseInPageToBegin`), `s`=2 - entire page (`erasePage`). |
-| Erase in line         | `${eraseInLineOpen}$s$eraseInLineClose`        |                                   | `eraseInLine…`   | Erases part of the line: `s`=0 (or missing) - to end (`eraseInLineToEnd`), `s`=2 - to beginning (`eraseInLineToBegin`), `s`=2 - entire line (`eraseLine`). |
-| Scroll up             | `${scrollUpOpen}$n$scrollUpClose`              | `scrollUpN(int n)`                | `scrollUp`       | Scroll page up by `n` (default 1) lines. New lines are added at the bottom. |
-| Scroll down           | `${scrollDownOpen}$n$scrollDownClose`          | `scrollDownN(int n)`              | `scrollDown`     | Scroll page down by `n` (default 1) lines. New lines are added at the top.  |
-| Hide cursor           |                                                |                                   | `hideCursor`     | Shows the cursor.                                                           |
-| Show cursor           |                                                |                                   | `showCursor`     | Hides the cursor.                                                           |
-| Save cursor           |                                                |                                   | `saveCursor`     | Saves the cursor position, encoding shift state and formatting attributes.  |
-| Restore cursor        |                                                |                                   | `restoreCursor`  | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
+| Goal                               | Template                                       | Function                          | Default constant | Description                                                                 |
+|:-----------------------------------|:-----------------------------------------------|:----------------------------------|:-----------------|:----------------------------------------------------------------------------|
+| Cursor up                          | `${cursorUpOpen}$n$cursorUpClose`              | `cursorUpN(int n)`                | `cursorUp`       | Moves the cursor up `n` (default 1) lines.                                  |
+| Cursor down                        | `${cursorDownOpen}$n$cursorDownClose`          | `cursorDownN(int n)`              | `cursorDown`     | Moves the cursor down `n` (default 1) lines.                                |
+| Cursor forward                     | `${cursorRightOpen}$n$cursorRightClose`        | `cursorRightN(int n)`             | `cursorRight`    | Moves the cursor right `n` (default 1) characters.                          |
+| Cursor back                        | `${cursorLeftOpen}$n$cursorLeftClose`          | `cursorLeftN(int n)`              | `cursorLeft`     | Moves the cursor left `n` (default 1) characters.                           |
+| Cursor next line                   | `${cursorNextLineOpen}$n$cursorNextLineClose`  | `cursorNextLineN(int n)`          | `cursorNextLine` | Moves cursor to beginning of the line `n` (default 1) lines down.           |
+| Cursor prev line                   | `${cursorPrevLineOpen}$n$cursorPrevLineClose`  | `cursorPrevLineN(int n)`          | `cursorPrevLine` | Moves cursor to beginning of the line `n` (default 1) lines up.             |
+| Cursor horizontal pos              | `${cursorHPosOpen}$n$cursorHPosClose`          | `cursorHPosN(int n)`              | `cursorHPos`     | Moves the cursor to column `n` (default 1).                                 |
+| Cursor pos                         | `${cursorPosOpen}$row;$col$cursorPosClose`     | `cursorPosTo(int row, int col)`   | `cursorPos`      | Moves the cursor to `row` and `col`.                                        |
+| Cursor horizontal and vertical pos | `${cursorHVPosOpen}$row;$col$cursorHVPosClose` | `cursorHVPosTo(int row, int col)` | `cursorHVPos`    | Same as `cursorPos`, just with some differences.                            |
+| Erase in page                      | `${eraseInPageOpen}$s$eraseInPageClose`        |                                   | `eraseInPage…`   | Erases part of the page: `s`=0 (or missing) - to end (`eraseInPageToEnd`), `s`=1 - to beginning (`eraseInPageToBegin`), `s`=2 - entire page (`erasePage`). |
+| Erase in line                      | `${eraseInLineOpen}$s$eraseInLineClose`        |                                   | `eraseInLine…`   | Erases part of the line: `s`=0 (or missing) - to end (`eraseInLineToEnd`), `s`=2 - to beginning (`eraseInLineToBegin`), `s`=2 - entire line (`eraseLine`). |
+| Scroll up                          | `${scrollUpOpen}$n$scrollUpClose`              | `scrollUpN(int n)`                | `scrollUp`       | Scroll page up by `n` (default 1) lines. New lines are added at the bottom. |
+| Scroll down                        | `${scrollDownOpen}$n$scrollDownClose`          | `scrollDownN(int n)`              | `scrollDown`     | Scroll page down by `n` (default 1) lines. New lines are added at the top.  |
+| Hide cursor                        |                                                |                                   | `hideCursor`     | Shows the cursor.                                                           |
+| Show cursor                        |                                                |                                   | `showCursor`     | Hides the cursor.                                                           |
+| Save cursor                        |                                                |                                   | `saveCursor`     | Saves the cursor position, encoding shift state and formatting attributes.  |
+| Restore cursor                     |                                                |                                   | `restoreCursor`  | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
 
 ```dart
 print('${CSI}4$CUU' == cursorUpN(4)); // true
@@ -231,7 +231,13 @@ The paragraph will appear later.
 <a id="sgr"></a>
 ### 1.6. Select graphic rendition (SGR)
 
-Template for working with graphic rendition: `CSI s… SGR`, where `s` is:
+Template for working with graphic rendition:
+
+```
+CSI s… SGR
+```
+
+Where `s` is:
 
 | Index | Constant                    | Predefined value                      | Description                                                |
 |------:|:----------------------------|:--------------------------------------|:-----------------------------------------------------------|
@@ -328,8 +334,12 @@ print('$fgYellow$bgGreen Yellow on green $resetBg$resetFg');
 <https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit>
 
 Template for setting the color from 256-color table:
-`CSI FOREGROUND/BACKGROUND/UNDERLINE_COLOR;COLOR_256;n SGR`,
-where `n` is:
+
+```
+CSI FOREGROUND/BACKGROUND/UNDERLINE_COLOR;COLOR_256;n SGR
+```
+
+Where `n` is:
 
 |   Index | Constant        | Predefined value                         | Comment |
 |--------:|:----------------|:-----------------------------------------|:--------|
@@ -368,7 +378,7 @@ You can also use functions to get the color index:
 
 ```dart
 int rgb(int r, int g, int b); // r,g,b are numbers from 0 to 5
-int gray(int level); // g is number from 0 to 23
+int gray(int level); // level is number from 0 to 23
 ```
 
 And use next functions to set the color from 256-color table by index:
@@ -386,9 +396,9 @@ const text1 = '$fg256Rgb550 Yellow text $resetFg';
 const text2 = '$fg256Open$RGB_550$fg256Close Yellow text $resetFg';
 final text3 = '${fg256(RGB_550)} Yellow text $resetFg';
 final text4 = '${fg256(rgb(5, 5, 0))} Yellow text $resetFg';
-print(text1 == text2);
-print(text2 == text3);
-print(text3 == text4);
+print(text1 == text2); // true
+print(text2 == text3); // true
+print(text3 == text4); // true
 ```
 
 <a id="rgb"></a>
@@ -397,8 +407,12 @@ print(text3 == text4);
 <https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit>
 
 Template for setting the color from 256-color table:
-`CSI FOREGROUND/BACKGROUND/UNDERLINE_COLOR;COLOR_RGB;r;g;b SGR`,
-where `r`, `g` and `b` are the corresponding color components in the RGB form.
+
+```
+CSI FOREGROUND/BACKGROUND/UNDERLINE_COLOR;COLOR_RGB;r;g;b SGR
+```
+
+Where `r`, `g` and `b` are the corresponding color components in the RGB form.
 
 You can use next functions to set the color by RGB:
 
@@ -443,13 +457,14 @@ In this way we can, for example, remove all escape codes:
 ```dart
 final buf = StringBuffer();
 for (final m in parser.matches) {
-  final result = switch (m.entity) {
-    EscapeCode() => '',
-    Text(:final string) => string,
-  };
-  buf.write(result);
+  switch (m.entity) {
+    case Text(:final string):
+      buf.write(string);
+    case EscapeCode():
+      break;
+  }
 }
-print(buf); // " Bold  Bold+cyan  Cyan "
+print(buf); // ' Bold  Bold+cyan  Cyan '
 ```
 
 There is a ready-made method for this:
@@ -522,7 +537,7 @@ print(AnsiParser(closedText).isClosed); // true
 ```
 
 The `substring` method allows you to retrieve a piece of text by computing
-together and its state:
+together its state:
 
 ```dart
 final substring = parser.substring(7, maxLength: 9);
@@ -546,7 +561,7 @@ print(test2.length); // 7
 To optimize the entire string, there is an `optimize` method:
 
 ```dart
-const text = "$fgWhite$bold$resetBoldAndFaint$fgGreen$underlined"
+const text = '$fgWhite$bold$resetBoldAndFaint$fgGreen$underlined'
     "$resetUnderlined$faint$faint What's in here? $resetBoldAndFaint$resetFg";
 print(text.length); // 63
 final parser = AnsiParser(text);
@@ -566,6 +581,10 @@ You can quickly analyze a string without using `AnsiParser` by using
 extensions.
 
 ```dart
+import 'package:ansi_escape_codes/extensions.dart';
+
+…
+
 const text = '${fgRed}ERROR$reset';
 print(text.hasEscapeCodes); // true
 print(text.hasCsi); // true
@@ -614,7 +633,7 @@ print(AnsiParser(text.removeCsi()).showControlFunctions());
 // [saveCursor] Text [restoreCursor]
 
 print(text.removeEscapeCodes().showEscapeCodes());
-// " Text "
+// ' Text '
 ```
 
 <a id="printer"></a>
@@ -680,7 +699,8 @@ void main() {
       const text = ' Default text '
           '$bgWhite$fgBlack Highlighted text '
           '$resetBg$resetFg Default text again $reset';
-      print(text);
+
+      print(text); // Use the usual print
     },
   );
 }
@@ -742,7 +762,7 @@ runZonedAnsiPrinter(
 ```
 
 <a id="stacked_printer"></a>
-### 2.4. AnsiPrinter with stack.
+### 2.4. Stacked AnsiPrinter.
 
 Escape codes allow you to do simple text decoration. But a slightly more
 complex design requires much more effort. One example is given above, when you
@@ -792,7 +812,7 @@ escape codes. `AnsiPrinter` helps solve this problem:
 ```dart
 final printer = AnsiPrinter.print(stacked: true);
 printer.print(text);
-// [bold]Dear Sam, welcome to us![reset] We are pleased to present to you …
+// [bold]Dear Sam, welcome to us![resetBoldAndFaint] We are pleased to present to you …
 ```
 
 AnsiPrinter with the `stacked` parameter accumulates state changes and
@@ -803,8 +823,10 @@ escape sequence on output:
 const text = '$bold 1 $bold 2 $bold 3 $resetBoldAndFaint 2 $resetBoldAndFaint 1 $resetBoldAndFaint';
 final printer1 = AnsiPrinter.print();
 final printer2 = AnsiPrinter.print(stacked: true);
-printer1.print(text); // "[bold] 1  2  3 [resetBoldAndFaint] 2  1 "
-printer2.print(text); // "[bold] 1  2  3  2  1 [resetBoldAndFaint]"
+printer1.print(text); // '[bold] 1  2  3 [resetBoldAndFaint] 2  1 '
+printer2.print(text); // '[bold] 1  2  3  2  1 [resetBoldAndFaint]'
 ```
+
+---
 
 That's all for now.
