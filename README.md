@@ -94,16 +94,16 @@ Second, in this form they will not prevent you from naming your own variables.
 These control functions (control codes) are represented by codes from 0x00 to
 0x1F. Some control functions from the C0 set:
 
-| Constant | Code       | Description                                  |
-|:--------:|:----------:|:---------------------------------------------|
-| NUL      | \x00       | Null                                         |
-| BEL      | \x07       | Bell (terminals can block the bell)          |
-| BS       | \b or \x08 | Backspace                                    |
-| HT       | \t or \x09 | Horizontal tabulation                        |
-| LF       | \n or \x0A | Line feed                                    |
-| FF       | \f or \x0C | Form feed                                    |
-| CR       | \r or \x0D | Carriage return                              |
-| ESC      | \x1B       | Escape (is used for code extension purposes) |
+| Constant   | Code           | Description                                  |
+|:-----------|:--------------:|:---------------------------------------------|
+| `NUL`      | `\x00`         | Null                                         |
+| `BEL`      | `\x07`         | Bell (terminals can block the bell)          |
+| `BS`       | `\b` or `\x08` | Backspace                                    |
+| `HT`       | `\t` or `\x09` | Horizontal tabulation                        |
+| `LF`       | `\n` or `\x0A` | Line feed                                    |
+| `FF`       | `\f` or `\x0C` | Form feed                                    |
+| `CR`       | `\r` or `\x0D` | Carriage return                              |
+| `ESC`      | `\x1B`         | Escape (is used for code extension purposes) |
 
 ```dart
 import 'package:ansi_escape_codes/controls.dart';
@@ -197,25 +197,25 @@ print('${CSI}3$SGR Italicized text ${CSI}0$SGR');
 Predefined values replace the use of control functions with the style used in
 Dart.
 
-| Goal            | Template                                       | Function                          | Default constant | Description                                                                 |
-|:----------------|:-----------------------------------------------|:----------------------------------|:-----------------|:----------------------------------------------------------------------------|
-| Cursor up       | `${cursorUpOpen}$n$cursorUpClose`              | `cursorUpN(int n)`                | `cursorUp`       | Moves the cursor up `n` (default 1) lines.                                  |
-| Cursor down     | `${cursorDownOpen}$n$cursorDownClose`          | `cursorDownN(int n)`              | `cursorDown`     | Moves the cursor down `n` (default 1) lines.                                |
-| Cursor forward  | `${cursorRightOpen}$n$cursorRightClose`        | `cursorRightN(int n)`             | `cursorRight`    | Moves the cursor right `n` (default 1) characters.                          |
-| Cursor back     | `${cursorLeftOpen}$n$cursorLeftClose`          | `cursorLeftN(int n)`              | `cursorLeft`     | Moves the cursor left `n` (default 1) characters.                           |
-| Cursor nextLine | `${cursorNextLineOpen}$n$cursorNextLineClose`  | `cursorNextLineN(int n)`          | `cursorNextLine` | Moves cursor to beginning of the line `n` (default 1) lines down.           |
-| Cursor prevLine | `${cursorPrevLineOpen}$n$cursorPrevLineClose`  | `cursorPrevLineN(int n)`          | `cursorPrevLine` | Moves cursor to beginning of the line `n` (default 1) lines up.             |
-| Cursor hPos     | `${cursorHPosOpen}$n$cursorHPosClose`          | `cursorHPosN(int n)`              | `cursorHPos`     | Moves the cursor to column `n` (default 1).                                 |
-| Cursor pos      | `${cursorPosOpen}$row;$col$cursorPosClose`     | `cursorPosTo(int row, int col)`   | `cursorPos`      | Moves the cursor to `row` and `col`.                                        |
-| CursorHVPos     | `${cursorHVPosOpen}$row;$col$cursorHVPosClose` | `cursorHVPosTo(int row, int col)` | `cursorHVPos`    | Same as `cursorPos`, just with some differences.                            |
-| Erase in page   | `${eraseInPageOpen}$s$eraseInPageClose`        |                                   | `eraseInPage…`   | Erases part of the page: `s`=0 (or missing) - to end (`eraseInPageToEnd`), `s`=1 - to beginning (`eraseInPageToBegin`), `s`=2 - entire page (`erasePage`). |
-| Erase in line   | `${eraseInLineOpen}$s$eraseInLineClose`        |                                   | `eraseInLine…`   | Erases part of the line: `s`=0 (or missing) - to end (`eraseInLineToEnd`), `s`=2 - to beginning (`eraseInLineToBegin`), `s`=2 - entire line (`eraseLine`). |
-| Scroll up       | `${scrollUpOpen}$n$scrollUpClose`              | `scrollUpN(int n)`                | `scrollUp`       | Scroll page up by `n` (default 1) lines. New lines are added at the bottom. |
-| Scroll down     | `${scrollDownOpen}$n$scrollDownClose`          | `scrollDownN(int n)`              | `scrollDown`     | Scroll page down by `n` (default 1) lines. New lines are added at the top.  |
-| Hide cursor     |                                                |                                   | `hideCursor`     | Shows the cursor.                                                           |
-| Show cursor     |                                                |                                   | `showCursor`     | Hides the cursor.                                                           |
-| Save cursor     |                                                |                                   | `saveCursor`     | Saves the cursor position, encoding shift state and formatting attributes.  |
-| Restore cursor  |                                                |                                   | `restoreCursor`  | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
+| Goal                  | Template                                       | Function                          | Default constant | Description                                                                 |
+|:----------------------|:-----------------------------------------------|:----------------------------------|:-----------------|:----------------------------------------------------------------------------|
+| Cursor up             | `${cursorUpOpen}$n$cursorUpClose`              | `cursorUpN(int n)`                | `cursorUp`       | Moves the cursor up `n` (default 1) lines.                                  |
+| Cursor down           | `${cursorDownOpen}$n$cursorDownClose`          | `cursorDownN(int n)`              | `cursorDown`     | Moves the cursor down `n` (default 1) lines.                                |
+| Cursor forward        | `${cursorRightOpen}$n$cursorRightClose`        | `cursorRightN(int n)`             | `cursorRight`    | Moves the cursor right `n` (default 1) characters.                          |
+| Cursor back           | `${cursorLeftOpen}$n$cursorLeftClose`          | `cursorLeftN(int n)`              | `cursorLeft`     | Moves the cursor left `n` (default 1) characters.                           |
+| Cursor next line      | `${cursorNextLineOpen}$n$cursorNextLineClose`  | `cursorNextLineN(int n)`          | `cursorNextLine` | Moves cursor to beginning of the line `n` (default 1) lines down.           |
+| Cursor prev line      | `${cursorPrevLineOpen}$n$cursorPrevLineClose`  | `cursorPrevLineN(int n)`          | `cursorPrevLine` | Moves cursor to beginning of the line `n` (default 1) lines up.             |
+| Cursor horizontal pos | `${cursorHPosOpen}$n$cursorHPosClose`          | `cursorHPosN(int n)`              | `cursorHPos`     | Moves the cursor to column `n` (default 1).                                 |
+| Cursor pos            | `${cursorPosOpen}$row;$col$cursorPosClose`     | `cursorPosTo(int row, int col)`   | `cursorPos`      | Moves the cursor to `row` and `col`.                                        |
+| Cursor hv pos         | `${cursorHVPosOpen}$row;$col$cursorHVPosClose` | `cursorHVPosTo(int row, int col)` | `cursorHVPos`    | Same as `cursorPos`, just with some differences.                            |
+| Erase in page         | `${eraseInPageOpen}$s$eraseInPageClose`        |                                   | `eraseInPage…`   | Erases part of the page: `s`=0 (or missing) - to end (`eraseInPageToEnd`), `s`=1 - to beginning (`eraseInPageToBegin`), `s`=2 - entire page (`erasePage`). |
+| Erase in line         | `${eraseInLineOpen}$s$eraseInLineClose`        |                                   | `eraseInLine…`   | Erases part of the line: `s`=0 (or missing) - to end (`eraseInLineToEnd`), `s`=2 - to beginning (`eraseInLineToBegin`), `s`=2 - entire line (`eraseLine`). |
+| Scroll up             | `${scrollUpOpen}$n$scrollUpClose`              | `scrollUpN(int n)`                | `scrollUp`       | Scroll page up by `n` (default 1) lines. New lines are added at the bottom. |
+| Scroll down           | `${scrollDownOpen}$n$scrollDownClose`          | `scrollDownN(int n)`              | `scrollDown`     | Scroll page down by `n` (default 1) lines. New lines are added at the top.  |
+| Hide cursor           |                                                |                                   | `hideCursor`     | Shows the cursor.                                                           |
+| Show cursor           |                                                |                                   | `showCursor`     | Hides the cursor.                                                           |
+| Save cursor           |                                                |                                   | `saveCursor`     | Saves the cursor position, encoding shift state and formatting attributes.  |
+| Restore cursor        |                                                |                                   | `restoreCursor`  | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
 
 ```dart
 print('${CSI}4$CUU' == cursorUpN(4)); // true
@@ -231,7 +231,7 @@ The paragraph will appear later.
 <a id="sgr"></a>
 ### 1.6. Select graphic rendition (SGR)
 
-Template for working with graphic rendition: CSI s… SGR, where s is:
+Template for working with graphic rendition: `CSI s… SGR`, where `s` is:
 
 | Index | Constant                    | Predefined value                      | Description                                                |
 |------:|:----------------------------|:--------------------------------------|:-----------------------------------------------------------|
@@ -328,29 +328,29 @@ print('$fgYellow$bgGreen Yellow on green $resetBg$resetFg');
 <https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit>
 
 Template for setting the color from 256-color table:
-CSI FOREGROUND/BACKGROUND/UNDERLINE_COLOR;COLOR_256;n SGR,
-where n is:
+`CSI FOREGROUND/BACKGROUND/UNDERLINE_COLOR;COLOR_256;n SGR`,
+where `n` is:
 
-|   Index | Constant        | Predefined value                               | Comment |
-|--------:|:----------------|:-----------------------------------------------|:--------|
-|       0 | `BLACK`         | (`fg`/`bg`/`underline`)`256Black`              |         |
-|       1 | `RED`           | (`fg`/`bg`/`underline`)`256Red`                |         |
-|       2 | `GREEN`         | (`fg`/`bg`/`underline`)`256Green`              |         |
-|       3 | `YELLOW`        | (`fg`/`bg`/`underline`)`256Yellow`             |         |
-|       4 | `BLUE`          | (`fg`/`bg`/`underline`)`256Blue`               |         |
-|       5 | `MAGENTA`       | (`fg`/`bg`/`underline`)`256Magenta`            |         |
-|       6 | `CYAN`          | (`fg`/`bg`/`underline`)`256Cyan`               |         |
-|       7 | `WHITE`         | (`fg`/`bg`/`underline`)`256White`              |         |
-|       8 | `HIGH_BLACK`    | (`fg`/`bg`/`underline`)`256HighBlack`          |         |
-|       9 | `HIGH_RED`      | (`fg`/`bg`/`underline`)`256HighRed`            |         |
-|      10 | `HIGH_GREEN`    | (`fg`/`bg`/`underline`)`256HighGreen`          |         |
-|      11 | `HIGH_YELLOW`   | (`fg`/`bg`/`underline`)`256HighYellow`         |         |
-|      12 | `HIGH_BLUE`     | (`fg`/`bg`/`underline`)`256HighBlue`           |         |
-|      13 | `HIGH_MAGENTA`  | (`fg`/`bg`/`underline`)`256HighMagenta`        |         |
-|      14 | `HIGH_CYAN`     | (`fg`/`bg`/`underline`)`256HighCyan`           |         |
-|      15 | `HIGH_WHITE`    | (`fg`/`bg`/`underline`)`256HighWhite`          |         |
+|   Index | Constant        | Predefined value                         | Comment |
+|--------:|:----------------|:-----------------------------------------|:--------|
+|       0 | `BLACK`         | (`fg`/`bg`/`underline`)`256Black`        |         |
+|       1 | `RED`           | (`fg`/`bg`/`underline`)`256Red`          |         |
+|       2 | `GREEN`         | (`fg`/`bg`/`underline`)`256Green`        |         |
+|       3 | `YELLOW`        | (`fg`/`bg`/`underline`)`256Yellow`       |         |
+|       4 | `BLUE`          | (`fg`/`bg`/`underline`)`256Blue`         |         |
+|       5 | `MAGENTA`       | (`fg`/`bg`/`underline`)`256Magenta`      |         |
+|       6 | `CYAN`          | (`fg`/`bg`/`underline`)`256Cyan`         |         |
+|       7 | `WHITE`         | (`fg`/`bg`/`underline`)`256White`        |         |
+|       8 | `HIGH_BLACK`    | (`fg`/`bg`/`underline`)`256HighBlack`    |         |
+|       9 | `HIGH_RED`      | (`fg`/`bg`/`underline`)`256HighRed`      |         |
+|      10 | `HIGH_GREEN`    | (`fg`/`bg`/`underline`)`256HighGreen`    |         |
+|      11 | `HIGH_YELLOW`   | (`fg`/`bg`/`underline`)`256HighYellow`   |         |
+|      12 | `HIGH_BLUE`     | (`fg`/`bg`/`underline`)`256HighBlue`     |         |
+|      13 | `HIGH_MAGENTA`  | (`fg`/`bg`/`underline`)`256HighMagenta`  |         |
+|      14 | `HIGH_CYAN`     | (`fg`/`bg`/`underline`)`256HighCyan`     |         |
+|      15 | `HIGH_WHITE`    | (`fg`/`bg`/`underline`)`256HighWhite`    |         |
 |  16-231 | `RGB_<r><g><b>` | (`fg`/`bg`/`underline`)`256Rgb<r><g><b>` | `r`,`g`,`b` are numbers from 0 to 5 (6 × 6 × 6 cube (216 colors): 16 + 36 × `r` + 6 × `g` + `b`) |
-| 232-255 | `GRAY<n>`       | (`fg`/`bg`/`underline`)`256Gray<n>`          | `n` is a number from 0 to 23 (grayscale from dark to light in 24 steps)                          |
+| 232-255 | `GRAY<n>`       | (`fg`/`bg`/`underline`)`256Gray<n>`      | `n` is a number from 0 to 23 (grayscale from dark to light in 24 steps)                          |
 
 Example:
 
@@ -397,8 +397,8 @@ print(text3 == text4);
 <https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit>
 
 Template for setting the color from 256-color table:
-CSI FOREGROUND/BACKGROUND/UNDERLINE_COLOR;COLOR_RGB;r;g;b SGR,
-where r, g and b are the corresponding color components in the RGB form.
+`CSI FOREGROUND/BACKGROUND/UNDERLINE_COLOR;COLOR_RGB;r;g;b SGR`,
+where `r`, `g` and `b` are the corresponding color components in the RGB form.
 
 You can use next functions to set the color by RGB:
 
@@ -427,9 +427,7 @@ print(text2 == text3); // true
 AnsiParser allows you to analyze text containing escape codes:
 
 ```dart
-const text = '$bold Bold '
-    '$fgBlue Bold+cyan '
-    '$resetBoldAndFaint Cyan ';
+const text = '$bold Bold $fgBlue Bold+cyan $resetBoldAndFaint Cyan ';
 final parser = AnsiParser(text);
 parser.matches.forEach(print);
 // Match(start: 0, end: 4, entity: Sgr(bold), state: SgrState(bold))
@@ -440,7 +438,7 @@ parser.matches.forEach(print);
 // Match(start: 31, end: 37, entity: Text(' Cyan '), state: SgrState(foreground: Color16(Colors.cyan)))
 ```
 
-In this way we can, for example, delete all escape codes:
+In this way we can, for example, remove all escape codes:
 
 ```dart
 final buf = StringBuffer();
@@ -481,7 +479,7 @@ print(parser.replaceAll((e) => '[${e.id}]'));
 print(parser.showControlFunctions());
 ```
 
-You can find out the length of plain text without codes using `length`:
+You can find out the length of plain text without escape codes using `length`:
 
 ```dart
 print(parser.length == parser.removeAll().length); // true
@@ -523,7 +521,7 @@ const closedText = '$text$reset';
 print(AnsiParser(closedText).isClosed); // true
 ```
 
-The substring method allows you to retrieve a piece of text by computing
+The `substring` method allows you to retrieve a piece of text by computing
 together and its state:
 
 ```dart
@@ -532,7 +530,7 @@ print(AnsiParser(substring).showControlFunctions()); // [bold;fgCyan]Bold+cyan[r
 ```
 
 By default, the substring is closed. The initial state is always included in
-the string in optimized form (`[bold;fgCyan]`):
+the string in optimized form: `[bold;fgCyan]`.
 
 ```dart
 const test1 = '$bold$fgCyan';
@@ -549,16 +547,16 @@ To optimize the entire string, there is an `optimize` method:
 
 ```dart
 const text = "$fgWhite$bold$resetBoldAndFaint$fgGreen$underlined"
-    "$resetUnderlined$faint$faint"
-    " What's in here? "
-    "$resetBoldAndFaint$resetFg";
+    "$resetUnderlined$faint$faint What's in here? $resetBoldAndFaint$resetFg";
 print(text.length); // 63
 final parser = AnsiParser(text);
-print(parser.showControlFunctions()); // [fgWhite][bold][resetBoldAndFaint][fgGreen][underlined][resetUnderlined][faint][faint] What's in here? [resetBoldAndFaint][resetFg]
+print(parser.showControlFunctions());
+// [fgWhite][bold][resetBoldAndFaint][fgGreen][underlined][resetUnderlined][faint][faint] What's in here? [resetBoldAndFaint][resetFg]
 
 final optimizedText = parser.optimize();
 print(optimizedText.length); // 28
-print(AnsiParser(optimizedText).showControlFunctions()); // [faint;fgGreen] What's in here? [reset]
+print(AnsiParser(optimizedText).showControlFunctions());
+// [faint;fgGreen] What's in here? [reset]
 ```
 
 <a id="quick_analysis"></a>
@@ -694,12 +692,11 @@ values you need.
 If you need the codes for debugging Flutter apps, you'll notice that when
 debugging iOS apps, the console will receive messages with escaped escape codes
 in them. This is a known issue and is currently (02.2025) unresolved:
-https://github.com/flutter/flutter/issues/20663.
-
-There is no way around this issue. But there are two ways to minimize it.
+https://github.com/flutter/flutter/issues/20663. There is no way around this
+issue. But there are two ways to minimize it.
 
 The first way is to use the `log` method from 'dart:developer'. The `log`
-outputs the escape codes correctly:
+outputs the escape codes on iOS correctly:
 
 ```dart
 import 'dart:developer';
@@ -721,10 +718,10 @@ runZonedAnsiPrinter(
 );
 ```
 
-Unfortunately, the log method outputs long messages (more than 128 characters)
-as `<collected>`. And it is easy to exceed the allowed size when using escape
-codes. In the example above, the `text` does not fit in this size if RGB colors
-are used.
+Unfortunately, the `log` method outputs long messages (more than 128
+characters) as `<collected>`. And it is easy to exceed the allowed size when
+using escape codes. In the example above, the `text` does not fit in this size
+if RGB colors are used.
 
 And secondly, `log` works only from IDE. Testers who don't use IDE won't
 see anything in the console.
@@ -747,4 +744,67 @@ runZonedAnsiPrinter(
 <a id="stacked_printer"></a>
 ### 2.4. AnsiPrinter with stack.
 
-The paragraph will appear later.
+Escape codes allow you to do simple text decoration. But a slightly more
+complex design requires much more effort. One example is given above, when you
+need a default style different from the one provided by the terminal.
+
+Imagine that you have a template for text into which you will insert other
+text, that is sent to you externally. But the person who sends you this text
+decides to highlight it:
+
+```dart
+String makeMessage(String name) {
+  const template = 'Dear {name}! We are pleased to present to you …';
+
+  return template.replaceAll('{name}', name);
+}
+
+…
+
+const name = '${bold}Sam$resetBoldAndFaint';
+
+…
+
+final text = makeMessage(name);
+print(text);
+// Dear [bold]Sam[resetBoldAndFaint]! We are pleased to present to you …
+```
+
+Without noticing it, at some point your designer decides to make changes to the
+template:
+
+```dart
+const template = '${bold}Dear {name}, welcome to us!$resetBoldAndFaint We are pleased to present to you …';
+
+…
+
+final text = makeMessage(name);
+print(text);
+// [bold]Dear [bold]Sam[resetBoldAndFaint], welcome to us![resetBoldAndFaint] We are pleased to present to you …
+```
+
+But the escape codes don't accumulate, double `bold` equals single `bold`. And
+`resetBoldAndFaint` cancels the bold text. And we don't get what we want at
+all. To fix it, we need to return the state of the text after insertion to the
+state it was before insertion. But it makes it much more difficult to use the
+escape codes. `AnsiPrinter` helps solve this problem:
+
+```dart
+final printer = AnsiPrinter.print(stacked: true);
+printer.print(text);
+// [bold]Dear Sam, welcome to us![reset] We are pleased to present to you …
+```
+
+AnsiPrinter with the `stacked` parameter accumulates state changes and
+sequentially disables them, translating the current state into the standard
+escape sequence on output:
+
+```dart
+const text = '$bold 1 $bold 2 $bold 3 $resetBoldAndFaint 2 $resetBoldAndFaint 1 $resetBoldAndFaint';
+final printer1 = AnsiPrinter.print();
+final printer2 = AnsiPrinter.print(stacked: true);
+printer1.print(text); // "[bold] 1  2  3 [resetBoldAndFaint] 2  1 "
+printer2.print(text); // "[bold] 1  2  3  2  1 [resetBoldAndFaint]"
+```
+
+That's all for now.

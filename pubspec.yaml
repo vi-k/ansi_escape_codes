@@ -1,14 +1,14 @@
 name: ansi_escape_codes
 description: Yet another package for ANSI escape sequences. It differs from the others only in that it focuses on using constants rather than functions or methods.
-version: 1.4.1
+version: 2.0.0
 homepage: https://github.com/vi-k/ansi_escape_codes
 
 environment:
-  sdk: ^3.0.5
+  sdk: ^3.3.4
 
 dependencies:
   meta: ^1.16.0
 
 dev_dependencies:
   lints: ^5.1.1
-  test: ^1.25.14
+  test: ^1.25.15

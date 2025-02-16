@@ -1,10 +1,18 @@
 ## 2.0.0
 
-- Shift the focus of the package to parsing.
-- Add parser.
-- Add printer.
+- Shift package focus to parsing and standardization.
+- Add `AnsiParser`.
+- Add `AnsiPrinter`.
+- Add stacked `AnsiPrinter`.
 - Add their corresponding functions to intercept the `print` function using
   zones: `runZonedAnsiParser`.
+
+Breaking changes:
+- The names of some constants have changed: `italic` to `italicized`,
+  `blinking` to `slowlyBlinking`. All constants of the form `not…` are
+  renamed to `reset…`.
+- Removed methods: `handle…`, `all…`. Use `AnsiParser` instead.
+
 
 ## 1.4.1
 

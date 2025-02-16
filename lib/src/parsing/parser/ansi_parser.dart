@@ -31,7 +31,7 @@ part 'matches/matches_result.dart';
 sealed class AnsiParser {
   factory AnsiParser(
     String input, {
-    bool stacked = false,
+    @experimental bool stacked = false,
   }) =>
       !stacked
           ? _ParserBase._(input, SgrPlainState.defaults)

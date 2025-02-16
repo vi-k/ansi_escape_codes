@@ -50,6 +50,9 @@ sealed class AnsiPrinter implements StringSink {
   AnsiPrinter._();
 
   void print(Object? object);
+
+  @visibleForTesting
+  String prepare(String string);
 }
 
 sealed class _PrinterBase<S extends SgrState<S>> extends AnsiPrinter {
@@ -118,13 +121,19 @@ base class _PrintPrinterBase<S extends SgrState<S>> extends _PrinterBase<S> {
 
   @override
   void flush() {
-    final string = _lineBuf.toString();
+    final output = prepare(_lineBuf.toString());
+    _output(output);
+    if (debugForTest) {
+      _output(AnsiParser(output).showControlFunctions());
+    }
 
+    _lineBuf.clear();
+  }
+
+  @override
+  String prepare(String string) {
     if (!ansiCodesEnabled) {
-      _output(string.removeEscapeCodes());
-      _lineBuf.clear();
-
-      return;
+      return string.removeEscapeCodes();
     }
 
     var lastState = defaultState;
@@ -153,13 +162,7 @@ base class _PrintPrinterBase<S extends SgrState<S>> extends _PrinterBase<S> {
 
     buf.write(reset);
 
-    final output = buf.toString();
-    _output(output);
-    if (debugForTest) {
-      _output(AnsiParser(output).showControlFunctions());
-    }
-
-    _lineBuf.clear();
+    return buf.toString();
   }
 }
 
@@ -224,14 +227,22 @@ base class _IOPrinterBase<S extends SgrState<S>> extends _PrinterBase<S> {
   }
 
   void _writeLine(String line) {
+    final output = prepare(line);
+    sink.write(output);
+    if (debugForTest) {
+      sink.write(AnsiParser(output).showControlFunctions());
+    }
+  }
+
+  @override
+  String prepare(String string) {
     if (!ansiCodesEnabled) {
-      sink.write(line.removeEscapeCodes());
-      return;
+      return string.removeEscapeCodes();
     }
 
     var lastState = defaultState;
 
-    final parser = _ParserBase<S>._(line, stateDefaults);
+    final parser = _ParserBase<S>._(string, stateDefaults);
     final buf = StringBuffer()
       ..write(reset)
       ..write(
@@ -253,11 +264,7 @@ base class _IOPrinterBase<S extends SgrState<S>> extends _PrinterBase<S> {
 
     buf.write(reset);
 
-    final output = buf.toString();
-    sink.write(output);
-    if (debugForTest) {
-      sink.write(AnsiParser(output).showControlFunctions());
-    }
+    return buf.toString();
   }
 
   @override

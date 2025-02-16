@@ -525,7 +525,7 @@ void main() {
 
     test('AnsiPrinter', () {
       final output1 = interceptPrint(
-        debugPrint: true,
+        // debugPrint: true,
         () {
           runZonedAnsiPrinter(
             defaultState: const SgrPlainState(
@@ -551,7 +551,7 @@ void main() {
       );
 
       final output2 = interceptPrint(
-        debugPrint: true,
+        // debugPrint: true,
         () {
           runZonedAnsiPrinter(
             defaultState: const SgrPlainState(
@@ -575,7 +575,7 @@ void main() {
       );
 
       final output3 = interceptPrint(
-        debugPrint: true,
+        // debugPrint: true,
         () {
           runZonedAnsiPrinter(
             defaultState: const SgrPlainState(
@@ -597,6 +597,54 @@ void main() {
         AnsiParser(output3[0]).showControlFunctions(),
         '[reset][bold;italicized;underlined;fgYellow;bgGreen]default colors'
         ' yellow on green default colors[reset]',
+      );
+    });
+
+    test('stacked AnsiPrinter', () {
+      String b(String text) => '$bold$text$resetBoldAndFaint';
+      String i(String text) => '$italicized$text$resetItalicized';
+      String u(String text) => '$underlined$text$resetUnderlined';
+      String s(String text) => '$crossedOut$text$resetCrossedOut';
+      String f(String text) => '$faint$text$resetBoldAndFaint';
+      String bg(String color, String text) => '$color$text$resetBg';
+      String fg(String color, String text) => '$color$text$resetFg';
+
+      final stacked1 = bg(bgRed, fg(fgWhite, f(b('fb'))));
+      final stacked2 = bg(bgGreen, fg(fgYellow, s(f('sf($stacked1)'))));
+      final stacked3 = bg(bgBlue, fg(fgCyan, u(s('us($stacked2)'))));
+      final stacked4 = bg(bgMagenta, fg(fgYellow, i(u('iu($stacked3)'))));
+      final stacked5 = bg(bgCyan, b(i('bi($stacked4)')));
+      final text = 'def($stacked5)';
+
+      final output = interceptPrint(
+        // debugPrint: true,
+        () {
+          runZonedAnsiPrinter(
+            defaultState: const SgrPlainState(
+              foreground: Color256(Colors.rgb555),
+              background: Color256(Colors.rgb320),
+            ),
+            stacked: true,
+            () => print(text),
+          );
+        },
+      );
+
+      expect(
+        AnsiParser(output[0]).showControlFunctions(),
+        '[reset]'
+        '[fg256Rgb555][bg256Rgb320]def('
+        '[bold;italicized;bgCyan]bi('
+        '[underlined;fgYellow;bgMagenta]iu('
+        '[crossedOut;fgCyan;bgBlue]us('
+        '[faint;fgYellow;bgGreen]sf('
+        '[fgWhite;bgRed]fb'
+        '[fgYellow;bgGreen])'
+        '[resetBoldAndFaint;bold;fgCyan;bgBlue])'
+        '[resetCrossedOut;fgYellow;bgMagenta])'
+        '[resetUnderlined;bgCyan][fg256Rgb555])'
+        '[resetBoldAndFaint;resetItalicized][bg256Rgb320])'
+        '[reset]',
       );
     });
   });
