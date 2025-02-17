@@ -1,3 +1,7 @@
+## 2.0.1
+
+- Minor updates.
+
 ## 2.0.0
 
 - Shift package focus to parsing and standardization.
