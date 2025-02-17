@@ -193,7 +193,6 @@ void main() {
     print(text);
     tabs(defaultTab: 12);
     print(text);
-    print('${CSI}2Ia${CSI}2Ia');
     tabs();
   }
 }

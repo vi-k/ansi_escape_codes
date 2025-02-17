@@ -53,13 +53,14 @@ sealed class AnsiPrinter implements StringSink {
   void print(Object? object);
 
   @visibleForTesting
-  String prepareLine(String string);
+  String prepare(String string);
 }
 
 sealed class _PrinterBase<S extends SgrState<S>> extends AnsiPrinter {
   final S stateDefaults;
   final SgrPlainState defaultState;
   final bool ansiCodesEnabled;
+  S? lastState;
 
   bool debugForTest;
 
@@ -75,7 +76,7 @@ sealed class _PrinterBase<S extends SgrState<S>> extends AnsiPrinter {
   void print(Object? object) => writeln(object);
 
   @override
-  String prepareLine(String line) {
+  String prepare(String line) {
     if (line.isEmpty) {
       return '';
     }
@@ -86,7 +87,7 @@ sealed class _PrinterBase<S extends SgrState<S>> extends AnsiPrinter {
 
     var lastState = stateDefaults.toPlainState();
 
-    final parser = _ParserBase<S>._(line, stateDefaults);
+    final parser = _ParserBase<S>._(line, this.lastState ?? stateDefaults);
     final buf = StringBuffer(reset);
 
     for (final m in parser.matches) {
@@ -101,6 +102,7 @@ sealed class _PrinterBase<S extends SgrState<S>> extends AnsiPrinter {
     }
 
     buf.write(lastState.transitTo(stateDefaults));
+    this.lastState = parser.finalState;
 
     return buf.toString();
   }
@@ -154,7 +156,7 @@ base class _PrintPrinterBase<S extends SgrState<S>> extends _PrinterBase<S> {
     _lineBuf.clear();
 
     for (final line in buf.split('\n')) {
-      final output = prepareLine(line);
+      final output = prepare(line);
       _output(output);
       if (debugForTest) {
         _output(AnsiParser(output).showControlFunctions());
@@ -224,7 +226,7 @@ base class _IOPrinterBase<S extends SgrState<S>> extends _PrinterBase<S> {
   }
 
   void _writeLine(String line) {
-    final output = prepareLine(line);
+    final output = prepare(line);
     sink.write(output);
     if (debugForTest) {
       sink.write(AnsiParser(output).showControlFunctions());

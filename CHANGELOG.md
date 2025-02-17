@@ -1,4 +1,4 @@
-## 2.0.1-2.0.2
+## 2.0.1-2.0.3
 
 - Fix multiline output by AnsiPrinter.
 - Minor changes.
@@ -16,7 +16,7 @@ Breaking changes:
 - The names of some constants have changed: `italic` to `italicized`,
   `blinking` to `slowlyBlinking`. All constants of the form `not…` are
   renamed to `reset…`. `(fg/bg/underline)Bright…` ara renamed to
-  `fg/bg/underline/High…`.
+  `(fg/bg/underline)High…`.
 - Removed methods: `handle…`, `all…`. Use `AnsiParser` instead.
 
 
