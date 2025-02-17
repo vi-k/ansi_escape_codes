@@ -26,7 +26,7 @@ sealed class AnsiPrinter implements StringSink {
             );
 
   factory AnsiPrinter.sink(
-    io.IOSink sink, {
+    StringSink sink, {
     SgrPlainState defaultState = SgrPlainState.defaults,
     bool stacked = false,
     bool ansiCodesEnabled = true,
@@ -53,7 +53,7 @@ sealed class AnsiPrinter implements StringSink {
   void print(Object? object);
 
   @visibleForTesting
-  String prepare(String string);
+  String prepareLine(String string);
 }
 
 sealed class _PrinterBase<S extends SgrState<S>> extends AnsiPrinter {
@@ -74,7 +74,36 @@ sealed class _PrinterBase<S extends SgrState<S>> extends AnsiPrinter {
   @override
   void print(Object? object) => writeln(object);
 
-  FutureOr<void> flush();
+  @override
+  String prepareLine(String line) {
+    if (line.isEmpty) {
+      return '';
+    }
+
+    if (!ansiCodesEnabled) {
+      return line.removeEscapeCodes();
+    }
+
+    var lastState = stateDefaults.toPlainState();
+
+    final parser = _ParserBase<S>._(line, stateDefaults);
+    final buf = StringBuffer(reset);
+
+    for (final m in parser.matches) {
+      final entity = m.entity;
+      if (entity is Text) {
+        final newState = m.state.changeDefaultsTo(defaultState);
+        buf
+          ..write(lastState.transitTo(newState))
+          ..write(entity.string);
+        lastState = newState;
+      }
+    }
+
+    buf.write(lastState.transitTo(stateDefaults));
+
+    return buf.toString();
+  }
 }
 
 base class _PrintPrinterBase<S extends SgrState<S>> extends _PrinterBase<S> {
@@ -117,58 +146,25 @@ base class _PrintPrinterBase<S extends SgrState<S>> extends _PrinterBase<S> {
   @override
   void writeln([Object? object = '']) {
     _lineBuf.write(object);
-    flush();
+    _writeBuf();
   }
 
-  @override
-  void flush() {
-    final output = prepare(_lineBuf.toString());
-    _output(output);
-    if (debugForTest) {
-      _output(AnsiParser(output).showControlFunctions());
-    }
-
+  void _writeBuf() {
+    final buf = _lineBuf.toString();
     _lineBuf.clear();
-  }
 
-  @override
-  String prepare(String string) {
-    if (!ansiCodesEnabled) {
-      return string.removeEscapeCodes();
-    }
-
-    var lastState = defaultState;
-
-    final parser = _ParserBase<S>._(string, stateDefaults);
-    final buf = StringBuffer()
-      ..write(reset)
-      ..write(
-        stateDefaults.transitTo(
-          lastState.changeDefaultsTo(stateDefaults),
-        ),
-      );
-
-    for (final m in parser.matches) {
-      final entity = m.entity;
-      if (entity is Text) {
-        // For debug:
-        // log('"${entity.string}" ${m.state}');
-        final newState = m.state.changeDefaultsTo(defaultState);
-        buf
-          ..write(lastState.transitTo(newState))
-          ..write(entity.string);
-        lastState = newState;
+    for (final line in buf.split('\n')) {
+      final output = prepareLine(line);
+      _output(output);
+      if (debugForTest) {
+        _output(AnsiParser(output).showControlFunctions());
       }
     }
-
-    buf.write(reset);
-
-    return buf.toString();
   }
 }
 
 base class _IOPrinterBase<S extends SgrState<S>> extends _PrinterBase<S> {
-  final io.IOSink sink;
+  final StringSink sink;
 
   _IOPrinterBase(
     this.sink, {
@@ -217,7 +213,7 @@ base class _IOPrinterBase<S extends SgrState<S>> extends _PrinterBase<S> {
     while (endIndex != -1) {
       final line = buf.substring(pos, endIndex);
       _writeLine(line);
-      sink.writeln();
+      sink.write('\n');
 
       pos = endIndex + 1;
       endIndex = buf.indexOf('\n', pos);
@@ -228,48 +224,12 @@ base class _IOPrinterBase<S extends SgrState<S>> extends _PrinterBase<S> {
   }
 
   void _writeLine(String line) {
-    final output = prepare(line);
+    final output = prepareLine(line);
     sink.write(output);
     if (debugForTest) {
       sink.write(AnsiParser(output).showControlFunctions());
     }
   }
-
-  @override
-  String prepare(String string) {
-    if (!ansiCodesEnabled) {
-      return string.removeEscapeCodes();
-    }
-
-    var lastState = defaultState;
-
-    final parser = _ParserBase<S>._(string, stateDefaults);
-    final buf = StringBuffer()
-      ..write(reset)
-      ..write(
-        stateDefaults.transitTo(
-          lastState.changeDefaultsTo(stateDefaults),
-        ),
-      );
-
-    for (final m in parser.matches) {
-      final entity = m.entity;
-      if (entity is Text) {
-        final newState = m.state.changeDefaultsTo(defaultState);
-        buf
-          ..write(lastState.transitTo(newState))
-          ..write(entity.string);
-        lastState = newState;
-      }
-    }
-
-    buf.write(reset);
-
-    return buf.toString();
-  }
-
-  @override
-  FutureOr<void> flush() => sink.flush();
 }
 
 R runZonedAnsiPrinter<R>(

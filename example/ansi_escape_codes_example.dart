@@ -167,53 +167,6 @@ void main() {
 
   // Stacked AnsiPrinter.
   {
-    String b(String text) => '$bold$text$resetBoldAndFaint';
-    String i(String text) => '$italicized$text$resetItalicized';
-    String u(String text) => '$underlined$text$resetUnderlined';
-    String s(String text) => '$crossedOut$text$resetCrossedOut';
-    String f(String text) => '$faint$text$resetBoldAndFaint';
-    String bg(String color, String text) => '$color$text$resetBg';
-    String fg(String color, String text) => '$color$text$resetFg';
-
-    final stacked1 = bg(bgRed, fg(fgWhite, f(b('fb'))));
-    final stacked2 = bg(bgGreen, fg(fgYellow, s(f('sf($stacked1)'))));
-    final stacked3 = bg(bgBlue, fg(fgCyan, u(s('us($stacked2)'))));
-    final stacked4 = bg(bgMagenta, fg(fgYellow, i(u('iu($stacked3)'))));
-    final stacked5 = bg(bgCyan, b(i('bi($stacked4)')));
-    final text = 'def($stacked5)';
-
-    const defaultState = SgrPlainState(
-      foreground: Color256(Colors.rgb555),
-      background: Color256(Colors.rgb320),
-    );
-
-    print('');
-    print('Standart output:');
-    print(AnsiParser(text).removeAll());
-    print(text);
-
-    print('');
-    print('With AnsiPrinter (the default state is overrided):');
-    final simplePrinter = AnsiPrinter(
-      defaultState: defaultState,
-    );
-    simplePrinter.print(text);
-
-    print('');
-    print(
-      'With stacked AnsiPrinter (the state is accumulated in the stack):',
-    );
-    final printer = AnsiPrinter(
-      defaultState: defaultState,
-      stacked: true,
-      // ignore: invalid_use_of_visible_for_testing_member
-      // debugForTest: true,
-    );
-    printer.print(text);
-  }
-
-  // Stacked AnsiPrinter.
-  {
     const importantNote = '${italicized}Important note$resetItalicized';
     const text1 = 'Normal text $importantNote Normal text';
     const text2 =

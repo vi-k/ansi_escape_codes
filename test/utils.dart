@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
-List<String> interceptPrint(
+List<String> interceptZonedPrint(
   void Function() body, {
   bool debugPrint = false,
 }) {

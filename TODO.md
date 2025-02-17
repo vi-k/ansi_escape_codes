@@ -18,5 +18,5 @@
 - CSI ? 47 l restore screen?
 
 - enum for cursorUp/etc
-
 - doc for AnsiParser, AnsiPrinter
+- independent functions

@@ -126,9 +126,10 @@ sealed class SgrState<S extends SgrState<S>> {
     bool skipSet = false,
     bool skipReset = false,
   }) {
-    if ((this as SgrState<void>) != SgrPlainState.defaults &&
-        other == SgrPlainState.defaults) {
-      return skipReset ? '' : reset;
+    if (other == SgrPlainState.defaults) {
+      return skipReset || (this as SgrState<void>) == SgrPlainState.defaults
+          ? ''
+          : reset;
     }
 
     final otherForeground = other.foreground;

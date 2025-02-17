@@ -583,81 +583,140 @@ void main() {
       );
     });
 
-    test('AnsiPrinter', () {
-      final output1 = interceptPrint(
-        // debugPrint: true,
-        () {
-          runZonedAnsiPrinter(
-            defaultState: const SgrPlainState(
-              foreground: Color16.black,
-              background: Color16.white,
-            ),
-            () => print(
-              'default colors'
-              '$fgYellow$bgGreen$underlined$bold$italicized yellow on green'
-              ' $resetItalicized$resetBoldAndFaint$resetUnderlined$resetBg$resetFg'
-              'default colors',
-            ),
-          );
-        },
-      );
-
-      expect(
-        AnsiParser(output1[0]).showControlFunctions(),
-        '[reset][fgBlack;bgWhite]default colors'
-        '[fgYellow;bgGreen;bold;italicized;underlined] yellow on green'
-        ' [resetBoldAndFaint;resetItalicized;resetUnderlined;fgBlack;bgWhite]'
-        'default colors[reset]',
-      );
-
-      final output2 = interceptPrint(
-        // debugPrint: true,
-        () {
-          runZonedAnsiPrinter(
-            defaultState: const SgrPlainState(
-              foreground: Color16.black,
-              background: Color16.white,
-            ),
-            () => print('default colors'
+    group('AnsiPrinter', () {
+      test('print', () {
+        final output1 = interceptZonedPrint(
+          // debugPrint: true,
+          () {
+            runZonedAnsiPrinter(
+              defaultState: const SgrPlainState(
+                foreground: Color16.black,
+                background: Color16.white,
+              ),
+              () => print(
+                'default colors'
                 '$fgYellow$bgGreen$underlined$bold$italicized yellow on green'
-                ' $reset'
-                'default colors'),
-          );
-        },
-      );
+                ' $resetItalicized$resetBoldAndFaint$resetUnderlined$resetBg$resetFg'
+                'default colors',
+              ),
+            );
+          },
+        );
 
-      expect(
-        AnsiParser(output2[0]).showControlFunctions(),
-        '[reset][fgBlack;bgWhite]default colors'
-        '[fgYellow;bgGreen;bold;italicized;underlined] yellow on green'
-        ' [resetBoldAndFaint;resetItalicized;resetUnderlined;fgBlack;bgWhite]'
-        'default colors[reset]',
-      );
+        expect(
+          AnsiParser(output1[0]).showControlFunctions(),
+          '[reset][fgBlack;bgWhite]default colors'
+          '[fgYellow;bgGreen;bold;italicized;underlined] yellow on green'
+          ' [resetBoldAndFaint;resetItalicized;resetUnderlined;fgBlack;bgWhite]'
+          'default colors[reset]',
+        );
 
-      final output3 = interceptPrint(
-        // debugPrint: true,
-        () {
-          runZonedAnsiPrinter(
-            defaultState: const SgrPlainState(
-              foreground: Color16.yellow,
-              background: Color16.green,
-              bold: true,
-              italicized: true,
-              singlyUnderlined: true,
-            ),
-            () => print('default colors'
-                '$fgYellow$bgGreen$underlined$bold$italicized yellow on green'
-                ' $reset'
-                'default colors'),
-          );
-        },
-      );
+        final output2 = interceptZonedPrint(
+          // debugPrint: true,
+          () {
+            runZonedAnsiPrinter(
+              defaultState: const SgrPlainState(
+                foreground: Color16.black,
+                background: Color16.white,
+              ),
+              () => print('default colors'
+                  '$fgYellow$bgGreen$underlined$bold$italicized yellow on green'
+                  ' $reset'
+                  'default colors'),
+            );
+          },
+        );
 
-      expect(
-        AnsiParser(output3[0]).showControlFunctions(),
-        '[reset][fgYellow;bgGreen;bold;italicized;underlined]default colors'
-        ' yellow on green default colors[reset]',
-      );
+        expect(
+          AnsiParser(output2[0]).showControlFunctions(),
+          '[reset][fgBlack;bgWhite]default colors'
+          '[fgYellow;bgGreen;bold;italicized;underlined] yellow on green'
+          ' [resetBoldAndFaint;resetItalicized;resetUnderlined;fgBlack;bgWhite]'
+          'default colors[reset]',
+        );
+
+        final output3 = interceptZonedPrint(
+          // debugPrint: true,
+          () {
+            runZonedAnsiPrinter(
+              defaultState: const SgrPlainState(
+                foreground: Color16.yellow,
+                background: Color16.green,
+                bold: true,
+                italicized: true,
+                singlyUnderlined: true,
+              ),
+              () => print('default colors'
+                  '$fgYellow$bgGreen$underlined$bold$italicized yellow on green'
+                  ' $reset'
+                  'default colors'),
+            );
+          },
+        );
+
+        expect(
+          AnsiParser(output3[0]).showControlFunctions(),
+          '[reset][fgYellow;bgGreen;bold;italicized;underlined]default colors'
+          ' yellow on green default colors[reset]',
+        );
+      });
+
+      test('multiline', () {
+        final output1 = interceptZonedPrint(
+          // debugPrint: true,
+          () {
+            runZonedAnsiPrinter(
+              () => print('\nTitle\nSubtitle\n'),
+            );
+          },
+        );
+
+        expect(
+          output1.join('\n').showAnsiControlFunctions(),
+          '\n'
+          '[reset]Title\n'
+          '[reset]Subtitle\n',
+        );
+
+        final output2 = interceptZonedPrint(
+          // debugPrint: true,
+          () {
+            runZonedAnsiPrinter(
+              defaultState: const SgrPlainState(
+                foreground: Color16.yellow,
+                background: Color16.green,
+              ),
+              () => print('\nTitle\nSubtitle\n'),
+            );
+          },
+        );
+
+        expect(
+          output2.join('\n').showAnsiControlFunctions(),
+          '\n'
+          '[reset][fgYellow;bgGreen]Title[reset]\n'
+          '[reset][fgYellow;bgGreen]Subtitle[reset]\n',
+        );
+      });
+
+      test('sink multiline', () {
+        final buf = StringBuffer();
+
+        AnsiPrinter.sink(
+          buf,
+          defaultState: const SgrPlainState(
+            foreground: Color16.yellow,
+            background: Color16.green,
+          ),
+        ).write('\nTitle\nSubtitle\n');
+
+        expect(
+          buf.toString().showAnsiControlFunctions(),
+          '\n'
+          '[reset][fgYellow;bgGreen]Title[reset]\n'
+          '[reset][fgYellow;bgGreen]Subtitle[reset]\n',
+        );
+      });
     });
 
     test('stacked AnsiPrinter', () {
@@ -676,7 +735,7 @@ void main() {
       final stacked5 = bg(bgCyan, b(i('bi($stacked4)')));
       final text = 'def($stacked5)';
 
-      final output = interceptPrint(
+      final output = interceptZonedPrint(
         // debugPrint: true,
         () {
           runZonedAnsiPrinter(

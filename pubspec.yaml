@@ -1,6 +1,6 @@
 name: ansi_escape_codes
 description: Yet another package for using ANSI escape codes and analyzing strings containing the escape codes.
-version: 2.0.1
+version: 2.0.2
 homepage: https://github.com/vi-k/ansi_escape_codes
 
 environment:
