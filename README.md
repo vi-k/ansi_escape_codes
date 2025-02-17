@@ -441,7 +441,7 @@ print(text2 == text3); // true
 AnsiParser allows you to analyze text containing escape codes:
 
 ```dart
-const text = '$bold Bold $fgBlue Bold+cyan $resetBoldAndFaint Cyan ';
+const text = '$bold Bold $fgCyan Bold+cyan $resetBoldAndFaint Cyan ';
 final parser = AnsiParser(text);
 parser.matches.forEach(print);
 // Match(start: 0, end: 4, entity: Sgr(bold), state: SgrState(bold))
@@ -541,19 +541,19 @@ together its state:
 
 ```dart
 final substring = parser.substring(7, maxLength: 9);
-print(AnsiParser(substring).showControlFunctions()); // [bold;fgCyan]Bold+cyan[reset]
+print(AnsiParser(substring).showControlFunctions()); // [fgCyan;bold]Bold+cyan[reset]
 ```
 
-By default, the substring is closed. The initial state is always included in
-the string in optimized form: `[bold;fgCyan]`.
+By default, the substring is closed. Escape codes is always included in the
+string in optimized form:
 
 ```dart
-const test1 = '$bold$fgCyan';
+const test1 = '$fgCyan$bold';
 final test2 = substring.substring(0, substring.indexOf('Bold'));
-print(test1.showEscapeCodes()); // [CSI 1 SGR][CSI 36 SGR]
-print(test2.showEscapeCodes()); // [CSI 1;36 SGR]
-print(AnsiParser(test1).showControlFunctions()); // [bold][fgCyan]
-print(AnsiParser(test2).showControlFunctions()); // [bold;fgCyan]
+print(test1.showEscapeCodes()); // [CSI 36 SGR][CSI 1 SGR]
+print(test2.showEscapeCodes()); // [CSI 36;1 SGR]
+print(AnsiParser(test1).showControlFunctions()); // [fgCyan][bold]
+print(AnsiParser(test2).showControlFunctions()); // [fgCyan;bold]
 print(test1.length); // 9
 print(test2.length); // 7
 ```
@@ -571,7 +571,7 @@ print(parser.showControlFunctions());
 final optimizedText = parser.optimize();
 print(optimizedText.length); // 28
 print(AnsiParser(optimizedText).showControlFunctions());
-// [faint;fgGreen] What's in here? [reset]
+// [fgGreen;faint] What's in here? [reset]
 ```
 
 <a id="quick_analysis"></a>
@@ -670,7 +670,7 @@ Or you can use `AnsiPrinter`:
 const text = ' Default text '
     '$bgWhite$fgBlack Highlighted text '
     '$resetBg$resetFg Default text again $reset';
-final printer = AnsiPrinter.print(
+final printer = AnsiPrinter(
   defaultState: SgrPlainState(
     background: ColorRgb(44, 43, 124),
     foreground: ColorRgb(224, 192, 64),
@@ -804,13 +804,13 @@ print(text);
 ```
 
 But the escape codes don't accumulate, double `bold` equals single `bold`. And
-`resetBoldAndFaint` cancels the bold text. And we don't get what we want at
-all. To fix it, we need to return the state of the text after insertion to the
-state it was before insertion. But it makes it much more difficult to use the
-escape codes. `AnsiPrinter` helps solve this problem:
+first `resetBoldAndFaint` cancels the bold text. And we don't get what we want
+at all. To fix it, we need to return the state of the text after insertion to
+the state it was before insertion. But it makes it much more difficult to use
+the escape codes. `AnsiPrinter` helps solve this problem:
 
 ```dart
-final printer = AnsiPrinter.print(stacked: true);
+final printer = AnsiPrinter(stacked: true);
 printer.print(text);
 // [bold]Dear Sam, welcome to us![resetBoldAndFaint] We are pleased to present to you …
 ```
@@ -821,8 +821,8 @@ escape sequence on output:
 
 ```dart
 const text = '$bold 1 $bold 2 $bold 3 $resetBoldAndFaint 2 $resetBoldAndFaint 1 $resetBoldAndFaint';
-final printer1 = AnsiPrinter.print();
-final printer2 = AnsiPrinter.print(stacked: true);
+final printer1 = AnsiPrinter();
+final printer2 = AnsiPrinter(stacked: true);
 printer1.print(text); // '[bold] 1  2  3 [resetBoldAndFaint] 2  1 '
 printer2.print(text); // '[bold] 1  2  3  2  1 [resetBoldAndFaint]'
 ```

@@ -121,83 +121,139 @@ sealed class SgrState<S extends SgrState<S>> {
 
   S resetUnderlineColor();
 
-  String transitTo(SgrState<void> other) {
+  String transitTo(
+    SgrState<void> other, {
+    bool skipSet = false,
+    bool skipReset = false,
+  }) {
     if ((this as SgrState<void>) != SgrPlainState.defaults &&
         other == SgrPlainState.defaults) {
-      return reset;
+      return skipReset ? '' : reset;
     }
 
     final otherForeground = other.foreground;
     final otherBackground = other.background;
     final otherUnderlineColor = other.underlineColor;
+    final otherUnderlinedStyle = other.underlinedStyle;
+    final otherBlinkingStyle = other.blinkingStyle;
+    final otherFramedStyle = other.framedStyle;
+    final otherScriptedStyle = other.scriptedStyle;
 
-    final numParams = <int>[
-      if (isBold && !other.isBold || isFaint && !other.isFaint) ...[
-        22,
-        if (other.isBold) 1,
-        if (other.isFaint) 2,
-      ] else ...[
-        if (!isBold && other.isBold) 1,
-        if (!isFaint && other.isFaint) 2,
-      ],
-      if (!isItalicized && other.isItalicized) 3,
-      if (isItalicized && !other.isItalicized) 23,
-      if (underlinedStyle != other.underlinedStyle)
-        switch (other.underlinedStyle) {
-          UnderlinedStyle.singly => 4,
-          UnderlinedStyle.doubly => 21,
-          null => 24,
-        },
-      if (blinkingStyle != other.blinkingStyle)
-        switch (other.blinkingStyle) {
-          BlinkingStyle.slowly => 5,
-          BlinkingStyle.rapidly => 6,
-          null => 25,
-        },
-      if (!isNegative && other.isNegative) 7,
-      if (isNegative && !other.isNegative) 27,
-      if (!isConcealed && other.isConcealed) 8,
-      if (isConcealed && !other.isConcealed) 28,
-      if (!isCrossedOut && other.isCrossedOut) 9,
-      if (isCrossedOut && !other.isCrossedOut) 29,
-      if (framedStyle != other.framedStyle)
-        switch (other.framedStyle) {
-          FramedStyle.framed => 51,
-          FramedStyle.encircled => 52,
-          null => 54,
-        },
-      if (!isOverlined && other.isOverlined) 53,
-      if (isOverlined && !other.isOverlined) 55,
-      if (scriptedStyle != other.scriptedStyle)
-        switch (other.scriptedStyle) {
-          ScriptedStyle.superscripted => 73,
-          ScriptedStyle.subscripted => 74,
-          null => 75,
-        },
-      if (foreground != otherForeground)
-        if (otherForeground is Color16)
-          _colorIndex(30, 90, otherForeground)
-        else if (otherForeground == null)
-          _colorIndex(30, 90, null),
-      if (background != otherBackground)
-        if (otherBackground is Color16)
-          _colorIndex(40, 100, otherBackground)
-        else if (otherBackground == null)
-          _colorIndex(40, 100, null),
-      if (underlineColor != otherUnderlineColor && otherUnderlineColor == null)
-        59,
-    ].join(';');
+    final resetParams = skipReset
+        ? const <int>[]
+        : <int>[
+            // Colors.
+            if (foreground != otherForeground && otherForeground == null)
+              _colorIndex(30, 90, null),
+            if (background != otherBackground && otherBackground == null)
+              _colorIndex(40, 100, null),
+            if (underlineColor != otherUnderlineColor &&
+                otherUnderlineColor == null)
+              59,
+            // Bold and faint.
+            if (isBold && !other.isBold || isFaint && !other.isFaint) 22,
+            // Italicized.
+            if (isItalicized && !other.isItalicized) 23,
+            // Underlined.
+            if (underlinedStyle != otherUnderlinedStyle &&
+                otherUnderlinedStyle == null)
+              24,
+            // Blinking.
+            if (blinkingStyle != otherBlinkingStyle &&
+                otherBlinkingStyle == null)
+              25,
+            // Negative.
+            if (isNegative && !other.isNegative) 27,
+            // Concealed.
+            if (isConcealed && !other.isConcealed) 28,
+            // Crossed out.
+            if (isCrossedOut && !other.isCrossedOut) 29,
+            // Framed and encircled.
+            if (framedStyle != otherFramedStyle && otherFramedStyle == null) 54,
+            // Overlined.
+            if (isOverlined && !other.isOverlined) 55,
+            // Superscripted and subscripted.
+            if (scriptedStyle != otherScriptedStyle &&
+                otherScriptedStyle == null)
+              75,
+          ];
 
-    final colorParams = <String>[
-      if (foreground != otherForeground && otherForeground is ExtendedColor)
-        _color(30, 90, otherForeground),
-      if (background != otherBackground && otherBackground is ExtendedColor)
-        _color(40, 100, otherBackground),
-      if (underlineColor != otherUnderlineColor && otherUnderlineColor != null)
-        _color(50, 0, otherUnderlineColor),
-    ].join();
+    final extColorsSetParams = skipSet
+        ? ''
+        : <String>[
+            if (foreground != otherForeground &&
+                otherForeground is ExtendedColor)
+              _color(30, 90, otherForeground),
+            if (background != otherBackground &&
+                otherBackground is ExtendedColor)
+              _color(40, 100, otherBackground),
+            if (underlineColor != otherUnderlineColor &&
+                otherUnderlineColor != null)
+              _color(50, 0, otherUnderlineColor),
+          ].join();
 
-    return '${numParams.isEmpty ? '' : '$CSI$numParams$SGR'}$colorParams';
+    final setParams = skipSet
+        ? const <int>[]
+        : <int>[
+            // Colors.
+            if (foreground != otherForeground && otherForeground is Color16)
+              _colorIndex(30, 90, otherForeground),
+            if (background != otherBackground && otherBackground is Color16)
+              _colorIndex(40, 100, otherBackground),
+            // Bold and faint.
+            if (isBold && !other.isBold || isFaint && !other.isFaint) ...[
+              if (other.isBold) 1,
+              if (other.isFaint) 2,
+            ] else ...[
+              if (!isBold && other.isBold) 1,
+              if (!isFaint && other.isFaint) 2,
+            ],
+            // Italicized.
+            if (!isItalicized && other.isItalicized) 3,
+            // Underlined.
+            if (underlinedStyle != otherUnderlinedStyle &&
+                otherUnderlinedStyle != null)
+              switch (otherUnderlinedStyle) {
+                UnderlinedStyle.singly => 4,
+                UnderlinedStyle.doubly => 21,
+              },
+            // Blinking.
+            if (blinkingStyle != otherBlinkingStyle &&
+                otherBlinkingStyle != null)
+              switch (otherBlinkingStyle) {
+                BlinkingStyle.slowly => 5,
+                BlinkingStyle.rapidly => 6,
+              },
+            // Negative.
+            if (!isNegative && other.isNegative) 7,
+            // Concealed.
+            if (!isConcealed && other.isConcealed) 8,
+            // Crossed out.
+            if (!isCrossedOut && other.isCrossedOut) 9,
+            // Framed and encircled.
+            if (framedStyle != otherFramedStyle && otherFramedStyle != null)
+              switch (otherFramedStyle) {
+                FramedStyle.framed => 51,
+                FramedStyle.encircled => 52,
+              },
+            // Overlined.
+            if (!isOverlined && other.isOverlined) 53,
+            // Superscripted and subscripted.
+            if (scriptedStyle != otherScriptedStyle &&
+                otherScriptedStyle != null)
+              switch (otherScriptedStyle) {
+                ScriptedStyle.superscripted => 73,
+                ScriptedStyle.subscripted => 74,
+              },
+          ];
+
+    return extColorsSetParams.isEmpty
+        ? resetParams.isEmpty && setParams.isEmpty
+            ? ''
+            : '$CSI${[...resetParams, ...setParams].join(';')}$SGR'
+        : '${resetParams.isEmpty ? '' : '$CSI${resetParams.join(';')}$SGR'}'
+            '$extColorsSetParams'
+            '${setParams.isEmpty ? '' : '$CSI${setParams.join(';')}$SGR'}';
   }
 
   SgrPlainState changeDefaultsTo(SgrState other) => SgrPlainState(

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+
 List<String> interceptPrint(
   void Function() body, {
   bool debugPrint = false,
@@ -19,4 +21,11 @@ List<String> interceptPrint(
   );
 
   return output;
+}
+
+extension StringTextExtension on String {
+  String showAnsiControlFunctions() => AnsiParser(this).showControlFunctions();
+
+  String optimizeAnsiControlFunctions({bool close = true}) =>
+      AnsiParser(this).optimize(close: close);
 }

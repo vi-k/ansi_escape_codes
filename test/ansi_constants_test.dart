@@ -342,9 +342,7 @@ void main() {
           ' ';
 
       final parser = AnsiParser(text);
-
       expect(parser.removeAll(), ' first second third ');
-
       expect(
         parser.showControlFunctions(),
         ' [fgWhite][bold][faint]first[resetBoldAndFaint]'
@@ -352,174 +350,236 @@ void main() {
         ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined][slowlyBlinking][negative]third[resetUnderlined][resetFg][resetBg]'
         ' ',
       );
-
       expect(parser.isClosed, isFalse);
 
-      expect(
-        AnsiParser(parser.substring(0)).showControlFunctions(),
-        ' [fgWhite][bold][faint]first[resetBoldAndFaint]'
-        ' [bg256Green][fg256Yellow][italicized]second[resetItalicized][resetBg][resetFg]'
-        ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined][slowlyBlinking][negative]third[resetUnderlined][resetFg][resetBg]'
-        ' [reset]',
-      );
-      expect(
-        AnsiParser(parser.substring(0, close: false)).showControlFunctions(),
-        ' [fgWhite][bold][faint]first[resetBoldAndFaint]'
-        ' [bg256Green][fg256Yellow][italicized]second[resetItalicized][resetBg][resetFg]'
-        ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined][slowlyBlinking][negative]third[resetUnderlined][resetFg][resetBg]'
-        ' ',
-      );
-      expect(
-          AnsiParser(AnsiParser(parser.substring(0)).optimize())
-              .showControlFunctions(),
-          ' [bold;faint;fgWhite]first[resetBoldAndFaint]'
-          ' [italicized][fg256Yellow][bg256Green]second[reset]'
-          ' [underlined;slowlyBlinking;negative][fgRgb(255,128,0)][bgRgb(48,64,128)]third[resetUnderlined;resetFg;resetBg]'
-          ' [reset]');
+      final optimizedText = parser.optimize();
+      {
+        final parser2 = AnsiParser(optimizedText);
+        expect(
+            parser2.showControlFunctions(),
+            ' [fgWhite;bold;faint]first[resetBoldAndFaint]'
+            ' [fg256Yellow][bg256Green][italicized]second[reset]'
+            ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined;slowlyBlinking;negative]third[resetFg;resetBg;resetUnderlined]'
+            ' [reset]');
+        expect(parser2.isClosed, isTrue);
+      }
+
+      final unclosedOptimizedText = parser.optimize(close: false);
+      {
+        final parser2 = AnsiParser(unclosedOptimizedText);
+        expect(
+            parser2.showControlFunctions(),
+            ' [fgWhite;bold;faint]first[resetBoldAndFaint]'
+            ' [fg256Yellow][bg256Green][italicized]second[reset]'
+            ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined;slowlyBlinking;negative]third[resetFg;resetBg;resetUnderlined]'
+            ' ');
+        expect(parser2.isClosed, isFalse);
+      }
+
+      // All.
+      {
+        final substring = parser.substring(0);
+        expect(substring, optimizedText);
+        expect(substring.optimizeAnsiControlFunctions(), substring);
+
+        final unclosed = parser.substring(0, close: false);
+        expect(
+          unclosed,
+          optimizedText.substring(
+            0,
+            optimizedText.length - 4, // ESC+[+0+SGR=reset
+          ),
+        );
+        expect(
+          unclosed.optimizeAnsiControlFunctions(),
+          optimizedText,
+        );
+      }
 
       // " first"
-      expect(
-        AnsiParser(parser.substring(0, maxLength: 6)).showControlFunctions(),
-        ' [fgWhite][bold][faint]first[reset]',
-      );
-      expect(
-        AnsiParser(parser.substring(0, maxLength: 6, close: false))
-            .showControlFunctions(),
-        ' [fgWhite][bold][faint]first',
-      );
-      expect(
-        AnsiParser(AnsiParser(parser.substring(0, maxLength: 6)).optimize())
-            .showControlFunctions(),
-        ' [bold;faint;fgWhite]first[reset]',
-      );
+      {
+        final substring = parser.substring(0, maxLength: 6);
+        expect(
+          substring.showAnsiControlFunctions(),
+          ' [fgWhite;bold;faint]first[reset]',
+        );
+        expect(substring.optimizeAnsiControlFunctions(), substring);
+
+        final unclosed = parser.substring(0, maxLength: 6, close: false);
+        expect(
+          unclosed.showAnsiControlFunctions(),
+          ' [fgWhite;bold;faint]first[resetBoldAndFaint]',
+        );
+        expect(unclosed.optimizeAnsiControlFunctions(close: false), unclosed);
+      }
 
       // " first "
-      expect(
-        AnsiParser(parser.substring(0, maxLength: 7)).showControlFunctions(),
-        ' [fgWhite][bold][faint]first[resetBoldAndFaint] [reset]',
-      );
-      expect(
-        AnsiParser(parser.substring(0, maxLength: 7, close: false))
-            .showControlFunctions(),
-        ' [fgWhite][bold][faint]first[resetBoldAndFaint] ',
-      );
-      expect(
-        AnsiParser(AnsiParser(parser.substring(0, maxLength: 7)).optimize())
-            .showControlFunctions(),
-        ' [bold;faint;fgWhite]first[resetBoldAndFaint] [reset]',
-      );
+      {
+        final substring = parser.substring(0, maxLength: 7);
+        expect(
+          substring.showAnsiControlFunctions(),
+          ' [fgWhite;bold;faint]first[resetBoldAndFaint] [reset]',
+        );
+        expect(substring.optimizeAnsiControlFunctions(), substring);
+
+        final unclosed = parser.substring(0, maxLength: 7, close: false);
+        expect(
+          unclosed.showAnsiControlFunctions(),
+          ' [fgWhite;bold;faint]first[resetBoldAndFaint] ',
+        );
+        expect(unclosed.optimizeAnsiControlFunctions(close: false), unclosed);
+      }
 
       // "first"
-      expect(
-        AnsiParser(parser.substring(1, maxLength: 5)).showControlFunctions(),
-        '[bold;faint;fgWhite]first[reset]',
-      );
-      expect(
-        AnsiParser(parser.substring(1, maxLength: 5, close: false))
-            .showControlFunctions(),
-        '[bold;faint;fgWhite]first',
-      );
-      expect(
-        AnsiParser(AnsiParser(parser.substring(1, maxLength: 5)).optimize())
-            .showControlFunctions(),
-        '[bold;faint;fgWhite]first[reset]',
-      );
+      {
+        final substring = parser.substring(1, maxLength: 5);
+        expect(
+          substring.showAnsiControlFunctions(),
+          '[fgWhite;bold;faint]first[reset]',
+        );
+        expect(substring.optimizeAnsiControlFunctions(), substring);
+
+        final unclosed = parser.substring(1, maxLength: 5, close: false);
+        expect(
+          unclosed.showAnsiControlFunctions(),
+          '[fgWhite;bold;faint]first[resetBoldAndFaint]',
+        );
+        expect(unclosed.optimizeAnsiControlFunctions(close: false), unclosed);
+      }
 
       // "second"
-      expect(
-        AnsiParser(parser.substring(7, maxLength: 6)).showControlFunctions(),
-        '[italicized][fg256Yellow][bg256Green]second[reset]',
-      );
-      expect(
-        AnsiParser(parser.substring(7, maxLength: 6, close: false))
-            .showControlFunctions(),
-        '[italicized][fg256Yellow][bg256Green]second',
-      );
-      expect(
-        AnsiParser(AnsiParser(parser.substring(7, maxLength: 6)).optimize())
-            .showControlFunctions(),
-        '[italicized][fg256Yellow][bg256Green]second[reset]',
-      );
+      {
+        final substring = parser.substring(7, maxLength: 6);
+        expect(
+          substring.showAnsiControlFunctions(),
+          '[fg256Yellow][bg256Green][italicized]second[reset]',
+        );
+        expect(substring.optimizeAnsiControlFunctions(), substring);
+
+        final unclosed = parser.substring(7, maxLength: 6, close: false);
+        expect(
+          unclosed.showAnsiControlFunctions(),
+          '[fg256Yellow][bg256Green][italicized]second[reset]',
+        );
+        expect(unclosed.optimizeAnsiControlFunctions(close: false), unclosed);
+      }
 
       // "third"
-      expect(
-        AnsiParser(parser.substring(14, maxLength: 5)).showControlFunctions(),
-        '[underlined;slowlyBlinking;negative]'
-        '[fgRgb(255,128,0)][bgRgb(48,64,128)]third[reset]',
-      );
-      expect(
-        AnsiParser(parser.substring(14, maxLength: 5, close: false))
-            .showControlFunctions(),
-        '[underlined;slowlyBlinking;negative]'
-        '[fgRgb(255,128,0)][bgRgb(48,64,128)]third',
-      );
-      expect(
-        AnsiParser(AnsiParser(parser.substring(14, maxLength: 5)).optimize())
-            .showControlFunctions(),
-        '[underlined;slowlyBlinking;negative]'
-        '[fgRgb(255,128,0)][bgRgb(48,64,128)]third[reset]',
-      );
+      {
+        final substring = parser.substring(14, maxLength: 5);
+        expect(
+          substring.showAnsiControlFunctions(),
+          '[fgRgb(255,128,0)][bgRgb(48,64,128)]'
+          '[underlined;slowlyBlinking;negative]'
+          'third[reset]',
+        );
+        expect(substring.optimizeAnsiControlFunctions(), substring);
+
+        final unclosed = parser.substring(14, maxLength: 5, close: false);
+        expect(
+          unclosed.showAnsiControlFunctions(),
+          '[fgRgb(255,128,0)][bgRgb(48,64,128)]'
+          '[underlined;slowlyBlinking;negative]'
+          'third[resetFg;resetBg;resetUnderlined]',
+        );
+        expect(unclosed.optimizeAnsiControlFunctions(close: false), unclosed);
+      }
 
       // "rst sec"
-      expect(
-        AnsiParser(parser.substring(3, maxLength: 7)).showControlFunctions(),
-        '[bold;faint;fgWhite]rst[resetBoldAndFaint]'
-        ' [bg256Green][fg256Yellow][italicized]sec'
-        '[reset]',
-      );
-      expect(
-        AnsiParser(parser.substring(3, maxLength: 7)).showControlFunctions(),
-        '[bold;faint;fgWhite]rst[resetBoldAndFaint]'
-        ' [bg256Green][fg256Yellow][italicized]sec[reset]',
-      );
-      expect(
-        AnsiParser(parser.substring(3, maxLength: 7, close: false))
-            .showControlFunctions(),
-        '[bold;faint;fgWhite]rst[resetBoldAndFaint]'
-        ' [bg256Green][fg256Yellow][italicized]sec',
-      );
-      expect(
-        AnsiParser(AnsiParser(parser.substring(3, maxLength: 7)).optimize())
-            .showControlFunctions(),
-        '[bold;faint;fgWhite]rst[resetBoldAndFaint]'
-        ' [italicized][fg256Yellow][bg256Green]sec[reset]',
-      );
+      {
+        final substring = parser.substring(3, maxLength: 7);
+        expect(
+          substring.showAnsiControlFunctions(),
+          '[fgWhite;bold;faint]rst[resetBoldAndFaint]'
+          ' [fg256Yellow][bg256Green][italicized]sec'
+          '[reset]',
+        );
+        expect(substring.optimizeAnsiControlFunctions(), substring);
+
+        final unclosed = parser.substring(3, maxLength: 7, close: false);
+        expect(
+          unclosed.showAnsiControlFunctions(),
+          '[fgWhite;bold;faint]rst[resetBoldAndFaint]'
+          ' [fg256Yellow][bg256Green][italicized]sec',
+        );
+        expect(unclosed.optimizeAnsiControlFunctions(close: false), unclosed);
+      }
 
       // "ond thi"
-      expect(
-        AnsiParser(parser.substring(10, maxLength: 7)).showControlFunctions(),
-        '[italicized][fg256Yellow][bg256Green]ond[resetItalicized][resetBg][resetFg]'
-        ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined][slowlyBlinking][negative]thi[reset]',
-      );
-      expect(
-        AnsiParser(parser.substring(10, maxLength: 7, close: false))
-            .showControlFunctions(),
-        '[italicized][fg256Yellow][bg256Green]ond[resetItalicized][resetBg][resetFg]'
-        ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined][slowlyBlinking][negative]thi',
-      );
-      expect(
-        AnsiParser(AnsiParser(parser.substring(10, maxLength: 7)).optimize())
-            .showControlFunctions(),
-        '[italicized][fg256Yellow][bg256Green]ond[reset]'
-        ' [underlined;slowlyBlinking;negative][fgRgb(255,128,0)][bgRgb(48,64,128)]thi[reset]',
-      );
+      {
+        final substring = parser.substring(10, maxLength: 7);
+        expect(
+          substring.showAnsiControlFunctions(),
+          '[fg256Yellow][bg256Green][italicized]ond[reset]'
+          ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined;slowlyBlinking;negative]thi[reset]',
+        );
+        expect(substring.optimizeAnsiControlFunctions(), substring);
+
+        final unclosed = parser.substring(10, maxLength: 7, close: false);
+        expect(
+          unclosed.showAnsiControlFunctions(),
+          '[fg256Yellow][bg256Green][italicized]ond[reset]'
+          ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined;slowlyBlinking;negative]thi',
+        );
+        expect(unclosed.optimizeAnsiControlFunctions(close: false), unclosed);
+      }
 
       // "rd "
+      {
+        final substring = parser.substring(17);
+        expect(
+          substring.showAnsiControlFunctions(),
+          '[fgRgb(255,128,0)][bgRgb(48,64,128)]'
+          '[underlined;slowlyBlinking;negative]'
+          'rd[resetFg;resetBg;resetUnderlined] [reset]',
+        );
+        expect(substring.optimizeAnsiControlFunctions(), substring);
+
+        final unclosed = parser.substring(17, close: false);
+        expect(
+          unclosed.showAnsiControlFunctions(),
+          '[fgRgb(255,128,0)][bgRgb(48,64,128)]'
+          '[underlined;slowlyBlinking;negative]'
+          'rd[resetFg;resetBg;resetUnderlined] ',
+        );
+        expect(unclosed.optimizeAnsiControlFunctions(close: false), unclosed);
+      }
+
+      final splicedText1 = parser.substring(0, maxLength: 1) +
+          parser.substring(1, maxLength: 5) + // first
+          parser.substring(6, maxLength: 1) +
+          parser.substring(7, maxLength: 6) + // second
+          parser.substring(13, maxLength: 1) +
+          parser.substring(14, maxLength: 5) + // third
+          parser.substring(19, maxLength: 1);
+      expect(splicedText1.optimizeAnsiControlFunctions(), optimizedText);
+
+      final splicedText2 = parser.substring(0, maxLength: 1, close: false) +
+          parser.substring(1, maxLength: 5, close: false) + // first
+          parser.substring(6, maxLength: 1, close: false) +
+          parser.substring(7, maxLength: 6, close: false) + // second
+          parser.substring(13, maxLength: 1, close: false) +
+          parser.substring(14, maxLength: 5, close: false) + // third
+          parser.substring(19, maxLength: 1, close: false);
       expect(
-        AnsiParser(parser.substring(17)).showControlFunctions(),
-        '[underlined;slowlyBlinking;negative][fgRgb(255,128,0)]'
-        '[bgRgb(48,64,128)]rd[resetUnderlined][resetFg][resetBg] [reset]',
+        splicedText2.optimizeAnsiControlFunctions(close: false),
+        unclosedOptimizedText,
       );
+
+      final splicedText3 = parser.substring(0, maxLength: 3) + // ' fi'
+          parser.substring(3, maxLength: 7) + // rst sec
+          parser.substring(10, maxLength: 7) + // ond thi
+          parser.substring(17, maxLength: 3); // 'rd '
+      expect(splicedText3.optimizeAnsiControlFunctions(), optimizedText);
+
+      final splicedText4 =
+          parser.substring(0, maxLength: 3, close: false) + // ' fi'
+              parser.substring(3, maxLength: 7, close: false) + // rst sec
+              parser.substring(10, maxLength: 7, close: false) + // ond thi
+              parser.substring(17, maxLength: 3, close: false); // 'rd '
       expect(
-        AnsiParser(parser.substring(17, close: false)).showControlFunctions(),
-        '[underlined;slowlyBlinking;negative][fgRgb(255,128,0)]'
-        '[bgRgb(48,64,128)]rd[resetUnderlined][resetFg][resetBg] ',
-      );
-      expect(
-        AnsiParser(AnsiParser(parser.substring(17)).optimize())
-            .showControlFunctions(),
-        '[underlined;slowlyBlinking;negative][fgRgb(255,128,0)]'
-        '[bgRgb(48,64,128)]rd[resetUnderlined;resetFg;resetBg] [reset]',
+        splicedText4.optimizeAnsiControlFunctions(close: false),
+        unclosedOptimizedText,
       );
     });
 
@@ -545,7 +605,7 @@ void main() {
       expect(
         AnsiParser(output1[0]).showControlFunctions(),
         '[reset][fgBlack;bgWhite]default colors'
-        '[bold;italicized;underlined;fgYellow;bgGreen] yellow on green'
+        '[fgYellow;bgGreen;bold;italicized;underlined] yellow on green'
         ' [resetBoldAndFaint;resetItalicized;resetUnderlined;fgBlack;bgWhite]'
         'default colors[reset]',
       );
@@ -569,7 +629,7 @@ void main() {
       expect(
         AnsiParser(output2[0]).showControlFunctions(),
         '[reset][fgBlack;bgWhite]default colors'
-        '[bold;italicized;underlined;fgYellow;bgGreen] yellow on green'
+        '[fgYellow;bgGreen;bold;italicized;underlined] yellow on green'
         ' [resetBoldAndFaint;resetItalicized;resetUnderlined;fgBlack;bgWhite]'
         'default colors[reset]',
       );
@@ -595,7 +655,7 @@ void main() {
 
       expect(
         AnsiParser(output3[0]).showControlFunctions(),
-        '[reset][bold;italicized;underlined;fgYellow;bgGreen]default colors'
+        '[reset][fgYellow;bgGreen;bold;italicized;underlined]default colors'
         ' yellow on green default colors[reset]',
       );
     });
@@ -634,15 +694,15 @@ void main() {
         AnsiParser(output[0]).showControlFunctions(),
         '[reset]'
         '[fg256Rgb555][bg256Rgb320]def('
-        '[bold;italicized;bgCyan]bi('
-        '[underlined;fgYellow;bgMagenta]iu('
-        '[crossedOut;fgCyan;bgBlue]us('
-        '[faint;fgYellow;bgGreen]sf('
+        '[bgCyan;bold;italicized]bi('
+        '[fgYellow;bgMagenta;underlined]iu('
+        '[fgCyan;bgBlue;crossedOut]us('
+        '[fgYellow;bgGreen;faint]sf('
         '[fgWhite;bgRed]fb'
         '[fgYellow;bgGreen])'
-        '[resetBoldAndFaint;bold;fgCyan;bgBlue])'
+        '[resetBoldAndFaint;fgCyan;bgBlue;bold])'
         '[resetCrossedOut;fgYellow;bgMagenta])'
-        '[resetUnderlined;bgCyan][fg256Rgb555])'
+        '[resetUnderlined][fg256Rgb555][bgCyan])'
         '[resetBoldAndFaint;resetItalicized][bg256Rgb320])'
         '[reset]',
       );

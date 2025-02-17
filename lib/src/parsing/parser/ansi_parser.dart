@@ -28,6 +28,7 @@ part 'matches/match.dart';
 part 'matches/matches.dart';
 part 'matches/matches_result.dart';
 
+/// Parser for analyzing strings containing codes.
 sealed class AnsiParser {
   factory AnsiParser(
     String input, {
@@ -42,10 +43,13 @@ sealed class AnsiParser {
   @visibleForTesting
   bool get isParsed;
 
+  /// List of matches.
   Iterable<Match<SgrState<void>>> get matches;
 
+  /// Final state of the string.
   SgrState get finalState;
 
+  /// String length without escape codes.
   int get length;
 
   /// Whether the string is closed.
@@ -108,27 +112,30 @@ sealed class AnsiParser {
   ///     ' ${italicized}italic$resetItalicized$resetUnderlined'
   ///     ' $resetFg';
   /// final substring = AnsiParser(string).substring(3, maxLength: 6);
-  /// print(AnsiParser(substring).replaceAll((code) => '[${code.id}]'));
-  /// // [bold;underlined;fgRed]ld[resetBoldAndFaint] [italicized]ita[reset]
+  /// print(AnsiParser(substring).showControlFunctions());
+  /// // [fgRed;bold;underlined]ld[resetBoldAndFaint] [italicized]ita[reset]
   /// ```
   ///
-  /// By default, the string is closed ('[resetItalicized;resetFg]' at the end
-  /// of the string). But if you disable the [close] parameter, the string will
-  /// not be closed. This means that when it is printed, it will affect the
-  /// next text output:
+  /// By default, the string will be closed ('[reset]' at the end of the
+  /// string). If you disable the [close] parameter, the string will not be
+  /// closed. This means that when it is printed, it will affect the next text
+  /// output:
   ///
   /// ```dart
-  /// AnsiParser(string).substring(3, maxLength: 6, close: false);
-  /// // [bold;underlined;fgRed]ld[resetBoldAndFaint] [italicized]ita
+  /// final substring =
+  ///     AnsiParser(string).substring(3, maxLength: 6, close: false);
+  /// print(AnsiParser(substring).showControlFunctions());
+  /// // [fgRed;bold;underlined]ld[resetBoldAndFaint] [italicized]ita
   /// ```
   ///
-  /// The first and last escape codes are not copied into the string directly,
-  /// but are inserted in an optimized form:
+  /// The escape codes are not copied into the string directly, but are
+  /// inserted in an optimized form:
   ///
   /// ```dart
   /// const string = '$bold$bold$italicized$resetItalicized${underlined}text'
   ///     '$resetBoldAndFaint$resetUnderlined';
   /// final substring = AnsiParser(string).substring(0, maxLength: 4);
+  /// print(AnsiParser(substring).showControlFunctions());
   /// // [bold;underlined]text[reset]
   /// ```
   String substring(
@@ -258,22 +265,18 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
       throw RangeError.range(end, start, null, 'end');
     }
 
-    if (!close && start == 0 && (end == null || end == input.length)) {
-      return input;
-    }
-
     final buf = StringBuffer();
     var pos = 0;
-    S? currentState;
+    var currentState = SgrPlainState.defaults;
+    Match<S>? lastMatch;
 
     for (final m in matches) {
       final entity = m.entity;
 
       switch (entity) {
         case Text():
-          currentState = m.state;
           final string = entity.string;
-          pos += entity.string.length;
+          pos += string.length;
           if (pos >= start) {
             final substring = string.substring(
               math.max(string.length - (pos - start), 0),
@@ -282,24 +285,19 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
                   : math.min(string.length - (pos - end), string.length),
             );
             if (substring.isNotEmpty) {
-              if (buf.isEmpty) {
-                buf.write(
-                  SgrPlainState.defaults.transitTo(m.state),
-                );
-              }
-              buf.write(substring);
+              buf
+                ..write(currentState.transitTo(m.state))
+                ..write(substring);
+              currentState = m.state.toPlainState();
+              lastMatch = m;
             }
           }
 
         case EscapeCode():
-          if (pos >= start) {
-            if (buf.isNotEmpty) {
-              buf.write(entity.string);
-            }
-          }
+          lastMatch = m;
       }
 
-      if (end != null && pos >= end) {
+      if (end != null && pos > end) {
         break;
       }
     }
@@ -308,17 +306,20 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
       throw RangeError.range(start, 0, pos, 'start');
     }
 
-    if (close && currentState != null) {
-      buf.write(currentState.transitTo(SgrPlainState.defaults));
+    if (lastMatch != null) {
+      buf.write(
+        currentState.transitTo(
+          close ? SgrPlainState.defaults : lastMatch.state,
+          skipSet: true,
+        ),
+      );
     }
 
     return buf.toString();
   }
 
   @override
-  String optimize({
-    bool close = true,
-  }) {
+  String optimize({bool close = true}) {
     final buf = StringBuffer();
     var currentState = SgrPlainState.defaults;
 
@@ -335,8 +336,12 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
       }
     }
 
+    final lastMatch = matches.lastOrNull;
+
     if (close) {
       buf.write(currentState.transitTo(SgrPlainState.defaults));
+    } else if (lastMatch != null) {
+      buf.write(currentState.transitTo(lastMatch.state));
     }
 
     return buf.toString();

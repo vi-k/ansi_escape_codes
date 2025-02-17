@@ -1,7 +1,8 @@
 part of 'ansi_parser.dart';
 
+/// Printer for replacing the default text style.
 sealed class AnsiPrinter implements StringSink {
-  factory AnsiPrinter.print({
+  factory AnsiPrinter({
     SgrPlainState defaultState = SgrPlainState.defaults,
     void Function(String)? output,
     bool stacked = false,
@@ -279,7 +280,7 @@ R runZonedAnsiPrinter<R>(
   bool ansiCodesEnabled = true,
   @visibleForTesting bool debugForTest = false,
 }) {
-  final printer = AnsiPrinter.print(
+  final printer = AnsiPrinter(
     defaultState: defaultState,
     output: output ?? (line) => Zone.current.parent!.print(line),
     stacked: stacked,

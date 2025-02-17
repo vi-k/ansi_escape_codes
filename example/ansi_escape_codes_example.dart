@@ -1,4 +1,4 @@
-// ignore_for_file: cascade_invocations, lines_longer_than_80_chars, prefer_single_quotes
+// ignore_for_file: cascade_invocations, lines_longer_than_80_chars
 
 import 'dart:io';
 
@@ -149,8 +149,8 @@ void main() {
     );
 
     print('');
-    print('With AnsiPrinter.print (the default state is overrided):');
-    final printer = AnsiPrinter.print(
+    print('With AnsiPrinter (the default state is overrided):');
+    final printer = AnsiPrinter(
       defaultState: defaultState,
     );
     printer.print(text);
@@ -193,17 +193,17 @@ void main() {
     print(text);
 
     print('');
-    print('With AnsiPrinter.print (the default state is overrided):');
-    final simplePrinter = AnsiPrinter.print(
+    print('With AnsiPrinter (the default state is overrided):');
+    final simplePrinter = AnsiPrinter(
       defaultState: defaultState,
     );
     simplePrinter.print(text);
 
     print('');
     print(
-      'With stacked AnsiPrinter.print (the state is accumulated in the stack):',
+      'With stacked AnsiPrinter (the state is accumulated in the stack):',
     );
-    final printer = AnsiPrinter.print(
+    final printer = AnsiPrinter(
       defaultState: defaultState,
       stacked: true,
       // ignore: invalid_use_of_visible_for_testing_member
@@ -228,7 +228,7 @@ void main() {
 
     print('');
     print('The state is accumulated in the stack:');
-    final stackedPrinter = AnsiPrinter.print(stacked: true);
+    final stackedPrinter = AnsiPrinter(stacked: true);
     stackedPrinter
         .print(text2); // <i>Important text Important note Important text</i>
   }
