@@ -109,10 +109,10 @@ const String bgHighCyan = '$CSI$BG_HIGH_CYAN$SGR';
 const String bgHighWhite = '$CSI$BG_HIGH_WHITE$SGR';
 
 /// Default display color (implementation-defined).
-const String resetFg = '${CSI}39$SGR';
+const String resetFg = '$CSI$FG_DEFAULT$SGR';
 
 /// Default background color (implementation-defined).
-const String resetBg = '${CSI}49$SGR';
+const String resetBg = '$CSI$BG_DEFAULT$SGR';
 
 /// Default underline color.
-const String resetUnderlineColor = '${CSI}59$SGR';
+const String resetUnderlineColor = '$CSI$UNDERLINE_COLOR_DEFAULT$SGR';

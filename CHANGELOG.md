@@ -1,3 +1,6 @@
+## 2.1.1 - not published
+- Fix README.
+
 ## 2.1.0
 
 - Add methods `indexOf`, `lastIndexOf`, `contains`, `startsWith`, `endsWith`

@@ -271,7 +271,7 @@ Where `s` is:
 |    36 | `FG_CYAN`                   | `fgCyan`                                | Cyan display (color #6 from 256-color table)               |
 |    37 | `FG_WHITE`                  | `fgWhite`                               | White display (color #7 from 256-color table)              |
 |    38 | `FOREGROUND`                | `fg256…/fgRgb…`                         | Display color from 256-color table or by RGB               |
-|    39 | `FG_DEFAULT`                | `fgDefault`                             | Default display color (implementation-defined)             |
+|    39 | `FG_DEFAULT`                | `resetFg`                               | Default display color (implementation-defined)             |
 |    40 | `BG_BLACK`                  | `bgBlack`                               | Black background (color #0 from 256-color table)           |
 |    41 | `BG_RED`                    | `bgRed`                                 | Red background (color #1 from 256-color table)             |
 |    42 | `BG_GREEN`                  | `bgGreen`                               | Green background (color #2 from 256-color table)           |
@@ -281,7 +281,7 @@ Where `s` is:
 |    46 | `BG_CYAN`                   | `bgCyan`                                | Cyan background (color #6 from 256-color table)            |
 |    47 | `BG_WHITE`                  | `bgWhite`                               | White background (color #7 from 256-color table)           |
 |    48 | `BACKGROUND`                | `bg256…/bgRgb…`                         | Background color from 256-color table or by RGB            |
-|    49 | `BG_DEFAULT`                | `bgDefault`                             | Default background color (implementation-defined)          |
+|    49 | `BG_DEFAULT`                | `resetBg`                               | Default background color (implementation-defined)          |
 |    51 | `FRAMED`                    | `framed`                                | Framed                                                     |
 |    52 | `ENCIRCLED`                 | `encircled`                             | Encircled                                                  |
 |    53 | `OVERLINED`                 | `overlined`                             | Overlined                                                  |
