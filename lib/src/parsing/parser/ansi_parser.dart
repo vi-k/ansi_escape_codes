@@ -93,6 +93,8 @@ sealed class AnsiParser {
   });
 
   /// Remove all escape codes.
+  ///
+  /// Returns plain string without escape codes.
   String removeAll();
 
   /// Show all control functions at the string.
@@ -155,29 +157,34 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
   final S initialState;
 
   Matches<S>? _matches;
+  String? _plainString;
 
   _ParserBase._(this.input, this.initialState) : super._();
+
+  String get _requirePlainString => _plainString ??= () {
+        final buf = StringBuffer();
+        for (final m in matches) {
+          final entity = m.entity;
+          if (entity is Text) {
+            buf.write(entity.string);
+          }
+        }
+
+        return buf.toString();
+      }();
 
   @override
   @visibleForTesting
   bool get isParsed => _matches?.isParsed ?? false;
 
   @override
-  Matches<S> get matches => _matches ?? Matches._(input, initialState);
+  Matches<S> get matches => _matches ??= Matches._(input, initialState);
 
   @override
   S get finalState => matches._requireParsingResult.finalState;
 
   @override
-  int get length => matches.fold(
-        0,
-        (prev, m) =>
-            prev +
-            switch (m.entity) {
-              Text(:final string) => string.length,
-              _ => 0,
-            },
-      );
+  int get length => _requirePlainString.length;
 
   @override
   bool get isClosed => finalState == SgrPlainState.defaults;
@@ -185,7 +192,20 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
   @override
   void prepare() {
     matches._requireParsingResult;
+    _requirePlainString;
   }
+
+  int indexOf(Pattern pattern) => _requirePlainString.indexOf(pattern);
+
+  int lastIndexOf(Pattern pattern) => _requirePlainString.lastIndexOf(pattern);
+
+  bool contains(Pattern other, [int startIndex = 0]) =>
+      _requirePlainString.contains(other, startIndex);
+
+  bool startsWith(Pattern pattern, [int index = 0]) =>
+      _requirePlainString.startsWith(pattern, index);
+
+  bool endsWith(String other) => _requirePlainString.endsWith(other);
 
   @override
   S stateAtPos(int pos) {
@@ -228,19 +248,7 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
   }
 
   @override
-  String removeAll() {
-    final buf = StringBuffer();
-
-    for (final m in matches) {
-      switch (m.entity) {
-        case Text(:final string):
-          buf.write(string);
-        case EscapeCode():
-      }
-    }
-
-    return buf.toString();
-  }
+  String removeAll() => _requirePlainString;
 
   @override
   String showControlFunctions({

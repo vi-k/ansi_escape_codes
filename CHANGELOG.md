@@ -1,3 +1,8 @@
+## 2.1.0
+
+- Add methods `indexOf`, `lastIndexOf`, `contains`, `startsWith`, `endsWith`
+  that work with a plain string.
+
 ## 2.0.1-2.0.3
 
 - Fix multiline output by AnsiPrinter.

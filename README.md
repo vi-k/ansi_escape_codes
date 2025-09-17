@@ -9,35 +9,34 @@ are a few key features:
 
 ## Table of contents
 
-1. [Control function constants and predefined values](#control_functions)
+1. [Control function constants and predefined values](#1-control-function-constants-and-predefined-values)
 
-    1.1. [Control codes (C0 set)](#c0)
+    1.1. [Control codes (C0 set)](#11-control-codes-c0-set)
 
-    1.2. [Control functions ESC Fe (C1 set)](#c1)
+    1.2. [Control functions ESC Fe (C1 set)](#12-control-functions-esc-fe-c1-set)
 
-    1.3. [Control sequences (CSI)](#csi)
+    1.3. [Control sequences (CSI)](#13-control-sequences-csi)
 
-    1.4. [Predefined values](#predefined_values)
+    1.4. [Predefined values](#14-predefined-values)
 
-    1.5. [Independent control functions ESC Fs](#independent_functions)
+    1.5. [Independent control functions ESC Fs](#15-independent-control-functions-esc-fs)
 
-    1.6. [Select graphic rendition (SGR)](#sgr)
+    1.6. [Select graphic rendition (SGR)](#16-select-graphic-rendition-sgr)
 
-    1.7. [256-color table](#256_colors)
+    1.7. [256-color table](#17-256-color-table)
 
-    1.8. [24-bit RGB colors](#rgb)
+    1.8. [24-bit RGB colors](#18-24-bit-rgb-colors)
 
-2. [Analyzing and parsing](#analysis)
+2. [Analyzing and parsing](#2-analyzing-and-parsing)
 
-    2.1. [AnsiParser](#parser)
+    2.1. [AnsiParser](#21-ansiparser)
 
-    2.2. [Quick analysis](#quick_analysis)
+    2.2. [Quick analysis](#22-quick-analysis)
 
-    2.3. [AnsiPrinter](#printer)
+    2.3. [AnsiPrinter](#23-ansiprinter)
 
-    2.4. [Stacked AnsiPrinter](#stacked_printer)
+    2.4. [Stacked AnsiPrinter](#24-stacked-ansiprinter)
 
-<a id="control_functions"></a>
 ## 1. Control function constants and predefined values
 
 Strings containing ANSI escape codes can be constants:
@@ -87,8 +86,6 @@ Control codes are deliberately named in SCREAMING_SNAKE_CASE as opposed to the
 common Dart camelCase. First, this is how they are named in the Standard.
 Second, in this form they will not prevent you from naming your own variables.
 
-<a id="c0"></a>
-
 ### 1.1. Control codes (C0 set)
 
 These control functions (control codes) are represented by codes from 0x00 to
@@ -113,7 +110,6 @@ import 'package:ansi_escape_codes/controls.dart';
 print('\t\r\n' == '$HT$CR$LF'); // true
 ```
 
-<a id="c1"></a>
 ### 1.2. Control functions ESC Fe (C1 set)
 
 These control functions are represented by 2-character escape sequences
@@ -146,7 +142,6 @@ print('${CSI}3g'); // Reset tabulations stops to default
 print('Go to ${OSC}8;;https://pub.dev/packages/ansi_escape_codes${ST}pub.dev${OSC}8;;$ST')
 ```
 
-<a id="csi"></a>
 ### 1.3. Control sequences (CSI)
 
 A control sequence is a string starting with the control function CONTROL
@@ -191,7 +186,6 @@ print('${CSI}4${RM}tree${CSI}3${CUB}h'); // thee
 print('${CSI}3$SGR Italicized text ${CSI}0$SGR');
 ```
 
-<a id="predefined_values"></a>
 ### 1.4. Predefined values
 
 Predefined values replace the use of control functions with the style used in
@@ -223,12 +217,10 @@ print('${CSI}4$CUU' == '${cursorUpOpen}4$cursorUpClose'); // true
 print('$CSI$CUU' == cursorUp); // true
 ```
 
-<a id="independent_functions"></a>
 ### 1.5. Independent control functions ESC Fs
 
 The paragraph will appear later.
 
-<a id="sgr"></a>
 ### 1.6. Select graphic rendition (SGR)
 
 Template for working with graphic rendition:
@@ -328,7 +320,6 @@ print('$underlined Underlined text $resetUnderlined');
 print('$fgYellow$bgGreen Yellow on green $resetBg$resetFg');
 ```
 
-<a id="256_colors"></a>
 ### 1.7. 256-color table
 
 <https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit>
@@ -401,7 +392,6 @@ print(text2 == text3); // true
 print(text3 == text4); // true
 ```
 
-<a id="rgb"></a>
 ### 1.8. 24-bit RGB colors
 
 <https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit>
@@ -432,10 +422,8 @@ print(text1 == text2); // true
 print(text2 == text3); // true
 ```
 
-<a id="analysis"></a>
 ## 2. Analyzing and parsing
 
-<a id="parser"></a>
 ### 2.1. AnsiParser
 
 AnsiParser allows you to analyze text containing escape codes:
@@ -574,7 +562,6 @@ print(AnsiParser(optimizedText).showControlFunctions());
 // [fgGreen;faint] What's in here? [reset]
 ```
 
-<a id="quick_analysis"></a>
 ### 2.2. Quick analysis
 
 You can quickly analyze a string without using `AnsiParser` by using
@@ -636,11 +623,10 @@ print(text.removeEscapeCodes().showEscapeCodes());
 // ' Text '
 ```
 
-<a id="printer"></a>
 ### 2.3. AnsiPrinter
 
 Escape codes do not allow you to set default values for your text. The
-foreground ans background colors depend on the implementation of the terminal
+foreground and background colors depend on the implementation of the terminal
 you are using. And so if you want to use some other values, you cannot use
 `resetFg` (CSI FOREGROUND_DEFAULT SGR) and `resetBg` (CSI BACKGROUND_DEFAULT
 SGR). Each time you will have to substitute your own values instead:
@@ -761,8 +747,7 @@ runZonedAnsiPrinter(
 );
 ```
 
-<a id="stacked_printer"></a>
-### 2.4. Stacked AnsiPrinter.
+### 2.4. Stacked AnsiPrinter
 
 Escape codes allow you to do simple text decoration. But a slightly more
 complex design requires much more effort. One example is given above, when you

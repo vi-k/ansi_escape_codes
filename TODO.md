@@ -11,7 +11,6 @@
   Суть в том, чтобы сохранить состояние текста после вставки. Вставляемый текст
   принимает свойства того места, в которое вставляется, но не портит текст
   после него.
-- indexOf
 - enum for cursorUp/etc
 - independent functions
 
@@ -25,4 +24,3 @@
 - Switch back to the terminal's primary context	CSI ? 1049 l
 - CSI ? 47 h save screen?
 - CSI ? 47 l restore screen?
-

@@ -7,6 +7,23 @@ import 'package:test/test.dart';
 import 'utils.dart';
 
 void main() {
+  group('Parsing', () {
+    test('parsing', () {
+      const text = '$bold Bold $resetBoldAndFaint';
+
+      final parser1 = AnsiParser(text);
+      expect(parser1.isParsed, isFalse);
+      parser1.prepare();
+      expect(parser1.isParsed, isTrue);
+      expect(parser1.removeAll(), ' Bold ');
+
+      final parser2 = AnsiParser(text);
+      expect(parser2.isParsed, isFalse);
+      expect(parser2.removeAll(), ' Bold ');
+      expect(parser2.isParsed, isTrue);
+    });
+  });
+
   group('SGR:', () {
     test('all SGR values', () {
       final buf = StringBuffer(CSI);

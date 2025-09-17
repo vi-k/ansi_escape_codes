@@ -19,6 +19,7 @@ final class Matches<S extends SgrState<S>> extends Iterable<Match<S>> {
       // no-op
     }
 
+    // _parsingResult is set by iterator.
     return _parsingResult!;
   }
 
