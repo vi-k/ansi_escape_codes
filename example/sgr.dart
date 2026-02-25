@@ -2,6 +2,11 @@
 
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
+/// Usage:
+///
+/// ```bash
+/// dart run example/sgr.dart
+/// ```
 void main() {
   // Bold and faint.
   print('Bold/faint:');
@@ -108,10 +113,12 @@ void main() {
 
   // Blinking.
   print('Blinking:');
-  print('    Normal'
-      ' / ${slowlyBlinking}Slowly blinking$resetBlinking'
-      ' / ${rapidlyBlinking}Rapidly blinking$resetBlinking'
-      ' / Normal$reset');
+  print(
+    '    Normal'
+    ' / ${slowlyBlinking}Slowly blinking$resetBlinking'
+    ' / ${rapidlyBlinking}Rapidly blinking$resetBlinking'
+    ' / Normal$reset',
+  );
 
   // Reverse.
   print('Negative:');

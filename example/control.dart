@@ -3,6 +3,11 @@ import 'dart:math';
 
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
+/// Usage:
+///
+/// ```bash
+/// dart run example/control.dart
+/// ```
 Future<void> main() async {
   const pause = 500;
   const delay = 50;
@@ -30,9 +35,7 @@ Future<void> main() async {
 
   stdout
     ..writeln()
-    ..write(
-      '${cursorHVPosTo(1, 21)}Horizontal Vertical Position',
-    );
+    ..write('${cursorHVPosTo(1, 21)}Horizontal Vertical Position');
 
   await Future<void>.delayed(const Duration(milliseconds: pause));
   for (var i = 0; i < 20; i++) {

@@ -28,21 +28,17 @@ Future<void> progressTest(
   stdout.writeln(showCursor);
 }
 
+/// Usage:
+///
+/// ```bash
+/// dart run example/progress_indicator.dart
+/// ```
 Future<void> main() async {
-  await progressTest(
-    'Carriage return',
-    CR,
-  );
+  await progressTest('Carriage return', CR);
 
-  await progressTest(
-    'Cursor back',
-    '${cursorLeftOpen}4$cursorLeftClose',
-  );
+  await progressTest('Cursor back', '${cursorLeftOpen}4$cursorLeftClose');
 
-  await progressTest(
-    'Cursor absolute position',
-    cursorHPosToBegin,
-  );
+  await progressTest('Cursor absolute position', cursorHPosToBegin);
 
   await progressTest(
     'Save and restore cursor',
