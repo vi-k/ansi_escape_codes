@@ -1,35 +1,6 @@
-# This file configures the static analysis results for your project (errors,
-# warnings, and lints).
-#
-# This enables the 'recommended' set of lints from `package:lints`.
-# This set helps identify many issues that may lead to problems when running
-# or consuming Dart code, and enforces writing Dart using a single, idiomatic
-# style and format.
-#
-# If you want a smaller set of lints you can change this to specify
-# 'package:lints/core.yaml'. These are just the most critical lints
-# (the recommended set includes the core lints).
-# The core lints are also what is used by pub.dev for scoring packages.
-
 include: package:lints/recommended.yaml
 
 analyzer:
-  # plugins:
-  #   dart_code_metrics: true
-
-  exclude:
-    # Web
-    'web/**': true
-    # Build
-    'build/**': true
-    # Generated code
-    'lib/**.g.dart': true
-    'lib/**.freezed.dart': true
-    'lib/generated_plugin_registrant.dart': true
-    '.test_coverage.dart': true
-    # Assets
-    'assets/**': true
-
   language:
     strict-casts: true
     strict-inference: true
@@ -96,7 +67,6 @@ linter:
     throw_in_finally: true
     unnecessary_statements: true
     # unrelated_type_equality_checks: true # [core]
-    unsafe_html: true
     # use_build_context_synchronously: true # [flutter]
     # use_key_in_widget_constructors: true # [flutter]
     # valid_regexps: true # [core]
@@ -181,7 +151,6 @@ linter:
     one_member_abstracts: true
     only_throw_errors: true
     # overridden_fields: true # [recommended]
-    package_api_docs: true # DO provide doc comments for all public APIs.
     # package_prefixed_library_names: true # [core]
     # parameter_assignments: true
     # prefer_adjacent_string_concatenation: true # [recommended]
@@ -286,23 +255,3 @@ linter:
     # package_names: true # [recommended]
     secure_pubspec_urls: true
     sort_pub_dependencies: true
-
-# dart_code_metrics:
-#   anti-patterns:
-#     -# long-method
-#     -# long-parameter-list
-#   metrics:
-#     cyclomatic-complexity: 20
-#     lines-of-executable-code: 100
-#     maximum-nesting-level: 5
-#     number-of-parameters: 10
-#     source-lines-of-code: 100
-#   metrics-exclude:
-#     -# test/**
-#   rules:
-#     -# newline-before-return
-#     -# no-boolean-literal-compare
-#     -# no-empty-block
-#     -# prefer-trailing-comma
-#     -# prefer-conditional-expressions
-#     -# no-equal-then-else

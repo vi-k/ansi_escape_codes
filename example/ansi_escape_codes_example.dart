@@ -7,23 +7,30 @@ import 'package:ansi_escape_codes/controls.dart';
 
 void main() {
   {
-    const text1 = '$fgGreen(fgGreen)$resetFg'
+    const text1 =
+        '$fgGreen(fgGreen)$resetFg'
         ' $fgHighGreen(fgHighGreen)$resetFg'
         ' $fg256Green(fg256Green)$resetFg'
-        ' $fg256Open$HIGH_GREEN$fg256Close(fg256Open highGreen fg256Close)$resetFg'
+        ' $fg256Open$HIGH_GREEN$fg256Close'
+        '(fg256Open highGreen fg256Close)$resetFg'
         ' $fg256Rgb050(fg256Rgb050)$resetFg'
-        ' ${fgRgbOpen}0;255;0$fgRgbClose(fgRgbOpen 0;255;0 fgRgbClose)$resetFg';
-    const text2 = '$fgGreen'
+        ' ${fgRgbOpen}0;255;0$fgRgbClose'
+        '(fgRgbOpen 0;255;0 fgRgbClose)$resetFg';
+    const text2 =
+        '$fgGreen'
         '$bgYellow(bgYellow)$resetBg'
         ' $bgHighYellow(bgHighYellow)$resetBg'
         ' $bg256Yellow(bg256Yellow)$resetBg'
-        ' $bg256Open$HIGH_YELLOW$bg256Close(bg256Open highYellow bg256Close)$resetBg'
+        ' $bg256Open$HIGH_YELLOW$bg256Close'
+        '(bg256Open highYellow bg256Close)$resetBg'
         ' $bg256HighYellow(bg256HighYellow)$resetBg'
         ' $bg256Rgb550(bg256Rgb550)$resetBg'
-        ' ${bgRgbOpen}255;255;0$bgRgbClose(bgRgbOpen 255;255;0 bgRgbClose)$resetBg'
+        ' ${bgRgbOpen}255;255;0$bgRgbClose'
+        '(bgRgbOpen 255;255;0 bgRgbClose)$resetBg'
         '$resetFg';
     const text3 = '$negative$text2$resetNegative';
-    const text4 = 'default $bold(bold)$resetBoldAndFaint'
+    const text4 =
+        'default $bold(bold)$resetBoldAndFaint'
         ' $faint(faint)$resetBoldAndFaint'
         ' $italicized(italicized)$resetItalicized'
         ' $underlined(underlined)$resetUnderlined'
@@ -52,7 +59,7 @@ void main() {
     print(
       '4: '
       '${parser.showControlFunctions(
-        open: '$faint[',
+        open: '$faint[', //
         close: ']$resetBoldAndFaint',
       )}',
     );
@@ -95,7 +102,8 @@ void main() {
   {
     print('');
     const text =
-        '${bold}bold ${italicized}bold+italic ${resetBoldAndFaint}italic$resetItalicized';
+        '${bold}bold ${italicized}bold+italic'
+        ' ${resetBoldAndFaint}italic$resetItalicized';
     final parser = AnsiParser(text);
     print(text);
     final stateAtPos0 = parser.stateAtPos(0);
@@ -125,9 +133,12 @@ void main() {
     print('');
     final parser = AnsiParser(
       '$fgWhite${bold}Lorem$resetBoldAndFaint '
-      '$bgHighRed$fgHighWhite${italicized}ipsum dolor sit$resetItalicized$resetBg$resetFg'
-      '$fgWhite amet, consectetur $fgRed${underlined}adipiscing$resetUnderlined'
-      '$fgWhite elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.$reset',
+      '$bgHighRed$fgHighWhite${italicized}ipsum'
+      ' dolor sit$resetItalicized$resetBg$resetFg'
+      '$fgWhite amet, consectetur'
+      ' $fgRed${underlined}adipiscing$resetUnderlined'
+      '$fgWhite elit, sed do eiusmod tempor incididunt'
+      ' ut labore et dolore magna aliqua.$reset',
     );
     for (var i = 0; i < 40; i += 2) {
       print('"${parser.substring(i, maxLength: 40)}"');
@@ -137,32 +148,28 @@ void main() {
   // AnsiPrinter.
   {
     print('');
-    const text = ' default colors'
+    const text =
+        ' default colors'
         ' $fg256Rgb550$bg256Rgb031 yellow on green'
         ' $resetFg$resetBg default colors ';
     print('Standart output (the default colors are set by the terminal):');
     print(text);
 
     const defaultState = SgrPlainState(
-      foreground: Color256(Colors.rgb555),
-      background: Color256(Colors.rgb320),
+      foreground: Color256.rgb555,
+      background: Color256.rgb320,
     );
 
     print('');
     print('With AnsiPrinter (the default state is overrided):');
-    final printer = AnsiPrinter(
-      defaultState: defaultState,
-    );
+    final printer = AnsiPrinter(defaultState: defaultState);
     printer.print(text);
 
     print('');
     print('With runZonedAnsiPrinter (the default state is overrided):');
-    runZonedAnsiPrinter(
-      defaultState: defaultState,
-      () {
-        print(text);
-      },
-    );
+    runZonedAnsiPrinter(defaultState: defaultState, () {
+      print(text);
+    });
   }
 
   // Stacked AnsiPrinter.
@@ -170,7 +177,8 @@ void main() {
     const importantNote = '${italicized}Important note$resetItalicized';
     const text1 = 'Normal text $importantNote Normal text';
     const text2 =
-        '${italicized}Important text $importantNote Important text$resetItalicized';
+        '${italicized}Important text $importantNote'
+        ' Important text$resetItalicized';
 
     print('');
     print(text1); // Normal text <i>Important</i> note Normal text
@@ -182,8 +190,9 @@ void main() {
     print('');
     print('The state is accumulated in the stack:');
     final stackedPrinter = AnsiPrinter(stacked: true);
-    stackedPrinter
-        .print(text2); // <i>Important text Important note Important text</i>
+    stackedPrinter.print(
+      text2,
+    ); // <i>Important text Important note Important text</i>
   }
 
   // Tabs.

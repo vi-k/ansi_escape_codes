@@ -73,7 +73,7 @@ sealed class AnsiParser {
   ///   AnsiParser('$bold bold $italicized italicized $reset')
   ///       .replaceAll((code) => '[${code.id}]'),
   /// )
-  /// // bold] bold [italicized] italicized [reset]
+  /// // [bold] bold [italicized] italicized [reset]
   /// ```
   ///
   /// [replacePlainText] allows you to process plain text:

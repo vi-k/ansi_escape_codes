@@ -1,4 +1,9 @@
-# ansi_escape_codes
+[![Dart CI](https://github.com/vi-k/ansi_escape_codes/actions/workflows/dart.yml/badge.svg)](https://github.com/vi-k/ansi_escape_codes/actions/workflows/dart.yml)
+[![GitHub Repo](https://img.shields.io/badge/github-repo-blue?logo=github)](https://github.com/vi-k/ansi_escape_codes)
+[![Pub Publisher](https://img.shields.io/pub/publisher/ansi_escape_codes)](https://pub.dev/publishers/yet-another.dev/packages)
+![Pub Version](https://img.shields.io/pub/v/ansi_escape_codes)
+![GitHub License](https://img.shields.io/github/license/vi-k/ansi_escape_codes)
+[![Dart](https://img.shields.io/badge/Dart-blue?logo=dart)](https://dart.dev/)
 
 It's yet another one of many packages to work with
 [ANSI escape codes](https://en.wikipedia.org/wiki/ANSI_escape_code). But there

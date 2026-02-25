@@ -61,45 +61,46 @@ void main() {
       final parser = AnsiParser(buf.toString());
 
       expect(
-          parser.showControlFunctions(),
-          '['
-          ';reset;bold;faint;italicized;underlined'
-          ';slowlyBlinking;rapidlyBlinking;negative;concealed;crossedOut'
-          ';10;11;12;13;14;15;16;17;18;19;20'
-          ';doublyUnderlined;resetBoldAndFaint;resetItalicized;resetUnderlined'
-          ';resetBlinking;26;resetNegative;resetConcealed;resetCrossedOut'
-          // fg...
-          ';fgBlack;fgRed;fgGreen;fgYellow;fgBlue;fgMagenta;fgCyan;fgWhite'
-          ';fg256White;fgRgb(0,128,255)'
-          // ... invalid values.
-          ';fg256?256;fgRgb?0:128:256;fgRgb?0:128;fg?3:0:128:255'
-          ';resetFg'
-          // bg...
-          ';bgBlack;bgRed;bgGreen;bgYellow;bgBlue;bgMagenta;bgCyan;bgWhite'
-          ';bg256White;bgRgb(0,128,255)'
-          // ... invalid values.
-          ';bg256?256;bgRgb?0:128:256;bgRgb?0:128;bg?3:0:128:255'
-          ';resetBg'
-          ';50'
-          ';framed;encircled;overlined;resetFramedAndEncircled;resetOverlined'
-          ';56;57'
-          // underline...
-          ';underline256White;underlineRgb(0,128,255)'
-          // ... invalid values.
-          ';underline256?256;underlineRgb?0:128:256;underlineRgb?0:128'
-          ';underline?3:0:128:255'
-          ';resetUnderlineColor'
-          ';60;61;62;63;64;65;66;67;68;69;70;71;72'
-          ';superscripted;subscripted;resetSuperAndSubscripted'
-          ';76;77;78;79;80;81;82;83;84;85;86;87;88;89'
-          // fgHigh...
-          ';fgHighBlack;fgHighRed;fgHighGreen;fgHighYellow'
-          ';fgHighBlue;fgHighMagenta;fgHighCyan;fgHighWhite'
-          ';98;99'
-          // bgHigh...
-          ';bgHighBlack;bgHighRed;bgHighGreen;bgHighYellow'
-          ';bgHighBlue;bgHighMagenta;bgHighCyan;bgHighWhite'
-          ']');
+        parser.showControlFunctions(),
+        '['
+        ';reset;bold;faint;italicized;underlined'
+        ';slowlyBlinking;rapidlyBlinking;negative;concealed;crossedOut'
+        ';10;11;12;13;14;15;16;17;18;19;20'
+        ';doublyUnderlined;resetBoldAndFaint;resetItalicized;resetUnderlined'
+        ';resetBlinking;26;resetNegative;resetConcealed;resetCrossedOut'
+        // fg...
+        ';fgBlack;fgRed;fgGreen;fgYellow;fgBlue;fgMagenta;fgCyan;fgWhite'
+        ';fg256White;fgRgb(0,128,255)'
+        // ... invalid values.
+        ';fg256?256;fgRgb?0:128:256;fgRgb?0:128;fg?3:0:128:255'
+        ';resetFg'
+        // bg...
+        ';bgBlack;bgRed;bgGreen;bgYellow;bgBlue;bgMagenta;bgCyan;bgWhite'
+        ';bg256White;bgRgb(0,128,255)'
+        // ... invalid values.
+        ';bg256?256;bgRgb?0:128:256;bgRgb?0:128;bg?3:0:128:255'
+        ';resetBg'
+        ';50'
+        ';framed;encircled;overlined;resetFramedAndEncircled;resetOverlined'
+        ';56;57'
+        // underline...
+        ';underline256White;underlineRgb(0,128,255)'
+        // ... invalid values.
+        ';underline256?256;underlineRgb?0:128:256;underlineRgb?0:128'
+        ';underline?3:0:128:255'
+        ';resetUnderlineColor'
+        ';60;61;62;63;64;65;66;67;68;69;70;71;72'
+        ';superscripted;subscripted;resetSuperAndSubscripted'
+        ';76;77;78;79;80;81;82;83;84;85;86;87;88;89'
+        // fgHigh...
+        ';fgHighBlack;fgHighRed;fgHighGreen;fgHighYellow'
+        ';fgHighBlue;fgHighMagenta;fgHighCyan;fgHighWhite'
+        ';98;99'
+        // bgHigh...
+        ';bgHighBlack;bgHighRed;bgHighGreen;bgHighYellow'
+        ';bgHighBlue;bgHighMagenta;bgHighCyan;bgHighWhite'
+        ']',
+      );
 
       final entity = parser.matches.first.entity as Sgr;
       for (final code in ControlFunctionsSGR.values) {
@@ -108,7 +109,8 @@ void main() {
     });
 
     test('stateAtPos', () {
-      const text = '$fgRed ${bold}bold $fgGreen$bgYellow'
+      const text =
+          '$fgRed ${bold}bold $fgGreen$bgYellow'
           ' ${italicized}bold+italic$resetBoldAndFaint'
           ' $resetBg italic$resetItalicized $reset';
       final parser = AnsiParser(text);
@@ -348,7 +350,8 @@ void main() {
     });
 
     test('substring and optimize', () {
-      final text = ' '
+      final text =
+          ' '
           '$fgWhite$bold${faint}first$resetBoldAndFaint'
           ' $bg256Green$fg256Yellow'
           '${italicized}second$resetItalicized'
@@ -373,11 +376,12 @@ void main() {
       {
         final parser2 = AnsiParser(optimizedText);
         expect(
-            parser2.showControlFunctions(),
-            ' [fgWhite;bold;faint]first[resetBoldAndFaint]'
-            ' [fg256Yellow][bg256Green][italicized]second[reset]'
-            ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined;slowlyBlinking;negative]third[resetFg;resetBg;resetUnderlined]'
-            ' [reset]');
+          parser2.showControlFunctions(),
+          ' [fgWhite;bold;faint]first[resetBoldAndFaint]'
+          ' [fg256Yellow][bg256Green][italicized]second[reset]'
+          ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined;slowlyBlinking;negative]third[resetFg;resetBg;resetUnderlined]'
+          ' [reset]',
+        );
         expect(parser2.isClosed, isTrue);
       }
 
@@ -385,11 +389,12 @@ void main() {
       {
         final parser2 = AnsiParser(unclosedOptimizedText);
         expect(
-            parser2.showControlFunctions(),
-            ' [fgWhite;bold;faint]first[resetBoldAndFaint]'
-            ' [fg256Yellow][bg256Green][italicized]second[reset]'
-            ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined;slowlyBlinking;negative]third[resetFg;resetBg;resetUnderlined]'
-            ' ');
+          parser2.showControlFunctions(),
+          ' [fgWhite;bold;faint]first[resetBoldAndFaint]'
+          ' [fg256Yellow][bg256Green][italicized]second[reset]'
+          ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined;slowlyBlinking;negative]third[resetFg;resetBg;resetUnderlined]'
+          ' ',
+        );
         expect(parser2.isClosed, isFalse);
       }
 
@@ -407,10 +412,7 @@ void main() {
             optimizedText.length - 4, // ESC+[+0+SGR=reset
           ),
         );
-        expect(
-          unclosed.optimizeAnsiControlFunctions(),
-          optimizedText,
-        );
+        expect(unclosed.optimizeAnsiControlFunctions(), optimizedText);
       }
 
       // " first"
@@ -562,7 +564,8 @@ void main() {
         expect(unclosed.optimizeAnsiControlFunctions(close: false), unclosed);
       }
 
-      final splicedText1 = parser.substring(0, maxLength: 1) +
+      final splicedText1 =
+          parser.substring(0, maxLength: 1) +
           parser.substring(1, maxLength: 5) + // first
           parser.substring(6, maxLength: 1) +
           parser.substring(7, maxLength: 6) + // second
@@ -571,7 +574,8 @@ void main() {
           parser.substring(19, maxLength: 1);
       expect(splicedText1.optimizeAnsiControlFunctions(), optimizedText);
 
-      final splicedText2 = parser.substring(0, maxLength: 1, close: false) +
+      final splicedText2 =
+          parser.substring(0, maxLength: 1, close: false) +
           parser.substring(1, maxLength: 5, close: false) + // first
           parser.substring(6, maxLength: 1, close: false) +
           parser.substring(7, maxLength: 6, close: false) + // second
@@ -583,7 +587,8 @@ void main() {
         unclosedOptimizedText,
       );
 
-      final splicedText3 = parser.substring(0, maxLength: 3) + // ' fi'
+      final splicedText3 =
+          parser.substring(0, maxLength: 3) + // ' fi'
           parser.substring(3, maxLength: 7) + // rst sec
           parser.substring(10, maxLength: 7) + // ond thi
           parser.substring(17, maxLength: 3); // 'rd '
@@ -591,9 +596,9 @@ void main() {
 
       final splicedText4 =
           parser.substring(0, maxLength: 3, close: false) + // ' fi'
-              parser.substring(3, maxLength: 7, close: false) + // rst sec
-              parser.substring(10, maxLength: 7, close: false) + // ond thi
-              parser.substring(17, maxLength: 3, close: false); // 'rd '
+          parser.substring(3, maxLength: 7, close: false) + // rst sec
+          parser.substring(10, maxLength: 7, close: false) + // ond thi
+          parser.substring(17, maxLength: 3, close: false); // 'rd '
       expect(
         splicedText4.optimizeAnsiControlFunctions(close: false),
         unclosedOptimizedText,
@@ -636,10 +641,12 @@ void main() {
                 foreground: Color16.black,
                 background: Color16.white,
               ),
-              () => print('default colors'
-                  '$fgYellow$bgGreen$underlined$bold$italicized yellow on green'
-                  ' $reset'
-                  'default colors'),
+              () => print(
+                'default colors'
+                '$fgYellow$bgGreen$underlined$bold$italicized yellow on green'
+                ' $reset'
+                'default colors',
+              ),
             );
           },
         );
@@ -663,10 +670,12 @@ void main() {
                 italicized: true,
                 singlyUnderlined: true,
               ),
-              () => print('default colors'
-                  '$fgYellow$bgGreen$underlined$bold$italicized yellow on green'
-                  ' $reset'
-                  'default colors'),
+              () => print(
+                'default colors'
+                '$fgYellow$bgGreen$underlined$bold$italicized yellow on green'
+                ' $reset'
+                'default colors',
+              ),
             );
           },
         );
@@ -682,9 +691,7 @@ void main() {
         final output1 = interceptZonedPrint(
           // debugPrint: true,
           () {
-            runZonedAnsiPrinter(
-              () => print('\nTitle\nSubtitle\n'),
-            );
+            runZonedAnsiPrinter(() => print('\nTitle\nSubtitle\n'));
           },
         );
 
@@ -757,8 +764,8 @@ void main() {
         () {
           runZonedAnsiPrinter(
             defaultState: const SgrPlainState(
-              foreground: Color256(Colors.rgb555),
-              background: Color256(Colors.rgb320),
+              foreground: Color256.rgb555,
+              background: Color256.rgb320,
             ),
             stacked: true,
             () => print(text),

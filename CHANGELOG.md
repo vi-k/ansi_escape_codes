@@ -1,5 +1,8 @@
-## 2.1.1 - not published
+## 2.2.0
+
 - Fix README.
+- Add predefined colors: `Color256.rgb123`, etc.
+- Update `example/colors256.dart`.
 
 ## 2.1.0
 
