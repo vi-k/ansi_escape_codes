@@ -6,18 +6,18 @@ final class Color256 extends ExtendedColor {
   const Color256(this.color);
 
   Color256.rgb(int r, int g, int b)
-    : assert(
-        r >= 0 && r <= 5 && g >= 0 && g <= 5 && b >= 0 && b <= 5,
-        'RGB values must be between 0 and 5',
-      ),
-      color = Colors.values[16 + r * 36 + g * 6 + b];
+      : assert(
+          r >= 0 && r <= 5 && g >= 0 && g <= 5 && b >= 0 && b <= 5,
+          'RGB values must be between 0 and 5',
+        ),
+        color = Colors.values[16 + r * 36 + g * 6 + b];
 
   Color256.gray(int level)
-    : assert(
-        level >= 0 && level <= 23,
-        'Grayscale level must be between 0 and 23',
-      ),
-      color = Colors.values[232 + level];
+      : assert(
+          level >= 0 && level <= 23,
+          'Grayscale level must be between 0 and 23',
+        ),
+        color = Colors.values[232 + level];
 
   const Color256._(this.color, [super._prefix]);
 
