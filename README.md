@@ -117,20 +117,19 @@ print(constantText);
 
 Of course, nothing prevents you from using the escape codes themselves
 directly. But even in this case you can use predefined constants to make the
-text more readable:
+text more readable.
+
+All of the following examples are equivalent:
 
 ```dart
-import 'package:ansi_escape_codes/controls.dart';
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
-…
-
-const text1 = '\x1B[38;2;255;128;0m Orange text \x1B[0m';
-const text2 = '$ESC[38;2;255;128;0m Orange text $ESC[0m';
-const text3 = '${CSI}38;2;255;128;0$SGR Orange text ${CSI}0$SGR';
-const text4 = '$CSI$FOREGROUND;$COLOR_RGB;255;128;0$SGR Orange text $CSI$RESET$SGR';
-const text5 = '${fgRgbOpen}255;128;0$fgRgbClose Orange text $resetFg';
-final text6 = '${fgRgb(255, 128, 0)} Orange text $resetFg';
-assert(text1 == text2 && text2 == text3 && text3 == text4 && text4 == text5 && text5 == text6);
+print('\x1B[38;2;255;128;0m Orange text \x1B[0m');
+print('$ESC[38;2;255;128;0m Orange text $ESC[0m');
+print('${CSI}38;2;255;128;0$SGR Orange text ${CSI}0$SGR');
+print('$CSI$FOREGROUND;$COLOR_RGB;255;128;0$SGR Orange text $CSI$RESET$SGR');
+print('${fgRgbOpen}255;128;0$fgRgbClose Orange text $resetFg'); // Not constant!
+print('${fgRgb(255, 128, 0)} Orange text $resetFg'); // Not constant!
 ```
 
 Control codes are deliberately named in **SCREAMING_SNAKE_CASE** as opposed to

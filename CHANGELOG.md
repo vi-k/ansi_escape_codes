@@ -1,3 +1,7 @@
+## 2.2.2
+
+- Fix README.
+
 ## 2.2.1
 
 - Fix SDK constraint.
