@@ -5,44 +5,90 @@
 ![GitHub License](https://img.shields.io/github/license/vi-k/ansi_escape_codes)
 [![Dart](https://img.shields.io/badge/Dart-blue?logo=dart)](https://dart.dev/)
 
-It's yet another one of many packages to work with
-[ANSI escape codes](https://en.wikipedia.org/wiki/ANSI_escape_code). But there
-are a few key features:
+A toolkit for working with **ANSI escape codes**
+and analyzing strings containing them.
 
-- focused on using **constants** instead of functions, methods and classes
-- **analyzing** and **parsing** strings containing escape codes
+> ANSI escape sequences are a standard for in-band signaling to control cursor
+> location, color, font styling, and other options on video text terminals and
+> terminal emulators. Certain sequences of bytes, most starting with an ASCII
+> escape character and a bracket character, are embedded into text. The
+> terminal interprets these sequences as commands, rather than text to display
+> verbatim. [Wikipedia](https://en.wikipedia.org/wiki/ANSI_escape_code)
+
+
+## Features
+
+- coloring: emphasis on using **constants** instead of functions and classes
+- cursor and terminal control
+- **analyzing** and **parsing** and  strings containing escape codes
+- **default style for all application output**
+
+
+## Quick start
+
+```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+
+void main() {
+  print('$fgGreen Green text $resetFg'
+    '$bgYellow Yellow background $resetBg'
+    '$bold Bold text $resetBoldAndFaint'
+    '$italicized Italicized text $resetItalicized'
+    '$underlined Underlined text $resetUnderlined'
+    '$reset');
+}
+```
+
+`fgGreen` is an ANSI escape sequence that sets the text color to green.
+`bgYellow` sets the background color to yellow. And so on.
+
+`resetFg` resets the text color to the default color set in your terminal.
+`resetBg` resets the background color to the default color. And so on.
+
+> [!NOTE]
+> Please note the following example:
+>
+> ```dart
+> print('$fgGreen Green text $fgYellow Yellow text $resetFg Default text');
+> ```
+>
+> After `resetFg`, the text color will not revert to `fgGreen`, but will return
+> to the standard terminal text color!
+>
+> If you need the ability to roll back to the previous color, use
+> [Stacked AnsiPrinter](#stacked-ansiprinter).
+
+Since you cannot set `bold` and `faint` at the same time, a single escape
+sequence is used in ANSI to reset both: `resetBoldAndFaint`.
+
+`reset` returns all settings to default.
+
+All the ready-to-use values can be seen in:
+
+- [Select graphic rendition (SGR)](#select-graphic-rendition-sgr)
+- [256-color table](#256-color-table)
+- [24-bit RGB colors](#24-bit-rgb-colors)
+
 
 ## Table of contents
 
-1. [Control function constants and predefined values](#1-control-function-constants-and-predefined-values)
+- [Control function constants and predefined values](#control-function-constants-and-predefined-values)
+  - [Control codes (C0 set)](#control-codes-c0-set)
+  - [Control functions ESC Fe (C1 set)](#control-functions-esc-fe-c1-set)
+  - [Control sequences (CSI)](#control-sequences-csi)
+  - [Predefined values](#predefined-values)
+  - [Independent control functions ESC Fs](#independent-control-functions-esc-fs)
+  - [Select graphic rendition (SGR)](#select-graphic-rendition-sgr)
+  - [256-color table](#256-color-table)
+  - [24-bit RGB colors](#24-bit-rgb-colors)
+- [Analyzing and parsing](#analyzing-and-parsing)
+  - [AnsiParser](#ansiparser)
+  - [Quick analysis](#quick-analysis)
+  - [AnsiPrinter](#ansiprinter)
+  - [Stacked AnsiPrinter](#stacked-ansiprinter)
 
-    1.1. [Control codes (C0 set)](#11-control-codes-c0-set)
 
-    1.2. [Control functions ESC Fe (C1 set)](#12-control-functions-esc-fe-c1-set)
-
-    1.3. [Control sequences (CSI)](#13-control-sequences-csi)
-
-    1.4. [Predefined values](#14-predefined-values)
-
-    1.5. [Independent control functions ESC Fs](#15-independent-control-functions-esc-fs)
-
-    1.6. [Select graphic rendition (SGR)](#16-select-graphic-rendition-sgr)
-
-    1.7. [256-color table](#17-256-color-table)
-
-    1.8. [24-bit RGB colors](#18-24-bit-rgb-colors)
-
-2. [Analyzing and parsing](#2-analyzing-and-parsing)
-
-    2.1. [AnsiParser](#21-ansiparser)
-
-    2.2. [Quick analysis](#22-quick-analysis)
-
-    2.3. [AnsiPrinter](#23-ansiprinter)
-
-    2.4. [Stacked AnsiPrinter](#24-stacked-ansiprinter)
-
-## 1. Control function constants and predefined values
+## Control function constants and ready-to-use values
 
 Strings containing ANSI escape codes can be constants:
 
@@ -82,16 +128,19 @@ const text1 = '\x1B[38;2;255;128;0m Orange text \x1B[0m';
 const text2 = '$ESC[38;2;255;128;0m Orange text $ESC[0m';
 const text3 = '${CSI}38;2;255;128;0$SGR Orange text ${CSI}0$SGR';
 const text4 = '$CSI$FOREGROUND;$COLOR_RGB;255;128;0$SGR Orange text $CSI$RESET$SGR';
-print(text1 == text2); // true
-print(text2 == text3); // true
-print(text3 == text4); // true
+const text5 = '${fgRgbOpen}255;128;0$fgRgbClose Orange text $resetFg';
+final text6 = '${fgRgb(255, 128, 0)} Orange text $resetFg';
+assert(text1 == text2 && text2 == text3 && text3 == text4 && text4 == text5 && text5 == text6);
 ```
 
-Control codes are deliberately named in SCREAMING_SNAKE_CASE as opposed to the
-common Dart camelCase. First, this is how they are named in the Standard.
-Second, in this form they will not prevent you from naming your own variables.
+Control codes are deliberately named in **SCREAMING_SNAKE_CASE** as opposed to
+the common Dart **camelCase**. First, this is how they are named in the
+Standard. Second, in this form they will not prevent you from naming your own
+variables. **Thirdly, and most importantly, most users do not need to use them
+directly.**
 
-### 1.1. Control codes (C0 set)
+
+### Control codes (C0 set)
 
 These control functions (control codes) are represented by codes from 0x00 to
 0x1F. Some control functions from the C0 set:
@@ -107,15 +156,19 @@ These control functions (control codes) are represented by codes from 0x00 to
 | `CR`       | `\r` or `\x0D` | Carriage return                              |
 | `ESC`      | `\x1B`         | Escape (is used for code extension purposes) |
 
+
 ```dart
 import 'package:ansi_escape_codes/controls.dart';
 
 …
 
-print('\t\r\n' == '$HT$CR$LF'); // true
+// The following examples are equivalent:
+print('\t\r\n');
+print('$HT$CR$LF');
 ```
 
-### 1.2. Control functions ESC Fe (C1 set)
+
+### Control functions ESC Fe (C1 set)
 
 These control functions are represented by 2-character escape sequences
 of the form ESC Fe, where ESC is represented by code 0x1B and Fe is
@@ -139,15 +192,16 @@ import 'package:ansi_escape_codes/controls.dart';
 print('Erase screen${CSI}2JScreen erased');
 
 // Set new tabulation stops
-print('$HTS        $HTS    $HTS  $HTS');
-print('1\t2\t3\t4'); // 1       2   3 4
+print('$HTS  $HTS  $HTS  $HTS');
+print('1\t2\t3\t4'); // 1 2 3 4
 print('${CSI}3g'); // Reset tabulations stops to default
 
 // Link (it doesn't work everywhere)
 print('Go to ${OSC}8;;https://pub.dev/packages/ansi_escape_codes${ST}pub.dev${OSC}8;;$ST')
 ```
 
-### 1.3. Control sequences (CSI)
+
+### Control sequences (CSI)
 
 A control sequence is a string starting with the control function CONTROL
 SEQUENCE INTRODUCER [CSI] followed by one or more bytes representing
@@ -191,10 +245,11 @@ print('${CSI}4${RM}tree${CSI}3${CUB}h'); // thee
 print('${CSI}3$SGR Italicized text ${CSI}0$SGR');
 ```
 
-### 1.4. Predefined values
 
-Predefined values replace the use of control functions with the style used in
-Dart.
+### Ready-to-use functions and constants
+
+Ready-to-use functions and constants replace the use of control functions with
+the style used in Dart.
 
 | Goal                               | Template                                       | Function                          | Default constant | Description                                                                 |
 |:-----------------------------------|:-----------------------------------------------|:----------------------------------|:-----------------|:----------------------------------------------------------------------------|
@@ -216,17 +271,23 @@ Dart.
 | Save cursor                        |                                                |                                   | `saveCursor`     | Saves the cursor position, encoding shift state and formatting attributes.  |
 | Restore cursor                     |                                                |                                   | `restoreCursor`  | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
 
+All of the following examples are equivalent:
+
 ```dart
-print('${CSI}4$CUU' == cursorUpN(4)); // true
-print('${CSI}4$CUU' == '${cursorUpOpen}4$cursorUpClose'); // true
-print('$CSI$CUU' == cursorUp); // true
+print('\x1B[4A');
+print('${CSI}4$CUU');
+print(cursorUpN(4)); // Not constant!
+print('${cursorUpOpen}4$cursorUpClose');
 ```
 
-### 1.5. Independent control functions ESC Fs
 
-The paragraph will appear later.
+### Independent control functions ESC Fs
 
-### 1.6. Select graphic rendition (SGR)
+> [!NOTE]
+> The paragraph will appear later.
+
+
+### Select graphic rendition (SGR)
 
 Template for working with graphic rendition:
 
@@ -234,10 +295,16 @@ Template for working with graphic rendition:
 CSI s… SGR
 ```
 
+Or, on Dart:
+
+```dart
+const str = '$CSI$s$SGR';
+```
+
 Where `s` is:
 
-| Index | Constant                    | Predefined value                      | Description                                                |
-|------:|:----------------------------|:--------------------------------------|:-----------------------------------------------------------|
+| Value | Constant                    | Ready-to-use constant (CSI+s+SGR)       | Description                                                |
+|------:|:----------------------------|:----------------------------------------|:-----------------------------------------------------------|
 |     0 | `RESET`                     | `reset`                                 | Default rendition (implementation-defined), cancels the effect of any preceding occurrence of SGR |
 |     1 | `BOLD`                      | `bold`                                  | Bold or increased intensity                                |
 |     2 | `FAINT`                     | `faint`                                 | Faint, decreased intensity or second color                 |
@@ -275,7 +342,7 @@ Where `s` is:
 |    35 | `FG_MAGENTA`                | `fgMagenta`                             | Magenta display (color #5 from 256-color table)            |
 |    36 | `FG_CYAN`                   | `fgCyan`                                | Cyan display (color #6 from 256-color table)               |
 |    37 | `FG_WHITE`                  | `fgWhite`                               | White display (color #7 from 256-color table)              |
-|    38 | `FOREGROUND`                | `fg256…/fgRgb…`                         | Display color from 256-color table or by RGB               |
+|    38 | `FOREGROUND`                | `fg256…/fgRgb…`                         | Display color from 256-color table or by RGB. See [256-color table](#256-color-table) |
 |    39 | `FG_DEFAULT`                | `resetFg`                               | Default display color (implementation-defined)             |
 |    40 | `BG_BLACK`                  | `bgBlack`                               | Black background (color #0 from 256-color table)           |
 |    41 | `BG_RED`                    | `bgRed`                                 | Red background (color #1 from 256-color table)             |
@@ -285,14 +352,14 @@ Where `s` is:
 |    45 | `BG_MAGENTA`                | `bgMagenta`                             | Magenta background (color #5 from 256-color table)         |
 |    46 | `BG_CYAN`                   | `bgCyan`                                | Cyan background (color #6 from 256-color table)            |
 |    47 | `BG_WHITE`                  | `bgWhite`                               | White background (color #7 from 256-color table)           |
-|    48 | `BACKGROUND`                | `bg256…/bgRgb…`                         | Background color from 256-color table or by RGB            |
+|    48 | `BACKGROUND`                | `bg256…/bgRgb…`                         | Background color from 256-color table or by RGB. See [256-color table](#256-color-table) |
 |    49 | `BG_DEFAULT`                | `resetBg`                               | Default background color (implementation-defined)          |
 |    51 | `FRAMED`                    | `framed`                                | Framed                                                     |
 |    52 | `ENCIRCLED`                 | `encircled`                             | Encircled                                                  |
 |    53 | `OVERLINED`                 | `overlined`                             | Overlined                                                  |
 |    54 | `NOT_FRAMED_NOT_ENCIRCLED`  | `resetFramedAndEncircled`               | Not framed, not encircled                                  |
 |    55 | `NOT_OVERLINED`             | `resetOverlined`                        | Not overlined                                              |
-|    58 | `UNDERLINE_COLOR`           | `underlineColor256…/underlineColorRgb…` | Underline color from 256-color table or by RGB             |
+|    58 | `UNDERLINE_COLOR`           | `underlineColor256…/underlineColorRgb…` | Underline color from 256-color table or by RGB. See [256-color table](#256-color-table) |
 |    59 | `UNDERLINE_COLOR_DEFAULT`   | `underlineColorDefault`                 | Default underline color                                    |
 |    73 | `SUPERSCRIPTED`             | `superscripted`                         | Superscripted                                              |
 |    74 | `SUBSCRIPTED`               | `subscripted`                           | Subscripted                                                |
@@ -314,18 +381,16 @@ Where `s` is:
 |   106 | `BG_HIGH_CYAN`              | `bgHighCyan`                            | High cyan background (color #14 from 256-color table)      |
 |   107 | `BG_HIGH_WHITE`             | `bgHighWhite`                           | High white background (color #15 from 256-color table)     |
 
-Example:
+All of the following examples are equivalent:
 
 ```dart
-print('${CSI}4$SGR' == underlined); // true
-print('$CSI$UNDERLINED$SGR' == underlined); // true
-
-print('$underlined Underlined text $resetUnderlined');
-
-print('$fgYellow$bgGreen Yellow on green $resetBg$resetFg');
+print('\x1B[1m bold \x1B[0m');
+print('$CSI$BOLD$SGR bold $SCI$RESET$SGR');
+print('$bold bold $reset');
 ```
 
-### 1.7. 256-color table
+
+### 256-color table
 
 <https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit>
 
@@ -335,9 +400,17 @@ Template for setting the color from 256-color table:
 CSI FOREGROUND/BACKGROUND/UNDERLINE_COLOR;COLOR_256;n SGR
 ```
 
+Or, on Dart:
+
+```dart
+const str = '$CSI$FOREGROUND;$COLOR_256;$n$SGR';
+const str = '$CSI$BACKGROUND;$COLOR_256;$n$SGR';
+const str = '$CSI$UNDERLINE_COLOR;$COLOR_256;$n$SGR';
+```
+
 Where `n` is:
 
-|   Index | Constant        | Predefined value                         | Comment |
+|   Value | Constant        | Ready-to-use constant                    | Comment |
 |--------:|:----------------|:-----------------------------------------|:--------|
 |       0 | `BLACK`         | (`fg`/`bg`/`underline`)`256Black`        |         |
 |       1 | `RED`           | (`fg`/`bg`/`underline`)`256Red`          |         |
@@ -358,16 +431,14 @@ Where `n` is:
 |  16-231 | `RGB_<r><g><b>` | (`fg`/`bg`/`underline`)`256Rgb<r><g><b>` | `r`,`g`,`b` are numbers from 0 to 5 (6 × 6 × 6 cube (216 colors): 16 + 36 × `r` + 6 × `g` + `b`) |
 | 232-255 | `GRAY<n>`       | (`fg`/`bg`/`underline`)`256Gray<n>`      | `n` is a number from 0 to 23 (grayscale from dark to light in 24 steps)                          |
 
-Example:
+All of the following examples are equivalent:
 
 ```dart
-const text1 = '$CSI$FOREGROUND;$COLOR_256;$YELLOW$SGR Yellow text $CSI$FG_DEFAULT$SGR';
-const text2 = '$fg256Open$YELLOW$fg256Close Yellow text $resetFg';
-final text3 = '${fg256(YELLOW)} Yellow text $resetFg'; // Not constant!
-const text4 = '$fg256Yellow Yellow text $resetFg';
-print(text1 == text2); // true
-print(text2 == text3); // true
-print(text3 == text4); // true
+print('\x1B[38;5;3m Yellow text \x1B[39m');
+print('$CSI$FOREGROUND;$COLOR_256;$YELLOW$SGR Yellow text $CSI$FG_DEFAULT$SGR');
+print('$fg256Open$YELLOW$fg256Close Yellow text $resetFg');
+print('$fg256Yellow Yellow text $resetFg');
+print('${fg256(YELLOW)} Yellow text $resetFg'); // Not constant!
 ```
 
 You can also use functions to get the color index:
@@ -385,19 +456,19 @@ String bg256(int index);
 String underline256(int index);
 ```
 
-Example:
+All of the following examples are equivalent:
 
 ```dart
-const text1 = '$fg256Rgb550 Yellow text $resetFg';
-const text2 = '$fg256Open$RGB_550$fg256Close Yellow text $resetFg';
-final text3 = '${fg256(RGB_550)} Yellow text $resetFg';
-final text4 = '${fg256(rgb(5, 5, 0))} Yellow text $resetFg';
-print(text1 == text2); // true
-print(text2 == text3); // true
-print(text3 == text4); // true
+print('\x1B[38;5;226m Yellow text \x1B[39m');
+print('$CSI$FOREGROUND;$COLOR_256;$RGB_550$SGR Yellow text $CSI$FG_DEFAULT$SGR');
+print('$fg256Open$RGB_550$fg256Close Yellow text $resetFg');
+print('$fg256Rgb550 Yellow text $resetFg');
+print('${fg256(RGB_550)} Yellow text $resetFg'); // Not constant!
+print('${fg256(rgb(5, 5, 0))} Yellow text $resetFg'); // Not constant!
 ```
 
-### 1.8. 24-bit RGB colors
+
+### 24-bit RGB colors
 
 <https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit>
 
@@ -405,6 +476,14 @@ Template for setting the color from 256-color table:
 
 ```
 CSI FOREGROUND/BACKGROUND/UNDERLINE_COLOR;COLOR_RGB;r;g;b SGR
+```
+
+Or, on Dart:
+
+```dart
+const str = '$CSI$FOREGROUND;$COLOR_RGB;$r;$g;$b$SGR';
+const str = '$CSI$BACKGROUND;$COLOR_RGB;$r;$g;$b$SGR';
+const str = '$CSI$UNDERLINE_COLOR;$COLOR_RGB;$r;$g;$b$SGR';
 ```
 
 Where `r`, `g` and `b` are the corresponding color components in the RGB form.
@@ -417,19 +496,20 @@ String bgRgb(int r, int g, int b);
 String underlineRgb(int r, int g, int b);
 ```
 
-Example:
+All of the following examples are equivalent:
 
 ```dart
-const text1 = '$CSI$BACKGROUND;$COLOR_RGB;44;43;124$SGR Ultramarine $CSI$FG_DEFAULT$SGR';
-const text2 = '${bgRgbOpen}44;43;124$fg256Close Ultramarine $resetFg';
-final text3 = '${bgRgb(44, 43, 124)} Ultramarine $resetFg'; // Not constant!
-print(text1 == text2); // true
-print(text2 == text3); // true
+print('\x1B[48;2;44;43;124m Ultramarine \x1B[49m');
+print('$CSI$BACKGROUND;$COLOR_RGB;44;43;124$SGR Ultramarine $CSI$BG_DEFAULT$SGR');
+print('${bgRgbOpen}44;43;124$bgRgbClose Ultramarine $resetBg');
+print('${bgRgb(44, 43, 124)} Ultramarine $resetBg'); // Not constant!
 ```
 
-## 2. Analyzing and parsing
 
-### 2.1. AnsiParser
+## Analyzing and parsing
+
+
+### AnsiParser
 
 AnsiParser allows you to analyze text containing escape codes:
 
@@ -460,7 +540,7 @@ for (final m in parser.matches) {
 print(buf); // ' Bold  Bold+cyan  Cyan '
 ```
 
-There is a ready-made method for this:
+There is a ready-to-use method for this:
 
 ```dart
 print(parser.removeAll());
@@ -480,7 +560,7 @@ for (final m in parser.matches) {
 print(buf); // [bold] Bold [fgCyan] Bold+cyan [resetBoldAndFaint] Cyan
 ```
 
-You can also use ready-made methods for this:
+You can also use ready-to-use methods for this:
 
 ```dart
 print(parser.replaceAll((e) => '[${e.id}]'));
@@ -567,7 +647,7 @@ print(AnsiParser(optimizedText).showControlFunctions());
 // [fgGreen;faint] What's in here? [reset]
 ```
 
-### 2.2. Quick analysis
+### Quick analysis
 
 You can quickly analyze a string without using `AnsiParser` by using
 extensions.
@@ -628,7 +708,7 @@ print(text.removeEscapeCodes().showEscapeCodes());
 // ' Text '
 ```
 
-### 2.3. AnsiPrinter
+### AnsiPrinter
 
 Escape codes do not allow you to set default values for your text. The
 foreground and background colors depend on the implementation of the terminal
@@ -752,7 +832,7 @@ runZonedAnsiPrinter(
 );
 ```
 
-### 2.4. Stacked AnsiPrinter
+### Stacked AnsiPrinter
 
 Escape codes allow you to do simple text decoration. But a slightly more
 complex design requires much more effort. One example is given above, when you
