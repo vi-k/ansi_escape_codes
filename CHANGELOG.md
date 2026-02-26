@@ -2,6 +2,7 @@
 
 - Fix README.
 - Add predefined colors: `Color256.rgb123`, etc.
+- Add `Color256.rgb` and `Color256.gray`.
 - Update `example/colors256.dart`.
 
 ## 2.1.0
