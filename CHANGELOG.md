@@ -1,3 +1,8 @@
+## 2.2.1
+
+- Fix SDK constraint.
+- Add `Color256.rgb` and `Color256.gray`.
+
 ## 2.2.0
 
 - Fix README.
