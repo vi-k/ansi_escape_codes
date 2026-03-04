@@ -1,5 +1,3 @@
-// ignore_for_file: lines_longer_than_80_chars
-
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
 /// Usage:

@@ -1,207 +1,299 @@
-// ignore_for_file: cascade_invocations, lines_longer_than_80_chars
+// ignore_for_file: cascade_invocations
 
 import 'dart:io';
 
+import 'package:ansi_escape_codes/ansi.dart';
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
-import 'package:ansi_escape_codes/controls.dart';
+import 'package:ansi_escape_codes/extensions.dart';
+import 'package:ansi_escape_codes/utils.dart';
 
+import '../test/utils.dart';
+
+/// Usage:
+///
+/// ```bash
+/// dart run example/ansi_escape_codes_example.dart
+/// ```
 void main() {
   {
-    const text1 =
-        '$fgGreen(fgGreen)$resetFg'
-        ' $fgHighGreen(fgHighGreen)$resetFg'
-        ' $fg256Green(fg256Green)$resetFg'
-        ' $fg256Open$HIGH_GREEN$fg256Close'
-        '(fg256Open highGreen fg256Close)$resetFg'
-        ' $fg256Rgb050(fg256Rgb050)$resetFg'
-        ' ${fgRgbOpen}0;255;0$fgRgbClose'
-        '(fgRgbOpen 0;255;0 fgRgbClose)$resetFg';
-    const text2 =
-        '$fgGreen'
-        '$bgYellow(bgYellow)$resetBg'
-        ' $bgHighYellow(bgHighYellow)$resetBg'
-        ' $bg256Yellow(bg256Yellow)$resetBg'
-        ' $bg256Open$HIGH_YELLOW$bg256Close'
-        '(bg256Open highYellow bg256Close)$resetBg'
-        ' $bg256HighYellow(bg256HighYellow)$resetBg'
-        ' $bg256Rgb550(bg256Rgb550)$resetBg'
-        ' ${bgRgbOpen}255;255;0$bgRgbClose'
-        '(bgRgbOpen 255;255;0 bgRgbClose)$resetBg'
-        '$resetFg';
-    const text3 = '$negative$text2$resetNegative';
-    const text4 =
-        'default $bold(bold)$resetBoldAndFaint'
-        ' $faint(faint)$resetBoldAndFaint'
-        ' $italicized(italicized)$resetItalicized'
-        ' $underlined(underlined)$resetUnderlined'
-        ' $doublyUnderlined(doublyUnderlined)$resetUnderlined'
-        ' $crossedOut(crossedOut)$resetCrossedOut'
-        ' $concealed(concealed)$resetConcealed'
-        ' $slowlyBlinking(slowlyBlinking)'
-        ' $rapidlyBlinking(rapidlyBlinking)$resetBlinking';
-    const text5 = '$negative$text4$resetNegative';
-    const texts = [text1, text2, text3, text4, text5];
-
-    for (final (index, text) in texts.indexed) {
-      print('${index + 1}: $text (${text.length})');
-    }
-
+    title('Colorize');
     print('');
-    for (final (index, text) in texts.indexed) {
-      final parser = AnsiParser(text);
-      final textWithoutEscapeCodes = parser.removeAll();
-      print('${index + 1}: $textWithoutEscapeCodes (${parser.length})');
-    }
 
-    // showControlFunctions.
+    print('$fgGreen Green text $resetFg');
+    print('$fg256Green Green text $resetFg');
+    print('$fg256Open$GREEN$fg256Close Green text $resetFg');
+
+    print('$fg256Rgb050 Rgb050 (#00FF00) $resetFg');
+    print('$fg256Open$RGB_050$fg256Close Rgb050 (#00FF00) $resetFg');
+
+    print('${fgRgb(0, 255, 0)} Rgb(0,255,0) (#00FF00) $resetFg');
+    print('${fgRgbOpen}0;255;0$fgRgbClose Rgb(0,255,0) (#00FF00) $resetFg');
+
+    {
+      print('');
+      title('Analysis');
+
+      const text = '$fgYellow Yellow foreground $resetFg'
+          '\t$bgYellow Yellow background $resetBg';
+      subtitle('As is:');
+      print(text);
+
+      subtitle('ansiRemoveEscapeCodes:');
+      print(text.ansiRemoveEscapeCodes());
+
+      subtitle('ansiShowControlCodes:');
+      subsubtitle(' escapeOrCharCode:');
+      print('  ${text.ansiShowControlCodes(
+        open: fg256Rgb500,
+        close: resetFg,
+      )}');
+      subsubtitle(' charCode:');
+      print('  ${text.ansiShowControlCodes(
+        open: fg256Rgb500,
+        close: resetFg,
+        preferStyle: ControlCodeStyle.charCode,
+      )}');
+      subsubtitle(' escapeOrAbbr:');
+      print('  ${text.ansiShowControlCodes(
+        open: fg256Rgb500,
+        close: resetFg,
+        preferStyle: ControlCodeStyle.escapeOrAbbr,
+      )}');
+      subsubtitle(' abbr:');
+      print('  ${text.ansiShowControlCodes(
+        open: fg256Rgb500,
+        close: resetFg,
+        preferStyle: ControlCodeStyle.abbr,
+      )}');
+      subsubtitle(' escapeOrUnicode:');
+      print('  ${text.ansiShowControlCodes(
+        open: fg256Rgb500,
+        close: resetFg,
+        preferStyle: ControlCodeStyle.escapeOrUnicode,
+      )}');
+      subsubtitle(' unicode:');
+      print('  ${text.ansiShowControlCodes(
+        open: fg256Rgb500,
+        close: resetFg,
+        preferStyle: ControlCodeStyle.unicode,
+      )}');
+
+      subtitle('ansiShowEscapeSequences:');
+      print(
+        ' ${text.ansiShowEscapeSequences(
+          open: '$fg256Rgb500[',
+          close: ']$resetFg',
+        )}',
+      );
+
+      subtitle('ansiShowControlFunctions:');
+      print(
+        ' ${text.ansiShowControlFunctions(
+          open: '$fg256Rgb500[',
+          close: ']$resetFg',
+        )}',
+      );
+    }
+  }
+
+  {
     print('');
-    final parser = AnsiParser(text4);
+    title('Parsing');
+
+    const text = '$fgYellow Yellow foreground $resetFg'
+        '$bgYellow Yellow background $resetBg';
+
+    final parser = Parser(text);
+
+    subtitle('As is:');
+    print(text);
+
+    subtitle('showControlFunctions:');
     print(
-      '4: '
-      '${parser.showControlFunctions(
-        open: '$faint[', //
-        close: ']$resetBoldAndFaint',
-      )}',
+      parser.showControlFunctions(
+        open: '$fg256Rgb500[',
+        close: ']$resetFg',
+      ),
     );
 
-    // matches.
-    print('');
-    final buf = StringBuffer('4: ');
+    subtitle('Matches:');
+    final buf = StringBuffer();
     for (final m in parser.matches) {
       switch (m.entity) {
         case Text(:final string):
-          buf.write(string);
+          buf
+            ..write(string)
+            ..write(reset);
 
-        case EscapeCode():
-        // no-op
+        case EscapeCode(:final id, :final string):
+          buf
+            ..write('$fg256Rgb500[$id]$reset')
+            ..write(string);
       }
     }
     print(buf);
   }
 
-  // Invalid values.
   {
     print('');
-    print('Invalid values:');
-    print(
-      AnsiParser(
-        '$CSI$FOREGROUND;$COLOR_256;256$SGR'
-        '$CSI$UNDERLINE_COLOR;3;1;2;3$SGR'
-        '$CSI$BACKGROUND;$COLOR_RGB;100$SGR'
-        '$CSI$BACKGROUND;$COLOR_RGB;200$SGR'
-        '$CSI$BACKGROUND;$COLOR_RGB;200;$SGR'
-        '$CSI$BACKGROUND;$COLOR_RGB;200;;$SGR'
-        '$CSI$BACKGROUND;$COLOR_RGB;200;0$SGR'
-        '$CSI$BACKGROUND;$COLOR_RGB;200;0;$SGR'
-        '${CSI}256%',
-      ).showControlFunctions(),
+    title('Style at position');
+
+    const text = '$fgGreen${bold}bold $fgRed${italicized}bold+italic'
+        ' $resetBoldAndFaint${fgMagenta}italic$resetItalicized$reset';
+    final parser = Parser(text);
+
+    final styleAtPos0 = parser.stateAt(0);
+    print('');
+    print('"$text"');
+    subsubtitle(
+      ' ^ isBold=${styleAtPos0.isBold}'
+      ', isItalicized=${styleAtPos0.isItalicized}'
+      ', foreground=${styleAtPos0.colorOfForeground}',
+    );
+
+    final styleAtPos5 = parser.stateAt(5);
+    print('');
+    print('"$text"');
+    subsubtitle(
+      ' ${' ' * 5}^ isBold=${styleAtPos5.isBold}'
+      ', isItalicized=${styleAtPos5.isItalicized}'
+      ', foreground=${styleAtPos5.colorOfForeground}',
+    );
+
+    final styleAtPos17 = parser.stateAt(17);
+    print('');
+    print('"$text"');
+    subsubtitle(
+      ' ${' ' * 17}^ isBold=${styleAtPos17.isBold}'
+      ', isItalicized=${styleAtPos17.isItalicized}'
+      ', foreground=${styleAtPos17.colorOfForeground}',
+    );
+
+    final finalStyle = parser.finalState;
+    print('');
+    print('"$text"');
+    subsubtitle(
+      ' ${' ' * 23}^ isBold=${finalStyle.isBold}'
+      ', isItalicized=${finalStyle.isItalicized}'
+      ', foreground=${finalStyle.colorOfForeground}',
     );
   }
 
-  // stateAtPos.
   {
     print('');
-    const text =
-        '${bold}bold ${italicized}bold+italic'
-        ' ${resetBoldAndFaint}italic$resetItalicized';
-    final parser = AnsiParser(text);
-    print(text);
-    final stateAtPos0 = parser.stateAtPos(0);
-    print(
-      '^-- isBold=${stateAtPos0.isBold}'
-      ', isItalicized=${stateAtPos0.isItalicized}',
-    );
-    final stateAtPos5 = parser.stateAtPos(5);
-    print(
-      '${' ' * 5}^-- isBold=${stateAtPos5.isBold}'
-      ', isItalicized=${stateAtPos5.isItalicized}',
-    );
-    final stateAtPos17 = parser.stateAtPos(17);
-    print(
-      '${' ' * 17}^-- isBold=${stateAtPos17.isBold}'
-      ', isItalicized=${stateAtPos17.isItalicized}',
-    );
-    final stateAtPos23 = parser.stateAtPos(23);
-    print(
-      '${' ' * 23}^-- isBold=${stateAtPos23.isBold}'
-      ', isItalicized=${stateAtPos23.isItalicized}',
-    );
-  }
+    title('Substrings');
 
-  // substring.
-  {
-    print('');
-    final parser = AnsiParser(
-      '$fgWhite${bold}Lorem$resetBoldAndFaint '
-      '$bgHighRed$fgHighWhite${italicized}ipsum'
-      ' dolor sit$resetItalicized$resetBg$resetFg'
-      '$fgWhite amet, consectetur'
-      ' $fgRed${underlined}adipiscing$resetUnderlined'
-      '$fgWhite elit, sed do eiusmod tempor incididunt'
-      ' ut labore et dolore magna aliqua.$reset',
-    );
-    for (var i = 0; i < 40; i += 2) {
+    const text = '$fg256Rgb135${bold}Lorem$resetBoldAndFaint '
+        '$bg256Rgb012${italicized}ipsum dolor sit$resetItalicized$resetBg'
+        ' amet, consectetur'
+        ' $bg256Rgb012${underlined}adipiscing$resetUnderlined$resetBg elit,'
+        ' $bg256Rgb012${crossedOut}sed do eiusmod$resetCrossedOut$resetBg'
+        ' tempor…$reset';
+    subtitle('Original:');
+    print('"$text"');
+
+    subtitle('Substrings:');
+
+    final parser = Parser(text);
+    for (var i = 0; i < 50; i += 2) {
       print('"${parser.substring(i, maxLength: 40)}"');
     }
   }
 
-  // AnsiPrinter.
   {
     print('');
-    const text =
-        ' default colors'
+    title('Default style (Printer)');
+
+    const text = ' default colors'
         ' $fg256Rgb550$bg256Rgb031 yellow on green'
         ' $resetFg$resetBg default colors ';
-    print('Standart output (the default colors are set by the terminal):');
+    subtitle('Standart output (the default colors are set by the terminal):');
     print(text);
 
-    const defaultState = SgrPlainState(
+    const defaultState = Style(
       foreground: Color256.rgb555,
       background: Color256.rgb320,
     );
 
-    print('');
-    print('With AnsiPrinter (the default state is overrided):');
-    final printer = AnsiPrinter(defaultState: defaultState);
+    subtitle('With Printer (the default state is overrided):');
+    final printer = Printer(defaultStyle: defaultState);
     printer.print(text);
 
-    print('');
-    print('With runZonedAnsiPrinter (the default state is overrided):');
-    runZonedAnsiPrinter(defaultState: defaultState, () {
-      print(text);
-    });
+    subtitle('With runZonedPrinter (the default state is overrided):');
+    runZonedPrinter(
+      defaultStyle: defaultState,
+      () {
+        print(text);
+      },
+    );
   }
 
-  // Stacked AnsiPrinter.
   {
-    const importantNote = '${italicized}Important note$resetItalicized';
-    const text1 = 'Normal text $importantNote Normal text';
-    const text2 =
-        '${italicized}Important text $importantNote'
-        ' Important text$resetItalicized';
-
     print('');
-    print(text1); // Normal text <i>Important</i> note Normal text
+    title('StackedPrinter');
 
-    print('');
-    print('Insertion breaks the style of the text:');
-    print(text2); // <i>Important text Important note</i> Important text
+    const template = '${fg256Rgb330}some text {placeholder} some text$reset';
+    const highlightedText = '${fg256Rgb550}highlighted text$resetFg';
 
-    print('');
-    print('The state is accumulated in the stack:');
-    final stackedPrinter = AnsiPrinter(stacked: true);
-    stackedPrinter.print(
-      text2,
-    ); // <i>Important text Important note Important text</i>
+    subtitle('template:');
+    print(template);
+
+    subtitle('text for placeholder:');
+    print(highlightedText);
+
+    final text = template.replaceAll('{placeholder}', highlightedText);
+
+    subtitle('Standart output:');
+    print(text);
+    subsubtitle(
+      '                           '
+      '^ `resetFg` resets the color to the ${bold}terminal settings',
+    );
+
+    subtitle('Stacked Printer:');
+    final stackedPrinter = StackedPrinter();
+    stackedPrinter.print(text);
+    subsubtitle(
+      '                           '
+      '^ `resetFg` resets the color to the ${bold}previous color',
+    );
   }
 
-  // Tabs.
   if (stdout.hasTerminal) {
     print('');
-    const text = '0\t1\t2\t3\t4\t5\t6\t7\t8\t9';
+    title('Tabs');
+    const text = '0\t1\t2\t3\t4\t5\t6';
+
+    print('');
+    print('${fg256Rgb424}Default tabs:$reset');
     print(text);
+
+    print('');
+    print('${fg256Rgb424}Custom tabs (12):$reset');
     tabs(defaultTab: 12);
     print(text);
-    tabs();
+
+    print('');
+    print('${fg256Rgb424}Custom tabs (4):$reset');
+    tabs(defaultTab: 4);
+    print(text);
+
+    tabs(); // Reset to defaults
   }
+
+  const text = 'Hello ${fgRed}world$reset';
+  final parser = Parser(text);
+  print(parser.showControlFunctions());
+}
+
+void title(String text) {
+  print('\n$fg256Rgb531▶︎ $text$reset');
+}
+
+void subtitle(String text) {
+  print('\n$fg256Rgb420$text$reset');
+}
+
+void subsubtitle(String text) {
+  print('$fg256Rgb320$text$reset');
 }

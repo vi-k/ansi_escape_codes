@@ -1,4 +1,4 @@
-import '../../controls/c0.dart';
+import '../../ansi/c0.dart';
 
 /// Pattern for escape codes.
 final escapeCodesRe = RegExp(

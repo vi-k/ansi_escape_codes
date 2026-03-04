@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import '../controls/c1.dart';
-import '../controls/csi.dart';
+import '../ansi/c1.dart';
+import '../ansi/csi.dart';
 import '../parsing/control_functions/control_sequences.dart';
 
 /// Returns the current cursor position if possible.

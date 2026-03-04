@@ -3,12 +3,6 @@ import 'dart:math' as math;
 
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
-String _c(String value, int width) {
-  final diff = width - value.length;
-  if (diff <= 0) return value;
-  return '${' ' * (diff ~/ 2)}$value${' ' * (diff - diff ~/ 2)}';
-}
-
 /// Usage:
 ///
 /// ```bash
@@ -109,4 +103,10 @@ void main() {
       stdout.writeln();
     }
   }
+}
+
+String _c(String value, int width) {
+  final diff = width - value.length;
+  if (diff <= 0) return value;
+  return '${' ' * (diff ~/ 2)}$value${' ' * (diff - diff ~/ 2)}';
 }

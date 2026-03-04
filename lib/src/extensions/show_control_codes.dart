@@ -1,17 +1,55 @@
 import '../parsing/control_functions/control_functions_c0.dart';
 
-enum ControlCodeStyle { abbr, unicodeSymbol, escape, charCode }
+enum ControlCodeStyle {
+  charCode,
+  abbr,
+  unicode,
+  escapeOrCharCode,
+  escapeOrAbbr,
+  escapeOrUnicode,
+}
 
 extension StringShowControlCodesExtension on String {
   /// Show control codes.
-  String showControlCodes({
+  String ansiShowControlCodes({
     String open = '',
     String close = '',
     String abbrOpen = '[',
     String abbrClose = ']',
-    ControlCodeStyle preferStyle = ControlCodeStyle.escape,
+    ControlCodeStyle preferStyle = ControlCodeStyle.escapeOrCharCode,
   }) {
     final buf = StringBuffer();
+
+    void abbrToBuf(String abbr) {
+      buf
+        ..write(open)
+        ..write(abbrOpen)
+        ..write(abbr)
+        ..write(abbrClose)
+        ..write(close);
+    }
+
+    void unicodeToBuf(String unicodeSymbol) {
+      buf
+        ..write(open)
+        ..write(unicodeSymbol)
+        ..write(close);
+    }
+
+    void escapeCodeToBuf(String escapeSymbol) {
+      buf
+        ..write(open)
+        ..write(escapeSymbol)
+        ..write(close);
+    }
+
+    void charCodeToBuf(int charCode) {
+      buf
+        ..write(open)
+        ..write(r'\x')
+        ..write(charCode.toRadixString(16).toUpperCase().padLeft(2, '0'))
+        ..write(close);
+    }
 
     for (final charCode in codeUnits) {
       final controlCode = ControlFunctionsC0.byIndex(charCode);
@@ -20,34 +58,35 @@ extension StringShowControlCodesExtension on String {
         buf.writeCharCode(charCode);
       } else {
         switch (preferStyle) {
-          case ControlCodeStyle.abbr:
-            buf
-              ..write(open)
-              ..write(abbrOpen)
-              ..write(controlCode.name)
-              ..write(abbrClose)
-              ..write(close);
-
-          case ControlCodeStyle.unicodeSymbol:
-            final symbol = controlCode.unicodeSymbol;
-            buf
-              ..write(open)
-              ..write(symbol)
-              ..write(close);
-
-          case ControlCodeStyle.escape when controlCode.escapeSymbol != null:
-            buf
-              ..write(open)
-              ..write(controlCode.escapeSymbol)
-              ..write(close);
-
-          case ControlCodeStyle.escape:
           case ControlCodeStyle.charCode:
-            buf
-              ..write(open)
-              ..write(r'\x')
-              ..write(charCode.toRadixString(16).toUpperCase().padLeft(2, '0'))
-              ..write(close);
+            charCodeToBuf(charCode);
+
+          case ControlCodeStyle.abbr:
+            abbrToBuf(controlCode.name);
+
+          case ControlCodeStyle.unicode:
+            unicodeToBuf(controlCode.unicodeSymbol);
+
+          case ControlCodeStyle.escapeOrCharCode:
+            if (controlCode.escapeSymbol case final escapeSymbol?) {
+              escapeCodeToBuf(escapeSymbol);
+            } else {
+              charCodeToBuf(charCode);
+            }
+
+          case ControlCodeStyle.escapeOrAbbr:
+            if (controlCode.escapeSymbol case final escapeSymbol?) {
+              escapeCodeToBuf(escapeSymbol);
+            } else {
+              abbrToBuf(controlCode.name);
+            }
+
+          case ControlCodeStyle.escapeOrUnicode:
+            if (controlCode.escapeSymbol case final escapeSymbol?) {
+              escapeCodeToBuf(escapeSymbol);
+            } else {
+              unicodeToBuf(controlCode.unicodeSymbol);
+            }
         }
       }
     }

@@ -1,6 +1,6 @@
-import '../../../controls/c1.dart';
-import '../../../controls/csi.dart';
-import '../../../controls/sgr.dart';
+import '../../../ansi/c1.dart';
+import '../../../ansi/csi.dart';
+import '../../../ansi/sgr.dart';
 
 //
 // ANSI escape codes for underline color by RGB.

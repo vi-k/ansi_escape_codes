@@ -1,6 +1,6 @@
-part of '../ansi_parser.dart';
+part of '../parser.dart';
 
-final class Match<S extends SgrState<S>> {
+final class Match<S extends State<S>> {
   final Entity entity;
 
   final S state;
@@ -17,7 +17,7 @@ final class Match<S extends SgrState<S>> {
   });
 
   @override
-  String toString() => 'Match('
+  String toString() => '${Match<S>}('
       'start: $start'
       ', end: $end'
       ', entity: $entity'

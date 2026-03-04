@@ -1,17 +1,23 @@
 import 'package:meta/meta.dart';
 
-import '../../controls/c1.dart';
-import '../../controls/csi.dart';
-import '../../controls/sgr.dart';
-import '../../predefined_values/sgr/sgr.dart';
+import '../../ansi/c1.dart';
+import '../../ansi/csi.dart';
+import '../../ansi/sgr.dart';
+import '../../ready_to_use/sgr/sgr.dart' as sgr;
 import '../colors/color.dart';
+import '../parser/parser.dart';
 
-part 'sgr_plain_state.dart';
-part 'sgr_stacked_state.dart';
+part 'style.dart';
+part 'stack.dart';
 
+/// The base class for tracking the state of ANSI escape codes.
+///
+/// This class represents a set of applied text styles and colors. Subclasses
+/// like [Style] and [Stack] provide specific mechanisms for how these
+/// properties are maintained.
 @immutable
-sealed class SgrState<S extends SgrState<S>> {
-  const SgrState();
+sealed class State<S extends State<S>> {
+  const State();
 
   bool get isBold;
 
@@ -51,90 +57,61 @@ sealed class SgrState<S extends SgrState<S>> {
 
   ScriptedStyle? get scriptedStyle;
 
-  Color? get foreground;
+  Color? get colorOfForeground;
 
-  Color? get background;
+  Color? get colorOfBackground;
 
-  ExtendedColor? get underlineColor;
+  ExtendedColor? get colorOfUnderline;
 
-  S resetAll();
+  S get bold;
+  S get faint;
+  S get italic;
+  S get underline;
+  S get doublyUnderline;
+  S get slowlyBlink;
+  S get rapidlyBlink;
+  S get negative;
+  S get conceal;
+  S get crossOut;
+  S get frame;
+  S get encircle;
+  S get overline;
+  S get superscript;
+  S get subscript;
 
-  S setBold();
+  S foreground(Color color);
+  S background(Color color);
+  S underlineColor(ExtendedColor color);
 
-  S setFaint();
-
-  S resetBoldAndFaint();
-
-  S setItalicized();
-
-  S resetItalicized();
-
-  S setSinglyUnderlined();
-
-  S setDoublyUnderlined();
-
-  S resetUnderlined();
-
-  S setSlowlyBlinking();
-
-  S setRapidlyBlinking();
-
-  S resetBlinking();
-
-  S setNegative();
-
-  S resetNegative();
-
-  S setConcealed();
-
-  S resetConcealed();
-
-  S setCrossedOut();
-
-  S resetCrossedOut();
-
-  S setFramed();
-
-  S setEncircled();
-
-  S resetFramedAndEncircled();
-
-  S setOverlined();
-
-  S resetOverlined();
-
-  S setSuperscripted();
-
-  S setSubscripted();
-
-  S resetSuperscriptedAndSubscripted();
-
-  S setForeground(Color color);
-
-  S resetForeground();
-
-  S setBackground(Color color);
-
-  S resetBackground();
-
-  S setUnderlineColor(ExtendedColor color);
-
-  S resetUnderlineColor();
+  S get reset;
+  S get resetBoldAndFaint;
+  S get resetItalicized;
+  S get resetUnderlined;
+  S get resetBlinking;
+  S get resetNegative;
+  S get resetConcealed;
+  S get resetCrossedOut;
+  S get resetFramedAndEncircled;
+  S get resetOverlined;
+  S get resetSuperscriptedAndSubscripted;
+  S get resetForeground;
+  S get resetBackground;
+  S get resetUnderlineColor;
 
   String transitTo(
-    SgrState<void> other, {
+    State<void> other, {
     bool skipSet = false,
     bool skipReset = false,
   }) {
-    if (other == SgrPlainState.defaults) {
-      return skipReset || (this as SgrState<void>) == SgrPlainState.defaults
+    if (other == Style.defaults) {
+      return skipReset || (this as State<void>) == Style.defaults
           ? ''
-          : reset;
+          : sgr.reset;
     }
 
-    final otherForeground = other.foreground;
-    final otherBackground = other.background;
-    final otherUnderlineColor = other.underlineColor;
+    final otherForeground = other.colorOfForeground;
+    final otherBackground = other.colorOfBackground;
+    final otherUnderlineColor = other.colorOfUnderline;
     final otherUnderlinedStyle = other.underlinedStyle;
     final otherBlinkingStyle = other.blinkingStyle;
     final otherFramedStyle = other.framedStyle;
@@ -144,11 +121,11 @@ sealed class SgrState<S extends SgrState<S>> {
         ? const <int>[]
         : <int>[
             // Colors.
-            if (foreground != otherForeground && otherForeground == null)
+            if (colorOfForeground != otherForeground && otherForeground == null)
               _colorIndex(30, 90, null),
-            if (background != otherBackground && otherBackground == null)
+            if (colorOfBackground != otherBackground && otherBackground == null)
               _colorIndex(40, 100, null),
-            if (underlineColor != otherUnderlineColor &&
+            if (colorOfUnderline != otherUnderlineColor &&
                 otherUnderlineColor == null)
               59,
             // Bold and faint.
@@ -182,13 +159,13 @@ sealed class SgrState<S extends SgrState<S>> {
     final extColorsSetParams = skipSet
         ? ''
         : <String>[
-            if (foreground != otherForeground &&
+            if (colorOfForeground != otherForeground &&
                 otherForeground is ExtendedColor)
               _color(30, 90, otherForeground),
-            if (background != otherBackground &&
+            if (colorOfBackground != otherBackground &&
                 otherBackground is ExtendedColor)
               _color(40, 100, otherBackground),
-            if (underlineColor != otherUnderlineColor &&
+            if (colorOfUnderline != otherUnderlineColor &&
                 otherUnderlineColor != null)
               _color(50, 0, otherUnderlineColor),
           ].join();
@@ -197,9 +174,11 @@ sealed class SgrState<S extends SgrState<S>> {
         ? const <int>[]
         : <int>[
             // Colors.
-            if (foreground != otherForeground && otherForeground is Color16)
+            if (colorOfForeground != otherForeground &&
+                otherForeground is Color16)
               _colorIndex(30, 90, otherForeground),
-            if (background != otherBackground && otherBackground is Color16)
+            if (colorOfBackground != otherBackground &&
+                otherBackground is Color16)
               _colorIndex(40, 100, otherBackground),
             // Bold and faint.
             if (isBold && !other.isBold || isFaint && !other.isFaint) ...[
@@ -257,7 +236,7 @@ sealed class SgrState<S extends SgrState<S>> {
             '${setParams.isEmpty ? '' : '$CSI${setParams.join(';')}$SGR'}';
   }
 
-  SgrPlainState changeDefaultsTo(SgrState other) => SgrPlainState(
+  Style changeDefaultsTo(State other) => Style(
         bold: isBold || other.isBold,
         faint: isFaint || other.isFaint,
         italicized: isItalicized || other.isItalicized,
@@ -287,12 +266,12 @@ sealed class SgrState<S extends SgrState<S>> {
         subscripted: scriptedStyle == ScriptedStyle.subscripted ||
             scriptedStyle == null &&
                 other.scriptedStyle == ScriptedStyle.subscripted,
-        foreground: foreground ?? other.foreground,
-        background: background ?? other.background,
-        underlineColor: underlineColor ?? other.underlineColor,
+        foreground: colorOfForeground ?? other.colorOfForeground,
+        background: colorOfBackground ?? other.colorOfBackground,
+        underlineColor: colorOfUnderline ?? other.colorOfUnderline,
       );
 
-  SgrPlainState toPlainState();
+  Style toStyle();
 
   int _colorIndex(int offset, int highOffset, Color16? color) =>
       switch (color) {
@@ -324,14 +303,14 @@ sealed class SgrState<S extends SgrState<S>> {
         isOverlined,
         isSuperscripted,
         isSubscripted,
-        foreground,
-        background,
-        underlineColor,
+        colorOfForeground,
+        colorOfBackground,
+        colorOfUnderline,
       );
 
   @override
   bool operator ==(Object other) =>
-      other is SgrState &&
+      other is State<void> &&
       isBold == other.isBold &&
       isFaint == other.isFaint &&
       isItalicized == other.isItalicized &&
@@ -347,9 +326,9 @@ sealed class SgrState<S extends SgrState<S>> {
       isOverlined == other.isOverlined &&
       isSuperscripted == other.isSuperscripted &&
       isSubscripted == other.isSubscripted &&
-      foreground == other.foreground &&
-      background == other.background &&
-      underlineColor == other.underlineColor;
+      colorOfForeground == other.colorOfForeground &&
+      colorOfBackground == other.colorOfBackground &&
+      colorOfUnderline == other.colorOfUnderline;
 
   String get _objectTypeName;
 
@@ -370,9 +349,9 @@ sealed class SgrState<S extends SgrState<S>> {
       if (isOverlined) 'overlined',
       if (isSuperscripted) 'superscripted',
       if (isSubscripted) 'subscripted',
-      if (foreground != null) 'foreground: $foreground',
-      if (background != null) 'background: $background',
-      if (underlineColor != null) 'underlineColor: $underlineColor',
+      if (colorOfForeground != null) 'foreground: $colorOfForeground',
+      if (colorOfBackground != null) 'background: $colorOfBackground',
+      if (colorOfUnderline != null) 'underlineColor: $colorOfUnderline',
     ];
 
     return values.join(', ');

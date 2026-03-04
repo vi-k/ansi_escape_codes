@@ -1,7 +1,7 @@
 import 'dart:io' as io;
 
-import '../controls/c1.dart';
-import '../controls/csi.dart';
+import '../ansi/c1.dart';
+import '../ansi/csi.dart';
 
 void tabs({
   int? defaultTab,

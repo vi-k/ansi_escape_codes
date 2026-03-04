@@ -1,7 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
-import '../../controls/c0.dart';
-import '../../controls/c1.dart' as c1;
+import '../../ansi/c0.dart';
+import '../../ansi/c1.dart' as c1;
 import 'control_functions_c0.dart';
 
 /// Control functions: elements of the C1 set.

@@ -1,10 +1,10 @@
 /// Foreground color as specified in ITU-T Rec. T.416 (03/93).
 library;
 
-import '../../../controls/c1.dart';
-import '../../../controls/colors.dart';
-import '../../../controls/csi.dart';
-import '../../../controls/sgr.dart';
+import '../../../ansi/c1.dart';
+import '../../../ansi/colors.dart';
+import '../../../ansi/csi.dart';
+import '../../../ansi/sgr.dart';
 
 /// Opening tag for foreground with 256-color table.
 ///

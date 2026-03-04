@@ -290,8 +290,8 @@ final class Color256 extends ExtendedColor {
   bool operator ==(Object other) => other is Color256 && color == other.color;
 
   @override
-  String get id => '${_prefix ?? '?'}256${color.name.firstToUpperCase()}';
+  String get id => '${_prefix ?? '?'}256${color.name.capitalize()}';
 
   @override
-  String toString() => '$Color256($color)';
+  String toString() => '$Color256.${color.name}';
 }

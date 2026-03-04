@@ -52,8 +52,8 @@ final class Color16 extends Color {
   bool operator ==(Object other) => other is Color16 && color == other.color;
 
   @override
-  String get id => '${_prefix ?? '?'}${color.name.firstToUpperCase()}';
+  String get id => '${_prefix ?? '?'}${color.name.capitalize()}';
 
   @override
-  String toString() => '$Color16($color)';
+  String toString() => '$Color16.${color.name}';
 }

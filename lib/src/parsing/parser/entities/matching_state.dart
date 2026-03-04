@@ -1,6 +1,6 @@
-part of '../ansi_parser.dart';
+part of '../parser.dart';
 
-final class MatchingState<S extends SgrState<S>> {
+final class MatchingState<S extends State<S>> {
   final RegExpMatch match;
   S sgrState;
 

@@ -1,5 +1,5 @@
-import '../controls/c0.dart';
-import '../controls/c1.dart';
+import '../ansi/c0.dart';
+import '../ansi/c1.dart';
 
 /// Link.
 ///

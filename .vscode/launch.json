@@ -11,6 +11,12 @@
             "program": "example/ansi_escape_codes_example.dart",
         },
         {
+            "name": "styles",
+            "request": "launch",
+            "type": "dart",
+            "program": "example/styles.dart",
+        },
+        {
             "name": "sgr",
             "request": "launch",
             "type": "dart",

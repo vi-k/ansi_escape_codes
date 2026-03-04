@@ -1,4 +1,4 @@
-part of '../ansi_parser.dart';
+part of '../parser.dart';
 
 @immutable
 sealed class Entity {
@@ -20,7 +20,7 @@ final class Text extends Entity {
   @override
   String toString() {
     final escapedText = string
-        .showControlCodes()
+        .ansiShowControlCodes()
         .replaceAll(r'\', r'\\')
         .replaceAll("'", r"\'");
 
@@ -33,7 +33,7 @@ sealed class EscapeCode extends Entity {
 
   String get id;
 
-  static EscapeCode _parse<S extends SgrState<S>>(MatchingState<S> state) {
+  static EscapeCode _parse<S extends State<S>>(MatchingState<S> state) {
     final csi = state['csi'];
     if (csi != null) {
       return Csi._parse(state);
@@ -53,14 +53,14 @@ sealed class EscapeCode extends Entity {
   }
 
   String toStringAsControlCodes() =>
-      string.showControlCodes(preferStyle: ControlCodeStyle.abbr);
+      string.ansiShowControlCodes(preferStyle: ControlCodeStyle.abbr);
 
-  String toStringAsEscapeSquences() => string.showEscapeCodes();
+  String toStringAsEscapeSquences() => string.ansiShowEscapeSequences();
 }
 
 mixin UnrecognizedEscapeCode on EscapeCode {
   @override
-  String get id => string.showEscapeCodes(open: '', close: '');
+  String get id => string.ansiShowEscapeSequences(open: '', close: '');
 }
 
 final class UnknownEscapeCode extends EscapeCode with UnrecognizedEscapeCode {

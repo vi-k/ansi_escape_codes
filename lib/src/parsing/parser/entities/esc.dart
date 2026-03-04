@@ -1,9 +1,9 @@
-part of '../ansi_parser.dart';
+part of '../parser.dart';
 
 sealed class Esc extends EscapeCode {
   const Esc._(super.string) : super._();
 
-  static Esc _parse<S extends SgrState<S>>(MatchingState<S> state) {
+  static Esc _parse<S extends State<S>>(MatchingState<S> state) {
     final code = state['esc_final']!;
 
     return switch (code) {

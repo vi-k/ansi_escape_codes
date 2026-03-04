@@ -1,6 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
-import '../../controls/csi.dart' as csi;
+import '../../ansi/csi.dart' as csi;
 
 /// Control sequences.
 ///

@@ -1,12 +1,12 @@
-import '../controls/c0.dart';
+import '../ansi/c0.dart';
 import '../parsing/control_functions/control_functions_c0.dart';
 import '../parsing/control_functions/control_functions_c1.dart';
 import '../parsing/control_functions/control_sequences.dart';
 import '../parsing/patterns/patterns.dart';
 
 extension StringShowEscapeCodesExtension on String {
-  /// Show escape codes.
-  String showEscapeCodes({
+  /// Show escape sequences.
+  String ansiShowEscapeSequences({
     String open = '[',
     String codeOpen = '',
     String codeClose = '',

@@ -1,6 +1,11 @@
-part of '../ansi_parser.dart';
+part of '../parser.dart';
 
-final class Matches<S extends SgrState<S>> extends Iterable<Match<S>> {
+/// An iterable collection of [Match] objects representing the parsed ANSI
+/// escape codes and text segments in a string.
+///
+/// This class is created by the [Parser] and provides access to the
+/// individual matches found in the input string.
+final class Matches<S extends State<S>> extends Iterable<Match<S>> {
   final S _initialState;
   final String _input;
 
@@ -30,6 +35,6 @@ final class Matches<S extends SgrState<S>> extends Iterable<Match<S>> {
   @visibleForTesting
   bool get isParsed => _parsingResult != null;
 
-  AnsiParserIterator<S> _createIterator() =>
-      AnsiParserIterator<S>._(this, _initialState);
+  ParserIterator<S> _createIterator() =>
+      ParserIterator<S>._(this, _initialState);
 }

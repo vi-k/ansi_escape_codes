@@ -3,163 +3,81 @@ import 'dart:math' as math;
 
 import 'package:meta/meta.dart';
 
-import '../../controls/sgr.dart';
+import '../../ansi/sgr.dart';
 import '../../extensions/remove.dart';
 import '../../extensions/show_control_codes.dart';
 import '../../extensions/show_escape_codes.dart';
-import '../../predefined_values/sgr/sgr.dart';
+import '../../ready_to_use/sgr/sgr.dart';
 import '../colors/color.dart';
 import '../control_functions/control_functions_c1.dart';
 import '../control_functions/control_sequences.dart';
 import '../control_functions/sgr.dart';
 import '../patterns/patterns.dart';
-import '../state/sgr_state.dart';
+import '../state/state.dart';
 
-part 'ansi_printer.dart';
+part 'printer.dart';
 part 'entities/csi.dart';
 part 'entities/entity.dart';
 part 'entities/esc.dart';
 part 'entities/matching_state.dart';
 part 'entities/osc.dart';
 part 'entities/sgr.dart';
-part 'matches/ansi_parser_iterator.dart';
+part 'matches/parser_iterator.dart';
 part 'matches/match.dart';
 part 'matches/matches.dart';
 part 'matches/matches_result.dart';
 
-/// Parser for analyzing strings containing codes.
-sealed class AnsiParser {
-  factory AnsiParser(
-    String input, {
-    @experimental bool stacked = false,
-  }) =>
-      !stacked
-          ? _ParserBase._(input, SgrPlainState.defaults)
-          : _ParserBase._(input, SgrStackedState.defaults);
-
-  AnsiParser._();
-
-  @visibleForTesting
-  bool get isParsed;
-
-  /// List of matches.
-  Iterable<Match<SgrState<void>>> get matches;
-
-  /// Final state of the string.
-  SgrState get finalState;
-
-  /// String length without escape codes.
-  int get length;
-
-  /// Whether the string is closed.
-  bool get isClosed;
-
-  /// Optional method. Only needed to optimize parsing only.
-  void prepare();
-
-  /// Return state at [pos].
-  ///
-  /// [pos] can point to the end of the string, i.e. be in the range from 0 to
-  /// [length] inclusive.
-  SgrState stateAtPos(int pos);
-
-  /// Replaces all escape codes with [replace].
-  ///
-  /// Creates a new string in which the escape codes are replaced by the result
-  /// of calling [replace] on the corresponding [EscapeCode] code.
-  ///
-  /// ```dart
-  /// print(
-  ///   AnsiParser('$bold bold $italicized italicized $reset')
-  ///       .replaceAll((code) => '[${code.id}]'),
-  /// )
-  /// // [bold] bold [italicized] italicized [reset]
-  /// ```
-  ///
-  /// [replacePlainText] allows you to process plain text:
-  ///
-  /// ```dart
-  /// print(
-  ///   AnsiParser('$bold bold\n$italicized italicized\n$reset').replaceAll(
-  ///     (code) => '[${code.id}]',
-  ///     replacePlainText: (entity) => entity.string.showAnsiControlCodes(),
-  ///   ),
-  /// );
-  /// // [bold] bold\n[italicized] italicized\n[reset]
-  /// ```
-  String replaceAll(
-    String Function(EscapeCode code) replace, {
-    String Function(Text entity)? replacePlainText,
-  });
-
-  /// Remove all escape codes.
-  ///
-  /// Returns plain string without escape codes.
-  String removeAll();
-
-  /// Show all control functions at the string.
-  String showControlFunctions({
-    String open = '[',
-    String close = ']',
-  });
-
-  /// The substring of this string from [start], maximum length [maxLength].
-  ///
-  /// Example:
-  ///
-  /// ```dart
-  /// const string = '$fgRed'
-  ///     ' $underlined${bold}bold$resetBoldAndFaint'
-  ///     ' ${italicized}italic$resetItalicized$resetUnderlined'
-  ///     ' $resetFg';
-  /// final substring = AnsiParser(string).substring(3, maxLength: 6);
-  /// print(AnsiParser(substring).showControlFunctions());
-  /// // [fgRed;bold;underlined]ld[resetBoldAndFaint] [italicized]ita[reset]
-  /// ```
-  ///
-  /// By default, the string will be closed ('[reset]' at the end of the
-  /// string). If you disable the [close] parameter, the string will not be
-  /// closed. This means that when it is printed, it will affect the next text
-  /// output:
-  ///
-  /// ```dart
-  /// final substring =
-  ///     AnsiParser(string).substring(3, maxLength: 6, close: false);
-  /// print(AnsiParser(substring).showControlFunctions());
-  /// // [fgRed;bold;underlined]ld[resetBoldAndFaint] [italicized]ita
-  /// ```
-  ///
-  /// The escape codes are not copied into the string directly, but are
-  /// inserted in an optimized form:
-  ///
-  /// ```dart
-  /// const string = '$bold$bold$italicized$resetItalicized${underlined}text'
-  ///     '$resetBoldAndFaint$resetUnderlined';
-  /// final substring = AnsiParser(string).substring(0, maxLength: 4);
-  /// print(AnsiParser(substring).showControlFunctions());
-  /// // [bold;underlined]text[reset]
-  /// ```
-  String substring(
-    int start, {
-    int? maxLength,
-    bool close = true,
-  });
-
-  /// Optimizes codes by removing redundant codes and merging the remaining
-  /// ones.
-  String optimize({
-    bool close = true,
-  });
+/// A parser that processes strings containing ANSI escape codes and tracks the
+/// current [Style].
+///
+/// [Parser] allows you to perform various operations on strings with ANSI
+/// sequences, such as:
+/// * Stripping out the escape codes using [removeAll].
+/// * Optimizing the string to remove redundant codes using [optimize].
+/// * Extracting a substring while preserving the active style using
+///   [substring].
+/// * Retrieving the computed [Style] at a specific text position using
+///   [stateAt] and [finalState].
+/// * Analyzing a string using [matches].
+///
+/// [Parser] allows you to work with a string containing ANSI escape codes as
+/// with a regular string without ANSI escape codes:
+/// * [length] - string length without ANSI escape codes.
+/// * [indexOf] - index of the first occurrence of a pattern in the string
+///   without ANSI escape codes.
+/// * [lastIndexOf] - index of the last occurrence of a pattern in the string
+///   without ANSI escape codes.
+/// * [contains] - whether the string contains a pattern in the string without
+///   ANSI escape codes.
+/// * [startsWith] - whether the string starts with a pattern in the string
+///   without ANSI escape codes.
+/// * [endsWith] - whether the string ends with a pattern in the string without
+///   ANSI escape codes.
+final class Parser extends _ParserBase<Style> {
+  /// Creates a [Parser] for the given [input] string.
+  Parser(String input) : super(input, Style.defaults);
 }
 
-final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
+/// A parser that processes strings containing ANSI escape codes and tracks
+/// the [Stack] of styles.
+///
+/// Similar to [Parser], but instead of maintaining only the currently active
+/// [Style], [StackedParser] tracks the full history of applied styles using a
+/// [Stack]. This is useful for complex formatting where styles might be
+/// applied and reverted hierarchically.
+final class StackedParser extends _ParserBase<Stack> {
+  /// Creates a [StackedParser] for the given [input] string.
+  StackedParser(String input) : super(input, Stack.defaults);
+}
+
+final class _ParserBase<S extends State<S>> {
   final String input;
   final S initialState;
 
   Matches<S>? _matches;
   String? _plainString;
 
-  _ParserBase._(this.input, this.initialState) : super._();
+  _ParserBase(this.input, this.initialState);
 
   String get _requirePlainString => _plainString ??= () {
         final buf = StringBuffer();
@@ -173,42 +91,57 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
         return buf.toString();
       }();
 
-  @override
   @visibleForTesting
   bool get isParsed => _matches?.isParsed ?? false;
 
-  @override
+  /// The [Matches] of the string.
   Matches<S> get matches => _matches ??= Matches._(input, initialState);
 
-  @override
+  /// The final [S] after processing the entire string.
+  ///
+  /// See also [stateAt].
   S get finalState => matches._requireParsingResult.finalState;
 
-  @override
+  /// String length without ANSI escape codes.
   int get length => _requirePlainString.length;
 
-  @override
-  bool get isClosed => finalState == SgrPlainState.defaults;
+  /// Whether the string is closed with the default style.
+  bool get isClosed => finalState == Style.defaults;
 
-  @override
+  /// Forcibly collects [matches] and prepares plain string.
   void prepare() {
     matches._requireParsingResult;
     _requirePlainString;
   }
 
+  /// Index of the first occurrence of a pattern in the string without ANSI
+  /// escape codes.
   int indexOf(Pattern pattern) => _requirePlainString.indexOf(pattern);
 
+  /// Index of the last occurrence of a pattern in the string without ANSI
+  /// escape codes.
   int lastIndexOf(Pattern pattern) => _requirePlainString.lastIndexOf(pattern);
 
+  /// Whether the string contains a pattern in the string without ANSI escape
+  /// codes.
   bool contains(Pattern other, [int startIndex = 0]) =>
       _requirePlainString.contains(other, startIndex);
 
+  /// Whether the string starts with a pattern in the string without ANSI
+  /// escape codes.
   bool startsWith(Pattern pattern, [int index = 0]) =>
       _requirePlainString.startsWith(pattern, index);
 
+  /// Whether the string ends with a pattern in the string without ANSI
+  /// escape codes.
   bool endsWith(String other) => _requirePlainString.endsWith(other);
 
-  @override
-  S stateAtPos(int pos) {
+  /// Returns the [S] of the string at the given plain text [pos].
+  ///
+  /// [pos] is the position in the string without ANSI escape codes.
+  ///
+  /// See also [finalState].
+  S stateAt(int pos) {
     RangeError.checkNotNegative(pos, 'pos');
 
     var end = 0;
@@ -226,7 +159,11 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
     return finalState;
   }
 
-  @override
+  /// Replaces all [EscapeCode]s in the string with the result of the [replace]
+  /// function.
+  ///
+  /// [replacePlainText] is an optional function that replaces [Text] entities.
+  /// If not provided, [Text] entities are not changed.
   String replaceAll(
     String Function(EscapeCode code) replace, {
     String Function(Text entity)? replacePlainText,
@@ -247,17 +184,32 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
     return buf.toString();
   }
 
-  @override
+  /// Returns the string without ANSI escape codes.
   String removeAll() => _requirePlainString;
 
-  @override
+  /// Returns a string in which all [EscapeCode] are replaced with their
+  /// identifiers.
+  ///
+  /// ```dart
+  /// const text = 'Hello ${fgRed}world$reset';
+  /// final parser = Parser(text);
+  /// print(parser.showControlFunctions());
+  /// // Hello [fgRed]world[reset]
+  /// ```
+  ///
+  /// [open] is the string to prepend to each [EscapeCode].
+  /// [close] is the string to append to each [EscapeCode].
   String showControlFunctions({
     String open = '[',
     String close = ']',
   }) =>
       replaceAll((e) => '$open${e.id}$close');
 
-  @override
+  /// Returns a substring of the given [start] position while preserving the
+  /// text style.
+  ///
+  /// [maxLength] is the maximum length of the substring.
+  /// [close] is whether to close the substring with the default style.
   String substring(
     int start, {
     int? maxLength,
@@ -274,7 +226,7 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
 
     final buf = StringBuffer();
     var pos = 0;
-    var currentState = SgrPlainState.defaults;
+    var currentState = Style.defaults;
     Match<S>? lastMatch;
 
     for (final m in matches) {
@@ -295,7 +247,7 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
               buf
                 ..write(currentState.transitTo(m.state))
                 ..write(substring);
-              currentState = m.state.toPlainState();
+              currentState = m.state.toStyle();
               lastMatch = m;
             }
           }
@@ -316,7 +268,7 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
     if (lastMatch != null) {
       buf.write(
         currentState.transitTo(
-          close ? SgrPlainState.defaults : lastMatch.state,
+          close ? Style.defaults : lastMatch.state,
           skipSet: true,
         ),
       );
@@ -325,10 +277,12 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
     return buf.toString();
   }
 
-  @override
+  /// Optimizes the string by removing consecutive escape codes.
+  ///
+  /// [close] is whether to close the string with the default style.
   String optimize({bool close = true}) {
     final buf = StringBuffer();
-    var currentState = SgrPlainState.defaults;
+    var currentState = Style.defaults;
 
     for (final m in matches) {
       final entity = m.entity;
@@ -339,14 +293,14 @@ final class _ParserBase<S extends SgrState<S>> extends AnsiParser {
             ..write(currentState.transitTo(m.state))
             ..write(string);
         }
-        currentState = m.state.toPlainState();
+        currentState = m.state.toStyle();
       }
     }
 
     final lastMatch = matches.lastOrNull;
 
     if (close) {
-      buf.write(currentState.transitTo(SgrPlainState.defaults));
+      buf.write(currentState.transitTo(Style.defaults));
     } else if (lastMatch != null) {
       buf.write(currentState.transitTo(lastMatch.state));
     }

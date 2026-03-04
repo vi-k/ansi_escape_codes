@@ -1,6 +1,23 @@
-## 2.2.2
+## 3.0.0
 
-- Fix README.
+- [breaking changes] Total renaiming:
+  - `AnsiPrinter` to `Printer`, `StackedPrinter`, `SinkPrinter` and
+    `StackedSinkPrinter`
+  - `AnsiParser` to `Parser` and `StackedParser`
+  - `stateAtPos` to `stateAt`
+  - `SgrPlainState` to `Style`
+  - `SgrState` to `State`
+  - `SgrStackState` to `Stack`
+  - `removeEscapeCodes` to `ansiRemoveEscapeCodes`
+  - `removeCsi` to `ansiRemoveCsi`
+  - `removeSgr` to `ansiRemoveSgr`
+  - `removeForeground` to `ansiRemoveForeground`
+  - `removeBackground` to `ansiRemoveBackground`
+  - `showControlCodes` to `ansiShowControlCodes`
+  - `showEscapeCodes` to `ansiShowEscapeSequences`
+  - `showAnsiControlFunctions` to `ansiShowControlFunctions`
+  - `optimizeAnsiControlFunctions` to `ansiOptimizeControlFunctions`
+- Add styles.
 
 ## 2.2.1
 

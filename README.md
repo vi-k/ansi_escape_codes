@@ -1,12 +1,10 @@
 [![Dart CI](https://github.com/vi-k/ansi_escape_codes/actions/workflows/dart.yml/badge.svg)](https://github.com/vi-k/ansi_escape_codes/actions/workflows/dart.yml)
-[![GitHub Repo](https://img.shields.io/badge/github-repo-blue?logo=github)](https://github.com/vi-k/ansi_escape_codes)
 [![Pub Publisher](https://img.shields.io/pub/publisher/ansi_escape_codes)](https://pub.dev/publishers/yet-another.dev/packages)
 ![Pub Version](https://img.shields.io/pub/v/ansi_escape_codes)
 ![GitHub License](https://img.shields.io/github/license/vi-k/ansi_escape_codes)
-[![Dart](https://img.shields.io/badge/Dart-blue?logo=dart)](https://dart.dev/)
 
-A toolkit for working with **ANSI escape codes**
-and analyzing strings containing them.
+A toolkit for working with **ANSI escape codes** and analyzing strings
+containing them.
 
 > ANSI escape sequences are a standard for in-band signaling to control cursor
 > location, color, font styling, and other options on video text terminals and
@@ -20,24 +18,82 @@ and analyzing strings containing them.
 
 - coloring: emphasis on using **constants** instead of functions and classes
 - cursor and terminal control
-- **analyzing** and **parsing** and  strings containing escape codes
+- **analyzing** and **parsing** strings containing escape codes
 - **default style for all application output**
 
 
+## Table of contents
+
+- [Quick start](#quick-start)
+  - [How do I color text?](#how-do-i-color-text)
+  - [How can I change the default style?](#how-can-i-change-the-default-style)
+- [Control function constants and ready-to-use values](#control-function-constants-and-ready-to-use-values)
+  - [Control codes (C0 set)](#control-codes-c0-set)
+  - [Control functions ESC Fe (C1 set)](#control-functions-esc-fe-c1-set)
+  - [Control sequences (CSI)](#control-sequences-csi)
+  - [Ready-to-use functions and constants](#ready-to-use-functions-and-constants)
+  - [Independent control functions ESC Fs](#independent-control-functions-esc-fs)
+  - [Select graphic rendition (SGR)](#select-graphic-rendition-sgr)
+  - [256-color table](#256-color-table)
+  - [24-bit RGB colors](#24-bit-rgb-colors)
+- [Analyzing and parsing](#analyzing-and-parsing)
+  - [Parser](#parser)
+  - [Quick analysis](#quick-analysis)
+  - [Printer](#printer)
+  - [StackedPrinter](#stackedprinter)
+
+
 ## Quick start
+
+
+### How do I color text?
+
+You can use different levels of coloring.
+
+###### Close to ANSI standard
+
+If you need a level that is as close as possible to ANSI, you can use
+ready-made constants that comply with the standard.
+
+```dart
+import 'package:ansi_escape_codes/ansi.dart';
+
+void main() {
+  const text = '$CSI$FG_GREEN$SGR Green text $CSI$FG_DEFAULT$SGR$LF'
+    '$CSI$FOREGROUND;$COLOR_256;$RGB_520$SGR Orange text $CSI$RESET$SGR';
+
+  print(text);
+}
+```
+
+Most likely, this option will only be of interest to specialists in the
+standard.
+
+All constants can be found in this folder:
+[ansi](https://github.com/vi-k/ansi_escape_codes/tree/main/lib/src/ansi)
+
+###### Maximum performance
+
+A convenient and highly efficient option is to use ready-to-use values that
+hide the complexity of ANSI:
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
 void main() {
-  print('$fgGreen Green text $resetFg'
+  const text = '$fgGreen Green text $resetFg'
     '$bgYellow Yellow background $resetBg'
     '$bold Bold text $resetBoldAndFaint'
     '$italicized Italicized text $resetItalicized'
     '$underlined Underlined text $resetUnderlined'
-    '$reset');
+    '$reset';
+
+  print(text);
 }
 ```
+
+Its main feature is that it allows you to create constant strings that are
+ready to use.
 
 `fgGreen` is an ANSI escape sequence that sets the text color to green.
 `bgYellow` sets the background color to yellow. And so on.
@@ -56,37 +112,124 @@ void main() {
 > to the standard terminal text color!
 >
 > If you need the ability to roll back to the previous color, use
-> [Stacked AnsiPrinter](#stacked-ansiprinter).
+> [styles](#the-power-of-styles) or [StackedPrinter](#stackedprinter).
 
 Since you cannot set `bold` and `faint` at the same time, a single escape
 sequence is used in ANSI to reset both: `resetBoldAndFaint`.
 
 `reset` returns all settings to default.
 
-All the ready-to-use values can be seen in:
-
-- [Select graphic rendition (SGR)](#select-graphic-rendition-sgr)
-- [256-color table](#256-color-table)
-- [24-bit RGB colors](#24-bit-rgb-colors)
+All the ready-to-use values can be found in this folder:
+[ready_to_use](https://github.com/vi-k/ansi_escape_codes/tree/main/lib/src/ready_to_use)
 
 
-## Table of contents
+###### The power of styles
 
-- [Control function constants and predefined values](#control-function-constants-and-predefined-values)
-  - [Control codes (C0 set)](#control-codes-c0-set)
-  - [Control functions ESC Fe (C1 set)](#control-functions-esc-fe-c1-set)
-  - [Control sequences (CSI)](#control-sequences-csi)
-  - [Predefined values](#predefined-values)
-  - [Independent control functions ESC Fs](#independent-control-functions-esc-fs)
-  - [Select graphic rendition (SGR)](#select-graphic-rendition-sgr)
-  - [256-color table](#256-color-table)
-  - [24-bit RGB colors](#24-bit-rgb-colors)
-- [Analyzing and parsing](#analyzing-and-parsing)
-  - [AnsiParser](#ansiparser)
-  - [Quick analysis](#quick-analysis)
-  - [AnsiPrinter](#ansiprinter)
-  - [Stacked AnsiPrinter](#stacked-ansiprinter)
+```dart
+import 'package:ansi_escape_codes/style.dart';
 
+void main() {
+  final defaultStyle = gray12;
+  final greenStyle = green.bold;
+  final highlighedStyle = red.bgYellow.underline;
+
+  print(
+    defaultStyle(
+      'Normal text'
+      ' ${greenStyle('Green ${highlighedStyle('Highlighted text')} text')}'
+      ' Normal text',
+    ),
+  );
+}
+```
+
+First, you can assemble your own style from any pieces:
+
+```dart
+final style = rgb050.bgRgb010.bold.italic.underline;
+```
+
+Second, styles can be nested: after completing the action of a nested style,
+the style will return to the parent style.
+
+
+### How can I change the default style?
+
+You cannot set default colors for the entire terminal. However, Dart allows you
+to intercept calls to the `print` and override the default style in those
+calls.
+
+Example (if you use styles):
+
+```dart
+import 'package:ansi_escape_codes/style.dart';
+
+void main() {
+  final greenStyle = green.bold;
+  final highlighedStyle = red.bgYellow.underline;
+
+  runZonedPrinter(
+    defaultStyle: gray12,
+    () {
+      print(
+        'Normal text'
+        ' ${greenStyle('Green ${highlighedStyle('Highlighted text')} text')}'
+        ' Normal text',
+      );
+    },
+  );
+}
+```
+
+If you are using [ready-to-use values](#maximum-performance), you can also
+use `runZonedPrinter`. But in this case, all `reset...` functions will return
+`defaultStyle`:
+
+```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+
+void main() {
+  runZonedPrinter(
+    defaultStyle: const Style(
+      foreground: Color256.gray12,
+    ),
+    () {
+      print(
+        'Normal text'
+        ' ${fgGreen}Green text ${fgRed}Highlighted text$resetFg Not a green text$resetFg'
+        ' Normal text',
+      );
+    },
+  );
+}
+```
+
+If you need nested styles, use `runZonedStackedPrinter`:
+
+```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+
+void main() {
+  runZonedStackedPrinter(
+    defaultStyle: const Style(
+      foreground: Color256.gray12,
+    ),
+    () {
+      print(
+        'Normal text'
+        ' ${fgGreen}Green text ${fgRed}Highlighted text$resetFg Green text$resetFg'
+        ' Normal text',
+      );
+    },
+  );
+}
+```
+
+> ![IMPORTANT]
+>
+> Please note that when using styles and applying ready-to-use values,
+> different imports are used. This is because some of the names are the same in
+> both options.
 
 ## Control function constants and ready-to-use values
 
@@ -508,13 +651,13 @@ print('${bgRgb(44, 43, 124)} Ultramarine $resetBg'); // Not constant!
 ## Analyzing and parsing
 
 
-### AnsiParser
+### Parser
 
-AnsiParser allows you to analyze text containing escape codes:
+`Parser` allows you to analyze text containing escape codes:
 
 ```dart
 const text = '$bold Bold $fgCyan Bold+cyan $resetBoldAndFaint Cyan ';
-final parser = AnsiParser(text);
+final parser = Parser(text);
 parser.matches.forEach(print);
 // Match(start: 0, end: 4, entity: Sgr(bold), state: SgrState(bold))
 // Match(start: 4, end: 10, entity: Text(' Bold '), state: SgrState(bold))
@@ -573,25 +716,25 @@ print(parser.length == parser.removeAll().length); // true
 print(parser.length); // 23
 ```
 
-The state at a particular position can be found with `stateAtPos`.
+The style at a particular position can be found with `styleAtPos`.
 
 ```dart
-final state = parser.stateAtPos(7);
-print(state); // SgrState(bold, foreground: Color16(Colors.cyan))
-print(state.isBold); // true
-print(state.isItalicized); // false
-print(state.foreground?.id); // fgCyan
-print(state.background?.id); // null
+final style = parser.styleAtPos(7);
+print(style); // SgrStyle(bold, foreground: Color16(Colors.cyan))
+print(style.isBold); // true
+print(style.isItalicized); // false
+print(style.foreground?.id); // fgCyan
+print(style.background?.id); // null
 ```
 
-The position in `stateAtPos` is specified in the plaintext range
+The position in `styleAtPos` is specified in the plaintext range
 (`pos` < `parser.length`) and can also point to the position behind the text
 (`pos` == `parser.length`) to find out the final state. The final state can
-also be obtained using `finalState`.
+also be obtained using `finalStyle`.
 
 ```dart
-print(parser.stateAtPos(23) == parser.finalState); // true
-print(parser.finalState); // SgrState(foreground: Color16(Colors.cyan))
+print(parser.styleAtPos(23) == parser.finalStyle); // true
+print(parser.finalStyle); // Style(foreground: Color16.cyan)
 ```
 
 In the above example, the text state was not set to default, i.e. the text was
@@ -605,7 +748,7 @@ The easiest way to close a text is to add a `reset` at the end of it:
 
 ```dart
 const closedText = '$text$reset';
-print(AnsiParser(closedText).isClosed); // true
+print(Parser(closedText).isClosed); // true
 ```
 
 The `substring` method allows you to retrieve a piece of text by computing
@@ -613,7 +756,7 @@ together its state:
 
 ```dart
 final substring = parser.substring(7, maxLength: 9);
-print(AnsiParser(substring).showControlFunctions()); // [fgCyan;bold]Bold+cyan[reset]
+print(Parser(substring).showControlFunctions()); // [fgCyan;bold]Bold+cyan[reset]
 ```
 
 By default, the substring is closed. Escape codes is always included in the
@@ -624,8 +767,8 @@ const test1 = '$fgCyan$bold';
 final test2 = substring.substring(0, substring.indexOf('Bold'));
 print(test1.showEscapeCodes()); // [CSI 36 SGR][CSI 1 SGR]
 print(test2.showEscapeCodes()); // [CSI 36;1 SGR]
-print(AnsiParser(test1).showControlFunctions()); // [fgCyan][bold]
-print(AnsiParser(test2).showControlFunctions()); // [fgCyan;bold]
+print(Parser(test1).showControlFunctions()); // [fgCyan][bold]
+print(Parser(test2).showControlFunctions()); // [fgCyan;bold]
 print(test1.length); // 9
 print(test2.length); // 7
 ```
@@ -636,20 +779,19 @@ To optimize the entire string, there is an `optimize` method:
 const text = '$fgWhite$bold$resetBoldAndFaint$fgGreen$underlined'
     "$resetUnderlined$faint$faint What's in here? $resetBoldAndFaint$resetFg";
 print(text.length); // 63
-final parser = AnsiParser(text);
+final parser = Parser(text);
 print(parser.showControlFunctions());
 // [fgWhite][bold][resetBoldAndFaint][fgGreen][underlined][resetUnderlined][faint][faint] What's in here? [resetBoldAndFaint][resetFg]
 
 final optimizedText = parser.optimize();
 print(optimizedText.length); // 28
-print(AnsiParser(optimizedText).showControlFunctions());
+print(Parser(optimizedText).showControlFunctions());
 // [fgGreen;faint] What's in here? [reset]
 ```
 
 ### Quick analysis
 
-You can quickly analyze a string without using `AnsiParser` by using
-extensions.
+You can quickly analyze a string without using `Parser` by using extensions.
 
 ```dart
 import 'package:ansi_escape_codes/extensions.dart';
@@ -688,26 +830,26 @@ You can quickly remove all codes using the methods:
 
 ```dart
 const text = '$saveCursor$cursorRight$italicized$bgGreen$fgYellow Text $resetFg$resetBg$resetItalicized$restoreCursor';
-print(AnsiParser(text).showControlFunctions());
+print(Parser(text).showControlFunctions());
 // [saveCursor][CSI CUF][italicized][bgGreen][fgYellow] Text [resetFg][resetBg][resetItalicized][restoreCursor]
 
-print(AnsiParser(text.removeBackground()).showControlFunctions());
+print(Parser(text.removeBackground()).showControlFunctions());
 // [saveCursor][CSI CUF][italicized][fgYellow] Text [resetFg][resetItalicized][restoreCursor]
 
-print(AnsiParser(text.removeBackground().removeForeground()).showControlFunctions());
+print(Parser(text.removeBackground().removeForeground()).showControlFunctions());
 // [saveCursor][CSI CUF][italicized] Text [resetItalicized][restoreCursor]
 
-print(AnsiParser(text.removeSgr()).showControlFunctions());
+print(Parser(text.removeSgr()).showControlFunctions());
 // [saveCursor][CSI CUF] Text [restoreCursor]
 
-print(AnsiParser(text.removeCsi()).showControlFunctions());
+print(Parser(text.removeCsi()).showControlFunctions());
 // [saveCursor] Text [restoreCursor]
 
 print(text.removeEscapeCodes().showEscapeCodes());
 // ' Text '
 ```
 
-### AnsiPrinter
+### Printer
 
 Escape codes do not allow you to set default values for your text. The
 foreground and background colors depend on the implementation of the terminal
@@ -734,16 +876,16 @@ const text = '$bgDefault$fgDefault Default text '
 print(text);
 ```
 
-Or you can use `AnsiPrinter`:
+Or you can use `Printer`:
 
 ```dart
 const text = ' Default text '
-    '$bgWhite$fgBlack Highlighted text '
-    '$resetBg$resetFg Default text again $reset';
-final printer = AnsiPrinter(
-  defaultState: SgrPlainState(
-    background: ColorRgb(44, 43, 124),
-    foreground: ColorRgb(224, 192, 64),
+    '$bgWhite$fgBlack Highlighted text $resetBg$resetFg'
+    ' Default text again $reset';
+final printer = Printer(
+  defaultStyle: Style(
+    background: Color256.rgb113,
+    foreground: Color256.rgb442,
   ),
 );
 printer.print(text);
@@ -758,17 +900,17 @@ the hood:
 
 ```dart
 void main() {
-  runZonedAnsiPrinter(
-    defaultState: SgrPlainState(
-      background: ColorRgb(44, 43, 124),
-      foreground: ColorRgb(224, 192, 64),
+  runZonedPrinter(
+    defaultStyle: Style(
+    background: Color256.rgb113,
+    foreground: Color256.rgb442,
     ),
     () {
       // … Your application code …
 
       const text = ' Default text '
-          '$bgWhite$fgBlack Highlighted text '
-          '$resetBg$resetFg Default text again $reset';
+          '$bgWhite$fgBlack Highlighted text $resetBg$resetFg'
+          ' Default text again $reset';
 
       print(text); // Use the usual print
     },
@@ -793,16 +935,16 @@ import 'dart:developer';
 
 …
 
-runZonedAnsiPrinter(
-  defaultState: const SgrPlainState(
+runZonedPrinter(
+  defaultState: const Style(
     background: Color16.green,
     foreground: Color16.yellow,
   ),
   output: log,
   () {
     const text = ' Default text '
-        '$bgWhite$fgBlack Highlighted text '
-        '$resetBg$resetFg Default text again $reset';
+        '$bgWhite$fgBlack Highlighted text $resetBg$resetFg'
+        ' Default text again $reset';
     print(text);
   },
 );
@@ -819,19 +961,19 @@ see anything in the console.
 So in most cases on iOS, it's left to disable escape codes for the most part:
 
 ```dart
-runZonedAnsiPrinter(
-  defaultState: …,
+runZonedPrinter(
+  defaultStyle: …,
   ansiCodesEnabled: !Platform.isIOS,
   () {
     const text = ' Default text '
-        '$bgWhite$fgBlack Highlighted text '
-        '$resetBg$resetFg Default text again $reset';
+        '$bgWhite$fgBlack Highlighted text $resetBg$resetFg'
+        ' Default text again $reset';
     print(text);
   },
 );
 ```
 
-### Stacked AnsiPrinter
+### StackedPrinter
 
 Escape codes allow you to do simple text decoration. But a slightly more
 complex design requires much more effort. One example is given above, when you
@@ -876,22 +1018,21 @@ But the escape codes don't accumulate, double `bold` equals single `bold`. And
 first `resetBoldAndFaint` cancels the bold text. And we don't get what we want
 at all. To fix it, we need to return the state of the text after insertion to
 the state it was before insertion. But it makes it much more difficult to use
-the escape codes. `AnsiPrinter` helps solve this problem:
+the escape codes. `StackedPrinter` helps solve this problem:
 
 ```dart
-final printer = AnsiPrinter(stacked: true);
+final printer = StackedPrinter();
 printer.print(text);
 // [bold]Dear Sam, welcome to us![resetBoldAndFaint] We are pleased to present to you …
 ```
 
-AnsiPrinter with the `stacked` parameter accumulates state changes and
-sequentially disables them, translating the current state into the standard
-escape sequence on output:
+`StackedPrinter` accumulates state changes and sequentially disables them,
+translating the current state into the standard escape sequence on output:
 
 ```dart
 const text = '$bold 1 $bold 2 $bold 3 $resetBoldAndFaint 2 $resetBoldAndFaint 1 $resetBoldAndFaint';
-final printer1 = AnsiPrinter();
-final printer2 = AnsiPrinter(stacked: true);
+final printer1 = Printer();
+final printer2 = StackedPrinter();
 printer1.print(text); // '[bold] 1  2  3 [resetBoldAndFaint] 2  1 '
 printer2.print(text); // '[bold] 1  2  3  2  1 [resetBoldAndFaint]'
 ```

@@ -1,7 +1,6 @@
-part of '../ansi_parser.dart';
+part of '../parser.dart';
 
-final class AnsiParserIterator<S extends SgrState<S>>
-    implements Iterator<Match<S>> {
+final class ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
   final Matches<S> _parent;
   final List<Match<S>> _readyMatches = [];
   final Iterator<RegExpMatch> _regExpIterator;
@@ -10,7 +9,7 @@ final class AnsiParserIterator<S extends SgrState<S>>
   Match<S>? _current;
   final S _initialState;
 
-  AnsiParserIterator._(this._parent, this._initialState)
+  ParserIterator._(this._parent, this._initialState)
       : _regExpIterator = escapeCodesRe.allMatches(_parent._input).iterator;
 
   /// Current match.

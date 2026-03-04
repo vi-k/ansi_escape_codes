@@ -1,7 +1,7 @@
 import 'dart:io';
 
+import 'package:ansi_escape_codes/ansi.dart';
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
-import 'package:ansi_escape_codes/controls.dart';
 
 Future<void> progressTest(
   String caption,

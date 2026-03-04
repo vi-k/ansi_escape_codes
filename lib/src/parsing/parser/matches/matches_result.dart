@@ -1,6 +1,6 @@
-part of '../ansi_parser.dart';
+part of '../parser.dart';
 
-final class MatchesResult<S extends SgrState<S>> {
+final class MatchesResult<S extends State<S>> {
   final List<Match<S>> matches;
   final S finalState;
 

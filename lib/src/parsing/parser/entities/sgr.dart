@@ -1,4 +1,4 @@
-part of '../ansi_parser.dart';
+part of '../parser.dart';
 
 final class Sgr extends Csi {
   final List<CsiParam> params;
@@ -12,7 +12,7 @@ final class Sgr extends Csi {
         functions = List.unmodifiable(functions),
         super._();
 
-  static Sgr _parse<S extends SgrState<S>>(
+  static Sgr _parse<S extends State<S>>(
     MatchingState<S> state,
     List<CsiParam> params,
   ) {
@@ -22,7 +22,7 @@ final class Sgr extends Csi {
       switch (parsingState.currentParam) {
         case CsiParamDefault():
           parsingState
-            ..sgrState = parsingState.sgrState.resetAll()
+            ..sgrState = parsingState.sgrState.reset
             ..commitFunction(const SgrDefaultFunction());
 
         case CsiParamNumber(:final value):
@@ -92,7 +92,7 @@ final class Sgr extends Csi {
     return Sgr._(state.string, params, parsingState.functions);
   }
 
-  static bool _parseSimpleFunction<S extends SgrState<S>>(
+  static bool _parseSimpleFunction<S extends State<S>>(
     _SgrParsingState<S> parsingState,
     int functionIndex,
   ) {
@@ -105,71 +105,70 @@ final class Sgr extends Csi {
 
     parsingState
       ..sgrState = switch (functionIndex) {
-        RESET => sgrState.resetAll(),
-        BOLD => sgrState.setBold(),
-        FAINT => sgrState.setFaint(),
-        ITALICIZED => sgrState.setItalicized(),
-        UNDERLINED => sgrState.setSinglyUnderlined(),
-        SLOWLY_BLINKING => sgrState.setSlowlyBlinking(),
-        RAPIDLY_BLINKING => sgrState.setRapidlyBlinking(),
-        NEGATIVE => sgrState.setNegative(),
-        CONCEALED => sgrState.setConcealed(),
-        CROSSEDOUT => sgrState.setCrossedOut(),
-        DOUBLY_UNDERLINED => sgrState.setDoublyUnderlined(),
-        NOT_BOLD_NOT_FAINT => sgrState.resetBoldAndFaint(),
-        NOT_ITALICIZED => sgrState.resetItalicized(),
-        NOT_UNDERLINED => sgrState.resetUnderlined(),
-        NOT_BLINKING => sgrState.resetBlinking(),
-        NOT_NEGATIVE => sgrState.resetNegative(),
-        NOT_CONCEALED => sgrState.resetConcealed(),
-        NOT_CROSSEDOUT => sgrState.resetCrossedOut(),
-        FG_BLACK => sgrState.setForeground(Color16.black),
-        FG_RED => sgrState.setForeground(Color16.red),
-        FG_GREEN => sgrState.setForeground(Color16.green),
-        FG_YELLOW => sgrState.setForeground(Color16.yellow),
-        FG_BLUE => sgrState.setForeground(Color16.blue),
-        FG_MAGENTA => sgrState.setForeground(Color16.magenta),
-        FG_CYAN => sgrState.setForeground(Color16.cyan),
-        FG_WHITE => sgrState.setForeground(Color16.white),
+        RESET => sgrState.reset,
+        BOLD => sgrState.bold,
+        FAINT => sgrState.faint,
+        ITALICIZED => sgrState.italic,
+        UNDERLINED => sgrState.underline,
+        SLOWLY_BLINKING => sgrState.slowlyBlink,
+        RAPIDLY_BLINKING => sgrState.rapidlyBlink,
+        NEGATIVE => sgrState.negative,
+        CONCEALED => sgrState.conceal,
+        CROSSEDOUT => sgrState.crossOut,
+        DOUBLY_UNDERLINED => sgrState.doublyUnderline,
+        NOT_BOLD_NOT_FAINT => sgrState.resetBoldAndFaint,
+        NOT_ITALICIZED => sgrState.resetItalicized,
+        NOT_UNDERLINED => sgrState.resetUnderlined,
+        NOT_BLINKING => sgrState.resetBlinking,
+        NOT_NEGATIVE => sgrState.resetNegative,
+        NOT_CONCEALED => sgrState.resetConcealed,
+        NOT_CROSSEDOUT => sgrState.resetCrossedOut,
+        FG_BLACK => sgrState.foreground(Color16.black),
+        FG_RED => sgrState.foreground(Color16.red),
+        FG_GREEN => sgrState.foreground(Color16.green),
+        FG_YELLOW => sgrState.foreground(Color16.yellow),
+        FG_BLUE => sgrState.foreground(Color16.blue),
+        FG_MAGENTA => sgrState.foreground(Color16.magenta),
+        FG_CYAN => sgrState.foreground(Color16.cyan),
+        FG_WHITE => sgrState.foreground(Color16.white),
         // 38 - FOREGROUND
-        FG_DEFAULT => sgrState.resetForeground(),
-        BG_BLACK => sgrState.setBackground(Color16.black),
-        BG_RED => sgrState.setBackground(Color16.red),
-        BG_GREEN => sgrState.setBackground(Color16.green),
-        BG_YELLOW => sgrState.setBackground(Color16.yellow),
-        BG_BLUE => sgrState.setBackground(Color16.blue),
-        BG_MAGENTA => sgrState.setBackground(Color16.magenta),
-        BG_CYAN => sgrState.setBackground(Color16.cyan),
-        BG_WHITE => sgrState.setBackground(Color16.white),
+        FG_DEFAULT => sgrState.resetForeground,
+        BG_BLACK => sgrState.background(Color16.black),
+        BG_RED => sgrState.background(Color16.red),
+        BG_GREEN => sgrState.background(Color16.green),
+        BG_YELLOW => sgrState.background(Color16.yellow),
+        BG_BLUE => sgrState.background(Color16.blue),
+        BG_MAGENTA => sgrState.background(Color16.magenta),
+        BG_CYAN => sgrState.background(Color16.cyan),
+        BG_WHITE => sgrState.background(Color16.white),
         // 48 - BACKGROUND
-        BG_DEFAULT => sgrState.resetBackground(),
-        FRAMED => sgrState.setFramed(),
-        ENCIRCLED => sgrState.setEncircled(),
-        OVERLINED => sgrState.setOverlined(),
-        NOT_FRAMED_NOT_ENCIRCLED => sgrState.resetFramedAndEncircled(),
-        NOT_OVERLINED => sgrState.resetOverlined(),
+        BG_DEFAULT => sgrState.resetBackground,
+        FRAMED => sgrState.frame,
+        ENCIRCLED => sgrState.encircle,
+        OVERLINED => sgrState.overline,
+        NOT_FRAMED_NOT_ENCIRCLED => sgrState.resetFramedAndEncircled,
+        NOT_OVERLINED => sgrState.resetOverlined,
         // 58 - UNDERLINE_COLOR
-        UNDERLINE_COLOR_DEFAULT => sgrState.resetUnderlineColor(),
-        SUPERSCRIPTED => sgrState.setSuperscripted(),
-        SUBSCRIPTED => sgrState.setSubscripted(),
-        NOT_SUPER_NOT_SUBSCRIPTED =>
-          sgrState.resetSuperscriptedAndSubscripted(),
-        FG_HIGH_BLACK => sgrState.setForeground(Color16.highBlack),
-        FG_HIGH_RED => sgrState.setForeground(Color16.highRed),
-        FG_HIGH_GREEN => sgrState.setForeground(Color16.highGreen),
-        FG_HIGH_YELLOW => sgrState.setForeground(Color16.highYellow),
-        FG_HIGH_BLUE => sgrState.setForeground(Color16.highBlue),
-        FG_HIGH_MAGENTA => sgrState.setForeground(Color16.highMagenta),
-        FG_HIGH_CYAN => sgrState.setForeground(Color16.highCyan),
-        FG_HIGH_WHITE => sgrState.setForeground(Color16.highWhite),
-        BG_HIGH_BLACK => sgrState.setBackground(Color16.highBlack),
-        BG_HIGH_RED => sgrState.setBackground(Color16.highRed),
-        BG_HIGH_GREEN => sgrState.setBackground(Color16.highGreen),
-        BG_HIGH_YELLOW => sgrState.setBackground(Color16.highYellow),
-        BG_HIGH_BLUE => sgrState.setBackground(Color16.highBlue),
-        BG_HIGH_MAGENTA => sgrState.setBackground(Color16.highMagenta),
-        BG_HIGH_CYAN => sgrState.setBackground(Color16.highCyan),
-        BG_HIGH_WHITE => sgrState.setBackground(Color16.highWhite),
+        UNDERLINE_COLOR_DEFAULT => sgrState.resetUnderlineColor,
+        SUPERSCRIPTED => sgrState.superscript,
+        SUBSCRIPTED => sgrState.subscript,
+        NOT_SUPER_NOT_SUBSCRIPTED => sgrState.resetSuperscriptedAndSubscripted,
+        FG_HIGH_BLACK => sgrState.foreground(Color16.highBlack),
+        FG_HIGH_RED => sgrState.foreground(Color16.highRed),
+        FG_HIGH_GREEN => sgrState.foreground(Color16.highGreen),
+        FG_HIGH_YELLOW => sgrState.foreground(Color16.highYellow),
+        FG_HIGH_BLUE => sgrState.foreground(Color16.highBlue),
+        FG_HIGH_MAGENTA => sgrState.foreground(Color16.highMagenta),
+        FG_HIGH_CYAN => sgrState.foreground(Color16.highCyan),
+        FG_HIGH_WHITE => sgrState.foreground(Color16.highWhite),
+        BG_HIGH_BLACK => sgrState.background(Color16.highBlack),
+        BG_HIGH_RED => sgrState.background(Color16.highRed),
+        BG_HIGH_GREEN => sgrState.background(Color16.highGreen),
+        BG_HIGH_YELLOW => sgrState.background(Color16.highYellow),
+        BG_HIGH_BLUE => sgrState.background(Color16.highBlue),
+        BG_HIGH_MAGENTA => sgrState.background(Color16.highMagenta),
+        BG_HIGH_CYAN => sgrState.background(Color16.highCyan),
+        BG_HIGH_WHITE => sgrState.background(Color16.highWhite),
         _ => sgrState,
       }
       ..commitFunction(SgrSimpleFunction(code));
@@ -177,7 +176,7 @@ final class Sgr extends Csi {
     return true;
   }
 
-  static void _parseColorFunctionFromParams<S extends SgrState<S>>(
+  static void _parseColorFunctionFromParams<S extends State<S>>(
     _SgrParsingState<S> parsingState,
     ControlFunctionsSGR code,
   ) {
@@ -234,17 +233,17 @@ final class Sgr extends Csi {
     } else {
       parsingState
         ..sgrState = switch (code) {
-          ControlFunctionsSGR.fg => parsingState.sgrState.setForeground(color),
-          ControlFunctionsSGR.bg => parsingState.sgrState.setBackground(color),
+          ControlFunctionsSGR.fg => parsingState.sgrState.foreground(color),
+          ControlFunctionsSGR.bg => parsingState.sgrState.background(color),
           ControlFunctionsSGR.underlineColor =>
-            parsingState.sgrState.setUnderlineColor(color),
+            parsingState.sgrState.underlineColor(color),
           _ => parsingState.sgrState,
         }
         ..commitFunction(SgrColorFunction(code, color));
     }
   }
 
-  static void _parseColorFunctionFromValues<S extends SgrState<S>>(
+  static void _parseColorFunctionFromValues<S extends State<S>>(
     _SgrParsingState<S> parsingState,
     List<int> values,
     ControlFunctionsSGR code,
@@ -283,10 +282,10 @@ final class Sgr extends Csi {
     } else {
       parsingState
         ..sgrState = switch (code) {
-          ControlFunctionsSGR.fg => parsingState.sgrState.setForeground(color),
-          ControlFunctionsSGR.bg => parsingState.sgrState.setBackground(color),
+          ControlFunctionsSGR.fg => parsingState.sgrState.foreground(color),
+          ControlFunctionsSGR.bg => parsingState.sgrState.background(color),
           ControlFunctionsSGR.underlineColor =>
-            parsingState.sgrState.setUnderlineColor(color),
+            parsingState.sgrState.underlineColor(color),
           _ => parsingState.sgrState,
         }
         ..commitFunction(SgrColorFunction(code, color));
@@ -312,7 +311,7 @@ final class Sgr extends Csi {
   // final List<AnsiSgrFunction> functions;
 }
 
-final class _SgrParsingState<S extends SgrState<S>> {
+final class _SgrParsingState<S extends State<S>> {
   final List<CsiParam> _params;
   final List<SgrFunction> functions = [];
 

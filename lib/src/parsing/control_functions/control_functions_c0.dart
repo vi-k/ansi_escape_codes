@@ -1,6 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
-import '../../controls/c0.dart' as c0;
+import '../../ansi/c0.dart' as c0;
 
 /// Control functions: elements of the C0 set.
 ///
@@ -31,7 +31,7 @@ enum ControlFunctionsC0 {
   BEL(c0.BEL, null, '␇', 'Bell'),
 
   /// See [c0.BS].
-  BS(c0.BS, 'b', '␈', 'Backspace'),
+  BS(c0.BS, r'\b', '␈', 'Backspace'),
 
   /// See [c0.HT].
   HT(c0.HT, r'\t', '␉', 'Horizontal Tabulation'),

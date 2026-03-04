@@ -1,6 +1,6 @@
-import '../../controls/c1.dart';
-import '../../controls/csi.dart';
-import '../../controls/sgr.dart';
+import '../../ansi/c1.dart';
+import '../../ansi/csi.dart';
+import '../../ansi/sgr.dart';
 
 /// Default rendition (implementation-defined), cancels the effect of any
 /// preceding occurrence of SGR in the data stream regardless of the setting

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+import 'package:ansi_escape_codes/parsing.dart';
 
 List<String> interceptZonedPrint(
   void Function() body, {
@@ -24,8 +24,12 @@ List<String> interceptZonedPrint(
 }
 
 extension StringTextExtension on String {
-  String showAnsiControlFunctions() => AnsiParser(this).showControlFunctions();
+  String ansiShowControlFunctions({
+    String open = '[',
+    String close = ']',
+  }) =>
+      Parser(this).showControlFunctions(open: open, close: close);
 
-  String optimizeAnsiControlFunctions({bool close = true}) =>
-      AnsiParser(this).optimize(close: close);
+  String ansiOptimizeControlFunctions({bool close = true}) =>
+      Parser(this).optimize(close: close);
 }

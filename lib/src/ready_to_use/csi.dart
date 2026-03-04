@@ -1,5 +1,5 @@
-import '../controls/c1.dart';
-import '../controls/csi.dart';
+import '../ansi/c1.dart';
+import '../ansi/csi.dart';
 
 /// Cursor Up: opening tag.
 ///
