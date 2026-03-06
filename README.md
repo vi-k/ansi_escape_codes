@@ -16,10 +16,13 @@ containing them.
 
 ## Features
 
-- coloring: emphasis on using **constants** instead of functions and classes
+- coloring: you can use ready-to-use values to create constant strings and
+  [maximize performance](#maximum-performance), or choose the power of
+  [styles](#the-power-of-styles).
 - cursor and terminal control
-- **analyzing** and **parsing** strings containing escape codes
-- **default style for all application output**
+- [analyzing and parsing](#analyzing-and-parsing) strings containing escape
+  codes
+- [default style](#printer) for all application output
 
 
 ## Table of contents
@@ -83,9 +86,9 @@ import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 void main() {
   const text = '$fgGreen Green text $resetFg'
     '$bgYellow Yellow background $resetBg'
-    '$bold Bold text $resetBoldAndFaint'
-    '$italicized Italicized text $resetItalicized'
-    '$underlined Underlined text $resetUnderlined'
+    '$bold Bold text $resetBoldAndDim'
+    '$italic Italic text $resetItalic'
+    '$underline Underline text $resetUnderline'
     '$reset';
 
   print(text);
@@ -114,8 +117,8 @@ ready to use.
 > If you need the ability to roll back to the previous color, use
 > [styles](#the-power-of-styles) or [StackedPrinter](#stackedprinter).
 
-Since you cannot set `bold` and `faint` at the same time, a single escape
-sequence is used in ANSI to reset both: `resetBoldAndFaint`.
+Since you cannot set `bold` and `dim` at the same time, a single escape
+sequence is used in ANSI to reset both: `resetBoldAndDim`.
 
 `reset` returns all settings to default.
 
@@ -238,9 +241,9 @@ Strings containing ANSI escape codes can be constants:
 ```dart
 const text = '$fgGreen Green text $resetFg'
     '$bgYellow Yellow background $resetBg'
-    '$bold Bold text $resetBoldAndFaint'
-    '$italicized Italicized text $resetItalicized'
-    '$underlined Underlined text $resetUnderlined';
+    '$bold Bold text $resetBoldAndDim'
+    '$italic Italic text $resetItalic'
+    '$underline Underline text $resetUnderline';
 print(text);
 ```
 
@@ -383,8 +386,8 @@ print('1234${CSI}4$CUB$CSI$DCH$CSI$CUF$CSI$ECH'); // '2 4'
 print('${CSI}4${SM}tree${CSI}3${CUB}h'); // three
 print('${CSI}4${RM}tree${CSI}3${CUB}h'); // thee
 
-// Italicized text
-print('${CSI}3$SGR Italicized text ${CSI}0$SGR');
+// Italic text
+print('${CSI}3$SGR Italic text ${CSI}0$SGR');
 ```
 
 
@@ -449,14 +452,14 @@ Where `s` is:
 |------:|:----------------------------|:----------------------------------------|:-----------------------------------------------------------|
 |     0 | `RESET`                     | `reset`                                 | Default rendition (implementation-defined), cancels the effect of any preceding occurrence of SGR |
 |     1 | `BOLD`                      | `bold`                                  | Bold or increased intensity                                |
-|     2 | `FAINT`                     | `faint`                                 | Faint, decreased intensity or second color                 |
-|     3 | `ITALICIZED`                | `italicized`                            | Italicized                                                 |
-|     4 | `UNDERLINED`                | `underlined`                            | Singly underlined                                          |
-|     5 | `SLOWLY_BLINKING`           | `slowlyBlinking`                        | Slowly blinking (less then 150 per minute)                 |
-|     6 | `RAPIDLY_BLINKING`          | `rapidlyBlinking`                       | Rapidly blinking (150 per minute or more)                  |
-|     7 | `NEGATIVE`                  | `negative`                              | Negative image                                             |
-|     8 | `CONCEALED`                 | `concealed`                             | Concealed characters                                       |
-|     9 | `CROSSEDOUT`                | `crossedOut`                            | Crossed-out (characters still legible but marked as to be deleted) |
+|     2 | `DIM`                       | `dim`                                   | Dim, decreased intensity or second color                   |
+|     3 | `ITALIC`                    | `italic`                                | Italic                                                     |
+|     4 | `UNDERLINE`                 | `underline`                             | Underline                                                  |
+|     5 | `BLINK`                     | `blink`                                 | Blink                                                      |
+|     6 | `BLINK_RAPID`               | `blinkRapid`                            | Blink rapid                                                |
+|     7 | `INVERSE`                   | `inverse`                               | Inverse                                                    |
+|     8 | `INVISIBLE`                 | `invisible`                             | Invisible characters                                       |
+|     9 | `STRIKETHROUGH`             | `strikethrough`                         | Strikethrough (characters still legible but marked as to be deleted) |
 |    10 | `PRIMARY_FONT`              |                                         | Primary (default) font                                     |
 |    11 | `ALT_FONT_1`                |                                         | First alternative font                                     |
 |    12 | `ALT_FONT_2`                |                                         | Second alternative font                                    |
@@ -468,14 +471,14 @@ Where `s` is:
 |    18 | `ALT_FONT_8`                |                                         | Eighth alternative font                                    |
 |    19 | `ALT_FONT_9`                |                                         | Ninth alternative font                                     |
 |    20 | `FRAKTUR`                   |                                         | Fraktur (Gothic)                                           |
-|    21 | `DOUBLY_UNDERLINED`         | `doublyUnderlined`                      | Doubly underlined                                          |
-|    22 | `NOT_BOLD_NOT_FAINT`        | `resetBoldAndFaint`                     | Normal colour or normal intensity (neither bold nor faint) |
-|    23 | `NOT_ITALICIZED`            | `resetItalicized`                       | Not italicized, not fraktur                                |
-|    24 | `NOT_UNDERLINED`            | `resetUnderlined`                       | Not underlined (neither singly nor doubly)                 |
-|    25 | `NOT_BLINKING`              | `resetBlinking`                         | Steady (not blinking)                                      |
-|    27 | `NOT_NEGATIVE`              | `resetNegative`                         | Positive image (not negative)                              |
-|    28 | `NOT_CONCEALED`             | `resetConcealed`                        | Revealed characters (not concealed)                        |
-|    29 | `NOT_CROSSEDOUT`            | `resetCrossedOut`                       | Not crossed out                                            |
+|    21 | `DOUBLY_UNDERLINE`          | `doublyUnderline`                       | Doubly underline                                           |
+|    22 | `NOT_BOLD_NOT_DIM`          | `resetBoldAndDim`                       | Normal colour or normal intensity (neither bold nor dim)   |
+|    23 | `NOT_ITALIC`                | `resetItalic`                           | Not italic, not fraktur                                    |
+|    24 | `NOT_UNDERLINE`             | `resetUnderline`                        | Not underline (neither singly nor doubly)                  |
+|    25 | `NOT_BLINK`                 | `resetBlink`                            | Steady (not blink)                                         |
+|    27 | `NOT_INVERSE`               | `resetInverse`                          | Positive image (not inverse)                               |
+|    28 | `NOT_INVISIBLE`             | `resetInvisible`                        | Revealed characters (not invisible)                        |
+|    29 | `NOT_STRIKETHROUGH`         | `resetStrikethrough`                    | Not strikethrough                                          |
 |    30 | `FG_BLACK`                  | `fgBlack`                               | Black display (color #0 from 256-color table)              |
 |    31 | `FG_RED`                    | `fgRed`                                 | Red display (color #1 from 256-color table)                |
 |    32 | `FG_GREEN`                  | `fgGreen`                               | Green display (color #2 from 256-color table)              |
@@ -496,16 +499,16 @@ Where `s` is:
 |    47 | `BG_WHITE`                  | `bgWhite`                               | White background (color #7 from 256-color table)           |
 |    48 | `BACKGROUND`                | `bg256…/bgRgb…`                         | Background color from 256-color table or by RGB. See [256-color table](#256-color-table) |
 |    49 | `BG_DEFAULT`                | `resetBg`                               | Default background color (implementation-defined)          |
-|    51 | `FRAMED`                    | `framed`                                | Framed                                                     |
-|    52 | `ENCIRCLED`                 | `encircled`                             | Encircled                                                  |
-|    53 | `OVERLINED`                 | `overlined`                             | Overlined                                                  |
-|    54 | `NOT_FRAMED_NOT_ENCIRCLED`  | `resetFramedAndEncircled`               | Not framed, not encircled                                  |
-|    55 | `NOT_OVERLINED`             | `resetOverlined`                        | Not overlined                                              |
+|    51 | `FRAME`                     | `frame`                                 | Frame                                                      |
+|    52 | `ENCIRCLE`                  | `encircle`                              | Encircle                                                   |
+|    53 | `OVERLINE`                  | `overline`                              | Overline                                                   |
+|    54 | `NOT_FRAME_NOT_ENCIRCLE`    | `resetFrameAndEncircle`                 | Not frame, not encircle                                    |
+|    55 | `NOT_OVERLINE`              | `resetOverline`                         | Not overline                                               |
 |    58 | `UNDERLINE_COLOR`           | `underlineColor256…/underlineColorRgb…` | Underline color from 256-color table or by RGB. See [256-color table](#256-color-table) |
 |    59 | `UNDERLINE_COLOR_DEFAULT`   | `underlineColorDefault`                 | Default underline color                                    |
-|    73 | `SUPERSCRIPTED`             | `superscripted`                         | Superscripted                                              |
-|    74 | `SUBSCRIPTED`               | `subscripted`                           | Subscripted                                                |
-|    75 | `NOT_SUPER_NOT_SUBSCRIPTED` | `resetSuperAnsSubscripted`              | Not superscripted, not subscipted                          |
+|    73 | `SUPERSCRIPTED`             | `superscript`                           | Superscript                                                |
+|    74 | `SUBSCRIPT`                 | `subscript`                             | Subscript                                                  |
+|    75 | `NOT_SUPER_NOT_SUBSCRIPT`   | `resetSuperAnsSubscript`                | Not superscript, not subscipt                              |
 |    90 | `FG_HIGH_BLACK`             | `fgHighBlack`                           | High black display (color #8 from 256-color table)         |
 |    91 | `FG_HIGH_RED`               | `fgHighRed`                             | High red display (color #9 from 256-color table)           |
 |    92 | `FG_HIGH_GREEN`             | `fgHighGreen`                           | High green display (color #10 from 256-color table)        |
@@ -656,14 +659,14 @@ print('${bgRgb(44, 43, 124)} Ultramarine $resetBg'); // Not constant!
 `Parser` allows you to analyze text containing escape codes:
 
 ```dart
-const text = '$bold Bold $fgCyan Bold+cyan $resetBoldAndFaint Cyan ';
+const text = '$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ';
 final parser = Parser(text);
 parser.matches.forEach(print);
 // Match(start: 0, end: 4, entity: Sgr(bold), state: SgrState(bold))
 // Match(start: 4, end: 10, entity: Text(' Bold '), state: SgrState(bold))
 // Match(start: 10, end: 15, entity: Sgr(fgCyan), state: SgrState(bold, foreground: Color16(Colors.cyan)))
 // Match(start: 15, end: 26, entity: Text(' Bold+cyan '), state: SgrState(bold, foreground: Color16(Colors.cyan)))
-// Match(start: 26, end: 31, entity: Sgr(resetBoldAndFaint), state: SgrState(foreground: Color16(Colors.cyan)))
+// Match(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: SgrState(foreground: Color16(Colors.cyan)))
 // Match(start: 31, end: 37, entity: Text(' Cyan '), state: SgrState(foreground: Color16(Colors.cyan)))
 ```
 
@@ -699,7 +702,7 @@ for (final m in parser.matches) {
   };
   buf.write(result);
 }
-print(buf); // [bold] Bold [fgCyan] Bold+cyan [resetBoldAndFaint] Cyan
+print(buf); // [bold] Bold [fgCyan] Bold+cyan [resetBoldAndDim] Cyan
 ```
 
 You can also use ready-to-use methods for this:
@@ -722,7 +725,7 @@ The style at a particular position can be found with `styleAtPos`.
 final style = parser.styleAtPos(7);
 print(style); // SgrStyle(bold, foreground: Color16(Colors.cyan))
 print(style.isBold); // true
-print(style.isItalicized); // false
+print(style.isItalic); // false
 print(style.foreground?.id); // fgCyan
 print(style.background?.id); // null
 ```
@@ -776,17 +779,17 @@ print(test2.length); // 7
 To optimize the entire string, there is an `optimize` method:
 
 ```dart
-const text = '$fgWhite$bold$resetBoldAndFaint$fgGreen$underlined'
-    "$resetUnderlined$faint$faint What's in here? $resetBoldAndFaint$resetFg";
+const text = '$fgWhite$bold$resetBoldAndDim$fgGreen$underline'
+    "$resetUnderline$dim$dim What's in here? $resetBoldAndDim$resetFg";
 print(text.length); // 63
 final parser = Parser(text);
 print(parser.showControlFunctions());
-// [fgWhite][bold][resetBoldAndFaint][fgGreen][underlined][resetUnderlined][faint][faint] What's in here? [resetBoldAndFaint][resetFg]
+// [fgWhite][bold][resetBoldAndDim][fgGreen][underline][resetUnderline][dim][dim] What's in here? [resetBoldAndDim][resetFg]
 
 final optimizedText = parser.optimize();
 print(optimizedText.length); // 28
 print(Parser(optimizedText).showControlFunctions());
-// [fgGreen;faint] What's in here? [reset]
+// [fgGreen;dim] What's in here? [reset]
 ```
 
 ### Quick analysis
@@ -829,15 +832,15 @@ print(text.showControlCodes(preferStyle: ControlCodeStyle.unicodeSymbol));
 You can quickly remove all codes using the methods:
 
 ```dart
-const text = '$saveCursor$cursorRight$italicized$bgGreen$fgYellow Text $resetFg$resetBg$resetItalicized$restoreCursor';
+const text = '$saveCursor$cursorRight$italic$bgGreen$fgYellow Text $resetFg$resetBg$resetItalic$restoreCursor';
 print(Parser(text).showControlFunctions());
-// [saveCursor][CSI CUF][italicized][bgGreen][fgYellow] Text [resetFg][resetBg][resetItalicized][restoreCursor]
+// [saveCursor][CSI CUF][italic][bgGreen][fgYellow] Text [resetFg][resetBg][resetItalic][restoreCursor]
 
 print(Parser(text.removeBackground()).showControlFunctions());
-// [saveCursor][CSI CUF][italicized][fgYellow] Text [resetFg][resetItalicized][restoreCursor]
+// [saveCursor][CSI CUF][italic][fgYellow] Text [resetFg][resetItalic][restoreCursor]
 
 print(Parser(text.removeBackground().removeForeground()).showControlFunctions());
-// [saveCursor][CSI CUF][italicized] Text [resetItalicized][restoreCursor]
+// [saveCursor][CSI CUF][italic] Text [resetItalic][restoreCursor]
 
 print(Parser(text.removeSgr()).showControlFunctions());
 // [saveCursor][CSI CUF] Text [restoreCursor]
@@ -992,30 +995,30 @@ String makeMessage(String name) {
 
 …
 
-const name = '${bold}Sam$resetBoldAndFaint';
+const name = '${bold}Sam$resetBoldAndDim';
 
 …
 
 final text = makeMessage(name);
 print(text);
-// Dear [bold]Sam[resetBoldAndFaint]! We are pleased to present to you …
+// Dear [bold]Sam[resetBoldAndDim]! We are pleased to present to you …
 ```
 
 Without noticing it, at some point your designer decides to make changes to the
 template:
 
 ```dart
-const template = '${bold}Dear {name}, welcome to us!$resetBoldAndFaint We are pleased to present to you …';
+const template = '${bold}Dear {name}, welcome to us!$resetBoldAndDim We are pleased to present to you …';
 
 …
 
 final text = makeMessage(name);
 print(text);
-// [bold]Dear [bold]Sam[resetBoldAndFaint], welcome to us![resetBoldAndFaint] We are pleased to present to you …
+// [bold]Dear [bold]Sam[resetBoldAndDim], welcome to us![resetBoldAndDim] We are pleased to present to you …
 ```
 
 But the escape codes don't accumulate, double `bold` equals single `bold`. And
-first `resetBoldAndFaint` cancels the bold text. And we don't get what we want
+first `resetBoldAndDim` cancels the bold text. And we don't get what we want
 at all. To fix it, we need to return the state of the text after insertion to
 the state it was before insertion. But it makes it much more difficult to use
 the escape codes. `StackedPrinter` helps solve this problem:
@@ -1023,18 +1026,18 @@ the escape codes. `StackedPrinter` helps solve this problem:
 ```dart
 final printer = StackedPrinter();
 printer.print(text);
-// [bold]Dear Sam, welcome to us![resetBoldAndFaint] We are pleased to present to you …
+// [bold]Dear Sam, welcome to us![resetBoldAndDim] We are pleased to present to you …
 ```
 
 `StackedPrinter` accumulates state changes and sequentially disables them,
 translating the current state into the standard escape sequence on output:
 
 ```dart
-const text = '$bold 1 $bold 2 $bold 3 $resetBoldAndFaint 2 $resetBoldAndFaint 1 $resetBoldAndFaint';
+const text = '$bold 1 $bold 2 $bold 3 $resetBoldAndDim 2 $resetBoldAndDim 1 $resetBoldAndDim';
 final printer1 = Printer();
 final printer2 = StackedPrinter();
-printer1.print(text); // '[bold] 1  2  3 [resetBoldAndFaint] 2  1 '
-printer2.print(text); // '[bold] 1  2  3  2  1 [resetBoldAndFaint]'
+printer1.print(text); // '[bold] 1  2  3 [resetBoldAndDim] 2  1 '
+printer2.print(text); // '[bold] 1  2  3  2  1 [resetBoldAndDim]'
 ```
 
 ---

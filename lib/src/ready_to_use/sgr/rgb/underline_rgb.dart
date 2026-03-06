@@ -17,9 +17,9 @@ import '../../../ansi/sgr.dart';
 /// - +mac iTerm2
 ///
 /// The following terminals mistakenly take each parameter as a command:
-/// - CSI 58;5;3 SGR (underline256Yellow) -> blink, italicized
-/// - CSI 58;2;3;4;7 SGR (underlineRgb(3,4,7)) -> faint, italicized, underlined,
-///   negative
+/// - CSI 58;5;3 SGR (underline256Yellow) -> blink, italic
+/// - CSI 58;2;3;4;7 SGR (underlineRgb(3,4,7)) -> dim, italic, underline,
+///   inverse
 ///
 /// - -as
 /// - -mac Terminal

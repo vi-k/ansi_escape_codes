@@ -1,30 +1,30 @@
 part of 'state.dart';
 
 const _bold = 0x0001;
-const _faint = 0x0002;
-const _italicized = 0x0004;
-const _singlyUnderlined = 0x0008;
-const _doublyUnderlined = 0x0010;
-const _slowlyBlinking = 0x0020;
-const _rapidlyBlinking = 0x0040;
-const _negative = 0x0080;
-const _concealed = 0x0100;
-const _crossedOut = 0x0200;
-const _framed = 0x0400;
-const _encircled = 0x0800;
-const _overlined = 0x1000;
-const _superscripted = 0x2000;
-const _subscripted = 0x4000;
+const _dim = 0x0002;
+const _italic = 0x0004;
+const _underline = 0x0008;
+const _doublyUnderline = 0x0010;
+const _blink = 0x0020;
+const _blinkRapid = 0x0040;
+const _inverse = 0x0080;
+const _invisible = 0x0100;
+const _strikethrough = 0x0200;
+const _frame = 0x0400;
+const _encircle = 0x0800;
+const _overline = 0x1000;
+const _superscript = 0x2000;
+const _subscript = 0x4000;
 
-enum IntensityStyle { bold, faint }
+enum IntensityStyle { bold, dim }
 
-enum UnderlinedStyle { singly, doubly }
+enum UnderlineStyle { singly, doubly }
 
-enum BlinkingStyle { slowly, rapidly }
+enum BlinkStyle { slow, rapid }
 
-enum FramedStyle { framed, encircled }
+enum FrameStyle { frame, encircle }
 
-enum ScriptedStyle { superscripted, subscripted }
+enum ScriptStyle { superscript, subscript }
 
 /// Represents the currently active text style.
 ///
@@ -38,73 +38,73 @@ final class Style extends State<Style> {
   final int _flags;
 
   @override
-  final Color? colorOfForeground;
+  final Color? foregroundColor;
 
   @override
-  final Color? colorOfBackground;
+  final Color? backgroundColor;
 
   @override
-  final ExtendedColor? colorOfUnderline;
+  final ExtendedColor? underlineColorValue;
 
   const Style({
     bool bold = false,
-    bool faint = false,
-    bool italicized = false,
-    bool singlyUnderlined = false,
-    bool doublyUnderlined = false,
-    bool slowlyBlinking = false,
-    bool rapidlyBlinking = false,
-    bool negative = false,
-    bool concealed = false,
-    bool crossedOut = false,
-    bool framed = false,
-    bool encircled = false,
-    bool overlined = false,
-    bool superscripted = false,
-    bool subscripted = false,
+    bool dim = false,
+    bool italic = false,
+    bool underline = false,
+    bool doublyUnderline = false,
+    bool blink = false,
+    bool blinkRapid = false,
+    bool inverse = false,
+    bool invisible = false,
+    bool strikethrough = false,
+    bool frame = false,
+    bool encircle = false,
+    bool overline = false,
+    bool superscript = false,
+    bool subscript = false,
     Color? foreground,
     Color? background,
     ExtendedColor? underlineColor,
   })  : assert(
-          !singlyUnderlined || !doublyUnderlined,
-          'Either singlyUnderlined or doublyUnderlined can be set',
+          !underline || !doublyUnderline,
+          'Either underline or doublyUnderline can be set',
         ),
         assert(
-          !slowlyBlinking || !rapidlyBlinking,
-          'Either slowlyBlinking or rapidlyBlinking can be set',
+          !blink || !blinkRapid,
+          'Either blink or blinkRapid can be set',
         ),
         assert(
-          !framed || !encircled,
-          'Either framed or encircled can be set',
+          !frame || !encircle,
+          'Either frame or encircle can be set',
         ),
         assert(
-          !superscripted || !subscripted,
-          'Either superscripted or subscripted can be set',
+          !superscript || !subscript,
+          'Either superscript or subscript can be set',
         ),
         _flags = (bold ? _bold : 0) |
-            (faint ? _faint : 0) |
-            (italicized ? _italicized : 0) |
-            (singlyUnderlined ? _singlyUnderlined : 0) |
-            (doublyUnderlined && !singlyUnderlined ? _doublyUnderlined : 0) |
-            (slowlyBlinking ? _slowlyBlinking : 0) |
-            (rapidlyBlinking && !slowlyBlinking ? _rapidlyBlinking : 0) |
-            (negative ? _negative : 0) |
-            (concealed ? _concealed : 0) |
-            (crossedOut ? _crossedOut : 0) |
-            (framed ? _framed : 0) |
-            (encircled && !framed ? _encircled : 0) |
-            (overlined ? _overlined : 0) |
-            (superscripted && !subscripted ? _superscripted : 0) |
-            (subscripted ? _subscripted : 0),
-        colorOfForeground = foreground,
-        colorOfBackground = background,
-        colorOfUnderline = underlineColor;
+            (dim ? _dim : 0) |
+            (italic ? _italic : 0) |
+            (underline ? _underline : 0) |
+            (doublyUnderline && !underline ? _doublyUnderline : 0) |
+            (blink ? _blink : 0) |
+            (blinkRapid && !blink ? _blinkRapid : 0) |
+            (inverse ? _inverse : 0) |
+            (invisible ? _invisible : 0) |
+            (strikethrough ? _strikethrough : 0) |
+            (frame ? _frame : 0) |
+            (encircle && !frame ? _encircle : 0) |
+            (overline ? _overline : 0) |
+            (superscript && !subscript ? _superscript : 0) |
+            (subscript ? _subscript : 0),
+        foregroundColor = foreground,
+        backgroundColor = background,
+        underlineColorValue = underlineColor;
 
   const Style._(
     this._flags,
-    this.colorOfForeground,
-    this.colorOfBackground,
-    this.colorOfUnderline,
+    this.foregroundColor,
+    this.backgroundColor,
+    this.underlineColorValue,
   );
 
   static const Style defaults = Style._(0, null, null, null);
@@ -125,145 +125,142 @@ final class Style extends State<Style> {
   bool get isBold => _flags & _bold != 0;
 
   @override
-  bool get isFaint => _flags & _faint != 0;
+  bool get isDim => _flags & _dim != 0;
 
   @override
-  bool get isItalicized => _flags & _italicized != 0;
+  bool get isItalic => _flags & _italic != 0;
 
   @override
-  bool get isSinglyUnderlined => _flags & _singlyUnderlined != 0;
+  bool get isUnderline => _flags & _underline != 0;
 
   @override
-  bool get isDoublyUnderlined => _flags & _doublyUnderlined != 0;
+  bool get isDoublyUnderline => _flags & _doublyUnderline != 0;
 
   @override
-  UnderlinedStyle? get underlinedStyle => isSinglyUnderlined
-      ? UnderlinedStyle.singly
-      : isDoublyUnderlined
-          ? UnderlinedStyle.doubly
+  UnderlineStyle? get underlineStyle => isUnderline
+      ? UnderlineStyle.singly
+      : isDoublyUnderline
+          ? UnderlineStyle.doubly
           : null;
 
   @override
-  bool get isSlowlyBlinking => _flags & _slowlyBlinking != 0;
+  bool get isBlink => _flags & _blink != 0;
 
   @override
-  bool get isRapidlyBlinking => _flags & _rapidlyBlinking != 0;
+  bool get isBlinkRapid => _flags & _blinkRapid != 0;
 
   @override
-  BlinkingStyle? get blinkingStyle => isSlowlyBlinking
-      ? BlinkingStyle.slowly
-      : isRapidlyBlinking
-          ? BlinkingStyle.rapidly
+  BlinkStyle? get blinkStyle => isBlink
+      ? BlinkStyle.slow
+      : isBlinkRapid
+          ? BlinkStyle.rapid
           : null;
 
   @override
-  bool get isNegative => _flags & _negative != 0;
+  bool get isInverse => _flags & _inverse != 0;
 
   @override
-  bool get isConcealed => _flags & _concealed != 0;
+  bool get isInvisible => _flags & _invisible != 0;
 
   @override
-  bool get isCrossedOut => _flags & _crossedOut != 0;
+  bool get isStrikethrough => _flags & _strikethrough != 0;
 
   @override
-  bool get isFramed => _flags & _framed != 0;
+  bool get isFrame => _flags & _frame != 0;
 
   @override
-  bool get isEncircled => _flags & _encircled != 0;
+  bool get isEncircle => _flags & _encircle != 0;
 
   @override
-  FramedStyle? get framedStyle => isFramed
-      ? FramedStyle.framed
-      : isEncircled
-          ? FramedStyle.encircled
+  FrameStyle? get frameStyle => isFrame
+      ? FrameStyle.frame
+      : isEncircle
+          ? FrameStyle.encircle
           : null;
 
   @override
-  bool get isOverlined => _flags & _overlined != 0;
+  bool get isOverline => _flags & _overline != 0;
 
   @override
-  bool get isSuperscripted => _flags & _superscripted != 0;
+  bool get isSuperscript => _flags & _superscript != 0;
 
   @override
-  bool get isSubscripted => _flags & _subscripted != 0;
+  bool get isSubscript => _flags & _subscript != 0;
 
   @override
-  ScriptedStyle? get scriptedStyle => isSuperscripted
-      ? ScriptedStyle.superscripted
-      : isSubscripted
-          ? ScriptedStyle.subscripted
+  ScriptStyle? get scriptStyle => isSuperscript
+      ? ScriptStyle.superscript
+      : isSubscript
+          ? ScriptStyle.subscript
           : null;
 
   @override
   Style get bold => _setFlags(_flags | _bold);
 
   @override
-  Style get faint => _setFlags(_flags | _faint);
+  Style get dim => _setFlags(_flags | _dim);
 
   @override
-  Style get italic => _setFlags(_flags | _italicized);
+  Style get italic => _setFlags(_flags | _italic);
 
   @override
-  Style get underline =>
-      _setFlags(_flags & ~_doublyUnderlined | _singlyUnderlined);
+  Style get underline => _setFlags(_flags & ~_doublyUnderline | _underline);
 
   @override
   Style get doublyUnderline =>
-      _setFlags(_flags & ~_singlyUnderlined | _doublyUnderlined);
+      _setFlags(_flags & ~_underline | _doublyUnderline);
 
   @override
-  Style get slowlyBlink =>
-      _setFlags(_flags & ~_rapidlyBlinking | _slowlyBlinking);
+  Style get blink => _setFlags(_flags & ~_blinkRapid | _blink);
 
   @override
-  Style get rapidlyBlink =>
-      _setFlags(_flags & ~_slowlyBlinking | _rapidlyBlinking);
+  Style get blinkRapid => _setFlags(_flags & ~_blink | _blinkRapid);
 
   @override
-  Style get negative => _setFlags(_flags | _negative);
+  Style get inverse => _setFlags(_flags | _inverse);
 
   @override
-  Style get conceal => _setFlags(_flags | _concealed);
+  Style get invisible => _setFlags(_flags | _invisible);
 
   @override
-  Style get crossOut => _setFlags(_flags | _crossedOut);
+  Style get strikethrough => _setFlags(_flags | _strikethrough);
 
   @override
-  Style get frame => _setFlags(_flags & ~_encircled | _framed);
+  Style get frame => _setFlags(_flags & ~_encircle | _frame);
 
   @override
-  Style get encircle => _setFlags(_flags & ~_framed | _encircled);
+  Style get encircle => _setFlags(_flags & ~_frame | _encircle);
 
   @override
-  Style get overline => _setFlags(_flags | _overlined);
+  Style get overline => _setFlags(_flags | _overline);
 
   @override
-  Style get superscript => _setFlags(_flags & ~_subscripted | _superscripted);
+  Style get superscript => _setFlags(_flags & ~_subscript | _superscript);
 
   @override
-  Style get subscript => _setFlags(_flags & ~_superscripted | _subscripted);
+  Style get subscript => _setFlags(_flags & ~_superscript | _subscript);
 
   @override
   Style foreground(Color color) => Style._(
         _flags,
         color.withPrefix('fg'),
-        colorOfBackground,
-        colorOfUnderline,
+        backgroundColor,
+        underlineColorValue,
       );
 
   @override
   Style background(Color color) => Style._(
         _flags,
-        colorOfForeground,
+        foregroundColor,
         color.withPrefix('bg'),
-        colorOfUnderline,
+        underlineColorValue,
       );
 
   @override
   Style underlineColor(ExtendedColor color) => Style._(
         _flags,
-        colorOfForeground,
-        colorOfBackground,
+        foregroundColor,
+        backgroundColor,
         color.withPrefix('underlineColor'),
       );
 
@@ -271,56 +268,54 @@ final class Style extends State<Style> {
   Style get reset => defaults;
 
   @override
-  Style get resetBoldAndFaint => _setFlags(_flags & ~(_bold | _faint));
+  Style get resetBoldAndDim => _setFlags(_flags & ~(_bold | _dim));
 
   @override
-  Style get resetItalicized => _setFlags(_flags & ~_italicized);
+  Style get resetItalic => _setFlags(_flags & ~_italic);
 
   @override
-  Style get resetUnderlined =>
-      _setFlags(_flags & ~(_singlyUnderlined | _doublyUnderlined));
+  Style get resetUnderline =>
+      _setFlags(_flags & ~(_underline | _doublyUnderline));
 
   @override
-  Style get resetBlinking =>
-      _setFlags(_flags & ~(_slowlyBlinking | _rapidlyBlinking));
+  Style get resetBlink => _setFlags(_flags & ~(_blink | _blinkRapid));
 
   @override
-  Style get resetNegative => _setFlags(_flags & ~_negative);
+  Style get resetInverse => _setFlags(_flags & ~_inverse);
 
   @override
-  Style get resetConcealed => _setFlags(_flags & ~_concealed);
+  Style get resetInvisible => _setFlags(_flags & ~_invisible);
 
   @override
-  Style get resetCrossedOut => _setFlags(_flags & ~_crossedOut);
+  Style get resetStrikethrough => _setFlags(_flags & ~_strikethrough);
 
   @override
-  Style get resetFramedAndEncircled =>
-      _setFlags(_flags & ~(_framed | _encircled));
+  Style get resetFrameAndEncircle => _setFlags(_flags & ~(_frame | _encircle));
 
   @override
-  Style get resetOverlined => _setFlags(_flags & ~_overlined);
+  Style get resetOverline => _setFlags(_flags & ~_overline);
 
   @override
-  Style get resetSuperscriptedAndSubscripted => _setFlags(
-        _flags & ~(_superscripted | _subscripted),
+  Style get resetSuperAndSubscript => _setFlags(
+        _flags & ~(_superscript | _subscript),
       );
   @override
   Style get resetForeground =>
-      Style._(_flags, null, colorOfBackground, colorOfUnderline);
+      Style._(_flags, null, backgroundColor, underlineColorValue);
 
   @override
   Style get resetBackground =>
-      Style._(_flags, colorOfForeground, null, colorOfUnderline);
+      Style._(_flags, foregroundColor, null, underlineColorValue);
 
   @override
   Style get resetUnderlineColor =>
-      Style._(_flags, colorOfForeground, colorOfBackground, null);
+      Style._(_flags, foregroundColor, backgroundColor, null);
 
   Style _setFlags(int flags) => Style._(
         flags,
-        colorOfForeground,
-        colorOfBackground,
-        colorOfUnderline,
+        foregroundColor,
+        backgroundColor,
+        underlineColorValue,
       );
 
   @override

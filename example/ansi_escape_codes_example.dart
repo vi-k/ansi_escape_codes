@@ -8,6 +8,7 @@ import 'package:ansi_escape_codes/extensions.dart';
 import 'package:ansi_escape_codes/utils.dart';
 
 import '../test/utils.dart';
+import 'utils.dart';
 
 /// Usage:
 ///
@@ -138,8 +139,8 @@ void main() {
     print('');
     title('Style at position');
 
-    const text = '$fgGreen${bold}bold $fgRed${italicized}bold+italic'
-        ' $resetBoldAndFaint${fgMagenta}italic$resetItalicized$reset';
+    const text = '$fgGreen${bold}bold $fgRed${italic}bold+italic'
+        ' $resetBoldAndDim${fgMagenta}italic$resetItalic$reset';
     final parser = Parser(text);
 
     final styleAtPos0 = parser.stateAt(0);
@@ -147,8 +148,8 @@ void main() {
     print('"$text"');
     subsubtitle(
       ' ^ isBold=${styleAtPos0.isBold}'
-      ', isItalicized=${styleAtPos0.isItalicized}'
-      ', foreground=${styleAtPos0.colorOfForeground}',
+      ', isItalic=${styleAtPos0.isItalic}'
+      ', foreground=${styleAtPos0.foregroundColor}',
     );
 
     final styleAtPos5 = parser.stateAt(5);
@@ -156,8 +157,8 @@ void main() {
     print('"$text"');
     subsubtitle(
       ' ${' ' * 5}^ isBold=${styleAtPos5.isBold}'
-      ', isItalicized=${styleAtPos5.isItalicized}'
-      ', foreground=${styleAtPos5.colorOfForeground}',
+      ', isItalic=${styleAtPos5.isItalic}'
+      ', foreground=${styleAtPos5.foregroundColor}',
     );
 
     final styleAtPos17 = parser.stateAt(17);
@@ -165,8 +166,8 @@ void main() {
     print('"$text"');
     subsubtitle(
       ' ${' ' * 17}^ isBold=${styleAtPos17.isBold}'
-      ', isItalicized=${styleAtPos17.isItalicized}'
-      ', foreground=${styleAtPos17.colorOfForeground}',
+      ', isItalic=${styleAtPos17.isItalic}'
+      ', foreground=${styleAtPos17.foregroundColor}',
     );
 
     final finalStyle = parser.finalState;
@@ -174,8 +175,8 @@ void main() {
     print('"$text"');
     subsubtitle(
       ' ${' ' * 23}^ isBold=${finalStyle.isBold}'
-      ', isItalicized=${finalStyle.isItalicized}'
-      ', foreground=${finalStyle.colorOfForeground}',
+      ', isItalic=${finalStyle.isItalic}'
+      ', foreground=${finalStyle.foregroundColor}',
     );
   }
 
@@ -183,11 +184,11 @@ void main() {
     print('');
     title('Substrings');
 
-    const text = '$fg256Rgb135${bold}Lorem$resetBoldAndFaint '
-        '$bg256Rgb012${italicized}ipsum dolor sit$resetItalicized$resetBg'
+    const text = '$fg256Rgb135${bold}Lorem$resetBoldAndDim '
+        '$bg256Rgb012${italic}ipsum dolor sit$resetItalic$resetBg'
         ' amet, consectetur'
-        ' $bg256Rgb012${underlined}adipiscing$resetUnderlined$resetBg elit,'
-        ' $bg256Rgb012${crossedOut}sed do eiusmod$resetCrossedOut$resetBg'
+        ' $bg256Rgb012${underline}adipiscing$resetUnderline$resetBg elit,'
+        ' $bg256Rgb012${strikethrough}sed do eiusmod$resetStrikethrough$resetBg'
         ' tempor…$reset';
     subtitle('Original:');
     print('"$text"');
@@ -280,20 +281,4 @@ void main() {
 
     tabs(); // Reset to defaults
   }
-
-  const text = 'Hello ${fgRed}world$reset';
-  final parser = Parser(text);
-  print(parser.showControlFunctions());
-}
-
-void title(String text) {
-  print('\n$fg256Rgb531▶︎ $text$reset');
-}
-
-void subtitle(String text) {
-  print('\n$fg256Rgb420$text$reset');
-}
-
-void subsubtitle(String text) {
-  print('$fg256Rgb320$text$reset');
 }

@@ -10,6 +10,22 @@ enum ControlCodeStyle {
 }
 
 extension StringShowControlCodesExtension on String {
+  @Deprecated('Use ansiShowControlCodes instead')
+  String showControlCodes({
+    String open = '',
+    String close = '',
+    String abbrOpen = '[',
+    String abbrClose = ']',
+    ControlCodeStyle preferStyle = ControlCodeStyle.escapeOrCharCode,
+  }) =>
+      ansiShowControlCodes(
+        open: open,
+        abbrOpen: abbrOpen,
+        abbrClose: abbrClose,
+        close: close,
+        preferStyle: preferStyle,
+      );
+
   /// Show control codes.
   String ansiShowControlCodes({
     String open = '',

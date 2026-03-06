@@ -13,29 +13,29 @@ enum ControlFunctionsSGR {
   /// See [sgr.bold] and [sgr.BOLD].
   bold, // 1
 
-  /// See [sgr.faint] and [sgr.FAINT].
-  faint, // 2
+  /// See [sgr.dim] and [sgr.DIM].
+  dim, // 2
 
-  /// See [sgr.italicized] and [sgr.ITALICIZED].
-  italicized, // 3
+  /// See [sgr.italic] and [sgr.ITALIC].
+  italic, // 3
 
-  /// See [sgr.underlined] and [sgr.UNDERLINED].
-  underlined, // 4
+  /// See [sgr.underline] and [sgr.UNDERLINE].
+  underline, // 4
 
-  /// See [sgr.slowlyBlinking] and [sgr.SLOWLY_BLINKING].
-  slowlyBlinking, // 5
+  /// See [sgr.blink] and [sgr.BLINK].
+  blink, // 5
 
-  /// See [sgr.rapidlyBlinking] and [sgr.RAPIDLY_BLINKING].
-  rapidlyBlinking, // 6
+  /// See [sgr.blinkRapid] and [sgr.BLINK_RAPID].
+  blinkRapid, // 6
 
-  /// See [sgr.negative] and [sgr.NEGATIVE].
-  negative, // 7
+  /// See [sgr.inverse] and [sgr.INVERSE].
+  inverse, // 7
 
-  /// See [sgr.concealed] and [sgr.CONCEALED].
-  concealed, // 8
+  /// See [sgr.invisible] and [sgr.INVISIBLE].
+  invisible, // 8
 
-  /// See [sgr.crossedOut] and [sgr.CROSSEDOUT].
-  crossedOut, // 9
+  /// See [sgr.strikethrough] and [sgr.STRIKETHROUGH].
+  strikethrough, // 9
 
   /// See [sgr.PRIMARY_FONT].
   primaryFont(isUnused: true), // 10
@@ -70,33 +70,33 @@ enum ControlFunctionsSGR {
   /// See [sgr.FRAKTUR].
   fraktur(isUnused: true), // 20
 
-  /// See [sgr.doublyUnderlined] and [sgr.DOUBLY_UNDERLINED].
-  doublyUnderlined, // 21
+  /// See [sgr.doublyUnderline] and [sgr.DOUBLY_UNDERLINE].
+  doublyUnderline, // 21
 
-  /// See [sgr.resetBoldAndFaint] and [sgr.NOT_BOLD_NOT_FAINT].
-  resetBoldAndFaint, // 22
+  /// See [sgr.resetBoldAndDim] and [sgr.NOT_BOLD_NOT_DIM].
+  resetBoldAndDim, // 22
 
-  /// See [sgr.resetItalicized] and [sgr.NOT_ITALICIZED].
-  resetItalicized, // 23
+  /// See [sgr.resetItalic] and [sgr.NOT_ITALIC].
+  resetItalic, // 23
 
-  /// See [sgr.resetUnderlined] and [sgr.NOT_UNDERLINED].
-  resetUnderlined, // 24
+  /// See [sgr.resetUnderline] and [sgr.NOT_UNDERLINE].
+  resetUnderline, // 24
 
-  /// See [sgr.resetBlinking] and [sgr.NOT_BLINKING].
-  resetBlinking, // 25
+  /// See [sgr.resetBlink] and [sgr.NOT_BLINK].
+  resetBlink, // 25
 
   /// Reserved for proportional spacing as specified in CCITT Recommendation
   /// T.61.
   reserved_26(isUnused: true), // 26
 
-  /// See [sgr.resetNegative] and [sgr.NOT_NEGATIVE].
-  resetNegative, // 27
+  /// See [sgr.resetInverse] and [sgr.NOT_INVERSE].
+  resetInverse, // 27
 
-  /// See [sgr.resetConcealed] and [sgr.NOT_CONCEALED].
-  resetConcealed, // 28
+  /// See [sgr.resetInvisible] and [sgr.NOT_INVISIBLE].
+  resetInvisible, // 28
 
-  /// See [sgr.resetCrossedOut] and [sgr.NOT_CROSSEDOUT].
-  resetCrossedOut, // 29
+  /// See [sgr.resetStrikethrough] and [sgr.NOT_STRIKETHROUGH].
+  resetStrikethrough, // 29
 
   /// See [sgr.fgBlack] and [sgr.FG_BLACK].
   fgBlack, // 30
@@ -162,20 +162,20 @@ enum ControlFunctionsSGR {
   /// by parameter value 26.
   reserved_50(isUnused: true), // 50
 
-  /// See [sgr.framed] and [sgr.FRAMED].
-  framed, // 51
+  /// See [sgr.frame] and [sgr.FRAME].
+  frame, // 51
 
-  /// See [sgr.encircled] and [sgr.ENCIRCLED].
-  encircled, // 52
+  /// See [sgr.encircle] and [sgr.ENCIRCLE].
+  encircle, // 52
 
-  /// See [sgr.overlined] and [sgr.OVERLINED].
-  overlined, // 53
+  /// See [sgr.overline] and [sgr.OVERLINE].
+  overline, // 53
 
-  /// See [sgr.resetFramedAndEncircled] and [sgr.NOT_FRAMED_NOT_ENCIRCLED].
-  resetFramedAndEncircled, // 54
+  /// See [sgr.resetFrameAndEncircle] and [sgr.NOT_FRAME_NOT_ENCIRCLE].
+  resetFrameAndEncircle, // 54
 
-  /// See [sgr.resetOverlined] and [sgr.NOT_OVERLINED].
-  resetOverlined, // 55
+  /// See [sgr.resetOverline] and [sgr.NOT_OVERLINE].
+  resetOverline, // 55
 
   /// Reserved for future standardization.
   reserved_56(isUnused: true), // 56
@@ -230,14 +230,14 @@ enum ControlFunctionsSGR {
   /// Reserved.
   reserved_72(isUnused: true), // 72
 
-  /// See [sgr.superscripted] and [sgr.SUPERSCRIPTED].
-  superscripted, // 73
+  /// See [sgr.superscript] and [sgr.SUPERSCRIPT].
+  superscript, // 73
 
-  /// See [sgr.subscripted] and [sgr.SUBSCRIPTED].
-  subscripted, // 74
+  /// See [sgr.subscript] and [sgr.SUBSCRIPT].
+  subscript, // 74
 
-  /// See [sgr.resetSuperAndSubscripted] and [sgr.NOT_SUPER_NOT_SUBSCRIPTED].
-  resetSuperAndSubscripted, // 75
+  /// See [sgr.resetSuperAndSubscript] and [sgr.NOT_SUPER_NOT_SUBSCRIPT].
+  resetSuperAndSubscript, // 75
 
   /// Reserved.
   reserved_76(isUnused: true), // 76

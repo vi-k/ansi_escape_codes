@@ -5,6 +5,28 @@ import '../parsing/control_functions/control_sequences.dart';
 import '../parsing/patterns/patterns.dart';
 
 extension StringShowEscapeCodesExtension on String {
+  @Deprecated('Use ansiShowEscapeSequences instead')
+  String showEscapeCodes({
+    String open = '[',
+    String codeOpen = '',
+    String codeClose = '',
+    String paramsOpen = ' ',
+    String paramsClose = '',
+    String finalOpen = ' ',
+    String finalClose = '',
+    String close = ']',
+  }) =>
+      ansiShowEscapeSequences(
+        open: open,
+        codeOpen: codeOpen,
+        codeClose: codeClose,
+        paramsOpen: paramsOpen,
+        paramsClose: paramsClose,
+        finalOpen: finalOpen,
+        finalClose: finalClose,
+        close: close,
+      );
+
   /// Show escape sequences.
   String ansiShowEscapeSequences({
     String open = '[',

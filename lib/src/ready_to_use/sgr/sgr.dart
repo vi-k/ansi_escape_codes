@@ -33,9 +33,9 @@ const String reset = '$CSI$RESET$SGR';
 /// - +mac Kitty
 /// - +mac Alacritty
 ///
-/// Bold+faint:
-/// - -vscode (same as faint, not support bold)
-/// - -as (same as bold, not support faint)
+/// Bold+dim:
+/// - -vscode (same as dim, not support bold)
+/// - -as (same as bold, not support dim)
 /// - +mac Terminal
 /// - +mac iTerm2
 /// - +mac Warp (on the default colors only)
@@ -43,12 +43,12 @@ const String reset = '$CSI$RESET$SGR';
 /// - +mac Kitty
 /// - +mac Alacritty
 ///
-/// See also [faint] and [resetBoldAndFaint].
+/// See also [dim] and [resetBoldAndDim].
 const String bold = '$CSI$BOLD$SGR';
 
-/// Faint, decreased intensity or second color.
+/// Dim, decreased intensity or second color.
 ///
-/// See [FAINT].
+/// See [DIM].
 ///
 /// Compatibility:
 /// - +vscode (decreased intensity, also of the background color)
@@ -60,9 +60,9 @@ const String bold = '$CSI$BOLD$SGR';
 /// - +mac Kitty (decreased intensity)
 /// - +mac Alacritty (decreased intensity)
 ///
-/// Bold+faint:
-/// - -vscode (same as faint, not support bold)
-/// - -as (same as bold, not support faint)
+/// Bold+dim:
+/// - -vscode (same as dim, not support bold)
+/// - -as (same as bold, not support dim)
 /// - +mac Terminal
 /// - +mac iTerm2
 /// - +mac Warp (on the default colors only)
@@ -70,19 +70,25 @@ const String bold = '$CSI$BOLD$SGR';
 /// - +mac Kitty
 /// - +mac Alacritty
 ///
-/// See also [bold] and [resetBoldAndFaint].
-const String faint = '$CSI$FAINT$SGR';
+/// See also [bold] and [resetBoldAndDim].
+const String dim = '$CSI$DIM$SGR';
 
-/// Normal colour or normal intensity (neither bold nor faint).
-///
-/// See [NOT_BOLD_NOT_FAINT].
-///
-/// See also [bold] and [faint].
-const String resetBoldAndFaint = '$CSI$NOT_BOLD_NOT_FAINT$SGR';
+@Deprecated('Use bold instead')
+const String faint = bold;
 
-/// Italicized.
+/// Normal colour or normal intensity (neither bold nor dim).
 ///
-/// See [ITALICIZED].
+/// See [NOT_BOLD_NOT_DIM].
+///
+/// See also [bold] and [dim].
+const String resetBoldAndDim = '$CSI$NOT_BOLD_NOT_DIM$SGR';
+
+@Deprecated('Use resetBoldAndDim instead')
+const String resetBoldAndFaint = resetBoldAndDim;
+
+/// Italic.
+///
+/// See [ITALIC].
 ///
 /// Compatibility:
 /// - +vscode
@@ -94,19 +100,25 @@ const String resetBoldAndFaint = '$CSI$NOT_BOLD_NOT_FAINT$SGR';
 /// - +mac Kitty
 /// - +mac Alacritty
 ///
-/// See also [resetItalicized].
-const String italicized = '$CSI$ITALICIZED$SGR';
+/// See also [resetItalic].
+const String italic = '$CSI$ITALIC$SGR';
 
-/// Not italicized, not fraktur.
-///
-/// See [NOT_ITALICIZED].
-///
-/// See also [italicized].
-const String resetItalicized = '$CSI$NOT_ITALICIZED$SGR';
+@Deprecated('Use italic instead')
+const String italicized = italic;
 
-/// Singly underlined.
+/// Not italic, not fraktur.
 ///
-/// See [UNDERLINED].
+/// See [NOT_ITALIC].
+///
+/// See also [italic].
+const String resetItalic = '$CSI$NOT_ITALIC$SGR';
+
+@Deprecated('Use resetItalic instead')
+const String resetItalicized = resetItalic;
+
+/// Underline.
+///
+/// See [UNDERLINE].
 ///
 /// Compatibility:
 /// - +vscode
@@ -121,12 +133,15 @@ const String resetItalicized = '$CSI$NOT_ITALICIZED$SGR';
 /// Colors:
 /// - +-vscode (only rgb colors)
 ///
-/// See also [resetUnderlined] and [doublyUnderlined].
-const String underlined = '$CSI$UNDERLINED$SGR';
+/// See also [resetUnderline] and [doublyUnderline].
+const String underline = '$CSI$UNDERLINE$SGR';
 
-/// Doubly underlined.
+@Deprecated('Use underline instead')
+const String singlyUnderlined = underline;
+
+/// Doubly underline.
 ///
-/// See [DOUBLY_UNDERLINED].
+/// See [DOUBLY_UNDERLINE].
 ///
 /// Double-underline per ECMA-48, but instead disables bold intensity on
 /// several terminals, including in the Linux kernel's console before version
@@ -145,19 +160,25 @@ const String underlined = '$CSI$UNDERLINED$SGR';
 /// Colors:
 /// - +-vscode (only rgb colors)
 ///
-/// See also [resetUnderlined] and [underlined].
-const String doublyUnderlined = '$CSI$DOUBLY_UNDERLINED$SGR';
+/// See also [resetUnderline] and [underline].
+const String doublyUnderline = '$CSI$DOUBLY_UNDERLINE$SGR';
 
-/// Not underlined (neither singly nor doubly).
-///
-/// See [NOT_UNDERLINED].
-///
-/// See also [underlined] and [doublyUnderlined].
-const String resetUnderlined = '$CSI$NOT_UNDERLINED$SGR';
+@Deprecated('Use doublyUnderline instead')
+const String doublyUnderlined = doublyUnderline;
 
-/// Slowly blinking (less then 150 per minute).
+/// Not underline (neither singly nor doubly).
 ///
-/// See [SLOWLY_BLINKING].
+/// See [NOT_UNDERLINE].
+///
+/// See also [underline] and [doublyUnderline].
+const String resetUnderline = '$CSI$NOT_UNDERLINE$SGR';
+
+@Deprecated('Use resetUnderline instead')
+const String resetUnderlined = resetUnderline;
+
+/// Blink.
+///
+/// See [BLINK].
 ///
 /// Compatibility:
 /// - +vscode
@@ -169,36 +190,45 @@ const String resetUnderlined = '$CSI$NOT_UNDERLINED$SGR';
 /// - -mac Kitty
 /// - -mac Alacritty
 ///
-/// See also [rapidlyBlinking] and [resetBlinking].
-const String slowlyBlinking = '$CSI$SLOWLY_BLINKING$SGR';
+/// See also [blinkRapid] and [resetBlink].
+const String blink = '$CSI$BLINK$SGR';
 
-/// Rapidly blinking (150 per minute or more).
+@Deprecated('Use blink instead')
+const String slowlyBlinking = blink;
+
+/// Blink rapid.
 ///
-/// See [RAPIDLY_BLINKING].
+/// See [BLINK_RAPID].
 ///
 /// Compatibility:
 /// - +vscode
 /// - -as
-/// - +-mac Terminal same as [slowlyBlinking])
+/// - +-mac Terminal same as [blink])
 /// - -mac iTerm2
 /// - -mac Warp
 /// - +mac WezTerm
 /// - -mac Kitty
 /// - -mac Alacritty
 ///
-/// See also [slowlyBlinking] and [resetBlinking].
-const String rapidlyBlinking = '$CSI$RAPIDLY_BLINKING$SGR';
+/// See also [blink] and [resetBlink].
+const String blinkRapid = '$CSI$BLINK_RAPID$SGR';
 
-/// Steady (not blinking).
-///
-/// See [NOT_BLINKING].
-///
-/// See also [slowlyBlinking] and [rapidlyBlinking].
-const String resetBlinking = '$CSI$NOT_BLINKING$SGR';
+@Deprecated('Use blinkRapid instead')
+const String rapidlyBlinking = blinkRapid;
 
-/// Negative image.
+/// Steady (not blink).
 ///
-/// See [NEGATIVE].
+/// See [NOT_BLINK].
+///
+/// See also [blink] and [blinkRapid].
+const String resetBlink = '$CSI$NOT_BLINK$SGR';
+
+@Deprecated('Use resetBlink instead')
+const String resetBlinking = resetBlink;
+
+/// Inverse.
+///
+/// See [INVERSE].
 ///
 /// Swap foreground and background colors.
 ///
@@ -212,19 +242,25 @@ const String resetBlinking = '$CSI$NOT_BLINKING$SGR';
 /// - +mac Kitty
 /// - +mac Alacritty
 ///
-/// See also [resetNegative].
-const String negative = '$CSI$NEGATIVE$SGR';
+/// See also [resetInverse].
+const String inverse = '$CSI$INVERSE$SGR';
 
-/// Positive image (not negative).
-///
-/// See [NOT_NEGATIVE].
-///
-/// See also [negative].
-const String resetNegative = '$CSI$NOT_NEGATIVE$SGR';
+@Deprecated('Use inverse instead')
+const String negative = inverse;
 
-/// Concealed characters.
+/// Positive (not inverse).
 ///
-/// See [CONCEALED].
+/// See [NOT_INVERSE].
+///
+/// See also [inverse].
+const String resetInverse = '$CSI$NOT_INVERSE$SGR';
+
+@Deprecated('Use resetInverse instead')
+const String resetNegative = resetInverse;
+
+/// Invisible.
+///
+/// See [INVISIBLE].
 ///
 /// Compatibility:
 /// - +vscode
@@ -236,19 +272,25 @@ const String resetNegative = '$CSI$NOT_NEGATIVE$SGR';
 /// - -mac Kitty
 /// - +mac Alacritty
 ///
-/// See also [resetConcealed].
-const String concealed = '$CSI$CONCEALED$SGR';
+/// See also [resetInvisible].
+const String invisible = '$CSI$INVISIBLE$SGR';
+
+@Deprecated('Use invisible instead')
+const String concealed = invisible;
 
 /// Revealed characters (not concealed).
 ///
-/// See [NOT_CONCEALED].
+/// See [NOT_INVISIBLE].
 ///
-/// See also [concealed].
-const String resetConcealed = '$CSI$NOT_CONCEALED$SGR';
+/// See also [invisible].
+const String resetInvisible = '$CSI$NOT_INVISIBLE$SGR';
 
-/// Crossed-out (characters still legible but marked as to be deleted).
+@Deprecated('Use resetInvisible instead')
+const String resetConcealed = resetInvisible;
+
+/// Strikethrough (characters still legible but marked as to be deleted).
 ///
-/// See [CROSSEDOUT].
+/// See [STRIKETHROUGH].
 ///
 /// Compatibility:
 /// - +vscode
@@ -260,25 +302,31 @@ const String resetConcealed = '$CSI$NOT_CONCEALED$SGR';
 /// - +mac Kitty
 /// - +mac Alacritty
 ///
-/// Crossed out + underline:
+/// Strikethrough + underline:
 /// - +vscode
 /// - +as
 /// - +mac iTerm2
 /// - -mac Warp (underline has priority)
 ///
-/// See also [resetCrossedOut].
-const String crossedOut = '$CSI$CROSSEDOUT$SGR';
+/// See also [resetStrikethrough].
+const String strikethrough = '$CSI$STRIKETHROUGH$SGR';
 
-/// Not crossed out.
-///
-/// See [NOT_CROSSEDOUT].
-///
-/// See also [crossedOut].
-const String resetCrossedOut = '$CSI$NOT_CROSSEDOUT$SGR';
+@Deprecated('Use strikethrough instead')
+const String crossedOut = strikethrough;
 
-/// Framed.
+/// Not strikethrough.
 ///
-/// See [FRAMED].
+/// See [NOT_STRIKETHROUGH].
+///
+/// See also [strikethrough].
+const String resetStrikethrough = '$CSI$NOT_STRIKETHROUGH$SGR';
+
+@Deprecated('Use resetStrikethrough instead')
+const String resetCrossedOut = resetStrikethrough;
+
+/// Frame.
+///
+/// See [FRAME].
 ///
 /// Compatibility:
 /// - -vscode
@@ -290,16 +338,19 @@ const String resetCrossedOut = '$CSI$NOT_CROSSEDOUT$SGR';
 /// - -mac Kitty
 /// - -mac Alacritty
 ///
-/// See also [resetFramedAndEncircled].
-const String framed = '$CSI$FRAMED$SGR';
+/// See also [resetFrameAndEncircle].
+const String frame = '$CSI$FRAME$SGR';
 
-/// Encircled.
+@Deprecated('Use frame instead')
+const String framed = frame;
+
+/// Encircle.
 ///
-/// See [ENCIRCLED].
+/// See [ENCIRCLE].
 ///
 /// Compatibility:
 /// - -vscode
-/// - +as (same as [framed])
+/// - +as (same as [frame])
 /// - -mac Terminal
 /// - -mac iTerm2
 /// - -mac Warp
@@ -307,19 +358,25 @@ const String framed = '$CSI$FRAMED$SGR';
 /// - -mac Kitty
 /// - -mac Alacritty
 ///
-/// See also [resetFramedAndEncircled].
-const String encircled = '$CSI$ENCIRCLED$SGR';
+/// See also [resetFrameAndEncircle].
+const String encircle = '$CSI$ENCIRCLE$SGR';
 
-/// Not framed, not encircled.
+@Deprecated('Use encircle instead')
+const String encircled = encircle;
+
+/// Not frame, not encircle.
 ///
-/// See [NOT_FRAMED_NOT_ENCIRCLED].
+/// See [NOT_FRAME_NOT_ENCIRCLE].
 ///
-/// See [framed] and [encircled].
-const String resetFramedAndEncircled = '$CSI$NOT_FRAMED_NOT_ENCIRCLED$SGR';
+/// See [frame] and [encircle].
+const String resetFrameAndEncircle = '$CSI$NOT_FRAME_NOT_ENCIRCLE$SGR';
+
+@Deprecated('Use resetFrameAndEncircle instead')
+const String resetFramedAndEncircled = resetFrameAndEncircle;
 
 /// Overlined.
 ///
-/// See [OVERLINED].
+/// See [OVERLINE].
 ///
 /// Compatibility:
 /// - +vscode
@@ -335,7 +392,7 @@ const String resetFramedAndEncircled = '$CSI$NOT_FRAMED_NOT_ENCIRCLED$SGR';
 /// - +vscode
 /// - +mac WezTerm
 ///
-/// Overlined + crossed out:
+/// Overlined + strikethrough:
 /// - +vscode
 /// - +mac WezTerm
 ///
@@ -343,19 +400,25 @@ const String resetFramedAndEncircled = '$CSI$NOT_FRAMED_NOT_ENCIRCLED$SGR';
 /// - +-vscode (only rgb colors)
 /// - +mac WezTerm
 ///
-/// See also [resetOverlined].
-const String overlined = '$CSI$OVERLINED$SGR';
+/// See also [resetOverline].
+const String overline = '$CSI$OVERLINE$SGR';
+
+@Deprecated('Use overline instead')
+const String overlined = overline;
 
 /// Not overlined.
 ///
-/// See [NOT_OVERLINED].
+/// See [NOT_OVERLINE].
 ///
-/// See also [overlined].
-const String resetOverlined = '$CSI$NOT_OVERLINED$SGR';
+/// See also [overline].
+const String resetOverline = '$CSI$NOT_OVERLINE$SGR';
+
+@Deprecated('Use resetOverline instead')
+const String resetOverlined = resetOverline;
 
 /// Superscripted.
 ///
-/// See [SUPERSCRIPTED].
+/// See [SUPERSCRIPT].
 ///
 /// Compatibility:
 /// - +vscode
@@ -367,12 +430,15 @@ const String resetOverlined = '$CSI$NOT_OVERLINED$SGR';
 /// - -mac Kitty
 /// - -mac Alacritty
 ///
-/// See also [subscripted] and [resetSuperAndSubscripted].
-const String superscripted = '$CSI$SUPERSCRIPTED$SGR';
+/// See also [subscript] and [resetSuperAndSubscript].
+const String superscript = '$CSI$SUPERSCRIPT$SGR';
+
+@Deprecated('Use superscript instead')
+const String superscripted = superscript;
 
 /// Subscripted.
 ///
-/// See [SUBSCRIPTED].
+/// See [SUBSCRIPT].
 ///
 /// Compatibility:
 /// - +vscode
@@ -384,12 +450,18 @@ const String superscripted = '$CSI$SUPERSCRIPTED$SGR';
 /// - -mac Kitty
 /// - -mac Alacritty
 ///
-/// See also [superscripted] and [resetSuperAndSubscripted].
-const String subscripted = '$CSI$SUBSCRIPTED$SGR';
+/// See also [superscript] and [resetSuperAndSubscript].
+const String subscript = '$CSI$SUBSCRIPT$SGR';
+
+@Deprecated('Use subscript instead')
+const String subscripted = subscript;
 
 /// Not superscripted, not subscipted.
 ///
-/// See [NOT_SUPER_NOT_SUBSCRIPTED].
+/// See [NOT_SUPER_NOT_SUBSCRIPT].
 ///
-/// See also [superscripted] and [subscripted].
-const String resetSuperAndSubscripted = '$CSI$NOT_SUPER_NOT_SUBSCRIPTED$SGR';
+/// See also [superscript] and [subscript].
+const String resetSuperAndSubscript = '$CSI$NOT_SUPER_NOT_SUBSCRIPT$SGR';
+
+@Deprecated('Use resetSuperAndSubscript instead')
+const String resetSuperAndSubscripted = resetSuperAndSubscript;

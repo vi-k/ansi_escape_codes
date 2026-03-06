@@ -1070,14 +1070,14 @@ const String RM = 'l';
 ///   any preceding occurrence of SGR in the data stream regardless of the
 ///   setting of the GRAPHIC RENDITION COMBINATION MODE (GRCM)
 /// - 1 - bold or increased intensity
-/// - 2 - faint, decreased intensity or second colour
-/// - 3 - italicized
-/// - 4 - singly underlined
-/// - 5 - slowly blinking (less then 150 per minute)
-/// - 6 - rapidly blinking (150 per minute or more)
-/// - 7 - negative image
-/// - 8 - concealed characters
-/// - 9 - crossed-out (characters still legible but marked as to be deleted)
+/// - 2 - dim, decreased intensity or second colour
+/// - 3 - italic
+/// - 4 - underline
+/// - 5 - blink
+/// - 6 - blink rapid
+/// - 7 - inverse
+/// - 8 - invisible characters
+/// - 9 - strikethrough (characters still legible but marked as to be deleted)
 /// - 10 - primary (default) font
 /// - 11 - first alternative font
 /// - 12 - second alternative font
@@ -1089,16 +1089,16 @@ const String RM = 'l';
 /// - 18 - eighth alternative font
 /// - 19 - ninth alternative font
 /// - 20 - Fraktur (Gothic)
-/// - 21 - doubly underlined
-/// - 22 - normal colour or normal intensity (neither bold nor faint)
+/// - 21 - doubly underline
+/// - 22 - normal colour or normal intensity (neither bold nor dim)
 /// - 23 - not italicized, not fraktur
-/// - 24 - not underlined (neither singly nor doubly)
-/// - 25 - steady (not blinking)
+/// - 24 - not underline (neither singly nor doubly)
+/// - 25 - steady (not blink)
 /// - 26 - (reserved for proportional spacing as specified in CCITT
 ///   Recommendation T.61)
-/// - 27 - positive image
-/// - 28 - revealed characters
-/// - 29 - not crossed out
+/// - 27 - positive (not inverse)
+/// - 28 - revealed (not invisible)
+/// - 29 - not strikethrough
 /// - 30 - black display
 /// - 31 - red display
 /// - 32 - green display

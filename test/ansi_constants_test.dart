@@ -10,7 +10,7 @@ import 'utils.dart';
 void main() {
   group('Parsing', () {
     test('parsing', () {
-      const text = '$bold Bold $resetBoldAndFaint';
+      const text = '$bold Bold $resetBoldAndDim';
 
       final parser1 = Parser(text);
       expect(parser1.isParsed, isFalse);
@@ -64,11 +64,11 @@ void main() {
       expect(
         parser.showControlFunctions(),
         '['
-        ';reset;bold;faint;italicized;underlined'
-        ';slowlyBlinking;rapidlyBlinking;negative;concealed;crossedOut'
+        ';reset;bold;dim;italic;underline'
+        ';blink;blinkRapid;inverse;invisible;strikethrough'
         ';10;11;12;13;14;15;16;17;18;19;20'
-        ';doublyUnderlined;resetBoldAndFaint;resetItalicized;resetUnderlined'
-        ';resetBlinking;26;resetNegative;resetConcealed;resetCrossedOut'
+        ';doublyUnderline;resetBoldAndDim;resetItalic;resetUnderline'
+        ';resetBlink;26;resetInverse;resetInvisible;resetStrikethrough'
         // fg...
         ';fgBlack;fgRed;fgGreen;fgYellow;fgBlue;fgMagenta;fgCyan;fgWhite'
         ';fg256White;fgRgb(0,128,255)'
@@ -82,7 +82,7 @@ void main() {
         ';bg256?256;bgRgb?0:128:256;bgRgb?0:128;bg?3:0:128:255'
         ';resetBg'
         ';50'
-        ';framed;encircled;overlined;resetFramedAndEncircled;resetOverlined'
+        ';frame;encircle;overline;resetFrameAndEncircle;resetOverline'
         ';56;57'
         // underline...
         ';underline256White;underlineRgb(0,128,255)'
@@ -91,7 +91,7 @@ void main() {
         ';underline?3:0:128:255'
         ';resetUnderlineColor'
         ';60;61;62;63;64;65;66;67;68;69;70;71;72'
-        ';superscripted;subscripted;resetSuperAndSubscripted'
+        ';superscript;subscript;resetSuperAndSubscript'
         ';76;77;78;79;80;81;82;83;84;85;86;87;88;89'
         // fgHigh...
         ';fgHighBlack;fgHighRed;fgHighGreen;fgHighYellow'
@@ -111,8 +111,8 @@ void main() {
 
     test('stateAtPos', () {
       const text = '$fgRed ${bold}bold $fgGreen$bgYellow'
-          ' ${italicized}bold+italic$resetBoldAndFaint'
-          ' $resetBg italic$resetItalicized $reset';
+          ' ${italic}bold+italic$resetBoldAndDim'
+          ' $resetBg italic$resetItalic $reset';
       final parser = Parser(text);
 
       expect(parser.removeAll(), ' bold  bold+italic  italic ');
@@ -120,8 +120,8 @@ void main() {
       expect(
         parser.showControlFunctions(),
         '[fgRed] [bold]bold [fgGreen][bgYellow]'
-        ' [italicized]bold+italic[resetBoldAndFaint]'
-        ' [resetBg] italic[resetItalicized] [reset]',
+        ' [italic]bold+italic[resetBoldAndDim]'
+        ' [resetBg] italic[resetItalic] [reset]',
       );
 
       expect(parser.length, 27);
@@ -129,90 +129,90 @@ void main() {
       // " bold  bold+italic  italic "
       //  ^--
       final styleAtPos0 = parser.stateAt(0);
-      expect(styleAtPos0.colorOfForeground, Color16.red);
-      expect(styleAtPos0.colorOfBackground, isNull);
+      expect(styleAtPos0.foregroundColor, Color16.red);
+      expect(styleAtPos0.backgroundColor, isNull);
       expect(styleAtPos0.isBold, isFalse);
-      expect(styleAtPos0.isItalicized, isFalse);
+      expect(styleAtPos0.isItalic, isFalse);
 
       // " bold  bold+italic  italic "
       //   ^--
       final styleAtPos1 = parser.stateAt(1);
-      expect(styleAtPos1.colorOfForeground, Color16.red);
-      expect(styleAtPos1.colorOfBackground, isNull);
+      expect(styleAtPos1.foregroundColor, Color16.red);
+      expect(styleAtPos1.backgroundColor, isNull);
       expect(styleAtPos1.isBold, isTrue);
-      expect(styleAtPos1.isItalicized, isFalse);
+      expect(styleAtPos1.isItalic, isFalse);
 
       // " bold  bold+italic  italic "
       //       ^--
       final styleAtPos5 = parser.stateAt(5);
-      expect(styleAtPos5.colorOfForeground, Color16.red);
-      expect(styleAtPos5.colorOfBackground, isNull);
+      expect(styleAtPos5.foregroundColor, Color16.red);
+      expect(styleAtPos5.backgroundColor, isNull);
       expect(styleAtPos5.isBold, isTrue);
-      expect(styleAtPos5.isItalicized, isFalse);
+      expect(styleAtPos5.isItalic, isFalse);
 
       // " bold  bold+italic  italic "
       //        ^--
       final styleAtPos6 = parser.stateAt(6);
-      expect(styleAtPos6.colorOfForeground, Color16.green);
-      expect(styleAtPos6.colorOfBackground, Color16.yellow);
+      expect(styleAtPos6.foregroundColor, Color16.green);
+      expect(styleAtPos6.backgroundColor, Color16.yellow);
       expect(styleAtPos6.isBold, isTrue);
-      expect(styleAtPos6.isItalicized, isFalse);
+      expect(styleAtPos6.isItalic, isFalse);
 
       // " bold  bold+italic  italic "
       //         ^--
       final styleAtPos7 = parser.stateAt(7);
-      expect(styleAtPos7.colorOfForeground, Color16.green);
-      expect(styleAtPos7.colorOfBackground, Color16.yellow);
+      expect(styleAtPos7.foregroundColor, Color16.green);
+      expect(styleAtPos7.backgroundColor, Color16.yellow);
       expect(styleAtPos7.isBold, isTrue);
-      expect(styleAtPos7.isItalicized, isTrue);
+      expect(styleAtPos7.isItalic, isTrue);
 
       // " bold  bold+italic  italic "
       //                   ^--
       final styleAtPos17 = parser.stateAt(17);
-      expect(styleAtPos17.colorOfForeground, Color16.green);
-      expect(styleAtPos17.colorOfBackground, Color16.yellow);
+      expect(styleAtPos17.foregroundColor, Color16.green);
+      expect(styleAtPos17.backgroundColor, Color16.yellow);
       expect(styleAtPos17.isBold, isTrue);
-      expect(styleAtPos17.isItalicized, isTrue);
+      expect(styleAtPos17.isItalic, isTrue);
 
       // " bold  bold+italic  italic "
       //                    ^--
       final styleAtPos18 = parser.stateAt(18);
-      expect(styleAtPos18.colorOfForeground, Color16.green);
-      expect(styleAtPos18.colorOfBackground, Color16.yellow);
+      expect(styleAtPos18.foregroundColor, Color16.green);
+      expect(styleAtPos18.backgroundColor, Color16.yellow);
       expect(styleAtPos18.isBold, isFalse);
-      expect(styleAtPos18.isItalicized, isTrue);
+      expect(styleAtPos18.isItalic, isTrue);
 
       // " bold  bold+italic  italic "
       //                     ^--
       final styleAtPos19 = parser.stateAt(19);
-      expect(styleAtPos19.colorOfForeground, Color16.green);
-      expect(styleAtPos19.colorOfBackground, null);
+      expect(styleAtPos19.foregroundColor, Color16.green);
+      expect(styleAtPos19.backgroundColor, null);
       expect(styleAtPos19.isBold, isFalse);
-      expect(styleAtPos19.isItalicized, isTrue);
+      expect(styleAtPos19.isItalic, isTrue);
 
       // " bold  bold+italic  italic "
       //                           ^--
       final styleAtPos25 = parser.stateAt(25);
-      expect(styleAtPos25.colorOfForeground, Color16.green);
-      expect(styleAtPos25.colorOfBackground, null);
+      expect(styleAtPos25.foregroundColor, Color16.green);
+      expect(styleAtPos25.backgroundColor, null);
       expect(styleAtPos25.isBold, isFalse);
-      expect(styleAtPos25.isItalicized, isTrue);
+      expect(styleAtPos25.isItalic, isTrue);
 
       // " bold  bold+italic  italic "
       //                            ^--
       final styleAtPos26 = parser.stateAt(26);
-      expect(styleAtPos26.colorOfForeground, Color16.green);
-      expect(styleAtPos26.colorOfBackground, null);
+      expect(styleAtPos26.foregroundColor, Color16.green);
+      expect(styleAtPos26.backgroundColor, null);
       expect(styleAtPos26.isBold, isFalse);
-      expect(styleAtPos26.isItalicized, isFalse);
+      expect(styleAtPos26.isItalic, isFalse);
 
       // " bold  bold+italic  italic "
       //                             ^--
       final styleAtPos27 = parser.stateAt(27);
-      expect(styleAtPos27.colorOfForeground, null);
-      expect(styleAtPos27.colorOfBackground, null);
+      expect(styleAtPos27.foregroundColor, null);
+      expect(styleAtPos27.backgroundColor, null);
       expect(styleAtPos27.isBold, isFalse);
-      expect(styleAtPos27.isItalicized, isFalse);
+      expect(styleAtPos27.isItalic, isFalse);
 
       expect(
         () => parser.stateAt(-1),
@@ -243,36 +243,36 @@ void main() {
 
     test('isClosed', () {
       const closedStrings = <String>[
-        '$bold $resetBoldAndFaint',
+        '$bold $resetBoldAndDim',
         '$bold $reset',
-        '$faint $resetBoldAndFaint',
-        '$faint $reset',
-        '$italicized $resetItalicized',
-        '$italicized $reset',
-        '$underlined $resetUnderlined',
-        '$underlined $reset',
-        '$doublyUnderlined $resetUnderlined',
-        '$doublyUnderlined $reset',
-        '$slowlyBlinking $resetBlinking',
-        '$slowlyBlinking $reset',
-        '$rapidlyBlinking $resetBlinking',
-        '$rapidlyBlinking $reset',
-        '$negative $resetNegative',
-        '$negative $reset',
-        '$concealed $resetConcealed',
-        '$concealed $reset',
-        '$crossedOut $resetCrossedOut',
-        '$crossedOut $reset',
-        '$framed $resetFramedAndEncircled',
-        '$framed $reset',
-        '$encircled $resetFramedAndEncircled',
-        '$encircled $reset',
-        '$overlined $resetOverlined',
-        '$overlined $reset',
-        '$superscripted $resetSuperAndSubscripted',
-        '$superscripted $reset',
-        '$subscripted $resetSuperAndSubscripted',
-        '$subscripted $reset',
+        '$dim $resetBoldAndDim',
+        '$dim $reset',
+        '$italic $resetItalic',
+        '$italic $reset',
+        '$underline $resetUnderline',
+        '$underline $reset',
+        '$doublyUnderline $resetUnderline',
+        '$doublyUnderline $reset',
+        '$blink $resetBlink',
+        '$blink $reset',
+        '$blinkRapid $resetBlink',
+        '$blinkRapid $reset',
+        '$inverse $resetInverse',
+        '$inverse $reset',
+        '$invisible $resetInvisible',
+        '$invisible $reset',
+        '$strikethrough $resetStrikethrough',
+        '$strikethrough $reset',
+        '$frame $resetFrameAndEncircle',
+        '$frame $reset',
+        '$encircle $resetFrameAndEncircle',
+        '$encircle $reset',
+        '$overline $resetOverline',
+        '$overline $reset',
+        '$superscript $resetSuperAndSubscript',
+        '$superscript $reset',
+        '$subscript $resetSuperAndSubscript',
+        '$subscript $reset',
         '$fgRed $resetFg',
         '$fgRed $reset',
         '$fg256Red $resetFg',
@@ -297,35 +297,35 @@ void main() {
 
       const openedStrings = <String>[
         '$bold ',
-        '$bold $resetItalicized',
-        '$faint ',
-        '$faint $resetItalicized',
-        '$italicized ',
-        '$italicized $resetUnderlined',
-        '$underlined ',
-        '$underlined $resetBlinking',
-        '$doublyUnderlined ',
-        '$doublyUnderlined $resetBlinking',
-        '$slowlyBlinking ',
-        '$slowlyBlinking $resetNegative',
-        '$rapidlyBlinking ',
-        '$rapidlyBlinking $resetNegative',
-        '$negative ',
-        '$negative $resetConcealed',
-        '$concealed ',
-        '$concealed $resetCrossedOut',
-        '$crossedOut ',
-        '$crossedOut $resetFramedAndEncircled',
-        '$framed ',
-        '$framed $resetOverlined',
-        '$encircled ',
-        '$encircled $resetOverlined',
-        '$overlined ',
-        '$overlined $resetSuperAndSubscripted',
-        '$superscripted ',
-        '$superscripted $resetFg',
-        '$subscripted ',
-        '$subscripted $resetFg',
+        '$bold $resetItalic',
+        '$dim ',
+        '$dim $resetItalic',
+        '$italic ',
+        '$italic $resetUnderline',
+        '$underline ',
+        '$underline $resetBlink',
+        '$doublyUnderline ',
+        '$doublyUnderline $resetBlink',
+        '$blink ',
+        '$blink $resetInverse',
+        '$blinkRapid ',
+        '$blinkRapid $resetInverse',
+        '$inverse ',
+        '$inverse $resetInvisible',
+        '$invisible ',
+        '$invisible $resetStrikethrough',
+        '$strikethrough ',
+        '$strikethrough $resetFrameAndEncircle',
+        '$frame ',
+        '$frame $resetOverline',
+        '$encircle ',
+        '$encircle $resetOverline',
+        '$overline ',
+        '$overline $resetSuperAndSubscript',
+        '$superscript ',
+        '$superscript $resetFg',
+        '$subscript ',
+        '$subscript $resetFg',
         '$fgRed ',
         '$fgRed $resetBg',
         '$fg256Red ',
@@ -339,9 +339,9 @@ void main() {
         '${bgRgbOpen}0;255;0$bgRgbClose ',
         '${bgRgbOpen}0;255;0$bgRgbClose $resetUnderlineColor',
         '$underline256Blue ',
-        '$underline256Blue $resetBoldAndFaint',
+        '$underline256Blue $resetBoldAndDim',
         '${underlineRgbOpen}255;0;0$underlineRgbClose ',
-        '${underlineRgbOpen}255;0;0$underlineRgbClose $resetBoldAndFaint',
+        '${underlineRgbOpen}255;0;0$underlineRgbClose $resetBoldAndDim',
       ];
 
       for (final string in openedStrings) {
@@ -351,12 +351,12 @@ void main() {
 
     test('substring and optimize', () {
       final text = ' '
-          '$fgWhite$bold${faint}first$resetBoldAndFaint'
+          '$fgWhite$bold${dim}first$resetBoldAndDim'
           ' $bg256Green$fg256Yellow'
-          '${italicized}second$resetItalicized'
+          '${italic}second$resetItalic'
           '$resetBg$resetFg'
           ' ${fgRgb(255, 128, 0)}${bgRgb(48, 64, 128)}'
-          '$underlined$slowlyBlinking${negative}third$resetUnderlined'
+          '$underline$blink${inverse}third$resetUnderline'
           '$resetFg$resetBg'
           ' ';
 
@@ -364,9 +364,9 @@ void main() {
       expect(parser.removeAll(), ' first second third ');
       expect(
         parser.showControlFunctions(),
-        ' [fgWhite][bold][faint]first[resetBoldAndFaint]'
-        ' [bg256Green][fg256Yellow][italicized]second[resetItalicized][resetBg][resetFg]'
-        ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined][slowlyBlinking][negative]third[resetUnderlined][resetFg][resetBg]'
+        ' [fgWhite][bold][dim]first[resetBoldAndDim]'
+        ' [bg256Green][fg256Yellow][italic]second[resetItalic][resetBg][resetFg]'
+        ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underline][blink][inverse]third[resetUnderline][resetFg][resetBg]'
         ' ',
       );
       expect(parser.isClosed, isFalse);
@@ -376,9 +376,9 @@ void main() {
         final parser2 = Parser(optimizedText);
         expect(
           parser2.showControlFunctions(),
-          ' [fgWhite;bold;faint]first[resetBoldAndFaint]'
-          ' [fg256Yellow][bg256Green][italicized]second[reset]'
-          ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined;slowlyBlinking;negative]third[resetFg;resetBg;resetUnderlined]'
+          ' [fgWhite;bold;dim]first[resetBoldAndDim]'
+          ' [fg256Yellow][bg256Green][italic]second[reset]'
+          ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underline;blink;inverse]third[resetFg;resetBg;resetUnderline]'
           ' [reset]',
         );
         expect(parser2.isClosed, isTrue);
@@ -389,9 +389,9 @@ void main() {
         final parser2 = Parser(unclosedOptimizedText);
         expect(
           parser2.showControlFunctions(),
-          ' [fgWhite;bold;faint]first[resetBoldAndFaint]'
-          ' [fg256Yellow][bg256Green][italicized]second[reset]'
-          ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined;slowlyBlinking;negative]third[resetFg;resetBg;resetUnderlined]'
+          ' [fgWhite;bold;dim]first[resetBoldAndDim]'
+          ' [fg256Yellow][bg256Green][italic]second[reset]'
+          ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underline;blink;inverse]third[resetFg;resetBg;resetUnderline]'
           ' ',
         );
         expect(parser2.isClosed, isFalse);
@@ -419,14 +419,14 @@ void main() {
         final substring = parser.substring(0, maxLength: 6);
         expect(
           substring.ansiShowControlFunctions(),
-          ' [fgWhite;bold;faint]first[reset]',
+          ' [fgWhite;bold;dim]first[reset]',
         );
         expect(substring.ansiOptimizeControlFunctions(), substring);
 
         final unclosed = parser.substring(0, maxLength: 6, close: false);
         expect(
           unclosed.ansiShowControlFunctions(),
-          ' [fgWhite;bold;faint]first[resetBoldAndFaint]',
+          ' [fgWhite;bold;dim]first[resetBoldAndDim]',
         );
         expect(unclosed.ansiOptimizeControlFunctions(close: false), unclosed);
       }
@@ -436,14 +436,14 @@ void main() {
         final substring = parser.substring(0, maxLength: 7);
         expect(
           substring.ansiShowControlFunctions(),
-          ' [fgWhite;bold;faint]first[resetBoldAndFaint] [reset]',
+          ' [fgWhite;bold;dim]first[resetBoldAndDim] [reset]',
         );
         expect(substring.ansiOptimizeControlFunctions(), substring);
 
         final unclosed = parser.substring(0, maxLength: 7, close: false);
         expect(
           unclosed.ansiShowControlFunctions(),
-          ' [fgWhite;bold;faint]first[resetBoldAndFaint] ',
+          ' [fgWhite;bold;dim]first[resetBoldAndDim] ',
         );
         expect(unclosed.ansiOptimizeControlFunctions(close: false), unclosed);
       }
@@ -453,14 +453,14 @@ void main() {
         final substring = parser.substring(1, maxLength: 5);
         expect(
           substring.ansiShowControlFunctions(),
-          '[fgWhite;bold;faint]first[reset]',
+          '[fgWhite;bold;dim]first[reset]',
         );
         expect(substring.ansiOptimizeControlFunctions(), substring);
 
         final unclosed = parser.substring(1, maxLength: 5, close: false);
         expect(
           unclosed.ansiShowControlFunctions(),
-          '[fgWhite;bold;faint]first[resetBoldAndFaint]',
+          '[fgWhite;bold;dim]first[resetBoldAndDim]',
         );
         expect(unclosed.ansiOptimizeControlFunctions(close: false), unclosed);
       }
@@ -470,14 +470,14 @@ void main() {
         final substring = parser.substring(7, maxLength: 6);
         expect(
           substring.ansiShowControlFunctions(),
-          '[fg256Yellow][bg256Green][italicized]second[reset]',
+          '[fg256Yellow][bg256Green][italic]second[reset]',
         );
         expect(substring.ansiOptimizeControlFunctions(), substring);
 
         final unclosed = parser.substring(7, maxLength: 6, close: false);
         expect(
           unclosed.ansiShowControlFunctions(),
-          '[fg256Yellow][bg256Green][italicized]second[reset]',
+          '[fg256Yellow][bg256Green][italic]second[reset]',
         );
         expect(unclosed.ansiOptimizeControlFunctions(close: false), unclosed);
       }
@@ -488,7 +488,7 @@ void main() {
         expect(
           substring.ansiShowControlFunctions(),
           '[fgRgb(255,128,0)][bgRgb(48,64,128)]'
-          '[underlined;slowlyBlinking;negative]'
+          '[underline;blink;inverse]'
           'third[reset]',
         );
         expect(substring.ansiOptimizeControlFunctions(), substring);
@@ -497,8 +497,8 @@ void main() {
         expect(
           unclosed.ansiShowControlFunctions(),
           '[fgRgb(255,128,0)][bgRgb(48,64,128)]'
-          '[underlined;slowlyBlinking;negative]'
-          'third[resetFg;resetBg;resetUnderlined]',
+          '[underline;blink;inverse]'
+          'third[resetFg;resetBg;resetUnderline]',
         );
         expect(unclosed.ansiOptimizeControlFunctions(close: false), unclosed);
       }
@@ -508,8 +508,8 @@ void main() {
         final substring = parser.substring(3, maxLength: 7);
         expect(
           substring.ansiShowControlFunctions(),
-          '[fgWhite;bold;faint]rst[resetBoldAndFaint]'
-          ' [fg256Yellow][bg256Green][italicized]sec'
+          '[fgWhite;bold;dim]rst[resetBoldAndDim]'
+          ' [fg256Yellow][bg256Green][italic]sec'
           '[reset]',
         );
         expect(substring.ansiOptimizeControlFunctions(), substring);
@@ -517,8 +517,8 @@ void main() {
         final unclosed = parser.substring(3, maxLength: 7, close: false);
         expect(
           unclosed.ansiShowControlFunctions(),
-          '[fgWhite;bold;faint]rst[resetBoldAndFaint]'
-          ' [fg256Yellow][bg256Green][italicized]sec',
+          '[fgWhite;bold;dim]rst[resetBoldAndDim]'
+          ' [fg256Yellow][bg256Green][italic]sec',
         );
         expect(unclosed.ansiOptimizeControlFunctions(close: false), unclosed);
       }
@@ -528,16 +528,16 @@ void main() {
         final substring = parser.substring(10, maxLength: 7);
         expect(
           substring.ansiShowControlFunctions(),
-          '[fg256Yellow][bg256Green][italicized]ond[reset]'
-          ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined;slowlyBlinking;negative]thi[reset]',
+          '[fg256Yellow][bg256Green][italic]ond[reset]'
+          ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underline;blink;inverse]thi[reset]',
         );
         expect(substring.ansiOptimizeControlFunctions(), substring);
 
         final unclosed = parser.substring(10, maxLength: 7, close: false);
         expect(
           unclosed.ansiShowControlFunctions(),
-          '[fg256Yellow][bg256Green][italicized]ond[reset]'
-          ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underlined;slowlyBlinking;negative]thi',
+          '[fg256Yellow][bg256Green][italic]ond[reset]'
+          ' [fgRgb(255,128,0)][bgRgb(48,64,128)][underline;blink;inverse]thi',
         );
         expect(unclosed.ansiOptimizeControlFunctions(close: false), unclosed);
       }
@@ -548,8 +548,7 @@ void main() {
         expect(
           substring.ansiShowControlFunctions(),
           '[fgRgb(255,128,0)][bgRgb(48,64,128)]'
-          '[underlined;slowlyBlinking;negative]'
-          'rd[resetFg;resetBg;resetUnderlined] [reset]',
+          '[underline;blink;inverse]rd[resetFg;resetBg;resetUnderline] [reset]',
         );
         expect(substring.ansiOptimizeControlFunctions(), substring);
 
@@ -557,8 +556,7 @@ void main() {
         expect(
           unclosed.ansiShowControlFunctions(),
           '[fgRgb(255,128,0)][bgRgb(48,64,128)]'
-          '[underlined;slowlyBlinking;negative]'
-          'rd[resetFg;resetBg;resetUnderlined] ',
+          '[underline;blink;inverse]rd[resetFg;resetBg;resetUnderline] ',
         );
         expect(unclosed.ansiOptimizeControlFunctions(close: false), unclosed);
       }
@@ -613,8 +611,8 @@ void main() {
               ),
               () => print(
                 'default colors'
-                '$fgYellow$bgGreen$underlined$bold$italicized yellow on green'
-                ' $resetItalicized$resetBoldAndFaint$resetUnderlined$resetBg$resetFg'
+                '$fgYellow$bgGreen$underline$bold$italic yellow on green'
+                ' $resetItalic$resetBoldAndDim$resetUnderline$resetBg$resetFg'
                 'default colors',
               ),
             );
@@ -624,8 +622,8 @@ void main() {
         expect(
           Parser(output1[0]).showControlFunctions(),
           '[reset][fgBlack;bgWhite]default colors'
-          '[fgYellow;bgGreen;bold;italicized;underlined] yellow on green'
-          ' [resetBoldAndFaint;resetItalicized;resetUnderlined;fgBlack;bgWhite]'
+          '[fgYellow;bgGreen;bold;italic;underline] yellow on green'
+          ' [resetBoldAndDim;resetItalic;resetUnderline;fgBlack;bgWhite]'
           'default colors[reset]',
         );
 
@@ -639,7 +637,7 @@ void main() {
               ),
               () => print(
                 'default colors'
-                '$fgYellow$bgGreen$underlined$bold$italicized yellow on green'
+                '$fgYellow$bgGreen$underline$bold$italic yellow on green'
                 ' $reset'
                 'default colors',
               ),
@@ -650,8 +648,8 @@ void main() {
         expect(
           Parser(output2[0]).showControlFunctions(),
           '[reset][fgBlack;bgWhite]default colors'
-          '[fgYellow;bgGreen;bold;italicized;underlined] yellow on green'
-          ' [resetBoldAndFaint;resetItalicized;resetUnderlined;fgBlack;bgWhite]'
+          '[fgYellow;bgGreen;bold;italic;underline] yellow on green'
+          ' [resetBoldAndDim;resetItalic;resetUnderline;fgBlack;bgWhite]'
           'default colors[reset]',
         );
 
@@ -663,12 +661,12 @@ void main() {
                 foreground: Color16.yellow,
                 background: Color16.green,
                 bold: true,
-                italicized: true,
-                singlyUnderlined: true,
+                italic: true,
+                underline: true,
               ),
               () => print(
                 'default colors'
-                '$fgYellow$bgGreen$underlined$bold$italicized yellow on green'
+                '$fgYellow$bgGreen$underline$bold$italic yellow on green'
                 ' $reset'
                 'default colors',
               ),
@@ -678,7 +676,7 @@ void main() {
 
         expect(
           Parser(output3[0]).showControlFunctions(),
-          '[reset][fgYellow;bgGreen;bold;italicized;underlined]default colors'
+          '[reset][fgYellow;bgGreen;bold;italic;underline]default colors'
           ' yellow on green default colors[reset]',
         );
       });
@@ -740,11 +738,11 @@ void main() {
     });
 
     test('StackedPrinter', () {
-      String b(String text) => '$bold$text$resetBoldAndFaint';
-      String i(String text) => '$italicized$text$resetItalicized';
-      String u(String text) => '$underlined$text$resetUnderlined';
-      String s(String text) => '$crossedOut$text$resetCrossedOut';
-      String f(String text) => '$faint$text$resetBoldAndFaint';
+      String b(String text) => '$bold$text$resetBoldAndDim';
+      String i(String text) => '$italic$text$resetItalic';
+      String u(String text) => '$underline$text$resetUnderline';
+      String s(String text) => '$strikethrough$text$resetStrikethrough';
+      String f(String text) => '$dim$text$resetBoldAndDim';
       String bg(String color, String text) => '$color$text$resetBg';
       String fg(String color, String text) => '$color$text$resetFg';
 
@@ -772,16 +770,16 @@ void main() {
         Parser(output[0]).showControlFunctions(),
         '[reset]'
         '[fg256Rgb555][bg256Rgb320]def('
-        '[bgCyan;bold;italicized]bi('
-        '[fgYellow;bgMagenta;underlined]iu('
-        '[fgCyan;bgBlue;crossedOut]us('
-        '[fgYellow;bgGreen;faint]sf('
+        '[bgCyan;bold;italic]bi('
+        '[fgYellow;bgMagenta;underline]iu('
+        '[fgCyan;bgBlue;strikethrough]us('
+        '[fgYellow;bgGreen;dim]sf('
         '[fgWhite;bgRed]fb'
         '[fgYellow;bgGreen])'
-        '[resetBoldAndFaint;fgCyan;bgBlue;bold])'
-        '[resetCrossedOut;fgYellow;bgMagenta])'
-        '[resetUnderlined][fg256Rgb555][bgCyan])'
-        '[resetBoldAndFaint;resetItalicized][bg256Rgb320])'
+        '[resetBoldAndDim;fgCyan;bgBlue;bold])'
+        '[resetStrikethrough;fgYellow;bgMagenta])'
+        '[resetUnderline][fg256Rgb555][bgCyan])'
+        '[resetBoldAndDim;resetItalic][bg256Rgb320])'
         '[reset]',
       );
     });

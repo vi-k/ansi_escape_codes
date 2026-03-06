@@ -12,50 +12,50 @@ const int RESET = 0;
 
 /// Bold or increased intensity.
 ///
-/// See also [FAINT] and [NOT_BOLD_NOT_FAINT].
+/// See also [DIM] and [NOT_BOLD_NOT_DIM].
 const int BOLD = 1;
 
-/// Faint, decreased intensity or second color.
+/// Dim, decreased intensity or second color.
 ///
-/// See also [BOLD] and [NOT_BOLD_NOT_FAINT].
-const int FAINT = 2;
+/// See also [BOLD] and [NOT_BOLD_NOT_DIM].
+const int DIM = 2;
 
-/// Italicized.
+/// Italic.
 ///
-/// See also [NOT_ITALICIZED].
-const int ITALICIZED = 3;
+/// See also [NOT_ITALIC].
+const int ITALIC = 3;
 
-/// Singly underlined.
+/// Underline.
 ///
-/// See also [NOT_UNDERLINED] and [DOUBLY_UNDERLINED].
-const int UNDERLINED = 4;
+/// See also [NOT_UNDERLINE] and [DOUBLY_UNDERLINE].
+const int UNDERLINE = 4;
 
-/// Slowly blinking (less then 150 per minute).
+/// Blink.
 ///
-/// See also [RAPIDLY_BLINKING] and [NOT_BLINKING].
-const int SLOWLY_BLINKING = 5;
+/// See also [BLINK_RAPID] and [NOT_BLINK].
+const int BLINK = 5;
 
-/// Rapidly blinking (150 per minute or more).
+/// Blink rapid.
 ///
-/// See also [SLOWLY_BLINKING] and [NOT_BLINKING].
-const int RAPIDLY_BLINKING = 6;
+/// See also [BLINK] and [NOT_BLINK].
+const int BLINK_RAPID = 6;
 
-/// Negative image.
+/// Inverse.
 ///
 /// Swap foreground and background colors.
 ///
-/// See also [NOT_NEGATIVE].
-const int NEGATIVE = 7;
+/// See also [NOT_INVERSE].
+const int INVERSE = 7;
 
-/// Concealed characters.
+/// Invisible.
 ///
-/// See also [NOT_CONCEALED].
-const int CONCEALED = 8;
+/// See also [NOT_INVISIBLE].
+const int INVISIBLE = 8;
 
-/// Crossed-out (characters still legible but marked as to be deleted).
+/// Strikethrough (characters still legible but marked as to be deleted).
 ///
-/// See also [NOT_CROSSEDOUT].
-const int CROSSEDOUT = 9;
+/// See also [NOT_STRIKETHROUGH].
+const int STRIKETHROUGH = 9;
 
 /// Primary (default) font.
 const int PRIMARY_FONT = 10;
@@ -90,49 +90,49 @@ const int ALT_FONT_9 = 19;
 /// Fraktur (Gothic).
 const int FRAKTUR = 20;
 
-/// Doubly underlined.
+/// Doubly underline.
 ///
 /// Double-underline per ECMA-48, but instead disables bold intensity on
 /// several terminals, including in the Linux kernel's console before version
 /// 4.17.
 ///
-/// See also [NOT_UNDERLINED] and [UNDERLINED].
-const int DOUBLY_UNDERLINED = 21;
+/// See also [NOT_UNDERLINE] and [UNDERLINE].
+const int DOUBLY_UNDERLINE = 21;
 
-/// Normal colour or normal intensity (neither bold nor faint).
+/// Normal colour or normal intensity (neither bold nor dim).
 ///
-/// See also [BOLD] and [FAINT].
-const int NOT_BOLD_NOT_FAINT = 22;
+/// See also [BOLD] and [DIM].
+const int NOT_BOLD_NOT_DIM = 22;
 
-/// Not italicized, not fraktur.
+/// Not italic, not fraktur.
 ///
-/// See also [ITALICIZED].
-const int NOT_ITALICIZED = 23;
+/// See also [ITALIC].
+const int NOT_ITALIC = 23;
 
-/// Not underlined (neither singly nor doubly).
+/// Not underline (neither singly nor doubly).
 ///
-/// See also [UNDERLINED] and [DOUBLY_UNDERLINED].
-const int NOT_UNDERLINED = 24;
+/// See also [UNDERLINE] and [DOUBLY_UNDERLINE].
+const int NOT_UNDERLINE = 24;
 
-/// Steady (not blinking).
+/// Steady (not blink).
 ///
-/// See also [SLOWLY_BLINKING] and [RAPIDLY_BLINKING].
-const int NOT_BLINKING = 25;
+/// See also [BLINK] and [BLINK_RAPID].
+const int NOT_BLINK = 25;
 
-/// Positive image (not negative).
+/// Positive (not inverse).
 ///
-/// See also [NEGATIVE].
-const int NOT_NEGATIVE = 27;
+/// See also [INVERSE].
+const int NOT_INVERSE = 27;
 
-/// Revealed characters (not concealed).
+/// Revealed (not invisible).
 ///
-/// See also [CONCEALED].
-const int NOT_CONCEALED = 28;
+/// See also [INVISIBLE].
+const int NOT_INVISIBLE = 28;
 
-/// Not crossed out.
+/// Not strikethrough.
 ///
-/// See also [CROSSEDOUT].
-const int NOT_CROSSEDOUT = 29;
+/// See also [STRIKETHROUGH].
+const int NOT_STRIKETHROUGH = 29;
 
 /// Black display.
 const int FG_BLACK = 30;
@@ -196,28 +196,28 @@ const int BG_DEFAULT = 49;
 
 /// Framed.
 ///
-/// See also [NOT_FRAMED_NOT_ENCIRCLED].
-const int FRAMED = 51;
+/// See also [NOT_FRAME_NOT_ENCIRCLE].
+const int FRAME = 51;
 
 /// Encircled.
 ///
-/// See also [NOT_FRAMED_NOT_ENCIRCLED].
-const int ENCIRCLED = 52;
+/// See also [NOT_FRAME_NOT_ENCIRCLE].
+const int ENCIRCLE = 52;
 
 /// Overlined.
 ///
-/// See also [NOT_OVERLINED].
-const int OVERLINED = 53;
+/// See also [NOT_OVERLINE].
+const int OVERLINE = 53;
 
 /// Not framed, not encircled.
 ///
-/// See [FRAMED] and [ENCIRCLED].
-const int NOT_FRAMED_NOT_ENCIRCLED = 54;
+/// See [FRAME] and [ENCIRCLE].
+const int NOT_FRAME_NOT_ENCIRCLE = 54;
 
 /// Not overlined.
 ///
-/// See also [OVERLINED].
-const int NOT_OVERLINED = 55;
+/// See also [OVERLINE].
+const int NOT_OVERLINE = 55;
 
 /// Underline color.
 const int UNDERLINE_COLOR = 58;
@@ -227,18 +227,18 @@ const int UNDERLINE_COLOR_DEFAULT = 59;
 
 /// Superscripted.
 ///
-/// See also [SUBSCRIPTED] and [NOT_SUPER_NOT_SUBSCRIPTED].
-const int SUPERSCRIPTED = 73;
+/// See also [SUBSCRIPT] and [NOT_SUPER_NOT_SUBSCRIPT].
+const int SUPERSCRIPT = 73;
 
 /// Subscripted.
 ///
-/// See also [SUPERSCRIPTED] and [NOT_SUPER_NOT_SUBSCRIPTED].
-const int SUBSCRIPTED = 74;
+/// See also [SUPERSCRIPT] and [NOT_SUPER_NOT_SUBSCRIPT].
+const int SUBSCRIPT = 74;
 
 /// Not superscripted, not subscipted.
 ///
-/// See also [SUPERSCRIPTED] and [SUBSCRIPTED].
-const int NOT_SUPER_NOT_SUBSCRIPTED = 75;
+/// See also [SUPERSCRIPT] and [SUBSCRIPT].
+const int NOT_SUPER_NOT_SUBSCRIPT = 75;
 
 /// High black display.
 const int FG_HIGH_BLACK = 90;

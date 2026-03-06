@@ -3,6 +3,12 @@ description: A toolkit for working with ANSI escape codes and analyzing strings 
 version: 3.0.0
 homepage: https://github.com/vi-k/ansi_escape_codes
 
+topics:
+  - ansi
+  - escape-codes
+  - console
+  - color
+
 environment:
   sdk: ^3.6.0
 

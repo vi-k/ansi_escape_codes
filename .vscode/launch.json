@@ -17,10 +17,10 @@
             "program": "example/styles.dart",
         },
         {
-            "name": "sgr",
+            "name": "check compatibility",
             "request": "launch",
             "type": "dart",
-            "program": "example/sgr.dart",
+            "program": "example/check_compatibility.dart",
         },
         {
             "name": "colors256",

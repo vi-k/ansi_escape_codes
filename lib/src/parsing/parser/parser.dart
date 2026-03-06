@@ -136,6 +136,9 @@ final class _ParserBase<S extends State<S>> {
   /// escape codes.
   bool endsWith(String other) => _requirePlainString.endsWith(other);
 
+  @Deprecated('Use stateAt instead')
+  S stateAtPos(int pos) => stateAt(pos);
+
   /// Returns the [S] of the string at the given plain text [pos].
   ///
   /// [pos] is the position in the string without ANSI escape codes.
