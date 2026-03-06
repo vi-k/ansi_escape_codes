@@ -1,5 +1,8 @@
 part of 'state.dart';
 
+@Deprecated('Use Stack instead')
+typedef SgrStackedState = Stack;
+
 /// Represents an active text style that tracks history via a stack.
 ///
 /// Unlike [Style] which keeps only the recently active properties, [Stack]

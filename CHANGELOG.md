@@ -1,4 +1,4 @@
-## 3.0.0-3.0.1
+## 3.0.0-3.0.2
 
 - [breaking changes] Total renaming:
   - `AnsiPrinter` to `Printer`, `StackedPrinter`, `SinkPrinter` and

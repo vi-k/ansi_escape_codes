@@ -1,5 +1,8 @@
 part of 'parser.dart';
 
+@Deprecated('Use Printer instead')
+typedef AnsiPrinter = Printer;
+
 /// A printer that processes ANSI escape codes and replaces the default text
 /// style.
 ///
@@ -259,6 +262,22 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
     }
   }
 }
+
+@Deprecated('Use runZonedPrinter instead')
+R runZonedAnsiPrinter<R>(
+  R Function() run, {
+  Style defaultStyle = Style.defaults,
+  void Function(String s)? output,
+  bool ansiCodesEnabled = true,
+  @visibleForTesting bool debugForTest = false,
+}) =>
+    runZonedPrinter(
+      run,
+      defaultStyle: defaultStyle,
+      output: output,
+      ansiCodesEnabled: ansiCodesEnabled,
+      debugForTest: debugForTest,
+    );
 
 /// Runs the given function in a zone where all print statements are processed
 /// by the printer.

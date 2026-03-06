@@ -27,6 +27,9 @@ part 'matches/match.dart';
 part 'matches/matches.dart';
 part 'matches/matches_result.dart';
 
+@Deprecated('Use Parser instead')
+typedef AnsiParser = Parser;
+
 /// A parser that processes strings containing ANSI escape codes and tracks the
 /// current [Style].
 ///

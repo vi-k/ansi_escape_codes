@@ -26,6 +26,9 @@ enum FrameStyle { frame, encircle }
 
 enum ScriptStyle { superscript, subscript }
 
+@Deprecated('Use Style instead')
+typedef SgrPlainState = Style;
+
 /// Represents the currently active text style.
 ///
 /// [Style] contains the current state of ANSI graphic renditions (SGR) without

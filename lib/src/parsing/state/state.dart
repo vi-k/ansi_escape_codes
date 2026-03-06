@@ -10,6 +10,9 @@ import '../parser/parser.dart';
 part 'style.dart';
 part 'stack.dart';
 
+@Deprecated('Use State instead')
+typedef SgrState<S extends State<S>> = State<S>;
+
 /// The base class for tracking the state of ANSI escape codes.
 ///
 /// This class represents a set of applied text styles and colors. Subclasses
