@@ -8,6 +8,7 @@ topics:
   - escape-codes
   - console
   - color
+  - cli
 
 environment:
   sdk: ^3.6.0
