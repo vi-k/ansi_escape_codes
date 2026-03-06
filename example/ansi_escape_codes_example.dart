@@ -143,40 +143,40 @@ void main() {
         ' $resetBoldAndDim${fgMagenta}italic$resetItalic$reset';
     final parser = Parser(text);
 
-    final styleAtPos0 = parser.stateAt(0);
+    final stateAt0 = parser.stateAt(0);
     print('');
     print('"$text"');
     subsubtitle(
-      ' ^ isBold=${styleAtPos0.isBold}'
-      ', isItalic=${styleAtPos0.isItalic}'
-      ', foreground=${styleAtPos0.foregroundColor}',
+      ' ^ isBold=${stateAt0.isBold}'
+      ', isItalic=${stateAt0.isItalic}'
+      ', foreground=${stateAt0.foregroundColor}',
     );
 
-    final styleAtPos5 = parser.stateAt(5);
+    final stateAt5 = parser.stateAt(5);
     print('');
     print('"$text"');
     subsubtitle(
-      ' ${' ' * 5}^ isBold=${styleAtPos5.isBold}'
-      ', isItalic=${styleAtPos5.isItalic}'
-      ', foreground=${styleAtPos5.foregroundColor}',
+      ' ${' ' * 5}^ isBold=${stateAt5.isBold}'
+      ', isItalic=${stateAt5.isItalic}'
+      ', foreground=${stateAt5.foregroundColor}',
     );
 
-    final styleAtPos17 = parser.stateAt(17);
+    final stateAt17 = parser.stateAt(17);
     print('');
     print('"$text"');
     subsubtitle(
-      ' ${' ' * 17}^ isBold=${styleAtPos17.isBold}'
-      ', isItalic=${styleAtPos17.isItalic}'
-      ', foreground=${styleAtPos17.foregroundColor}',
+      ' ${' ' * 17}^ isBold=${stateAt17.isBold}'
+      ', isItalic=${stateAt17.isItalic}'
+      ', foreground=${stateAt17.foregroundColor}',
     );
 
-    final finalStyle = parser.finalState;
+    final finalState = parser.finalState;
     print('');
     print('"$text"');
     subsubtitle(
-      ' ${' ' * 23}^ isBold=${finalStyle.isBold}'
-      ', isItalic=${finalStyle.isItalic}'
-      ', foreground=${finalStyle.foregroundColor}',
+      ' ${' ' * 23}^ isBold=${finalState.isBold}'
+      ', isItalic=${finalState.isItalic}'
+      ', foreground=${finalState.foregroundColor}',
     );
   }
 

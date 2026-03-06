@@ -109,7 +109,7 @@ void main() {
       }
     });
 
-    test('stateAtPos', () {
+    test('stateAt', () {
       const text = '$fgRed ${bold}bold $fgGreen$bgYellow'
           ' ${italic}bold+italic$resetBoldAndDim'
           ' $resetBg italic$resetItalic $reset';
@@ -128,91 +128,91 @@ void main() {
 
       // " bold  bold+italic  italic "
       //  ^--
-      final styleAtPos0 = parser.stateAt(0);
-      expect(styleAtPos0.foregroundColor, Color16.red);
-      expect(styleAtPos0.backgroundColor, isNull);
-      expect(styleAtPos0.isBold, isFalse);
-      expect(styleAtPos0.isItalic, isFalse);
+      final stateAt0 = parser.stateAt(0);
+      expect(stateAt0.foregroundColor, Color16.red);
+      expect(stateAt0.backgroundColor, isNull);
+      expect(stateAt0.isBold, isFalse);
+      expect(stateAt0.isItalic, isFalse);
 
       // " bold  bold+italic  italic "
       //   ^--
-      final styleAtPos1 = parser.stateAt(1);
-      expect(styleAtPos1.foregroundColor, Color16.red);
-      expect(styleAtPos1.backgroundColor, isNull);
-      expect(styleAtPos1.isBold, isTrue);
-      expect(styleAtPos1.isItalic, isFalse);
+      final stateAt1 = parser.stateAt(1);
+      expect(stateAt1.foregroundColor, Color16.red);
+      expect(stateAt1.backgroundColor, isNull);
+      expect(stateAt1.isBold, isTrue);
+      expect(stateAt1.isItalic, isFalse);
 
       // " bold  bold+italic  italic "
       //       ^--
-      final styleAtPos5 = parser.stateAt(5);
-      expect(styleAtPos5.foregroundColor, Color16.red);
-      expect(styleAtPos5.backgroundColor, isNull);
-      expect(styleAtPos5.isBold, isTrue);
-      expect(styleAtPos5.isItalic, isFalse);
+      final stateAt5 = parser.stateAt(5);
+      expect(stateAt5.foregroundColor, Color16.red);
+      expect(stateAt5.backgroundColor, isNull);
+      expect(stateAt5.isBold, isTrue);
+      expect(stateAt5.isItalic, isFalse);
 
       // " bold  bold+italic  italic "
       //        ^--
-      final styleAtPos6 = parser.stateAt(6);
-      expect(styleAtPos6.foregroundColor, Color16.green);
-      expect(styleAtPos6.backgroundColor, Color16.yellow);
-      expect(styleAtPos6.isBold, isTrue);
-      expect(styleAtPos6.isItalic, isFalse);
+      final stateAt6 = parser.stateAt(6);
+      expect(stateAt6.foregroundColor, Color16.green);
+      expect(stateAt6.backgroundColor, Color16.yellow);
+      expect(stateAt6.isBold, isTrue);
+      expect(stateAt6.isItalic, isFalse);
 
       // " bold  bold+italic  italic "
       //         ^--
-      final styleAtPos7 = parser.stateAt(7);
-      expect(styleAtPos7.foregroundColor, Color16.green);
-      expect(styleAtPos7.backgroundColor, Color16.yellow);
-      expect(styleAtPos7.isBold, isTrue);
-      expect(styleAtPos7.isItalic, isTrue);
+      final stateAt7 = parser.stateAt(7);
+      expect(stateAt7.foregroundColor, Color16.green);
+      expect(stateAt7.backgroundColor, Color16.yellow);
+      expect(stateAt7.isBold, isTrue);
+      expect(stateAt7.isItalic, isTrue);
 
       // " bold  bold+italic  italic "
       //                   ^--
-      final styleAtPos17 = parser.stateAt(17);
-      expect(styleAtPos17.foregroundColor, Color16.green);
-      expect(styleAtPos17.backgroundColor, Color16.yellow);
-      expect(styleAtPos17.isBold, isTrue);
-      expect(styleAtPos17.isItalic, isTrue);
+      final stateAt17 = parser.stateAt(17);
+      expect(stateAt17.foregroundColor, Color16.green);
+      expect(stateAt17.backgroundColor, Color16.yellow);
+      expect(stateAt17.isBold, isTrue);
+      expect(stateAt17.isItalic, isTrue);
 
       // " bold  bold+italic  italic "
       //                    ^--
-      final styleAtPos18 = parser.stateAt(18);
-      expect(styleAtPos18.foregroundColor, Color16.green);
-      expect(styleAtPos18.backgroundColor, Color16.yellow);
-      expect(styleAtPos18.isBold, isFalse);
-      expect(styleAtPos18.isItalic, isTrue);
+      final stateAt18 = parser.stateAt(18);
+      expect(stateAt18.foregroundColor, Color16.green);
+      expect(stateAt18.backgroundColor, Color16.yellow);
+      expect(stateAt18.isBold, isFalse);
+      expect(stateAt18.isItalic, isTrue);
 
       // " bold  bold+italic  italic "
       //                     ^--
-      final styleAtPos19 = parser.stateAt(19);
-      expect(styleAtPos19.foregroundColor, Color16.green);
-      expect(styleAtPos19.backgroundColor, null);
-      expect(styleAtPos19.isBold, isFalse);
-      expect(styleAtPos19.isItalic, isTrue);
+      final stateAt19 = parser.stateAt(19);
+      expect(stateAt19.foregroundColor, Color16.green);
+      expect(stateAt19.backgroundColor, null);
+      expect(stateAt19.isBold, isFalse);
+      expect(stateAt19.isItalic, isTrue);
 
       // " bold  bold+italic  italic "
       //                           ^--
-      final styleAtPos25 = parser.stateAt(25);
-      expect(styleAtPos25.foregroundColor, Color16.green);
-      expect(styleAtPos25.backgroundColor, null);
-      expect(styleAtPos25.isBold, isFalse);
-      expect(styleAtPos25.isItalic, isTrue);
+      final stateAt25 = parser.stateAt(25);
+      expect(stateAt25.foregroundColor, Color16.green);
+      expect(stateAt25.backgroundColor, null);
+      expect(stateAt25.isBold, isFalse);
+      expect(stateAt25.isItalic, isTrue);
 
       // " bold  bold+italic  italic "
       //                            ^--
-      final styleAtPos26 = parser.stateAt(26);
-      expect(styleAtPos26.foregroundColor, Color16.green);
-      expect(styleAtPos26.backgroundColor, null);
-      expect(styleAtPos26.isBold, isFalse);
-      expect(styleAtPos26.isItalic, isFalse);
+      final stateAt26 = parser.stateAt(26);
+      expect(stateAt26.foregroundColor, Color16.green);
+      expect(stateAt26.backgroundColor, null);
+      expect(stateAt26.isBold, isFalse);
+      expect(stateAt26.isItalic, isFalse);
 
       // " bold  bold+italic  italic "
       //                             ^--
-      final styleAtPos27 = parser.stateAt(27);
-      expect(styleAtPos27.foregroundColor, null);
-      expect(styleAtPos27.backgroundColor, null);
-      expect(styleAtPos27.isBold, isFalse);
-      expect(styleAtPos27.isItalic, isFalse);
+      final stateAt27 = parser.stateAt(27);
+      expect(stateAt27.foregroundColor, null);
+      expect(stateAt27.backgroundColor, null);
+      expect(stateAt27.isBold, isFalse);
+      expect(stateAt27.isItalic, isFalse);
 
       expect(
         () => parser.stateAt(-1),

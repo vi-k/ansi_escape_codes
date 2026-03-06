@@ -40,7 +40,7 @@ final class ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
       final matchingState = MatchingState(next, currentState);
       final entity = EscapeCode._parse(matchingState);
       final match = Match<S>._(
-        state: matchingState.sgrState,
+        state: matchingState.state,
         entity: entity,
         start: next.start,
         end: next.end,
@@ -92,7 +92,7 @@ final class ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
     final matchingState = MatchingState(m, currentState);
     final entity = EscapeCode._parse(matchingState);
     final match = Match<S>._(
-      state: matchingState.sgrState,
+      state: matchingState.state,
       entity: entity,
       start: m.start,
       end: m.end,

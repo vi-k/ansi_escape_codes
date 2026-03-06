@@ -16,13 +16,13 @@ final class Sgr extends Csi {
     MatchingState<S> state,
     List<CsiParam> params,
   ) {
-    final parsingState = _SgrParsingState(params, state.sgrState);
+    final parsingState = _SgrParsingState(params, state.state);
 
     while (!parsingState.end) {
       switch (parsingState.currentParam) {
         case CsiParamDefault():
           parsingState
-            ..sgrState = parsingState.sgrState.reset
+            ..state = parsingState.state.reset
             ..commitFunction(const SgrDefaultFunction());
 
         case CsiParamNumber(:final value):
@@ -87,7 +87,7 @@ final class Sgr extends Csi {
       }
     }
 
-    state.sgrState = parsingState.sgrState;
+    state.state = parsingState.state;
 
     return Sgr._(state.string, params, parsingState.functions);
   }
@@ -101,75 +101,75 @@ final class Sgr extends Csi {
       return false;
     }
 
-    final sgrState = parsingState.sgrState;
+    final state = parsingState.state;
 
     parsingState
-      ..sgrState = switch (functionIndex) {
-        RESET => sgrState.reset,
-        BOLD => sgrState.bold,
-        DIM => sgrState.dim,
-        ITALIC => sgrState.italic,
-        UNDERLINE => sgrState.underline,
-        BLINK => sgrState.blink,
-        BLINK_RAPID => sgrState.blinkRapid,
-        INVERSE => sgrState.inverse,
-        INVISIBLE => sgrState.invisible,
-        STRIKETHROUGH => sgrState.strikethrough,
-        DOUBLY_UNDERLINE => sgrState.doublyUnderline,
-        NOT_BOLD_NOT_DIM => sgrState.resetBoldAndDim,
-        NOT_ITALIC => sgrState.resetItalic,
-        NOT_UNDERLINE => sgrState.resetUnderline,
-        NOT_BLINK => sgrState.resetBlink,
-        NOT_INVERSE => sgrState.resetInverse,
-        NOT_INVISIBLE => sgrState.resetInvisible,
-        NOT_STRIKETHROUGH => sgrState.resetStrikethrough,
-        FG_BLACK => sgrState.foreground(Color16.black),
-        FG_RED => sgrState.foreground(Color16.red),
-        FG_GREEN => sgrState.foreground(Color16.green),
-        FG_YELLOW => sgrState.foreground(Color16.yellow),
-        FG_BLUE => sgrState.foreground(Color16.blue),
-        FG_MAGENTA => sgrState.foreground(Color16.magenta),
-        FG_CYAN => sgrState.foreground(Color16.cyan),
-        FG_WHITE => sgrState.foreground(Color16.white),
+      ..state = switch (functionIndex) {
+        RESET => state.reset,
+        BOLD => state.bold,
+        DIM => state.dim,
+        ITALIC => state.italic,
+        UNDERLINE => state.underline,
+        BLINK => state.blink,
+        BLINK_RAPID => state.blinkRapid,
+        INVERSE => state.inverse,
+        INVISIBLE => state.invisible,
+        STRIKETHROUGH => state.strikethrough,
+        DOUBLY_UNDERLINE => state.doublyUnderline,
+        NOT_BOLD_NOT_DIM => state.resetBoldAndDim,
+        NOT_ITALIC => state.resetItalic,
+        NOT_UNDERLINE => state.resetUnderline,
+        NOT_BLINK => state.resetBlink,
+        NOT_INVERSE => state.resetInverse,
+        NOT_INVISIBLE => state.resetInvisible,
+        NOT_STRIKETHROUGH => state.resetStrikethrough,
+        FG_BLACK => state.foreground(Color16.black),
+        FG_RED => state.foreground(Color16.red),
+        FG_GREEN => state.foreground(Color16.green),
+        FG_YELLOW => state.foreground(Color16.yellow),
+        FG_BLUE => state.foreground(Color16.blue),
+        FG_MAGENTA => state.foreground(Color16.magenta),
+        FG_CYAN => state.foreground(Color16.cyan),
+        FG_WHITE => state.foreground(Color16.white),
         // 38 - FOREGROUND
-        FG_DEFAULT => sgrState.resetForeground,
-        BG_BLACK => sgrState.background(Color16.black),
-        BG_RED => sgrState.background(Color16.red),
-        BG_GREEN => sgrState.background(Color16.green),
-        BG_YELLOW => sgrState.background(Color16.yellow),
-        BG_BLUE => sgrState.background(Color16.blue),
-        BG_MAGENTA => sgrState.background(Color16.magenta),
-        BG_CYAN => sgrState.background(Color16.cyan),
-        BG_WHITE => sgrState.background(Color16.white),
+        FG_DEFAULT => state.resetForeground,
+        BG_BLACK => state.background(Color16.black),
+        BG_RED => state.background(Color16.red),
+        BG_GREEN => state.background(Color16.green),
+        BG_YELLOW => state.background(Color16.yellow),
+        BG_BLUE => state.background(Color16.blue),
+        BG_MAGENTA => state.background(Color16.magenta),
+        BG_CYAN => state.background(Color16.cyan),
+        BG_WHITE => state.background(Color16.white),
         // 48 - BACKGROUND
-        BG_DEFAULT => sgrState.resetBackground,
-        FRAME => sgrState.frame,
-        ENCIRCLE => sgrState.encircle,
-        OVERLINE => sgrState.overline,
-        NOT_FRAME_NOT_ENCIRCLE => sgrState.resetFrameAndEncircle,
-        NOT_OVERLINE => sgrState.resetOverline,
+        BG_DEFAULT => state.resetBackground,
+        FRAME => state.frame,
+        ENCIRCLE => state.encircle,
+        OVERLINE => state.overline,
+        NOT_FRAME_NOT_ENCIRCLE => state.resetFrameAndEncircle,
+        NOT_OVERLINE => state.resetOverline,
         // 58 - UNDERLINE_COLOR
-        UNDERLINE_COLOR_DEFAULT => sgrState.resetUnderlineColor,
-        SUPERSCRIPT => sgrState.superscript,
-        SUBSCRIPT => sgrState.subscript,
-        NOT_SUPER_NOT_SUBSCRIPT => sgrState.resetSuperAndSubscript,
-        FG_HIGH_BLACK => sgrState.foreground(Color16.highBlack),
-        FG_HIGH_RED => sgrState.foreground(Color16.highRed),
-        FG_HIGH_GREEN => sgrState.foreground(Color16.highGreen),
-        FG_HIGH_YELLOW => sgrState.foreground(Color16.highYellow),
-        FG_HIGH_BLUE => sgrState.foreground(Color16.highBlue),
-        FG_HIGH_MAGENTA => sgrState.foreground(Color16.highMagenta),
-        FG_HIGH_CYAN => sgrState.foreground(Color16.highCyan),
-        FG_HIGH_WHITE => sgrState.foreground(Color16.highWhite),
-        BG_HIGH_BLACK => sgrState.background(Color16.highBlack),
-        BG_HIGH_RED => sgrState.background(Color16.highRed),
-        BG_HIGH_GREEN => sgrState.background(Color16.highGreen),
-        BG_HIGH_YELLOW => sgrState.background(Color16.highYellow),
-        BG_HIGH_BLUE => sgrState.background(Color16.highBlue),
-        BG_HIGH_MAGENTA => sgrState.background(Color16.highMagenta),
-        BG_HIGH_CYAN => sgrState.background(Color16.highCyan),
-        BG_HIGH_WHITE => sgrState.background(Color16.highWhite),
-        _ => sgrState,
+        UNDERLINE_COLOR_DEFAULT => state.resetUnderlineColor,
+        SUPERSCRIPT => state.superscript,
+        SUBSCRIPT => state.subscript,
+        NOT_SUPER_NOT_SUBSCRIPT => state.resetSuperAndSubscript,
+        FG_HIGH_BLACK => state.foreground(Color16.highBlack),
+        FG_HIGH_RED => state.foreground(Color16.highRed),
+        FG_HIGH_GREEN => state.foreground(Color16.highGreen),
+        FG_HIGH_YELLOW => state.foreground(Color16.highYellow),
+        FG_HIGH_BLUE => state.foreground(Color16.highBlue),
+        FG_HIGH_MAGENTA => state.foreground(Color16.highMagenta),
+        FG_HIGH_CYAN => state.foreground(Color16.highCyan),
+        FG_HIGH_WHITE => state.foreground(Color16.highWhite),
+        BG_HIGH_BLACK => state.background(Color16.highBlack),
+        BG_HIGH_RED => state.background(Color16.highRed),
+        BG_HIGH_GREEN => state.background(Color16.highGreen),
+        BG_HIGH_YELLOW => state.background(Color16.highYellow),
+        BG_HIGH_BLUE => state.background(Color16.highBlue),
+        BG_HIGH_MAGENTA => state.background(Color16.highMagenta),
+        BG_HIGH_CYAN => state.background(Color16.highCyan),
+        BG_HIGH_WHITE => state.background(Color16.highWhite),
+        _ => state,
       }
       ..commitFunction(SgrSimpleFunction(code));
 
@@ -232,12 +232,12 @@ final class Sgr extends Csi {
         );
     } else {
       parsingState
-        ..sgrState = switch (code) {
-          ControlFunctionsSGR.fg => parsingState.sgrState.foreground(color),
-          ControlFunctionsSGR.bg => parsingState.sgrState.background(color),
+        ..state = switch (code) {
+          ControlFunctionsSGR.fg => parsingState.state.foreground(color),
+          ControlFunctionsSGR.bg => parsingState.state.background(color),
           ControlFunctionsSGR.underlineColor =>
-            parsingState.sgrState.underlineColor(color),
-          _ => parsingState.sgrState,
+            parsingState.state.underlineColor(color),
+          _ => parsingState.state,
         }
         ..commitFunction(SgrColorFunction(code, color));
     }
@@ -281,12 +281,12 @@ final class Sgr extends Csi {
       );
     } else {
       parsingState
-        ..sgrState = switch (code) {
-          ControlFunctionsSGR.fg => parsingState.sgrState.foreground(color),
-          ControlFunctionsSGR.bg => parsingState.sgrState.background(color),
+        ..state = switch (code) {
+          ControlFunctionsSGR.fg => parsingState.state.foreground(color),
+          ControlFunctionsSGR.bg => parsingState.state.background(color),
           ControlFunctionsSGR.underlineColor =>
-            parsingState.sgrState.underlineColor(color),
-          _ => parsingState.sgrState,
+            parsingState.state.underlineColor(color),
+          _ => parsingState.state,
         }
         ..commitFunction(SgrColorFunction(code, color));
     }
@@ -318,9 +318,9 @@ final class _SgrParsingState<S extends State<S>> {
   int _index;
   int? _savedIndex;
 
-  S sgrState;
+  S state;
 
-  _SgrParsingState(this._params, this.sgrState) : _index = 0;
+  _SgrParsingState(this._params, this.state) : _index = 0;
 
   bool get end => _index >= _params.length;
 

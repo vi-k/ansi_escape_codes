@@ -268,6 +268,7 @@ text more readable.
 All of the following examples are equivalent:
 
 ```dart
+import 'package:ansi_escape_codes/ansi.dart';
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
 print('\x1B[38;2;255;128;0m Orange text \x1B[0m');
@@ -279,7 +280,7 @@ print('${fgRgb(255, 128, 0)} Orange text $resetFg'); // Not constant!
 ```
 
 Control codes are deliberately named in **SCREAMING_SNAKE_CASE** as opposed to
-the common Dart **camelCase**. First, this is how they are named in the
+the common Dart **camelCase**.  First, this is how they are named in the
 Standard. Second, in this form they will not prevent you from naming your own
 variables. **Thirdly, and most importantly, most users do not need to use them
 directly.**
@@ -303,7 +304,7 @@ These control functions (control codes) are represented by codes from 0x00 to
 
 
 ```dart
-import 'package:ansi_escape_codes/controls.dart';
+import 'package:ansi_escape_codes/ansi.dart';
 
 …
 
@@ -329,7 +330,7 @@ Some control functions from the C1 set:
 | `HTS`      | `ESC H` | Character Tabulation Set    |
 
 ```dart
-import 'package:ansi_escape_codes/controls.dart';
+import 'package:ansi_escape_codes/ansi.dart';
 
 …
 
@@ -372,7 +373,7 @@ Some control functions from this set:
 | `SGR`      | `CSI s… m`   | Select graphic rendition                                              |
 
 ```dart
-import 'package:ansi_escape_codes/controls.dart';
+import 'package:ansi_escape_codes/ansi.dart';
 
 …
 
@@ -396,33 +397,33 @@ print('${CSI}3$SGR Italic text ${CSI}0$SGR');
 Ready-to-use functions and constants replace the use of control functions with
 the style used in Dart.
 
-| Goal                               | Template                                       | Function                          | Default constant | Description                                                                 |
-|:-----------------------------------|:-----------------------------------------------|:----------------------------------|:-----------------|:----------------------------------------------------------------------------|
-| Cursor up                          | `${cursorUpOpen}$n$cursorUpClose`              | `cursorUpN(int n)`                | `cursorUp`       | Moves the cursor up `n` (default 1) lines.                                  |
-| Cursor down                        | `${cursorDownOpen}$n$cursorDownClose`          | `cursorDownN(int n)`              | `cursorDown`     | Moves the cursor down `n` (default 1) lines.                                |
-| Cursor forward                     | `${cursorRightOpen}$n$cursorRightClose`        | `cursorRightN(int n)`             | `cursorRight`    | Moves the cursor right `n` (default 1) characters.                          |
-| Cursor back                        | `${cursorLeftOpen}$n$cursorLeftClose`          | `cursorLeftN(int n)`              | `cursorLeft`     | Moves the cursor left `n` (default 1) characters.                           |
-| Cursor next line                   | `${cursorNextLineOpen}$n$cursorNextLineClose`  | `cursorNextLineN(int n)`          | `cursorNextLine` | Moves cursor to beginning of the line `n` (default 1) lines down.           |
-| Cursor prev line                   | `${cursorPrevLineOpen}$n$cursorPrevLineClose`  | `cursorPrevLineN(int n)`          | `cursorPrevLine` | Moves cursor to beginning of the line `n` (default 1) lines up.             |
-| Cursor horizontal pos              | `${cursorHPosOpen}$n$cursorHPosClose`          | `cursorHPosN(int n)`              | `cursorHPos`     | Moves the cursor to column `n` (default 1).                                 |
-| Cursor pos                         | `${cursorPosOpen}$row;$col$cursorPosClose`     | `cursorPosTo(int row, int col)`   | `cursorPos`      | Moves the cursor to `row` and `col`.                                        |
-| Cursor horizontal and vertical pos | `${cursorHVPosOpen}$row;$col$cursorHVPosClose` | `cursorHVPosTo(int row, int col)` | `cursorHVPos`    | Same as `cursorPos`, just with some differences.                            |
-| Erase in page                      | `${eraseInPageOpen}$s$eraseInPageClose`        |                                   | `eraseInPage…`   | Erases part of the page: `s`=0 (or missing) - to end (`eraseInPageToEnd`), `s`=1 - to beginning (`eraseInPageToBegin`), `s`=2 - entire page (`erasePage`). |
-| Erase in line                      | `${eraseInLineOpen}$s$eraseInLineClose`        |                                   | `eraseInLine…`   | Erases part of the line: `s`=0 (or missing) - to end (`eraseInLineToEnd`), `s`=2 - to beginning (`eraseInLineToBegin`), `s`=2 - entire line (`eraseLine`). |
-| Scroll up                          | `${scrollUpOpen}$n$scrollUpClose`              | `scrollUpN(int n)`                | `scrollUp`       | Scroll page up by `n` (default 1) lines. New lines are added at the bottom. |
-| Scroll down                        | `${scrollDownOpen}$n$scrollDownClose`          | `scrollDownN(int n)`              | `scrollDown`     | Scroll page down by `n` (default 1) lines. New lines are added at the top.  |
-| Hide cursor                        |                                                |                                   | `hideCursor`     | Shows the cursor.                                                           |
-| Show cursor                        |                                                |                                   | `showCursor`     | Hides the cursor.                                                           |
-| Save cursor                        |                                                |                                   | `saveCursor`     | Saves the cursor position, encoding shift state and formatting attributes.  |
-| Restore cursor                     |                                                |                                   | `restoreCursor`  | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
+| Goal                               | Using                         | Description       |
+|:-----------------------------------|:------------------------------|:------------------|
+| Cursor up                          | **template:** `${cursorUpOpen}$n$cursorUpClose`              <br>**function:** `cursorUpN(int n)`                <br>**default constant:** `cursorUp`             | Moves the cursor up `n` (default 1) lines. |
+| Cursor down                        | **template:** `${cursorDownOpen}$n$cursorDownClose`          <br>**function:** `cursorDownN(int n)`              <br>**default constant:** `cursorDown`           | Moves the cursor down `n` (default 1) lines. |
+| Cursor forward                     | **template:** `${cursorRightOpen}$n$cursorRightClose`        <br>**function:** `cursorRightN(int n)`             <br>**default constant:** `cursorRight`          | Moves the cursor right `n` (default 1) characters. |
+| Cursor back                        | **template:** `${cursorLeftOpen}$n$cursorLeftClose`          <br>**function:** `cursorLeftN(int n)`              <br>**default constant:** `cursorLeft`           | Moves the cursor left `n` (default 1) characters. |
+| Cursor next line                   | **template:** `${cursorNextLineOpen}$n$cursorNextLineClose`  <br>**function:** `cursorNextLineN(int n)`          <br>**default constant:** `cursorNextLine`       | Moves cursor to beginning of the line `n` (default 1) lines down. |
+| Cursor prev line                   | **template:** `${cursorPrevLineOpen}$n$cursorPrevLineClose`  <br>**function:** `cursorPrevLineN(int n)`          <br>**default constant:** `cursorPrevLine`       | Moves cursor to beginning of the line `n` (default 1) lines up. |
+| Cursor horizontal pos              | **template:** `${cursorHPosOpen}$n$cursorHPosClose`          <br>**function:** `cursorHPosN(int n)`              <br>**default constant:** `cursorHPosToBegin`    | Moves the cursor to column `n` (default 1). |
+| Cursor pos                         | **template:** `${cursorPosOpen}$row;$col$cursorPosClose`     <br>**function:** `cursorPosTo(int row, int col)`   <br>**default constant:** `cursorPosToTopLeft`   | Moves the cursor to `row` and `col`. |
+| Cursor horizontal and vertical pos | **template:** `${cursorHVPosOpen}$row;$col$cursorHVPosClose` <br>**function:** `cursorHVPosTo(int row, int col)` <br>**default constant:** `cursorHVPosToTopLeft` | Same as `cursorPos`, just with some differences. |
+| Erase in page                      | **template:** `${eraseInPageOpen}$s$eraseInPageClose`        <br>**function:**                                   <br>**default constants:** `erasePage`, `eraseInPageToBegin`, `eraseInPageToEnd` | Erases part of the page: `s`=0 (or missing) - to end, `s`=1 - to beginning, `s`=2 - entire page. |
+| Erase in line                      | **template:** `${eraseInLineOpen}$s$eraseInLineClose`        <br>**function:**                                   <br>**default constant:** `eraseLine`, `eraseInLineToBegin`, `eraseInLineToEnd` | Erases part of the line: `s`=0 (or missing) - to end, `s`=2 - to beginning, `s`=2 - entire line. |
+| Scroll up                          | **template:** `${scrollUpOpen}$n$scrollUpClose`              <br>**function:** `scrollUpN(int n)`                <br>**default constant:** `scrollUp`             | Scroll page up by `n` (default 1) lines. New lines are added at the bottom. |
+| Scroll down                        | **template:** `${scrollDownOpen}$n$scrollDownClose`          <br>**function:** `scrollDownN(int n)`              <br>**default constant:** `scrollDown`           | Scroll page down by `n` (default 1) lines. New lines are added at the top. |
+| Hide cursor                        | **constant:** `hideCursor`    | Shows the cursor. |
+| Show cursor                        | **constant:** `showCursor`    | Hides the cursor. |
+| Save cursor                        | **constant:** `saveCursor`    | Saves the cursor position, encoding shift state and formatting attributes. |
+| Restore cursor                     | **constant:** `restoreCursor` | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
 
 All of the following examples are equivalent:
 
 ```dart
 print('\x1B[4A');
 print('${CSI}4$CUU');
-print(cursorUpN(4)); // Not constant!
 print('${cursorUpOpen}4$cursorUpClose');
+print(cursorUpN(4)); // Not constant!
 ```
 
 
@@ -448,87 +449,89 @@ const str = '$CSI$s$SGR';
 
 Where `s` is:
 
-| Value | Constant                    | Ready-to-use constant (CSI+s+SGR)       | Description                                                |
-|------:|:----------------------------|:----------------------------------------|:-----------------------------------------------------------|
-|     0 | `RESET`                     | `reset`                                 | Default rendition (implementation-defined), cancels the effect of any preceding occurrence of SGR |
-|     1 | `BOLD`                      | `bold`                                  | Bold or increased intensity                                |
-|     2 | `DIM`                       | `dim`                                   | Dim, decreased intensity or second color                   |
-|     3 | `ITALIC`                    | `italic`                                | Italic                                                     |
-|     4 | `UNDERLINE`                 | `underline`                             | Underline                                                  |
-|     5 | `BLINK`                     | `blink`                                 | Blink                                                      |
-|     6 | `BLINK_RAPID`               | `blinkRapid`                            | Blink rapid                                                |
-|     7 | `INVERSE`                   | `inverse`                               | Inverse                                                    |
-|     8 | `INVISIBLE`                 | `invisible`                             | Invisible characters                                       |
-|     9 | `STRIKETHROUGH`             | `strikethrough`                         | Strikethrough (characters still legible but marked as to be deleted) |
-|    10 | `PRIMARY_FONT`              |                                         | Primary (default) font                                     |
-|    11 | `ALT_FONT_1`                |                                         | First alternative font                                     |
-|    12 | `ALT_FONT_2`                |                                         | Second alternative font                                    |
-|    13 | `ALT_FONT_3`                |                                         | Third alternative font                                     |
-|    14 | `ALT_FONT_4`                |                                         | Fourth alternative font                                    |
-|    15 | `ALT_FONT_5`                |                                         | Fifth alternative font                                     |
-|    16 | `ALT_FONT_6`                |                                         | Sixth alternative font                                     |
-|    17 | `ALT_FONT_7`                |                                         | Seventh alternative font                                   |
-|    18 | `ALT_FONT_8`                |                                         | Eighth alternative font                                    |
-|    19 | `ALT_FONT_9`                |                                         | Ninth alternative font                                     |
-|    20 | `FRAKTUR`                   |                                         | Fraktur (Gothic)                                           |
-|    21 | `DOUBLY_UNDERLINE`          | `doublyUnderline`                       | Doubly underline                                           |
-|    22 | `NOT_BOLD_NOT_DIM`          | `resetBoldAndDim`                       | Normal colour or normal intensity (neither bold nor dim)   |
-|    23 | `NOT_ITALIC`                | `resetItalic`                           | Not italic, not fraktur                                    |
-|    24 | `NOT_UNDERLINE`             | `resetUnderline`                        | Not underline (neither singly nor doubly)                  |
-|    25 | `NOT_BLINK`                 | `resetBlink`                            | Steady (not blink)                                         |
-|    27 | `NOT_INVERSE`               | `resetInverse`                          | Positive image (not inverse)                               |
-|    28 | `NOT_INVISIBLE`             | `resetInvisible`                        | Revealed characters (not invisible)                        |
-|    29 | `NOT_STRIKETHROUGH`         | `resetStrikethrough`                    | Not strikethrough                                          |
-|    30 | `FG_BLACK`                  | `fgBlack`                               | Black display (color #0 from 256-color table)              |
-|    31 | `FG_RED`                    | `fgRed`                                 | Red display (color #1 from 256-color table)                |
-|    32 | `FG_GREEN`                  | `fgGreen`                               | Green display (color #2 from 256-color table)              |
-|    33 | `FG_YELLOW`                 | `fgYellow`                              | Yellow display (color #3 from 256-color table)             |
-|    34 | `FG_BLUE`                   | `fgBlue`                                | Blue display (color #4 from 256-color table)               |
-|    35 | `FG_MAGENTA`                | `fgMagenta`                             | Magenta display (color #5 from 256-color table)            |
-|    36 | `FG_CYAN`                   | `fgCyan`                                | Cyan display (color #6 from 256-color table)               |
-|    37 | `FG_WHITE`                  | `fgWhite`                               | White display (color #7 from 256-color table)              |
-|    38 | `FOREGROUND`                | `fg256…/fgRgb…`                         | Display color from 256-color table or by RGB. See [256-color table](#256-color-table) |
-|    39 | `FG_DEFAULT`                | `resetFg`                               | Default display color (implementation-defined)             |
-|    40 | `BG_BLACK`                  | `bgBlack`                               | Black background (color #0 from 256-color table)           |
-|    41 | `BG_RED`                    | `bgRed`                                 | Red background (color #1 from 256-color table)             |
-|    42 | `BG_GREEN`                  | `bgGreen`                               | Green background (color #2 from 256-color table)           |
-|    43 | `BG_YELLOW`                 | `bgYellow`                              | Yellow background (color #3 from 256-color table)          |
-|    44 | `BG_BLUE`                   | `bgBlue`                                | Blue background (color #4 from 256-color table)            |
-|    45 | `BG_MAGENTA`                | `bgMagenta`                             | Magenta background (color #5 from 256-color table)         |
-|    46 | `BG_CYAN`                   | `bgCyan`                                | Cyan background (color #6 from 256-color table)            |
-|    47 | `BG_WHITE`                  | `bgWhite`                               | White background (color #7 from 256-color table)           |
-|    48 | `BACKGROUND`                | `bg256…/bgRgb…`                         | Background color from 256-color table or by RGB. See [256-color table](#256-color-table) |
-|    49 | `BG_DEFAULT`                | `resetBg`                               | Default background color (implementation-defined)          |
-|    51 | `FRAME`                     | `frame`                                 | Frame                                                      |
-|    52 | `ENCIRCLE`                  | `encircle`                              | Encircle                                                   |
-|    53 | `OVERLINE`                  | `overline`                              | Overline                                                   |
-|    54 | `NOT_FRAME_NOT_ENCIRCLE`    | `resetFrameAndEncircle`                 | Not frame, not encircle                                    |
-|    55 | `NOT_OVERLINE`              | `resetOverline`                         | Not overline                                               |
-|    58 | `UNDERLINE_COLOR`           | `underlineColor256…/underlineColorRgb…` | Underline color from 256-color table or by RGB. See [256-color table](#256-color-table) |
-|    59 | `UNDERLINE_COLOR_DEFAULT`   | `underlineColorDefault`                 | Default underline color                                    |
-|    73 | `SUPERSCRIPTED`             | `superscript`                           | Superscript                                                |
-|    74 | `SUBSCRIPT`                 | `subscript`                             | Subscript                                                  |
-|    75 | `NOT_SUPER_NOT_SUBSCRIPT`   | `resetSuperAnsSubscript`                | Not superscript, not subscipt                              |
-|    90 | `FG_HIGH_BLACK`             | `fgHighBlack`                           | High black display (color #8 from 256-color table)         |
-|    91 | `FG_HIGH_RED`               | `fgHighRed`                             | High red display (color #9 from 256-color table)           |
-|    92 | `FG_HIGH_GREEN`             | `fgHighGreen`                           | High green display (color #10 from 256-color table)        |
-|    93 | `FG_HIGH_YELLOW`            | `fgHighYellow`                          | High yellow display (color #11 from 256-color table)       |
-|    94 | `FG_HIGH_BLUE`              | `fgHighBlue`                            | High blue display (color #12 from 256-color table)         |
-|    95 | `FG_HIGH_MAGENTA`           | `fgHighMagenta`                         | High magenta display (color #13 from 256-color table)      |
-|    96 | `FG_HIGH_CYAN`              | `fgHighCyan`                            | High cyan display (color #14 from 256-color table)         |
-|    97 | `FG_HIGH_WHITE`             | `fgHighWhite`                           | High white display (color #15 from 256-color table)        |
-|   100 | `BG_HIGH_BLACK`             | `bgHighBlack`                           | High black background (color #8 from 256-color table)      |
-|   101 | `BG_HIGH_RED`               | `bgHighRed`                             | High red background (color #9 from 256-color table)        |
-|   102 | `BG_HIGH_GREEN`             | `bgHighGreen`                           | High green background (color #10 from 256-color table)     |
-|   103 | `BG_HIGH_YELLOW`            | `bgHighYellow`                          | High yellow background (color #11 from 256-color table)    |
-|   104 | `BG_HIGH_BLUE`              | `bgHighBlue`                            | High blue background (color #12 from 256-color table)      |
-|   105 | `BG_HIGH_MAGENTA`           | `bgHighMagenta`                         | High magenta background (color #13 from 256-color table)   |
-|   106 | `BG_HIGH_CYAN`              | `bgHighCyan`                            | High cyan background (color #14 from 256-color table)      |
-|   107 | `BG_HIGH_WHITE`             | `bgHighWhite`                           | High white background (color #15 from 256-color table)     |
+| Value | Constant                  | Using                    | Description                                                |
+|------:|:--------------------------|:-------------------------|:-----------------------------------------------------------|
+|     0 | `RESET`                   | `reset`                  | Default rendition (implementation-defined), cancels the effect of any preceding occurrence of SGR |
+|     1 | `BOLD`                    | `bold`                   | Bold or increased intensity |
+|     2 | `DIM`                     | `dim`                    | Dim, decreased intensity or second color |
+|     3 | `ITALIC`                  | `italic`                 | Italic |
+|     4 | `UNDERLINE`               | `underline`              | Underline |
+|     5 | `BLINK`                   | `blink`                  | Blink |
+|     6 | `BLINK_RAPID`             | `blinkRapid`             | Blink rapid |
+|     7 | `INVERSE`                 | `inverse`                | Inverse |
+|     8 | `INVISIBLE`               | `invisible`              | Invisible characters |
+|     9 | `STRIKETHROUGH`           | `strikethrough`          | Strikethrough (characters still legible but marked as to be deleted) |
+|    10 | `PRIMARY_FONT`            |                          | Primary (default) font |
+|    11 | `ALT_FONT_1`              |                          | First alternative font |
+|    12 | `ALT_FONT_2`              |                          | Second alternative font |
+|    13 | `ALT_FONT_3`              |                          | Third alternative font |
+|    14 | `ALT_FONT_4`              |                          | Fourth alternative font |
+|    15 | `ALT_FONT_5`              |                          | Fifth alternative font |
+|    16 | `ALT_FONT_6`              |                          | Sixth alternative font |
+|    17 | `ALT_FONT_7`              |                          | Seventh alternative font |
+|    18 | `ALT_FONT_8`              |                          | Eighth alternative font |
+|    19 | `ALT_FONT_9`              |                          | Ninth alternative font |
+|    20 | `FRAKTUR`                 |                          | Fraktur (Gothic) |
+|    21 | `DOUBLY_UNDERLINE`        | `doublyUnderline`        | Doubly underline |
+|    22 | `NOT_BOLD_NOT_DIM`        | `resetBoldAndDim`        | Normal colour or normal intensity (neither bold nor dim) |
+|    23 | `NOT_ITALIC`              | `resetItalic`            | Not italic, not fraktur |
+|    24 | `NOT_UNDERLINE`           | `resetUnderline`         | Not underline (neither singly nor doubly) |
+|    25 | `NOT_BLINK`               | `resetBlink`             | Steady (not blink) |
+|    27 | `NOT_INVERSE`             | `resetInverse`           | Positive image (not inverse) |
+|    28 | `NOT_INVISIBLE`           | `resetInvisible`         | Revealed characters (not invisible) |
+|    29 | `NOT_STRIKETHROUGH`       | `resetStrikethrough`     | Not strikethrough |
+|    30 | `FG_BLACK`                | `fgBlack`                | Black display |
+|    31 | `FG_RED`                  | `fgRed`                  | Red display |
+|    32 | `FG_GREEN`                | `fgGreen`                | Green display |
+|    33 | `FG_YELLOW`               | `fgYellow`               | Yellow display |
+|    34 | `FG_BLUE`                 | `fgBlue`                 | Blue display |
+|    35 | `FG_MAGENTA`              | `fgMagenta`              | Magenta display |
+|    36 | `FG_CYAN`                 | `fgCyan`                 | Cyan display |
+|    37 | `FG_WHITE`                | `fgWhite`                | White display |
+|    38 | `FOREGROUND`              | `fg256…/fgRgb…`          | Display color from [256-color table](#256-color-table) or by [RGB](#24-bit-rgb-colors) |
+|    39 | `FG_DEFAULT`              | `resetFg`                | Default display color (implementation-defined) |
+|    40 | `BG_BLACK`                | `bgBlack`                | Black background |
+|    41 | `BG_RED`                  | `bgRed`                  | Red background |
+|    42 | `BG_GREEN`                | `bgGreen`                | Green background |
+|    43 | `BG_YELLOW`               | `bgYellow`               | Yellow background |
+|    44 | `BG_BLUE`                 | `bgBlue`                 | Blue background |
+|    45 | `BG_MAGENTA`              | `bgMagenta`              | Magenta background |
+|    46 | `BG_CYAN`                 | `bgCyan`                 | Cyan background |
+|    47 | `BG_WHITE`                | `bgWhite`                | White background |
+|    48 | `BACKGROUND`              | `bg256…/bgRgb…`          | Background color from [256-color table](#256-color-table) or by [RGB](#24-bit-rgb-colors) |
+|    49 | `BG_DEFAULT`              | `resetBg`                | Default background color (implementation-defined) |
+|    51 | `FRAME`                   | `frame`                  | Frame |
+|    52 | `ENCIRCLE`                | `encircle`               | Encircle |
+|    53 | `OVERLINE`                | `overline`               | Overline |
+|    54 | `NOT_FRAME_NOT_ENCIRCLE`  | `resetFrameAndEncircle`  | Not frame, not encircle |
+|    55 | `NOT_OVERLINE`            | `resetOverline`          | Not overline |
+|    58 | `UNDERLINE_COLOR`         | `underlineColor256…/underlineColorRgb…` | Underline color from [256-color table](#256-color-table) or by [RGB](#24-bit-rgb-colors) |
+|    59 | `UNDERLINE_COLOR_DEFAULT` | `underlineColorDefault`  | Default underline color |
+|    73 | `SUPERSCRIPTED`           | `superscript`            | Superscript |
+|    74 | `SUBSCRIPT`               | `subscript`              | Subscript |
+|    75 | `NOT_SUPER_NOT_SUBSCRIPT` | `resetSuperAnsSubscript` | Not superscript, not subscipt |
+|    90 | `FG_HIGH_BLACK`           | `fgHighBlack`            | High black display |
+|    91 | `FG_HIGH_RED`             | `fgHighRed`              | High red display |
+|    92 | `FG_HIGH_GREEN`           | `fgHighGreen`            | High green display |
+|    93 | `FG_HIGH_YELLOW`          | `fgHighYellow`           | High yellow display |
+|    94 | `FG_HIGH_BLUE`            | `fgHighBlue`             | High blue display |
+|    95 | `FG_HIGH_MAGENTA`         | `fgHighMagenta`          | High magenta display |
+|    96 | `FG_HIGH_CYAN`            | `fgHighCyan`             | High cyan display |
+|    97 | `FG_HIGH_WHITE`           | `fgHighWhite`            | High white display |
+|   100 | `BG_HIGH_BLACK`           | `bgHighBlack`            | High black background |
+|   101 | `BG_HIGH_RED`             | `bgHighRed`              | High red background |
+|   102 | `BG_HIGH_GREEN`           | `bgHighGreen`            | High green background |
+|   103 | `BG_HIGH_YELLOW`          | `bgHighYellow`           | High yellow background |
+|   104 | `BG_HIGH_BLUE`            | `bgHighBlue`             | High blue background |
+|   105 | `BG_HIGH_MAGENTA`         | `bgHighMagenta`          | High magenta background |
+|   106 | `BG_HIGH_CYAN`            | `bgHighCyan`             | High cyan background |
+|   107 | `BG_HIGH_WHITE`           | `bgHighWhite`            | High white background |
 
 All of the following examples are equivalent:
 
 ```dart
+import 'package:ansi_escape_codes/ansi.dart';
+
 print('\x1B[1m bold \x1B[0m');
 print('$CSI$BOLD$SGR bold $SCI$RESET$SGR');
 print('$bold bold $reset');
@@ -542,7 +545,9 @@ print('$bold bold $reset');
 Template for setting the color from 256-color table:
 
 ```
-CSI FOREGROUND/BACKGROUND/UNDERLINE_COLOR;COLOR_256;n SGR
+CSI FOREGROUND;COLOR_256;n SGR
+CSI BACKGROUND;COLOR_256;n SGR
+CSI UNDERLINE_COLOR;COLOR_256;n SGR
 ```
 
 Or, on Dart:
@@ -555,30 +560,33 @@ const str = '$CSI$UNDERLINE_COLOR;$COLOR_256;$n$SGR';
 
 Where `n` is:
 
-|   Value | Constant        | Ready-to-use constant                    | Comment |
-|--------:|:----------------|:-----------------------------------------|:--------|
-|       0 | `BLACK`         | (`fg`/`bg`/`underline`)`256Black`        |         |
-|       1 | `RED`           | (`fg`/`bg`/`underline`)`256Red`          |         |
-|       2 | `GREEN`         | (`fg`/`bg`/`underline`)`256Green`        |         |
-|       3 | `YELLOW`        | (`fg`/`bg`/`underline`)`256Yellow`       |         |
-|       4 | `BLUE`          | (`fg`/`bg`/`underline`)`256Blue`         |         |
-|       5 | `MAGENTA`       | (`fg`/`bg`/`underline`)`256Magenta`      |         |
-|       6 | `CYAN`          | (`fg`/`bg`/`underline`)`256Cyan`         |         |
-|       7 | `WHITE`         | (`fg`/`bg`/`underline`)`256White`        |         |
-|       8 | `HIGH_BLACK`    | (`fg`/`bg`/`underline`)`256HighBlack`    |         |
-|       9 | `HIGH_RED`      | (`fg`/`bg`/`underline`)`256HighRed`      |         |
-|      10 | `HIGH_GREEN`    | (`fg`/`bg`/`underline`)`256HighGreen`    |         |
-|      11 | `HIGH_YELLOW`   | (`fg`/`bg`/`underline`)`256HighYellow`   |         |
-|      12 | `HIGH_BLUE`     | (`fg`/`bg`/`underline`)`256HighBlue`     |         |
-|      13 | `HIGH_MAGENTA`  | (`fg`/`bg`/`underline`)`256HighMagenta`  |         |
-|      14 | `HIGH_CYAN`     | (`fg`/`bg`/`underline`)`256HighCyan`     |         |
-|      15 | `HIGH_WHITE`    | (`fg`/`bg`/`underline`)`256HighWhite`    |         |
-|  16-231 | `RGB_<r><g><b>` | (`fg`/`bg`/`underline`)`256Rgb<r><g><b>` | `r`,`g`,`b` are numbers from 0 to 5 (6 × 6 × 6 cube (216 colors): 16 + 36 × `r` + 6 × `g` + `b`) |
-| 232-255 | `GRAY<n>`       | (`fg`/`bg`/`underline`)`256Gray<n>`      | `n` is a number from 0 to 23 (grayscale from dark to light in 24 steps)                          |
+|   Value | Constant        | Using | Comment |
+|--------:|:----------------|:-----------------------------------------|:-|
+|       0 | `BLACK`         | `fg256Black`<br>`bg256Black`<br>`underline256Black` | |
+|       1 | `RED`           | `fg256Red`<br>`bg256Red`<br>`underline256Red` | |
+|       2 | `GREEN`         | `fg256Green`<br>`bg256Green`<br>`underline256Green` | |
+|       3 | `YELLOW`        | `fg256Yellow`<br>`bg256Yellow`<br>`underline256Yellow` | |
+|       4 | `BLUE`          | `fg256Blue`<br>`bg256Blue`<br>`underline256Blue` | |
+|       5 | `MAGENTA`       | `fg256Magenta`<br>`bg256Magenta`<br>`underline256Magenta` | |
+|       6 | `CYAN`          | `fg256Cyan`<br>`bg256Cyan`<br>`underline256Cyan` | |
+|       7 | `WHITE`         | `fg256White`<br>`bg256White`<br>`underline256White` | |
+|       8 | `HIGH_BLACK`    | `fg256HighBlack`<br>`bg256HighBlack`<br>`underline256HighBlack` | |
+|       9 | `HIGH_RED`      | `fg256HighRed`<br>`bg256HighRed`<br>`underline256HighRed` | |
+|      10 | `HIGH_GREEN`    | `fg256HighGreen`<br>`bg256HighGreen`<br>`underline256HighGreen` | |
+|      11 | `HIGH_YELLOW`   | `fg256HighYellow`<br>`bg256HighYellow`<br>`underline256HighYellow` | |
+|      12 | `HIGH_BLUE`     | `fg256HighBlue`<br>`bg256HighBlue`<br>`underline256HighBlue` | |
+|      13 | `HIGH_MAGENTA`  | `fg256HighMagenta`<br>`bg256HighMagenta`<br>`underline256HighMagenta` | |
+|      14 | `HIGH_CYAN`     | `fg256HighCyan`<br>`bg256HighCyan`<br>`underline256HighCyan` | |
+|      15 | `HIGH_WHITE`    | `fg256HighWhite`<br>`bg256HighWhite`<br>`underline256HighWhite`  | |
+|  16-231 | `RGB_<r><g><b>` | `fg256Rgb<r><g><b>`<br>`bg256Rgb<r><g><b>`<br>`underline256Rgb<r><g><b>` | `r`,`g`,`b` are numbers from 0 to 5 (6 × 6 × 6 cube (216 colors): 16 + 36 × `r` + 6 × `g` + `b`) |
+| 232-255 | `GRAY<n>`       | `fg256Gray<n>`<br>`bg256Gray<n>`<br>`underline256Gray<n>` | `n` is a number from 0 to 23 (grayscale from dark to light in 24 steps) |
 
 All of the following examples are equivalent:
 
 ```dart
+import 'package:ansi_escape_codes/ansi.dart';
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+
 print('\x1B[38;5;3m Yellow text \x1B[39m');
 print('$CSI$FOREGROUND;$COLOR_256;$YELLOW$SGR Yellow text $CSI$FG_DEFAULT$SGR');
 print('$fg256Open$YELLOW$fg256Close Yellow text $resetFg');
@@ -591,6 +599,9 @@ You can also use functions to get the color index:
 ```dart
 int rgb(int r, int g, int b); // r,g,b are numbers from 0 to 5
 int gray(int level); // level is number from 0 to 23
+
+print('${fg256(rgb(5, 5, 0))}');
+print('${fg256(gray(16))}');
 ```
 
 And use next functions to set the color from 256-color table by index:
@@ -604,6 +615,9 @@ String underline256(int index);
 All of the following examples are equivalent:
 
 ```dart
+import 'package:ansi_escape_codes/ansi.dart';
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+
 print('\x1B[38;5;226m Yellow text \x1B[39m');
 print('$CSI$FOREGROUND;$COLOR_256;$RGB_550$SGR Yellow text $CSI$FG_DEFAULT$SGR');
 print('$fg256Open$RGB_550$fg256Close Yellow text $resetFg');
@@ -620,7 +634,9 @@ print('${fg256(rgb(5, 5, 0))} Yellow text $resetFg'); // Not constant!
 Template for setting the color from 256-color table:
 
 ```
-CSI FOREGROUND/BACKGROUND/UNDERLINE_COLOR;COLOR_RGB;r;g;b SGR
+CSI FOREGROUND;COLOR_RGB;r;g;b SGR
+CSI BACKGROUND;COLOR_RGB;r;g;b SGR
+CSI UNDERLINE_COLOR;COLOR_RGB;r;g;b SGR
 ```
 
 Or, on Dart:
@@ -659,20 +675,23 @@ print('${bgRgb(44, 43, 124)} Ultramarine $resetBg'); // Not constant!
 `Parser` allows you to analyze text containing escape codes:
 
 ```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+
 const text = '$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ';
 final parser = Parser(text);
 parser.matches.forEach(print);
-// Match(start: 0, end: 4, entity: Sgr(bold), state: SgrState(bold))
-// Match(start: 4, end: 10, entity: Text(' Bold '), state: SgrState(bold))
-// Match(start: 10, end: 15, entity: Sgr(fgCyan), state: SgrState(bold, foreground: Color16(Colors.cyan)))
-// Match(start: 15, end: 26, entity: Text(' Bold+cyan '), state: SgrState(bold, foreground: Color16(Colors.cyan)))
-// Match(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: SgrState(foreground: Color16(Colors.cyan)))
-// Match(start: 31, end: 37, entity: Text(' Cyan '), state: SgrState(foreground: Color16(Colors.cyan)))
+// Match<Style>(start: 0, end: 4, entity: Sgr(bold), state: Style(bold))
+// Match<Style>(start: 4, end: 10, entity: Text(' Bold '), state: Style(bold))
+// Match<Style>(start: 10, end: 15, entity: Sgr(fgCyan), state: Style(bold, foreground: Color16(Colors.cyan)))
+// Match<Style>(start: 15, end: 26, entity: Text(' Bold+cyan '), state: Style(bold, foreground: Color16(Colors.cyan)))
+// Match<Style>(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: Style(foreground: Color16(Colors.cyan)))
+// Match<Style>(start: 31, end: 37, entity: Text(' Cyan '), state: Style(foreground: Color16(Colors.cyan)))
 ```
 
 In this way we can, for example, remove all escape codes:
 
 ```dart
+final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
 final buf = StringBuffer();
 for (final m in parser.matches) {
   switch (m.entity) {
@@ -694,6 +713,7 @@ print(parser.removeAll());
 Or replace the escape codes with a readable form:
 
 ```dart
+final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
 final buf = StringBuffer();
 for (final m in parser.matches) {
   final result = switch (m.entity) {
@@ -719,31 +739,34 @@ print(parser.length == parser.removeAll().length); // true
 print(parser.length); // 23
 ```
 
-The style at a particular position can be found with `styleAtPos`.
+The style at a particular position can be found with `stateAt`.
 
 ```dart
-final style = parser.styleAtPos(7);
-print(style); // SgrStyle(bold, foreground: Color16(Colors.cyan))
+final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
+final style = parser.stateAt(7);
+print(style); // Style(bold, foreground: Color16(Colors.cyan))
 print(style.isBold); // true
 print(style.isItalic); // false
 print(style.foreground?.id); // fgCyan
 print(style.background?.id); // null
 ```
 
-The position in `styleAtPos` is specified in the plaintext range
+The position in `stateAt` is specified in the plaintext range
 (`pos` < `parser.length`) and can also point to the position behind the text
 (`pos` == `parser.length`) to find out the final state. The final state can
-also be obtained using `finalStyle`.
+also be obtained using `finalState`.
 
 ```dart
-print(parser.styleAtPos(23) == parser.finalStyle); // true
-print(parser.finalStyle); // Style(foreground: Color16.cyan)
+print(parser.stateAt(23) == parser.finalState); // true
+print(parser.finalState); // Style(foreground: Color16.cyan)
 ```
 
 In the above example, the text state was not set to default, i.e. the text was
 not closed:
 
 ```dart
+const text = '$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ';
+final parser = Parser(text);
 print(parser.isClosed); // false
 ```
 
@@ -758,16 +781,19 @@ The `substring` method allows you to retrieve a piece of text by computing
 together its state:
 
 ```dart
-final substring = parser.substring(7, maxLength: 9);
-print(Parser(substring).showControlFunctions()); // [fgCyan;bold]Bold+cyan[reset]
+final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
+final substr = parser.substring(7, maxLength: 9); // "Bold+cyan"
+print(Parser(substr).ansiShowControlFunctions()); // [fgCyan;bold]Bold+cyan[reset]
 ```
 
 By default, the substring is closed. Escape codes is always included in the
 string in optimized form:
 
 ```dart
+final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
+final substr = parser.substring(7, maxLength: 9); // "Bold+cyan"
 const test1 = '$fgCyan$bold';
-final test2 = substring.substring(0, substring.indexOf('Bold'));
+final test2 = substr.substring(0, substr.indexOf('Bold'));
 print(test1.showEscapeCodes()); // [CSI 36 SGR][CSI 1 SGR]
 print(test2.showEscapeCodes()); // [CSI 36;1 SGR]
 print(Parser(test1).showControlFunctions()); // [fgCyan][bold]
@@ -802,53 +828,66 @@ import 'package:ansi_escape_codes/extensions.dart';
 …
 
 const text = '${fgRed}ERROR$reset';
-print(text.hasEscapeCodes); // true
-print(text.hasCsi); // true
-print(text.hasSgr); // true
-print(text.hasForeground); // true
-print(text.hasBackground); // false
-print(text.showEscapeCodes()); // [CSI 31 SGR]ERROR[CSI 0 SGR]
+print(text.ansiHasEscapeCodes); // true
+print(text.ansiHasCsi); // true
+print(text.ansiHasSgr); // true
+print(text.ansiHasForeground); // true
+print(text.ansiHasBackground); // false
+print(text.ansiShowEscapeSequences()); // [CSI 31 SGR]ERROR[CSI 0 SGR]
 ```
 
-The method `showControlCodes` allows to show all control codes from C0 set in
-a string:
+The method `ansiShowControlCodes` allows to show all control codes from C0
+set in a string:
 
 ```dart
 const text = 'Tab: \t Line feed: \n Carriage return: \r Bell: \x07';
 
-print(text.showControlCodes());
+print(text.ansiShowControlCodes()); // preferStyle: ControlCodeStyle.escapeOrCharCode
 // Tab: \t Line feed: \n Carriage return: \r Bell: \x07
 
-print(text.showControlCodes(preferStyle: ControlCodeStyle.charCode));
+print(text.ansiShowControlCodes(preferStyle: ControlCodeStyle.charCode));
 // Tab: \x09 Line feed: \x0A Carriage return: \x0D Bell: \x07
 
-print(text.showControlCodes(preferStyle: ControlCodeStyle.abbr));
+
+print(text.ansiShowControlCodes(preferStyle: ControlCodeStyle.abbr));
 // Tab: [HT] Line feed: [LF] Carriage return: [CR] Bell: [BEL]
 
-print(text.showControlCodes(preferStyle: ControlCodeStyle.unicodeSymbol));
+print(text.ansiShowControlCodes(preferStyle: ControlCodeStyle.escapeOrAbbr));
+// Tab: \t Line feed: \n Carriage return: \r Bell: [BEL]
+
+print(text.ansiShowControlCodes(preferStyle: ControlCodeStyle.unicode));
 // Tab: ␉ Line feed: ␊ Carriage return: ␍ Bell: ␇
+
+print(text.ansiShowControlCodes(preferStyle: ControlCodeStyle.escapeOrUnicode));
+// Tab: \t Line feed: \n Carriage return: \r Bell: ␇
 ```
 
 You can quickly remove all codes using the methods:
 
 ```dart
-const text = '$saveCursor$cursorRight$italic$bgGreen$fgYellow Text $resetFg$resetBg$resetItalic$restoreCursor';
+const text =
+    '$saveCursor$cursorRight$italic$bgGreen$fgYellow Text $resetFg$resetBg$resetItalic$restoreCursor';
 print(Parser(text).showControlFunctions());
 // [saveCursor][CSI CUF][italic][bgGreen][fgYellow] Text [resetFg][resetBg][resetItalic][restoreCursor]
 
-print(Parser(text.removeBackground()).showControlFunctions());
+final withoutBackground = text.ansiRemoveBackground();
+print(Parser(withoutBackground).showControlFunctions());
 // [saveCursor][CSI CUF][italic][fgYellow] Text [resetFg][resetItalic][restoreCursor]
 
-print(Parser(text.removeBackground().removeForeground()).showControlFunctions());
+final andWithoutForeground = withoutBackground.ansiRemoveForeground();
+print(Parser(andWithoutForeground).showControlFunctions());
 // [saveCursor][CSI CUF][italic] Text [resetItalic][restoreCursor]
 
-print(Parser(text.removeSgr()).showControlFunctions());
+final andWithoutSgr = andWithoutForeground.ansiRemoveSgr();
+print(Parser(andWithoutSgr).showControlFunctions());
 // [saveCursor][CSI CUF] Text [restoreCursor]
 
-print(Parser(text.removeCsi()).showControlFunctions());
+final andWithoutCsi = andWithoutSgr.ansiRemoveSgr();
+print(Parser(andWithoutCsi).showControlFunctions());
 // [saveCursor] Text [restoreCursor]
 
-print(text.removeEscapeCodes().showEscapeCodes());
+final withoutAllEscapeCodes = text.ansiRemoveEscapeCodes();
+print(withoutAllEscapeCodes.ansiShowEscapeSequences());
 // ' Text '
 ```
 
@@ -862,20 +901,19 @@ SGR). Each time you will have to substitute your own values instead:
 
 ```dart
 const text =
-    '${bgRgbOpen}44;43;124$bgRgbClose${fgRgbOpen}224;192;64$fgRgbClose Default text '
+    '$bg256Rgb113$fg256Rgb442 Default text '
     '$bgWhite$fgBlack Highlighted text '
-    '${bgRgbOpen}44;43;124$bgRgbClose${fgRgbOpen}224;192;64$fgRgbClose Default text again $reset';
+    '$bg256Rgb113$fg256Rgb442 Default text again $reset';
 print(text);
 ```
 
 You can move the color setting to constants and use them everywhere:
 
 ```dart
-const bgDefault = '${bgRgbOpen}44;43;124$bgRgbClose';
-const fgDefault = '${fgRgbOpen}224;192;64$fgRgbClose';
-const text = '$bgDefault$fgDefault Default text '
+const defaultStyle = '$bg256Rgb113$fg256Rgb442';
+const text = '$defaultStyle Default text '
     '$bgWhite$fgBlack Highlighted text '
-    '$bgDefault$fgDefault Default text again $reset';
+    '$defaultStyle Default text again $reset';
 print(text);
 ```
 
@@ -883,10 +921,10 @@ Or you can use `Printer`:
 
 ```dart
 const text = ' Default text '
-    '$bgWhite$fgBlack Highlighted text $resetBg$resetFg'
-    ' Default text again $reset';
+    '$bgWhite$fgBlack Highlighted text $reset'
+    ' Default text again';
 final printer = Printer(
-  defaultStyle: Style(
+  defaultStyle: const Style(
     background: Color256.rgb113,
     foreground: Color256.rgb442,
   ),
@@ -904,7 +942,7 @@ the hood:
 ```dart
 void main() {
   runZonedPrinter(
-    defaultStyle: Style(
+    defaultStyle: const Style(
     background: Color256.rgb113,
     foreground: Color256.rgb442,
     ),
@@ -912,8 +950,8 @@ void main() {
       // … Your application code …
 
       const text = ' Default text '
-          '$bgWhite$fgBlack Highlighted text $resetBg$resetFg'
-          ' Default text again $reset';
+          '$bgWhite$fgBlack Highlighted text $reset'
+          ' Default text again';
 
       print(text); // Use the usual print
     },
@@ -969,8 +1007,8 @@ runZonedPrinter(
   ansiCodesEnabled: !Platform.isIOS,
   () {
     const text = ' Default text '
-        '$bgWhite$fgBlack Highlighted text $resetBg$resetFg'
-        ' Default text again $reset';
+        '$bgWhite$fgBlack Highlighted text $reset'
+        ' Default text again';
     print(text);
   },
 );
@@ -1039,7 +1077,3 @@ final printer2 = StackedPrinter();
 printer1.print(text); // '[bold] 1  2  3 [resetBoldAndDim] 2  1 '
 printer2.print(text); // '[bold] 1  2  3  2  1 [resetBoldAndDim]'
 ```
-
----
-
-That's all for now.
