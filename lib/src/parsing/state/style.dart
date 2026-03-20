@@ -116,8 +116,11 @@ final class Style extends State<Style> {
     final buf = StringBuffer();
     final printer = StackedPrinter(defaultStyle: this);
 
-    for (final line in text.split('\n')) {
+    for (final (index, line) in text.split('\n').indexed) {
       final output = printer.prepare(line);
+      if (index != 0) {
+        buf.write('\n');
+      }
       buf.write(output);
     }
 

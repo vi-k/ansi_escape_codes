@@ -53,7 +53,7 @@ containing them.
 
 You can use different levels of coloring.
 
-###### Close to ANSI standard
+#### Close to ANSI standard
 
 If you need a level that is as close as possible to ANSI, you can use
 ready-made constants that comply with the standard.
@@ -75,7 +75,7 @@ standard.
 All constants can be found in this folder:
 [ansi](https://github.com/vi-k/ansi_escape_codes/tree/main/lib/src/ansi)
 
-###### Maximum performance
+#### Maximum performance
 
 A convenient and highly efficient option is to use ready-to-use values that
 hide the complexity of ANSI:
@@ -126,7 +126,7 @@ All the ready-to-use values can be found in this folder:
 [ready_to_use](https://github.com/vi-k/ansi_escape_codes/tree/main/lib/src/ready_to_use)
 
 
-###### The power of styles
+#### The power of styles
 
 ```dart
 import 'package:ansi_escape_codes/style.dart';

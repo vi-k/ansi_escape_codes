@@ -1,6 +1,6 @@
 name: ansi_escape_codes
 description: A toolkit for working with ANSI escape codes and analyzing strings containing them.
-version: 3.0.2
+version: 3.0.3
 homepage: https://github.com/vi-k/ansi_escape_codes
 
 topics:
