@@ -1,4 +1,4 @@
-## 3.0.4
+## 3.0.4-3.0.5
 
 - Add `padLeft` and `padRight` to `Parser` and `StackedParser`.
 

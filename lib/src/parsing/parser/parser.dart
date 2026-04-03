@@ -283,7 +283,7 @@ final class _ParserBase<S extends State<S>> {
     return buf.toString();
   }
 
-  String padRight(int width, {String padding = ' '}) {
+  String padRight(int width, [String padding = ' ']) {
     final needToAdd = width - length;
     if (needToAdd <= 0) {
       return input;
@@ -292,7 +292,7 @@ final class _ParserBase<S extends State<S>> {
     return input.padRight(input.length + needToAdd, padding);
   }
 
-  String padLeft(int width, {String padding = ' '}) {
+  String padLeft(int width, [String padding = ' ']) {
     final needToAdd = width - length;
     if (needToAdd <= 0) {
       return input;
