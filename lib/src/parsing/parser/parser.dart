@@ -283,6 +283,24 @@ final class _ParserBase<S extends State<S>> {
     return buf.toString();
   }
 
+  String padRight(int width, {String padding = ' '}) {
+    final needToAdd = width - length;
+    if (needToAdd <= 0) {
+      return input;
+    }
+
+    return input.padRight(input.length + needToAdd, padding);
+  }
+
+  String padLeft(int width, {String padding = ' '}) {
+    final needToAdd = width - length;
+    if (needToAdd <= 0) {
+      return input;
+    }
+
+    return input.padLeft(input.length + needToAdd, padding);
+  }
+
   /// Optimizes the string by removing consecutive escape codes.
   ///
   /// [close] is whether to close the string with the default style.

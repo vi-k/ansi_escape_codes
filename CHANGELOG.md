@@ -1,3 +1,7 @@
+## 3.0.4
+
+- Add `padLeft` and `padRight` to `Parser` and `StackedParser`.
+
 ## 3.0.3
 
 - Fix multiline output by `Style`.
