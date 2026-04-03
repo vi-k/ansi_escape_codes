@@ -317,6 +317,10 @@ final class Style extends State<Style> {
   Style get resetUnderlineColor =>
       Style._(_flags, foregroundColor, backgroundColor, null);
 
+  String get open => Style.defaults.transitTo(this);
+
+  String get close => transitTo(Style.defaults);
+
   Style _setFlags(int flags) => Style._(
         flags,
         foregroundColor,
