@@ -46,3 +46,6 @@ final oscRe = RegExp(oscPattern);
 
 /// Pattern for ESC.
 const String escPattern = '(?<esc>$ESC)(?<esc_final>.)';
+
+/// Pattern for control codes.
+final controlCodesRe = RegExp('[\x00-\x1F\x7F]');

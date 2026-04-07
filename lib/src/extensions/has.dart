@@ -30,4 +30,6 @@ extension StringHasEscapeCodesExtension on String {
 
   /// Whether the background color in the text changes.
   bool get ansiHasBackground => backgroundRe.hasMatch(this);
+
+  bool get ansiHasControlCodes => controlCodesRe.hasMatch(this);
 }

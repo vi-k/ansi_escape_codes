@@ -30,4 +30,7 @@ extension StringRemoveEscapeCodesExtension on String {
 
   @Deprecated('Use ansiRemoveBackground instead')
   String removeBackground() => ansiRemoveBackground();
+
+  /// Returns the length of the string without escape codes.
+  int get lengthWithoutEscapeCodes => ansiRemoveEscapeCodes().length;
 }

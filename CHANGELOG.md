@@ -1,3 +1,7 @@
+## 3.0.7
+
+- Add string extensions: `ansiHasControlCodes` and `lengthWithoutEscapeCodes`.
+
 ## 3.0.6
 
 - Add `open` and `close` to `Style`.

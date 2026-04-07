@@ -117,11 +117,10 @@ final class Style extends State<Style> {
     final printer = StackedPrinter(defaultStyle: this);
 
     for (final (index, line) in text.split('\n').indexed) {
-      final output = printer.prepare(line);
       if (index != 0) {
         buf.write('\n');
       }
-      buf.write(output);
+      buf.write(printer.prepare(line));
     }
 
     return buf.toString();
@@ -317,9 +316,9 @@ final class Style extends State<Style> {
   Style get resetUnderlineColor =>
       Style._(_flags, foregroundColor, backgroundColor, null);
 
-  String get open => Style.defaults.transitTo(this);
+  String get open => Style.defaults.transitTo(this, skipReset: true);
 
-  String get close => transitTo(Style.defaults);
+  String get close => sgr.reset;
 
   Style _setFlags(int flags) => Style._(
         flags,
