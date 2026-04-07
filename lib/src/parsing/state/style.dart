@@ -113,6 +113,10 @@ final class Style extends State<Style> {
   static const Style defaults = Style._(0, null, null, null);
 
   String call(String text) {
+    if (text.isEmpty) {
+      return '';
+    }
+
     final buf = StringBuffer();
     final printer = StackedPrinter(defaultStyle: this);
 
