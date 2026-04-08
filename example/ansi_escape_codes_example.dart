@@ -184,11 +184,11 @@ void main() {
     print('');
     title('Substrings');
 
-    const text = '$fg256Rgb135${bold}Lorem$resetBoldAndDim '
-        '$bg256Rgb012${italic}ipsum dolor sit$resetItalic$resetBg'
+    const text = '$fg256Rgb233${bold}Lorem$resetBoldAndDim '
+        '$bg256Rgb022${italic}ipsum dolor sit$resetItalic$resetBg'
         ' amet, consectetur'
-        ' $bg256Rgb012${underline}adipiscing$resetUnderline$resetBg elit,'
-        ' $bg256Rgb012${strikethrough}sed do eiusmod$resetStrikethrough$resetBg'
+        ' $bg256Rgb022${underline}adipiscing$resetUnderline$resetBg elit,'
+        ' $bg256Rgb022${strikethrough}sed do eiusmod$resetStrikethrough$resetBg'
         ' tempor…$reset';
     subtitle('Original:');
     print('"$text"');
