@@ -1,4 +1,4 @@
-## 3.1.0
+## 3.1.0-3.1.1
 
 - Add `NoStyle`.
 - Rename `defaults` to `terminalColors`.

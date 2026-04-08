@@ -860,4 +860,7 @@ final class NoStyle extends Style {
 
   @override
   String call(String text) => text;
+
+  @override
+  String get _objectTypeName => '$NoStyle';
 }
