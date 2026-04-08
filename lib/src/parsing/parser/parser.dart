@@ -58,7 +58,7 @@ typedef AnsiParser = Parser;
 ///   ANSI escape codes.
 final class Parser extends _ParserBase<Style> {
   /// Creates a [Parser] for the given [input] string.
-  Parser(String input) : super(input, Style.defaults);
+  Parser(String input) : super(input, Style.terminalColors);
 }
 
 /// A parser that processes strings containing ANSI escape codes and tracks
@@ -70,7 +70,7 @@ final class Parser extends _ParserBase<Style> {
 /// applied and reverted hierarchically.
 final class StackedParser extends _ParserBase<Stack> {
   /// Creates a [StackedParser] for the given [input] string.
-  StackedParser(String input) : super(input, Stack.defaults);
+  StackedParser(String input) : super(input, Stack.terminalColors);
 }
 
 final class _ParserBase<S extends State<S>> {
@@ -109,7 +109,7 @@ final class _ParserBase<S extends State<S>> {
   int get length => _requirePlainString.length;
 
   /// Whether the string is closed with the default style.
-  bool get isClosed => finalState == Style.defaults;
+  bool get isClosed => finalState == Style.terminalColors;
 
   /// Forcibly collects [matches] and prepares plain string.
   void prepare() {
@@ -232,7 +232,7 @@ final class _ParserBase<S extends State<S>> {
 
     final buf = StringBuffer();
     var pos = 0;
-    var currentState = Style.defaults;
+    var currentState = Style.terminalColors;
     Match<S>? lastMatch;
 
     for (final m in matches) {
@@ -274,7 +274,7 @@ final class _ParserBase<S extends State<S>> {
     if (lastMatch != null) {
       buf.write(
         currentState.transitTo(
-          close ? Style.defaults : lastMatch.state,
+          close ? Style.terminalColors : lastMatch.state,
           skipSet: true,
         ),
       );
@@ -306,7 +306,7 @@ final class _ParserBase<S extends State<S>> {
   /// [close] is whether to close the string with the default style.
   String optimize({bool close = true}) {
     final buf = StringBuffer();
-    var currentState = Style.defaults;
+    var currentState = Style.terminalColors;
 
     for (final m in matches) {
       final entity = m.entity;
@@ -324,7 +324,7 @@ final class _ParserBase<S extends State<S>> {
     final lastMatch = matches.lastOrNull;
 
     if (close) {
-      buf.write(currentState.transitTo(Style.defaults));
+      buf.write(currentState.transitTo(Style.terminalColors));
     } else if (lastMatch != null) {
       buf.write(currentState.transitTo(lastMatch.state));
     }

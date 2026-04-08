@@ -1,3 +1,8 @@
+## 3.1.0
+
+- Add `NoStyle`.
+- Rename `defaults` to `terminalColors`.
+
 ## 3.0.7-3.0.8
 
 - Add string extensions: `ansiHasControlCodes` and `lengthWithoutEscapeCodes`.

@@ -58,7 +58,7 @@ final class Stack extends State<Stack> {
         _backgroundStack = backgroundStack,
         _underlineColorStack = underlineColorStack;
 
-  static const Stack defaults = Stack._(
+  static const Stack terminalColors = Stack._(
     intencityStack: [],
     boldCounter: 0,
     dimCounter: 0,
@@ -75,6 +75,9 @@ final class Stack extends State<Stack> {
     backgroundStack: [],
     underlineColorStack: [],
   );
+
+  @Deprecated('Use `terminalColors` instead')
+  static const Stack defaults = terminalColors;
 
   @override
   bool get isBold => _boldCounter != 0;
@@ -252,7 +255,7 @@ final class Stack extends State<Stack> {
       _copyWith(underlineColorStack: List.of(_underlineColorStack)..add(color));
 
   @override
-  Stack get reset => defaults;
+  Stack get reset => terminalColors;
 
   @override
   Stack get resetBoldAndDim {

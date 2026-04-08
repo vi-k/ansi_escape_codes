@@ -15,11 +15,11 @@ final class Printer extends _PrintPrinterBase<Style> {
   /// Creates a printer that processes ANSI escape codes and replaces the
   /// default text style.
   Printer({
-    super.defaultStyle = Style.defaults,
+    super.defaultStyle = Style.terminalColors,
     super.output,
     super.ansiCodesEnabled = true,
     @visibleForTesting super.debugForTest,
-  }) : super(stateDefaults: Style.defaults);
+  }) : super(stateDefaults: Style.terminalColors);
 }
 
 /// A printer that processes ANSI escape codes, replaces the default text
@@ -35,11 +35,11 @@ final class StackedPrinter extends _PrintPrinterBase<Stack> {
   /// Creates a printer that processes ANSI escape codes, replaces the default
   /// text style, and tracks the [Stack] of styles.
   StackedPrinter({
-    super.defaultStyle = Style.defaults,
+    super.defaultStyle = Style.terminalColors,
     super.output,
     super.ansiCodesEnabled = true,
     @visibleForTesting super.debugForTest,
-  }) : super(stateDefaults: Stack.defaults);
+  }) : super(stateDefaults: Stack.terminalColors);
 }
 
 /// A printer that processes ANSI escape codes and writes the output to
@@ -53,10 +53,10 @@ final class SinkPrinter extends _SinkPrinterBase<Style> {
   /// to a [StringSink].
   SinkPrinter(
     super.sink, {
-    super.defaultStyle = Style.defaults,
+    super.defaultStyle = Style.terminalColors,
     super.ansiCodesEnabled = true,
     @visibleForTesting super.debugForTest,
-  }) : super(stateDefaults: Style.defaults);
+  }) : super(stateDefaults: Style.terminalColors);
 }
 
 /// A printer that processes ANSI escape codes, writes the output to
@@ -70,10 +70,10 @@ final class StackedSinkPrinter extends _SinkPrinterBase<Stack> {
   /// a [StringSink], and tracks the [Stack] of styles.
   StackedSinkPrinter(
     super.sink, {
-    super.defaultStyle = Style.defaults,
+    super.defaultStyle = Style.terminalColors,
     super.ansiCodesEnabled = true,
     @visibleForTesting super.debugForTest,
-  }) : super(stateDefaults: Stack.defaults);
+  }) : super(stateDefaults: Stack.terminalColors);
 }
 
 sealed class _PrinterBase<S extends State<S>> implements StringSink {
@@ -283,7 +283,7 @@ R runZonedAnsiPrinter<R>(
 /// by the printer.
 R runZonedPrinter<R>(
   R Function() run, {
-  Style defaultStyle = Style.defaults,
+  Style defaultStyle = Style.terminalColors,
   void Function(String s)? output,
   bool ansiCodesEnabled = true,
   @visibleForTesting bool debugForTest = false,
@@ -310,7 +310,7 @@ R runZonedPrinter<R>(
 /// by the stacked printer.
 R runZonedStackedPrinter<R>(
   R Function() run, {
-  Style defaultStyle = Style.defaults,
+  Style defaultStyle = Style.terminalColors,
   void Function(String s)? output,
   bool ansiCodesEnabled = true,
   @visibleForTesting bool debugForTest = false,

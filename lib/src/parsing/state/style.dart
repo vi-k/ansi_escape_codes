@@ -110,7 +110,10 @@ final class Style extends State<Style> {
     this.underlineColorValue,
   );
 
-  static const Style defaults = Style._(0, null, null, null);
+  static const Style terminalColors = Style();
+
+  @Deprecated('Use `terminalColors` or `NoStyle` instead')
+  static const Style defaults = terminalColors;
 
   String call(String text) {
     if (text.isEmpty) {
@@ -274,7 +277,7 @@ final class Style extends State<Style> {
       );
 
   @override
-  Style get reset => defaults;
+  Style get reset => terminalColors;
 
   @override
   Style get resetBoldAndDim => _setFlags(_flags & ~(_bold | _dim));
@@ -320,7 +323,7 @@ final class Style extends State<Style> {
   Style get resetUnderlineColor =>
       Style._(_flags, foregroundColor, backgroundColor, null);
 
-  String get open => Style.defaults.transitTo(this, skipReset: true);
+  String get open => Style.terminalColors.transitTo(this, skipReset: true);
 
   String get close => sgr.reset;
 
@@ -850,4 +853,11 @@ final class Style extends State<Style> {
   Style get bgGray21 => background(Color256.gray21);
   Style get bgGray22 => background(Color256.gray22);
   Style get bgGray23 => background(Color256.gray23);
+}
+
+final class NoStyle extends Style {
+  const NoStyle();
+
+  @override
+  String call(String text) => text;
 }

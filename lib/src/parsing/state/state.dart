@@ -106,8 +106,12 @@ sealed class State<S extends State<S>> {
     bool skipSet = false,
     bool skipReset = false,
   }) {
-    if (other == Style.defaults) {
-      return skipReset || (this as State<void>) == Style.defaults
+    if (other is NoStyle) {
+      return '';
+    }
+
+    if (other == Style.terminalColors) {
+      return skipReset || (this as State<void>) == Style.terminalColors
           ? ''
           : sgr.reset;
     }
