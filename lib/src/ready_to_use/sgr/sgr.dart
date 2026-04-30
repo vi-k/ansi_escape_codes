@@ -267,7 +267,7 @@ const String resetNegative = resetInverse;
 /// - -as
 /// - +mac Terminal
 /// - +mac iTerm2
-/// - -mac Warp
+/// - +mac Warp
 /// - +mac WezTerm
 /// - -mac Kitty
 /// - +mac Alacritty

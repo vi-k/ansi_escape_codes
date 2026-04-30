@@ -1,3 +1,7 @@
+## 3.1.2
+
+- Add operators <, <=, >, >= for `Colors` enum.
+
 ## 3.1.0-3.1.1
 
 - Add `NoStyle`.

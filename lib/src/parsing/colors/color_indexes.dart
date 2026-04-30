@@ -262,4 +262,12 @@ enum Colors {
 
   static Colors? byIndex(int index) =>
       index >= 0 && index <= 255 ? values[index] : null;
+
+  bool operator <(Colors other) => index < other.index;
+
+  bool operator <=(Colors other) => index <= other.index;
+
+  bool operator >(Colors other) => index > other.index;
+
+  bool operator >=(Colors other) => index >= other.index;
 }
