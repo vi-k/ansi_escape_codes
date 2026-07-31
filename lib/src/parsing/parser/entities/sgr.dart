@@ -222,18 +222,13 @@ final class Sgr extends Csi {
 
           if (param4 is CsiParamNumber && param5 is CsiParamNumber) {
             try {
+              // `38;2` takes three parameters, the way xterm reads it, and
+              // whatever follows them belongs to the sequence as usual.
               color = ColorRgb(
                 param3.value,
                 param4.value,
                 param5.value,
               );
-
-              // В rgb параметров может быть больше, чем только r, g и b.
-              // Трудно понять, как терминалы могут реагировать на это.
-              // Поэтому лучшим вариантом вижу считать, что цвет в RGB
-              // задаётся всегда отдельным блоком, и дальнейший парсинг нужно
-              // отменить.
-              parsingState.cancelParsing();
 
               // ignore: avoid_catching_errors
             } on IndexError {

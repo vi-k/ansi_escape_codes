@@ -39,6 +39,16 @@ void main() {
       expect(Parser('\x1B[1;38:2::1:2:3m').finalState.isBold, isTrue);
     });
 
+    test('an RGB colour does not swallow what follows it', () {
+      final state = Parser('\x1B[38;2;1;2;3;1m').finalState;
+
+      expect(state.foregroundColor, ColorRgb(1, 2, 3));
+      expect(state.isBold, isTrue);
+
+      // The 256-colour form has always kept the tail; the two agree now.
+      expect(Parser('\x1B[38;5;1;1m').finalState.isBold, isTrue);
+    });
+
     test('leaves the functions around it alone', () {
       final state = Parser('\x1B[1;4:0;3m').finalState;
 
