@@ -261,6 +261,12 @@ final class _ParserBase<S extends State<S>> {
           }
 
         case EscapeCode():
+          if (entity is! Sgr && pos >= start && (end == null || pos <= end)) {
+            buf
+              ..write(currentState.transitTo(m.state))
+              ..write(entity.string);
+            currentState = m.state.toStyle();
+          }
           lastMatch = m;
       }
 
@@ -319,6 +325,14 @@ final class _ParserBase<S extends State<S>> {
             ..write(currentState.transitTo(m.state))
             ..write(string);
         }
+        currentState = m.state.toStyle();
+      } else if (entity is! Sgr) {
+        // Carries no style of its own, so it is kept as it was written. The
+        // styles collected so far are flushed first: erasing and scrolling
+        // read the current background color.
+        buf
+          ..write(currentState.transitTo(m.state))
+          ..write(entity.string);
         currentState = m.state.toStyle();
       }
     }
