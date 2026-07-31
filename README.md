@@ -228,7 +228,7 @@ void main() {
 }
 ```
 
-> ![IMPORTANT]
+> [!IMPORTANT]
 >
 > Please note that when using styles and applying ready-to-use values,
 > different imports are used. This is because some of the names are the same in
@@ -343,7 +343,7 @@ print('1\t2\t3\t4'); // 1 2 3 4
 print('${CSI}3g'); // Reset tabulations stops to default
 
 // Link (it doesn't work everywhere)
-print('Go to ${OSC}8;;https://pub.dev/packages/ansi_escape_codes${ST}pub.dev${OSC}8;;$ST')
+print('Go to ${OSC}8;;https://pub.dev/packages/ansi_escape_codes${ST}pub.dev${OSC}8;;$ST');
 ```
 
 
@@ -367,7 +367,7 @@ Some control functions from this set:
 | `ED`       | `CSI s J`    | Erase in page (in display) (`s`=2 - entire screen)                    |
 | `DCH`      | `CSI n P`    | Delete n characters                                                   |
 | `ECH`      | `CSI n X`    | Erase n characters                                                    |
-| `TBC`      | `CSI n g`    | Tabulation clear (`s`=3 - all character tabulation stops are cleared) |
+| `TBC`      | `CSI s g`    | Tabulation clear (`s`=3 - all character tabulation stops are cleared) |
 | `SM`       | `CSI s h`    | Set mode (`s`=4 - INSERTION REPLACEMENT MODE)                         |
 | `RM`       | `CSI s l`    | Reset mode                                                            |
 | `SGR`      | `CSI s… m`   | Select graphic rendition                                              |
@@ -405,15 +405,15 @@ the style used in Dart.
 | Cursor back                        | **template:** `${cursorLeftOpen}$n$cursorLeftClose`          <br>**function:** `cursorLeftN(int n)`              <br>**default constant:** `cursorLeft`           | Moves the cursor left `n` (default 1) characters. |
 | Cursor next line                   | **template:** `${cursorNextLineOpen}$n$cursorNextLineClose`  <br>**function:** `cursorNextLineN(int n)`          <br>**default constant:** `cursorNextLine`       | Moves cursor to beginning of the line `n` (default 1) lines down. |
 | Cursor prev line                   | **template:** `${cursorPrevLineOpen}$n$cursorPrevLineClose`  <br>**function:** `cursorPrevLineN(int n)`          <br>**default constant:** `cursorPrevLine`       | Moves cursor to beginning of the line `n` (default 1) lines up. |
-| Cursor horizontal pos              | **template:** `${cursorHPosOpen}$n$cursorHPosClose`          <br>**function:** `cursorHPosN(int n)`              <br>**default constant:** `cursorHPosToBegin`    | Moves the cursor to column `n` (default 1). |
+| Cursor horizontal pos              | **template:** `${cursorHPosOpen}$n$cursorHPosClose`          <br>**function:** `cursorHPosTo(int n)`             <br>**default constant:** `cursorHPosToBegin`    | Moves the cursor to column `n` (default 1). |
 | Cursor pos                         | **template:** `${cursorPosOpen}$row;$col$cursorPosClose`     <br>**function:** `cursorPosTo(int row, int col)`   <br>**default constant:** `cursorPosToTopLeft`   | Moves the cursor to `row` and `col`. |
 | Cursor horizontal and vertical pos | **template:** `${cursorHVPosOpen}$row;$col$cursorHVPosClose` <br>**function:** `cursorHVPosTo(int row, int col)` <br>**default constant:** `cursorHVPosToTopLeft` | Same as `cursorPos`, just with some differences. |
 | Erase in page                      | **template:** `${eraseInPageOpen}$s$eraseInPageClose`        <br>**function:**                                   <br>**default constants:** `erasePage`, `eraseInPageToBegin`, `eraseInPageToEnd` | Erases part of the page: `s`=0 (or missing) - to end, `s`=1 - to beginning, `s`=2 - entire page. |
-| Erase in line                      | **template:** `${eraseInLineOpen}$s$eraseInLineClose`        <br>**function:**                                   <br>**default constant:** `eraseLine`, `eraseInLineToBegin`, `eraseInLineToEnd` | Erases part of the line: `s`=0 (or missing) - to end, `s`=2 - to beginning, `s`=2 - entire line. |
+| Erase in line                      | **template:** `${eraseInLineOpen}$s$eraseInLineClose`        <br>**function:**                                   <br>**default constants:** `eraseLine`, `eraseInLineToBegin`, `eraseInLineToEnd` | Erases part of the line: `s`=0 (or missing) - to end, `s`=1 - to beginning, `s`=2 - entire line. |
 | Scroll up                          | **template:** `${scrollUpOpen}$n$scrollUpClose`              <br>**function:** `scrollUpN(int n)`                <br>**default constant:** `scrollUp`             | Scroll page up by `n` (default 1) lines. New lines are added at the bottom. |
 | Scroll down                        | **template:** `${scrollDownOpen}$n$scrollDownClose`          <br>**function:** `scrollDownN(int n)`              <br>**default constant:** `scrollDown`           | Scroll page down by `n` (default 1) lines. New lines are added at the top. |
-| Hide cursor                        | **constant:** `hideCursor`    | Shows the cursor. |
-| Show cursor                        | **constant:** `showCursor`    | Hides the cursor. |
+| Hide cursor                        | **constant:** `hideCursor`    | Hides the cursor. |
+| Show cursor                        | **constant:** `showCursor`    | Shows the cursor. |
 | Save cursor                        | **constant:** `saveCursor`    | Saves the cursor position, encoding shift state and formatting attributes. |
 | Restore cursor                     | **constant:** `restoreCursor` | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
 
@@ -505,11 +505,11 @@ Where `s` is:
 |    53 | `OVERLINE`                | `overline`               | Overline |
 |    54 | `NOT_FRAME_NOT_ENCIRCLE`  | `resetFrameAndEncircle`  | Not frame, not encircle |
 |    55 | `NOT_OVERLINE`            | `resetOverline`          | Not overline |
-|    58 | `UNDERLINE_COLOR`         | `underlineColor256…/underlineColorRgb…` | Underline color from [256-color table](#256-color-table) or by [RGB](#24-bit-rgb-colors) |
-|    59 | `UNDERLINE_COLOR_DEFAULT` | `underlineColorDefault`  | Default underline color |
-|    73 | `SUPERSCRIPTED`           | `superscript`            | Superscript |
+|    58 | `UNDERLINE_COLOR`         | `underline256…/underlineRgb…` | Underline color from [256-color table](#256-color-table) or by [RGB](#24-bit-rgb-colors) |
+|    59 | `UNDERLINE_COLOR_DEFAULT` | `resetUnderlineColor`    | Default underline color |
+|    73 | `SUPERSCRIPT`             | `superscript`            | Superscript |
 |    74 | `SUBSCRIPT`               | `subscript`              | Subscript |
-|    75 | `NOT_SUPER_NOT_SUBSCRIPT` | `resetSuperAnsSubscript` | Not superscript, not subscipt |
+|    75 | `NOT_SUPER_NOT_SUBSCRIPT` | `resetSuperAndSubscript` | Not superscript, not subscript |
 |    90 | `FG_HIGH_BLACK`           | `fgHighBlack`            | High black display |
 |    91 | `FG_HIGH_RED`             | `fgHighRed`              | High red display |
 |    92 | `FG_HIGH_GREEN`           | `fgHighGreen`            | High green display |
@@ -533,7 +533,7 @@ All of the following examples are equivalent:
 import 'package:ansi_escape_codes/ansi.dart';
 
 print('\x1B[1m bold \x1B[0m');
-print('$CSI$BOLD$SGR bold $SCI$RESET$SGR');
+print('$CSI$BOLD$SGR bold $CSI$RESET$SGR');
 print('$bold bold $reset');
 ```
 
@@ -676,16 +676,17 @@ print('${bgRgb(44, 43, 124)} Ultramarine $resetBg'); // Not constant!
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+import 'package:ansi_escape_codes/extensions.dart';
 
 const text = '$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ';
 final parser = Parser(text);
 parser.matches.forEach(print);
 // Match<Style>(start: 0, end: 4, entity: Sgr(bold), state: Style(bold))
 // Match<Style>(start: 4, end: 10, entity: Text(' Bold '), state: Style(bold))
-// Match<Style>(start: 10, end: 15, entity: Sgr(fgCyan), state: Style(bold, foreground: Color16(Colors.cyan)))
-// Match<Style>(start: 15, end: 26, entity: Text(' Bold+cyan '), state: Style(bold, foreground: Color16(Colors.cyan)))
-// Match<Style>(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: Style(foreground: Color16(Colors.cyan)))
-// Match<Style>(start: 31, end: 37, entity: Text(' Cyan '), state: Style(foreground: Color16(Colors.cyan)))
+// Match<Style>(start: 10, end: 15, entity: Sgr(fgCyan), state: Style(bold, foreground: Color16.cyan))
+// Match<Style>(start: 15, end: 26, entity: Text(' Bold+cyan '), state: Style(bold, foreground: Color16.cyan))
+// Match<Style>(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: Style(foreground: Color16.cyan))
+// Match<Style>(start: 31, end: 37, entity: Text(' Cyan '), state: Style(foreground: Color16.cyan))
 ```
 
 In this way we can, for example, remove all escape codes:
@@ -744,11 +745,11 @@ The style at a particular position can be found with `stateAt`.
 ```dart
 final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
 final style = parser.stateAt(7);
-print(style); // Style(bold, foreground: Color16(Colors.cyan))
+print(style); // Style(bold, foreground: Color16.cyan)
 print(style.isBold); // true
 print(style.isItalic); // false
-print(style.foreground?.id); // fgCyan
-print(style.background?.id); // null
+print(style.foregroundColor?.id); // fgCyan
+print(style.backgroundColor?.id); // null
 ```
 
 The position in `stateAt` is specified in the plaintext range
@@ -783,7 +784,7 @@ together its state:
 ```dart
 final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
 final substr = parser.substring(7, maxLength: 9); // "Bold+cyan"
-print(Parser(substr).ansiShowControlFunctions()); // [fgCyan;bold]Bold+cyan[reset]
+print(Parser(substr).showControlFunctions()); // [fgCyan;bold]Bold+cyan[reset]
 ```
 
 By default, the substring is closed. Escape codes is always included in the
@@ -794,8 +795,8 @@ final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
 final substr = parser.substring(7, maxLength: 9); // "Bold+cyan"
 const test1 = '$fgCyan$bold';
 final test2 = substr.substring(0, substr.indexOf('Bold'));
-print(test1.showEscapeCodes()); // [CSI 36 SGR][CSI 1 SGR]
-print(test2.showEscapeCodes()); // [CSI 36;1 SGR]
+print(test1.ansiShowEscapeSequences()); // [CSI 36 SGR][CSI 1 SGR]
+print(test2.ansiShowEscapeSequences()); // [CSI 36;1 SGR]
 print(Parser(test1).showControlFunctions()); // [fgCyan][bold]
 print(Parser(test2).showControlFunctions()); // [fgCyan;bold]
 print(test1.length); // 9
@@ -823,6 +824,7 @@ print(Parser(optimizedText).showControlFunctions());
 You can quickly analyze a string without using `Parser` by using extensions.
 
 ```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:ansi_escape_codes/extensions.dart';
 
 …
@@ -882,7 +884,7 @@ final andWithoutSgr = andWithoutForeground.ansiRemoveSgr();
 print(Parser(andWithoutSgr).showControlFunctions());
 // [saveCursor][CSI CUF] Text [restoreCursor]
 
-final andWithoutCsi = andWithoutSgr.ansiRemoveSgr();
+final andWithoutCsi = andWithoutSgr.ansiRemoveCsi();
 print(Parser(andWithoutCsi).showControlFunctions());
 // [saveCursor] Text [restoreCursor]
 
@@ -977,7 +979,7 @@ import 'dart:developer';
 …
 
 runZonedPrinter(
-  defaultState: const Style(
+  defaultStyle: const Style(
     background: Color16.green,
     foreground: Color16.yellow,
   ),
