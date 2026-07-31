@@ -22,20 +22,23 @@ Future<(int, int)> currentCursorPos(Stdout stdout, Stdin stdin) async {
       ..echoMode = false
       ..lineMode = false;
 
-    final stream = stdin.asBroadcastStream(
-      onCancel: (subscription) {
-        subscription.cancel();
-      },
-    );
+    try {
+      final stream = stdin.asBroadcastStream(
+        onCancel: (subscription) {
+          subscription.cancel();
+        },
+      );
 
-    final cursorSeqF = stream.first.timeout(const Duration(milliseconds: 100));
+      final cursorSeqF =
+          stream.first.timeout(const Duration(milliseconds: 100));
 
-    stdout.write('${CSI}6$DSR');
-    cursorSeq = await cursorSeqF;
-
-    stdin
-      ..echoMode = keepEchoMode
-      ..lineMode = keepLineMode;
+      stdout.write('${CSI}6$DSR');
+      cursorSeq = await cursorSeqF;
+    } finally {
+      stdin
+        ..echoMode = keepEchoMode
+        ..lineMode = keepLineMode;
+    }
   } on Object catch (_, stacktrace) {
     Error.throwWithStackTrace(
       UnsupportedError(errorText),
