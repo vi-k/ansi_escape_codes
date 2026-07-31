@@ -47,16 +47,16 @@ const String cursorDownOpen = CSI;
 /// Template: `'$cursorDownOpen[$n]$cursorDownClose'`.
 ///
 /// See also [cursorDown] and [cursorDownN].
-const String cursorDownClose = CUB;
+const String cursorDownClose = CUD;
 
-/// Cursor Down: moves the cursor up `1` line.
+/// Cursor Down: moves the cursor down `1` line.
 ///
 /// See [CUD].
 ///
 /// See also [cursorDownOpen], [cursorDownClose] and [cursorDownN].
 const String cursorDown = '$cursorDownOpen$cursorDownClose';
 
-/// Cursor Down: moves the cursor up [n] line.
+/// Cursor Down: moves the cursor down [n] lines.
 ///
 /// See [CUD].
 ///
