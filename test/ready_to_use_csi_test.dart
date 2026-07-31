@@ -49,6 +49,35 @@ void main() {
       }
     });
 
+    test('the functions refuse a value that would move nothing', () {
+      const calls = <String, String Function(int)>{
+        'cursorUpN': cursorUpN,
+        'cursorDownN': cursorDownN,
+        'cursorRightN': cursorRightN,
+        'cursorLeftN': cursorLeftN,
+        'cursorNextLineN': cursorNextLineN,
+        'cursorPrevLineN': cursorPrevLineN,
+        'cursorHPosTo': cursorHPosTo,
+        'scrollUpN': scrollUpN,
+        'scrollDownN': scrollDownN,
+      };
+
+      for (final MapEntry(key: name, value: call) in calls.entries) {
+        for (final value in [0, -1]) {
+          expect(
+            () => call(value),
+            throwsA(isA<RangeError>()),
+            reason: '$name($value)',
+          );
+        }
+      }
+
+      expect(() => cursorPosTo(0, 1), throwsA(isA<RangeError>()));
+      expect(() => cursorPosTo(1, -1), throwsA(isA<RangeError>()));
+      expect(() => cursorHVPosTo(-1, 1), throwsA(isA<RangeError>()));
+      expect(() => cursorHVPosTo(1, 0), throwsA(isA<RangeError>()));
+    });
+
     test('constants and functions emit correct raw sequences', () {
       const constants = {
         'cursorUp': (cursorUp, '\x1B[A'),

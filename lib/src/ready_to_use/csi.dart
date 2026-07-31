@@ -29,7 +29,7 @@ const String cursorUp = '$cursorUpOpen$cursorUpClose';
 /// Cursor Up: moves the cursor up [n] lines.
 ///
 /// See also [cursorUpOpen], [cursorUpClose] and [cursorUp].
-String cursorUpN(int n) => '$cursorUpOpen$n$cursorUpClose';
+String cursorUpN(int n) => '$cursorUpOpen${_checked(n, 'n')}$cursorUpClose';
 
 /// Cursor Down: opening tag.
 ///
@@ -61,7 +61,8 @@ const String cursorDown = '$cursorDownOpen$cursorDownClose';
 /// See [CUD].
 ///
 /// See also [cursorDownOpen], [cursorDownClose] and [cursorDownN].
-String cursorDownN(int n) => '$cursorDownOpen$n$cursorDownClose';
+String cursorDownN(int n) =>
+    '$cursorDownOpen${_checked(n, 'n')}$cursorDownClose';
 
 /// Cursor Right: opening tag.
 ///
@@ -93,7 +94,8 @@ const String cursorRight = '$cursorRightOpen$cursorRightClose';
 /// See [CUF].
 ///
 /// See also [cursorRightOpen], [cursorRightClose] and [cursorRightN].
-String cursorRightN(int n) => '$cursorRightOpen$n$cursorRightClose';
+String cursorRightN(int n) =>
+    '$cursorRightOpen${_checked(n, 'n')}$cursorRightClose';
 
 /// Cursor Left: opening tag.
 ///
@@ -125,7 +127,8 @@ const String cursorLeft = '$cursorLeftOpen$cursorLeftClose';
 /// See [CUB].
 ///
 /// See also [cursorLeftOpen], [cursorLeftClose] and [cursorLeftN].
-String cursorLeftN(int n) => '$cursorLeftOpen$n$cursorLeftClose';
+String cursorLeftN(int n) =>
+    '$cursorLeftOpen${_checked(n, 'n')}$cursorLeftClose';
 
 /// Cursor Next Line: opening tag.
 ///
@@ -157,7 +160,8 @@ const String cursorNextLine = '$cursorNextLineOpen$cursorNextLineClose';
 /// See [CNL].
 ///
 /// See also [cursorNextLineOpen], [cursorNextLineClose] and [cursorNextLineN].
-String cursorNextLineN(int n) => '$cursorNextLineOpen$n$cursorNextLineClose';
+String cursorNextLineN(int n) =>
+    '$cursorNextLineOpen${_checked(n, 'n')}$cursorNextLineClose';
 
 /// Cursor Preceding Line: opening tag.
 ///
@@ -189,7 +193,8 @@ const String cursorPrevLine = '$cursorPrevLineOpen$cursorPrevLineClose';
 /// See [CPL].
 ///
 /// See also [cursorPrevLineOpen], [cursorPrevLineClose] and [cursorPrevLineN].
-String cursorPrevLineN(int n) => '$cursorPrevLineOpen$n$cursorPrevLineClose';
+String cursorPrevLineN(int n) =>
+    '$cursorPrevLineOpen${_checked(n, 'n')}$cursorPrevLineClose';
 
 /// Cursor Character Absolute: opening tag.
 ///
@@ -221,7 +226,8 @@ const String cursorHPosToBegin = '$cursorHPosOpen$cursorHPosClose';
 /// See [CHA].
 ///
 /// See also [cursorHPosOpen], [cursorHPosClose] and [cursorHPosTo].
-String cursorHPosTo(int n) => '$cursorHPosOpen$n$cursorHPosClose';
+String cursorHPosTo(int n) =>
+    '$cursorHPosOpen${_checked(n, 'n')}$cursorHPosClose';
 
 /// Cursor Position: opening tag.
 ///
@@ -254,7 +260,8 @@ const String cursorPosToTopLeft = '$cursorPosOpen$cursorPosClose';
 ///
 /// See also [cursorPosOpen], [cursorPosClose] and [cursorPosTo].
 String cursorPosTo(int row, int col) =>
-    '$cursorPosOpen$row;$col$cursorPosClose';
+    '$cursorPosOpen${_checked(row, 'row')};${_checked(col, 'col')}'
+    '$cursorPosClose';
 
 /// Character And Line Position: opening tag.
 ///
@@ -287,7 +294,8 @@ const String cursorHVPosToTopLeft = '$cursorHVPosOpen$cursorHVPosClose';
 ///
 /// See also [cursorHVPosOpen], [cursorHVPosClose] and [cursorHVPosTo].
 String cursorHVPosTo(int row, int col) =>
-    '$cursorHVPosOpen$row;$col$cursorHVPosClose';
+    '$cursorHVPosOpen${_checked(row, 'row')};${_checked(col, 'col')}'
+    '$cursorHVPosClose';
 
 /// Erase In Page: opening tag.
 ///
@@ -415,7 +423,7 @@ const String scrollUp = '$scrollUpOpen$scrollUpClose';
 /// See [SU].
 ///
 /// See also [scrollUpOpen], [scrollUpClose] and [scrollUpN].
-String scrollUpN(int n) => '$scrollUpOpen$n$scrollUpClose';
+String scrollUpN(int n) => '$scrollUpOpen${_checked(n, 'n')}$scrollUpClose';
 
 /// Scroll Down: opening tag.
 ///
@@ -447,7 +455,17 @@ const String scrollDown = '$scrollDownOpen$scrollDownClose';
 /// See [SD].
 ///
 /// See also [scrollDownOpen], [scrollDownClose] and [scrollDownN].
-String scrollDownN(int n) => '$scrollDownOpen$n$scrollDownClose';
+String scrollDownN(int n) =>
+    '$scrollDownOpen${_checked(n, 'n')}$scrollDownClose';
+
+/// Checks a parameter that is meant to move the cursor or the page.
+///
+/// Below `1` there is nothing to move by, and a negative value would not even
+/// leave a valid sequence behind: `-` is not a parameter byte, so the terminal
+/// would have to find its way out of the middle of a broken one.
+int _checked(int value, String name) => value < 1
+    ? throw RangeError.value(value, name, 'Must be greater than 0')
+    : value;
 
 /// Shows the cursor.
 const String showCursor = '$CSI?25h';
