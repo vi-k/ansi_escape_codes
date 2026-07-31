@@ -1,3 +1,4 @@
+import '../internal/sgr_functions.dart';
 import '../parsing/patterns/patterns.dart';
 
 extension StringHasEscapeCodesExtension on String {
@@ -23,13 +24,13 @@ extension StringHasEscapeCodesExtension on String {
   bool get hasForeground => ansiHasForeground;
 
   /// Whether the foreground color in the text changes.
-  bool get ansiHasForeground => foregroundRe.hasMatch(this);
+  bool get ansiHasForeground => hasSgrFunction(this, isForegroundFunction);
 
   @Deprecated('Use ansiHasBackground instead')
   bool get hasBackground => ansiHasBackground;
 
   /// Whether the background color in the text changes.
-  bool get ansiHasBackground => backgroundRe.hasMatch(this);
+  bool get ansiHasBackground => hasSgrFunction(this, isBackgroundFunction);
 
   bool get ansiHasControlCodes => controlCodesRe.hasMatch(this);
 }

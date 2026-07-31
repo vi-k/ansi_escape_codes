@@ -1,3 +1,4 @@
+import '../internal/sgr_functions.dart';
 import '../parsing/patterns/patterns.dart';
 
 extension StringRemoveEscapeCodesExtension on String {
@@ -20,13 +21,21 @@ extension StringRemoveEscapeCodesExtension on String {
   String removeSgr() => ansiRemoveSgr();
 
   /// Removes foreground colors in the text.
-  String ansiRemoveForeground() => replaceAll(foregroundRe, '');
+  ///
+  /// The other functions of a sequence are kept: `CSI 1;31 SGR` becomes
+  /// `CSI 1 SGR`.
+  String ansiRemoveForeground() =>
+      removeSgrFunction(this, isForegroundFunction);
 
   @Deprecated('Use ansiRemoveForeground instead')
   String removeForeground() => ansiRemoveForeground();
 
   /// Removes background colors in the text.
-  String ansiRemoveBackground() => replaceAll(backgroundRe, '');
+  ///
+  /// The other functions of a sequence are kept: `CSI 1;41 SGR` becomes
+  /// `CSI 1 SGR`.
+  String ansiRemoveBackground() =>
+      removeSgrFunction(this, isBackgroundFunction);
 
   @Deprecated('Use ansiRemoveBackground instead')
   String removeBackground() => ansiRemoveBackground();
