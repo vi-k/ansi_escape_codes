@@ -84,7 +84,7 @@ extension StringShowEscapeCodesExtension on String {
       final osc = m.namedGroup('osc');
       if (osc != null) {
         final params = m.namedGroup('osc_params')!;
-        final terminator = m.namedGroup('osc_terminator')!;
+        final terminator = m.namedGroup('osc_terminator');
 
         buf
           ..write(open)
@@ -96,9 +96,12 @@ extension StringShowEscapeCodesExtension on String {
           ..write(paramsClose)
           ..write(finalOpen)
           ..write(
-            terminator == BEL
-                ? ControlFunctionsC0.BEL.name
-                : ControlFunctionsC1.ST.name,
+            switch (terminator) {
+              BEL => ControlFunctionsC0.BEL.name,
+              // The string was never terminated.
+              null => '',
+              _ => ControlFunctionsC1.ST.name,
+            },
           )
           ..write(finalClose)
           ..write(close);

@@ -8,7 +8,10 @@ sealed class Osc extends EscapeCode {
     final firstParam = int.tryParse(params[0]);
 
     return switch (firstParam) {
-      8 when params.length == 3 => Link._(state.string, params[2]),
+      // OSC 8 is `8 ; params ; uri`, and the uri may hold semicolons of its
+      // own, so everything past the second one belongs to it.
+      8 when params.length >= 3 =>
+        Link._(state.string, params.sublist(2).join(';')),
       _ => OscUnknown._(state.string),
     };
   }

@@ -22,8 +22,14 @@ const String sgrPattern = '(?<csi>$ESC\\[)'
 final RegExp sgrRe = RegExp(sgrPattern);
 
 /// Pattern for OSC.
+///
+/// The string runs until its terminator, and a terminator that never comes —
+/// a truncated stream, or a sequence the writer forgot to close — ends it at
+/// the next `ESC` or at the end of the text. Without that the string would be
+/// read as a two-character escape code and its payload would surface as text.
 const String oscPattern = '(?<osc>$ESC\\])'
-    '(?<osc_params>.*?)(?<osc_terminator>$BEL|$ESC\\\\)';
+    '(?<osc_params>[^$BEL$ESC]*)'
+    '(?<osc_terminator>$BEL|$ESC\\\\)?';
 
 /// Pattern for OSC.
 final oscRe = RegExp(oscPattern);
