@@ -17,6 +17,51 @@ void main() {
       expect(stdin.lineMode, isTrue);
     });
 
+    test('reads a reply that arrives in pieces', () async {
+      final stdin = _FakeStdin(
+        Stream.fromIterable([
+          '\x1B['.codeUnits,
+          '12;'.codeUnits,
+          '34R'.codeUnits,
+        ]),
+      );
+
+      expect(await currentCursorPos(_FakeStdout(), stdin), (12, 34));
+    });
+
+    test('ignores what was typed before the reply', () async {
+      final stdin = _FakeStdin(
+        Stream.fromIterable([
+          'q'.codeUnits,
+          '\x1B[12;34R'.codeUnits,
+        ]),
+      );
+
+      expect(await currentCursorPos(_FakeStdout(), stdin), (12, 34));
+    });
+
+    test('can be asked again when the input is shared', () async {
+      final controller = StreamController<List<int>>.broadcast();
+      addTearDown(controller.close);
+      final stdin = _FakeStdin(const Stream<List<int>>.empty());
+      final stdout = _FakeStdout();
+
+      Future<(int, int)> ask(String reply) async {
+        final answer = currentCursorPos(
+          stdout,
+          stdin,
+          input: controller.stream,
+        );
+        await Future<void>.delayed(Duration.zero);
+        controller.add(reply.codeUnits);
+
+        return answer;
+      }
+
+      expect(await ask('\x1B[1;2R'), (1, 2));
+      expect(await ask('\x1B[3;4R'), (3, 4));
+    });
+
     test('restores the terminal modes when there is no answer', () async {
       final controller = StreamController<List<int>>();
       addTearDown(controller.close);
@@ -24,7 +69,11 @@ void main() {
       final stdout = _FakeStdout();
 
       await expectLater(
-        currentCursorPos(stdout, stdin),
+        currentCursorPos(
+          stdout,
+          stdin,
+          timeout: const Duration(milliseconds: 10),
+        ),
         throwsA(isA<UnsupportedError>()),
       );
 
