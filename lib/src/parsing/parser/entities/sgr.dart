@@ -77,6 +77,16 @@ final class Sgr extends Csi {
                 ControlFunctionsSGR.underlineColor,
               );
 
+            case UNDERLINE:
+              if (!_parseSimpleFunction(
+                parsingState,
+                _underlineFunctionFromValues(values),
+              )) {
+                parsingState.commitFunction(
+                  SgrUnknownParamsFunction(values),
+                );
+              }
+
             default:
               if (!_parseSimpleFunction(parsingState, firstValue)) {
                 parsingState.commitFunction(
@@ -91,6 +101,17 @@ final class Sgr extends Csi {
 
     return Sgr._(state.string, params, parsingState.functions);
   }
+
+  /// The function `4:n` stands for.
+  ///
+  /// The kinds this package does not tell apart — curly, dotted and dashed —
+  /// are read as a plain underline.
+  static int _underlineFunctionFromValues(List<int> values) =>
+      switch (values.length > 1 ? values[1] : 1) {
+        0 => NOT_UNDERLINE,
+        2 => DOUBLY_UNDERLINE,
+        _ => UNDERLINE,
+      };
 
   static bool _parseSimpleFunction<S extends State<S>>(
     _SgrParsingState<S> parsingState,
