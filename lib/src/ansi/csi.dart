@@ -1221,12 +1221,12 @@ const String PRIVATEUSE_70 = 'p';
 const String PRIVATEUSE_71 = 'q';
 const String PRIVATEUSE_72 = 'r';
 
-/// Save Cursor (not standart).
+/// Save Cursor (not standard).
 const String SAVE_CURSOR = 's';
 
 const String PRIVATEUSE_74 = 't';
 
-/// Restore Cursor (not standart).
+/// Restore Cursor (not standard).
 const String RESTORE_CURSOR = 'u';
 
 // Final Bytes of control sequences with a single Intermediate Byte 0x20.

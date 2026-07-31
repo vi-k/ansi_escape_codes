@@ -456,7 +456,7 @@ const String subscript = '$CSI$SUBSCRIPT$SGR';
 @Deprecated('Use subscript instead')
 const String subscripted = subscript;
 
-/// Not superscripted, not subscipted.
+/// Not superscripted, not subscripted.
 ///
 /// See [NOT_SUPER_NOT_SUBSCRIPT].
 ///

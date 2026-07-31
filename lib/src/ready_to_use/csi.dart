@@ -81,14 +81,14 @@ const String cursorRightOpen = CSI;
 /// See also [cursorRight] and [cursorRightN].
 const String cursorRightClose = CUF;
 
-/// Cursor Right: moves the cursor right `1` line.
+/// Cursor Right: moves the cursor right `1` column.
 ///
 /// See [CUF].
 ///
 /// See also [cursorRightOpen], [cursorRightClose] and [cursorRightN].
 const String cursorRight = '$cursorRightOpen$cursorRightClose';
 
-/// Cursor Right: moves the cursor right [n] line.
+/// Cursor Right: moves the cursor right [n] columns.
 ///
 /// See [CUF].
 ///
@@ -113,14 +113,14 @@ const String cursorLeftOpen = CSI;
 /// See also [cursorLeft] and [cursorLeftN].
 const String cursorLeftClose = CUB;
 
-/// Cursor Left: moves the cursor left `1` line.
+/// Cursor Left: moves the cursor left `1` column.
 ///
 /// See [CUB].
 ///
 /// See also [cursorLeftOpen], [cursorLeftClose] and [cursorLeftN].
 const String cursorLeft = '$cursorLeftOpen$cursorLeftClose';
 
-/// Cursor Left: moves the cursor left [n] line.
+/// Cursor Left: moves the cursor left [n] columns.
 ///
 /// See [CUB].
 ///
@@ -227,7 +227,7 @@ String cursorHPosTo(int n) => '$cursorHPosOpen$n$cursorHPosClose';
 ///
 /// See [CUP].
 ///
-/// Template: `'$cursorPosOpen[$n]$cursorPosClose'`.
+/// Template: `'$cursorPosOpen[$row];[$col]$cursorPosClose'`.
 ///
 /// See also [cursorPosToTopLeft] and [cursorPosTo].
 const String cursorPosOpen = CSI;
@@ -236,7 +236,7 @@ const String cursorPosOpen = CSI;
 ///
 /// See [CUP].
 ///
-/// Template: `'$cursorPosOpen[$n]$cursorPosClose'`.
+/// Template: `'$cursorPosOpen[$row];[$col]$cursorPosClose'`.
 ///
 /// See also [cursorPosToTopLeft] and [cursorPosTo].
 const String cursorPosClose = CUP;
@@ -248,7 +248,7 @@ const String cursorPosClose = CUP;
 /// See also [cursorPosOpen], [cursorPosClose] and [cursorPosTo].
 const String cursorPosToTopLeft = '$cursorPosOpen$cursorPosClose';
 
-/// Cursor Position: moves the cursor to to [row] and [col].
+/// Cursor Position: moves the cursor to [row] and [col].
 ///
 /// See [CUP].
 ///
@@ -260,7 +260,7 @@ String cursorPosTo(int row, int col) =>
 ///
 /// See [HVP].
 ///
-/// Template: `'$cursorHVPosOpen[$n]$cursorHVPosClose'`.
+/// Template: `'$cursorHVPosOpen[$row];[$col]$cursorHVPosClose'`.
 ///
 /// See also [cursorHVPosToTopLeft] and [cursorHVPosTo].
 const String cursorHVPosOpen = CSI;
@@ -269,7 +269,7 @@ const String cursorHVPosOpen = CSI;
 ///
 /// See [HVP].
 ///
-/// Template: `'$cursorHVPosOpen[$n]$cursorHVPosClose'`.
+/// Template: `'$cursorHVPosOpen[$row];[$col]$cursorHVPosClose'`.
 ///
 /// See also [cursorHVPosToTopLeft] and [cursorHVPosTo].
 const String cursorHVPosClose = HVP;
@@ -342,28 +342,28 @@ const String erasePage = '${eraseInPageOpen}2$eraseInPageClose';
 ///
 /// See [EL].
 ///
-/// Template: `'$eraseLineOpen[$s]$eraseLineClose'`.
+/// Template: `'$eraseInLineOpen[$s]$eraseInLineClose'`.
 ///
-/// Erase part of the screen:
-/// - If n is 0 (or missing), clear from cursor to the end of the line. See
+/// Erases part of the line:
+/// - If `s` is `0` (or missing), clear from cursor to the end of the line. See
 ///   [eraseInLineToEnd].
-/// - If n is 1, clear from cursor to beginning of the line. See
+/// - If `s` is `1`, clear from cursor to beginning of the line. See
 ///   [eraseInLineToBegin].
-/// - If n is 2, clear entire line. See [eraseLine].
+/// - If `s` is `2`, clear entire line. See [eraseLine].
 const String eraseInLineOpen = CSI;
 
 /// Erase In Line: closing tag.
 ///
 /// See [EL].
 ///
-/// Template: `'$eraseLineOpen[$s]$eraseLineClose'`.
+/// Template: `'$eraseInLineOpen[$s]$eraseInLineClose'`.
 ///
 /// See also [eraseInLineToEnd], [eraseInLineToBegin] and [eraseLine].
 const String eraseInLineClose = EL;
 
 /// Erase In Line: erases from cursor to the end of the line.
 ///
-/// See [ED].
+/// See [EL].
 ///
 /// See also [eraseInLineOpen], [eraseInLineClose], [eraseInLineToBegin] and
 /// [eraseLine].
@@ -371,7 +371,7 @@ const String eraseInLineToEnd = '$eraseInLineOpen$eraseInLineClose';
 
 /// Erase In Line: erases from cursor to beginning of the line.
 ///
-/// See [ED].
+/// See [EL].
 ///
 /// See also [eraseInLineOpen], [eraseInLineClose], [eraseInLineToEnd] and
 /// [eraseLine].
@@ -379,7 +379,7 @@ const String eraseInLineToBegin = '${eraseInLineOpen}1$eraseInLineClose';
 
 /// Erase In Line: erases entire line.
 ///
-/// See [ED].
+/// See [EL].
 ///
 /// See also [eraseInLineOpen], [eraseInLineClose], [eraseInLineToEnd] and
 /// [eraseInLineToBegin].

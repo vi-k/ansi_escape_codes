@@ -5,7 +5,7 @@ import 'utils.dart';
 /// Usage:
 ///
 /// ```bash
-/// dart run example/sgr.dart
+/// dart run example/check_compatibility.dart
 /// ```
 void main() {
   // Bold and dim.

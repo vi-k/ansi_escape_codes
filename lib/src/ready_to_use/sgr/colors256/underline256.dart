@@ -14,10 +14,10 @@ import '../../../ansi/sgr.dart';
 ///
 /// Not in standard!
 ///
-/// Template: `${underline256Open}{color}${underline256Close}`
+/// Template: `${underline256Open}${colorIndex}${underline256Close}`
 ///
 /// Predefined constants:
-/// `$underline256Open$black$underline256Close` = `underline256Black`
+/// `$underline256Open$BLACK$underline256Close` = `underline256Black`
 ///
 /// Compatibility:
 /// - -vscode
@@ -33,7 +33,7 @@ import '../../../ansi/sgr.dart';
 /// - -mac Warp
 ///
 /// See color indexes in the
-/// [colors_8bit/indexes.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/values/sgr/colors_8bit/indexes.dart).
+/// [colors.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/ansi/colors.dart).
 ///
 /// See also [underline256Close] and [underline256].
 const String underline256Open = '$CSI$UNDERLINE_COLOR;$COLOR_256;';

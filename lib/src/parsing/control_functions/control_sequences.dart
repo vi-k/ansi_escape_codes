@@ -160,7 +160,7 @@ enum ControlSequencesFunctions {
   PRIVATEUSE_72('r', null, _Type.private),
 
   /// See [csi.SAVE_CURSOR].
-  SAVE_CURSOR(csi.SAVE_CURSOR, 'Save Crusor'),
+  SAVE_CURSOR(csi.SAVE_CURSOR, 'Save Cursor'),
 
   /// Private.
   PRIVATEUSE_74('t', null, _Type.private),
