@@ -3,6 +3,8 @@ import 'dart:math' as math;
 
 import 'package:meta/meta.dart';
 
+import '../../ansi/c0.dart';
+import '../../ansi/c1.dart';
 import '../../ansi/sgr.dart';
 import '../../extensions/remove.dart';
 import '../../extensions/show_control_codes.dart';

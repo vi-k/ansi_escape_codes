@@ -27,7 +27,7 @@ final class OscUnknown extends Osc with UnrecognizedEscapeCode {
 final class Link extends Osc {
   final String url;
 
-  const Link(this.url) : super._(reset);
+  const Link(this.url) : super._('${OSC}8;;$url$ST');
 
   const Link._(super.string, this.url) : super._();
 

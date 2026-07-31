@@ -25,7 +25,7 @@ final class EscUnknown extends Esc with UnrecognizedEscapeCode {
 }
 
 final class SaveCursor extends Esc {
-  const SaveCursor() : super._(reset);
+  const SaveCursor() : super._('${ESC}7');
 
   const SaveCursor._(super.string) : super._();
 
@@ -37,7 +37,7 @@ final class SaveCursor extends Esc {
 }
 
 final class RestoreCursor extends Esc {
-  const RestoreCursor() : super._(reset);
+  const RestoreCursor() : super._('${ESC}8');
 
   const RestoreCursor._(super.string) : super._();
 
