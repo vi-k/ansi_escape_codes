@@ -42,6 +42,17 @@ void main() {
       expect(state.underlineColorValue, isNull);
     });
 
+    test('carries an underline colour through the stack', () {
+      expect(
+        Stack.terminalColors.underlineColor(Color256.red).underlineColorValue,
+        Color256.red,
+      );
+      expect(
+        StackedParser('\x1B[58;5;1m').finalState.underlineColorValue,
+        Color256.red,
+      );
+    });
+
     test('nesting of the same property still unwinds one level at a time', () {
       expect(
         StackedParser('$bold$bold$resetBoldAndDim').finalState.isBold,

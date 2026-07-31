@@ -255,7 +255,7 @@ final class Stack extends State<Stack> {
       _copyWith(backgroundStack: List.of(_backgroundStack)..add(color));
 
   @override
-  Stack underlineColor(Color color) =>
+  Stack underlineColor(ExtendedColor color) =>
       _copyWith(underlineColorStack: List.of(_underlineColorStack)..add(color));
 
   @override
@@ -411,7 +411,7 @@ final class Stack extends State<Stack> {
     List<ScriptStyle>? scripStack,
     List<Color>? foregroundStack,
     List<Color>? backgroundStack,
-    List<Color>? underlineColorStack,
+    List<ExtendedColor>? underlineColorStack,
   }) =>
       Stack._(
         intencityStack: intencityStack == null
