@@ -2,12 +2,24 @@ import 'dart:io' as io;
 
 import '../ansi/c1.dart';
 import '../ansi/csi.dart';
+import '../ready_to_use/csi.dart';
 
 /// Sets the tabulation stops of the terminal.
+///
+/// The stops that were set before are always cleared first, so calling this
+/// without [defaultTab] and without [tabs] leaves the terminal with no stops
+/// at all — it does not bring back the ones the terminal started with.
+///
+/// [tabs] sets a stop after each of the given distances; [defaultTab] then
+/// keeps setting one every that many columns until the width of the terminal
+/// is reached.
 ///
 /// Every stop advances the cursor, so [defaultTab] and each element of [tabs]
 /// must be greater than `0`, otherwise a [RangeError] is thrown and nothing is
 /// written.
+///
+/// Nothing is written when [stdout] is not a terminal: there are no stops to
+/// set and no width to fit them into.
 void tabs({
   int? defaultTab,
   List<int>? tabs,
@@ -26,6 +38,10 @@ void tabs({
   }
 
   stdout ??= io.stdout;
+  if (!stdout.hasTerminal) {
+    return;
+  }
+
   final width = stdout.terminalColumns;
 
   // Reset tabs.
@@ -41,7 +57,7 @@ void tabs({
         break;
       }
       stdout
-        ..write(' ' * tab)
+        ..write(cursorRightN(tab))
         ..write(HTS);
     }
   }
@@ -58,7 +74,7 @@ void tabs({
         break;
       }
       stdout
-        ..write(' ' * defaultTab)
+        ..write(cursorRightN(defaultTab))
         ..write(HTS);
     }
   }

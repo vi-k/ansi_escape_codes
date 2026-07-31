@@ -4,6 +4,7 @@
 import 'dart:io';
 
 import 'package:ansi_escape_codes/ansi.dart';
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:ansi_escape_codes/utils.dart';
 import 'package:test/test.dart';
 
@@ -18,10 +19,34 @@ void main() {
         stdout.written,
         '\r${CSI}3$TBC'
         '$HTS'
-        '${' ' * 8}$HTS'
-        '${' ' * 8}$HTS'
+        '${cursorRightN(8)}$HTS'
+        '${cursorRightN(8)}$HTS'
         '\r',
       );
+    });
+
+    test('moves the cursor instead of writing over the line', () {
+      final stdout = _FakeStdout(terminalColumns: 20);
+
+      tabs(tabs: [4, 4], stdout: stdout);
+
+      expect(stdout.written, isNot(contains(' ')));
+    });
+
+    test('without arguments it only clears the stops', () {
+      final stdout = _FakeStdout(terminalColumns: 20);
+
+      tabs(stdout: stdout);
+
+      expect(stdout.written, '\r${CSI}3$TBC\r');
+    });
+
+    test('does nothing when there is no terminal', () {
+      final stdout = _FakeStdout(terminalColumns: 20, hasTerminal: false);
+
+      tabs(defaultTab: 8, stdout: stdout);
+
+      expect(stdout.written, isEmpty);
     });
 
     test('rejects a `defaultTab` that would never advance the cursor', () {
@@ -50,10 +75,13 @@ void main() {
 }
 
 final class _FakeStdout implements Stdout {
-  _FakeStdout({required this.terminalColumns});
+  _FakeStdout({required this.terminalColumns, this.hasTerminal = true});
 
   @override
   final int terminalColumns;
+
+  @override
+  final bool hasTerminal;
 
   final StringBuffer _buf = StringBuffer();
   int _writes = 0;

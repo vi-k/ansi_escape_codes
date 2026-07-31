@@ -279,6 +279,6 @@ void main() {
     tabs(defaultTab: 4);
     print(text);
 
-    tabs(); // Reset to defaults
+    tabs(); // Clears every stop, leaving the terminal with none
   }
 }
