@@ -4,11 +4,12 @@ sealed class Esc extends EscapeCode {
   const Esc._(super.string) : super._();
 
   static Esc _parse<S extends State<S>>(MatchingState<S> state) {
-    final code = state['esc_final']!;
+    final intermediate = state['esc_inter'] ?? '';
+    final code = state['esc_final'];
 
     return switch (code) {
-      '7' => SaveCursor._(state.string),
-      '8' => RestoreCursor._(state.string),
+      '7' when intermediate.isEmpty => SaveCursor._(state.string),
+      '8' when intermediate.isEmpty => RestoreCursor._(state.string),
       _ => EscUnknown._(state.string),
     };
   }

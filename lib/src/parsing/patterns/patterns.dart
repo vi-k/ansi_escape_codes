@@ -29,7 +29,17 @@ const String oscPattern = '(?<osc>$ESC\\])'
 final oscRe = RegExp(oscPattern);
 
 /// Pattern for ESC.
-const String escPattern = '(?<esc>$ESC)(?<esc_final>.)';
+///
+/// An escape sequence is `ESC`, any number of intermediate bytes and a final
+/// byte. The final byte is optional here so that a broken sequence — a lone
+/// `ESC` at the end of the text, or one followed by a byte that cannot end a
+/// sequence — is still recognized as an escape code rather than left in the
+/// text.
+const String escPattern =
+    '(?<esc>$ESC)(?<esc_inter>$_intermediates*)(?<esc_final>[\x30-\x7E])?';
+
+/// Bytes that may precede the final byte of a sequence.
+const String _intermediates = '[\x20-\x2F]';
 
 /// Pattern for control codes.
 final controlCodesRe = RegExp('[\x00-\x1F\x7F]');
