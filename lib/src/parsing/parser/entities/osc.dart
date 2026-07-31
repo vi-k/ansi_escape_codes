@@ -35,5 +35,5 @@ final class Link extends Osc {
   String get id => url.isEmpty ? 'linkClose' : 'link($url)';
 
   @override
-  String toString() => '$Link()';
+  String toString() => '$Link($url)';
 }

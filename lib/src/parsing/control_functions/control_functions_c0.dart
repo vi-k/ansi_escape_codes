@@ -70,7 +70,7 @@ enum ControlFunctionsC0 {
   DC4(c0.DC4, null, '␔', 'Device Control Four'),
 
   /// See [c0.NAK].
-  NAK(c0.NAK, null, '␕', ''),
+  NAK(c0.NAK, null, '␕', 'Negative Acknowledge'),
 
   /// See [c0.SYN].
   SYN(c0.SYN, null, '␖', 'Synchronous Idle'),

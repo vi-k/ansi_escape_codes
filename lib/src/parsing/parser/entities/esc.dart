@@ -15,7 +15,7 @@ sealed class Esc extends EscapeCode {
   }
 
   @override
-  String toString() => '$Osc("${toStringAsEscapeSquences()}")';
+  String toString() => '$Esc("${toStringAsEscapeSquences()}")';
 }
 
 final class EscUnknown extends Esc with UnrecognizedEscapeCode {

@@ -384,7 +384,7 @@ final class SgrDefaultFunction extends SgrFunctionWithCode {
   const SgrDefaultFunction() : super(ControlFunctionsSGR.reset);
 
   @override
-  String toString() => '';
+  String toString() => code.id;
 }
 
 final class SgrSimpleFunction extends SgrFunctionWithCode {

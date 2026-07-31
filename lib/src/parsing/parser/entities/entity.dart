@@ -19,10 +19,12 @@ final class Text extends Entity {
 
   @override
   String toString() {
+    // The escaping goes first: showing the control codes writes backslashes
+    // of its own, and those must not be escaped again.
     final escapedText = string
-        .ansiShowControlCodes()
         .replaceAll(r'\', r'\\')
-        .replaceAll("'", r"\'");
+        .replaceAll("'", r"\'")
+        .ansiShowControlCodes();
 
     return "$Text('$escapedText')";
   }

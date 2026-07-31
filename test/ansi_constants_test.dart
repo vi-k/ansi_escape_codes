@@ -64,6 +64,8 @@ void main() {
       expect(
         parser.showControlFunctions(),
         '['
+        // The sequence opens with an empty parameter, which stands for 0.
+        'reset'
         ';reset;bold;dim;italic;underline'
         ';blink;blinkRapid;inverse;invisible;strikethrough'
         ';10;11;12;13;14;15;16;17;18;19;20'
