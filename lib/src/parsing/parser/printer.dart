@@ -321,12 +321,13 @@ R runZonedStackedPrinter<R>(
     run,
     zoneSpecification: ZoneSpecification(
       print: (self, parent, zone, line) {
-        printer ??= StackedPrinter(
+        (printer ??= StackedPrinter(
           defaultStyle: defaultStyle,
           output: output ?? (line) => parent.print(zone, line),
           ansiCodesEnabled: ansiCodesEnabled,
           debugForTest: debugForTest,
-        )..print(line);
+        ))
+            .print(line);
       },
     ),
   );

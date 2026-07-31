@@ -783,5 +783,20 @@ void main() {
         '[reset]',
       );
     });
+
+    test('runZonedStackedPrinter prints every line', () {
+      final output = interceptZonedPrint(() {
+        runZonedStackedPrinter(() {
+          print('first');
+          print('second');
+          print('third');
+        });
+      });
+
+      expect(
+        output.map((line) => line.ansiShowControlFunctions()).toList(),
+        ['[reset]first', '[reset]second', '[reset]third'],
+      );
+    });
   });
 }
