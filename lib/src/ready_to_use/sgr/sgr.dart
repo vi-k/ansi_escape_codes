@@ -73,8 +73,8 @@ const String bold = '$CSI$BOLD$SGR';
 /// See also [bold] and [resetBoldAndDim].
 const String dim = '$CSI$DIM$SGR';
 
-@Deprecated('Use bold instead')
-const String faint = bold;
+@Deprecated('Use dim instead')
+const String faint = dim;
 
 /// Normal colour or normal intensity (neither bold nor dim).
 ///
