@@ -27,6 +27,18 @@ void main() {
       }
     });
 
+    test('an empty sub-parameter stands for the default value', () {
+      // The ITU-T T.416 form, with the colour space id left out. libvte and
+      // others write colours this way.
+      expect(
+        Parser('\x1B[38:2::1:2:3m').finalState.foregroundColor,
+        ColorRgb(1, 2, 3),
+      );
+
+      // ... and the rest of the sequence survives it.
+      expect(Parser('\x1B[1;38:2::1:2:3m').finalState.isBold, isTrue);
+    });
+
     test('leaves the functions around it alone', () {
       final state = Parser('\x1B[1;4:0;3m').finalState;
 

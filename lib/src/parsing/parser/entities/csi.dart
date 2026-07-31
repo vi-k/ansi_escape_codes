@@ -49,7 +49,9 @@ sealed class CsiParam {
 
     final numbers = <int>[];
     for (final value in list) {
-      numbers.add(int.parse(value));
+      // An empty sub-parameter stands for the default value, as an empty
+      // parameter does. `38:2::1:2:3` leaves out the colour space id this way.
+      numbers.add(value.isEmpty ? 0 : int.parse(value));
     }
 
     return CsiParamNumbers._(numbers);
