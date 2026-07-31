@@ -49,6 +49,37 @@ void main() {
       expect(Parser('\x1B[38;5;1;1m').finalState.isBold, isTrue);
     });
 
+    test('a colour with no valid kind gives up only itself', () {
+      final state = Parser('\x1B[38;9;1;4m').finalState;
+
+      expect(state.foregroundColor, isNull);
+      expect(state.isBold, isTrue);
+      expect(state.isUnderline, isTrue);
+    });
+
+    test('a colour cut short gives up only itself', () {
+      // The kind is there, the colour it needs is not.
+      expect(Parser('\x1B[38;5m').finalState.foregroundColor, isNull);
+
+      // The introducer with nothing at all after it, so nothing to give up.
+      expect(Parser('\x1B[1;38m').finalState.isBold, isTrue);
+    });
+
+    test('the valid colour forms still read', () {
+      expect(
+        Parser('\x1B[38;5;1m').finalState.foregroundColor,
+        Color256.red,
+      );
+      expect(
+        Parser('\x1B[38;2;1;2;3m').finalState.foregroundColor,
+        ColorRgb(1, 2, 3),
+      );
+      expect(
+        Parser('\x1B[48;5;1m').finalState.backgroundColor,
+        Color256.red,
+      );
+    });
+
     test('leaves the functions around it alone', () {
       final state = Parser('\x1B[1;4:0;3m').finalState;
 

@@ -205,30 +205,35 @@ final class Sgr extends Csi {
 
     parsingState.savePosition();
 
-    if (parsingState.availableParamsCount >= 2) {
-      final param2 = parsingState.nextParam;
-      final param3 = parsingState.nextParam;
+    // The introducer is followed by the kind of colour, and the kind says how
+    // many parameters it takes. Nothing else is read until the kind is known,
+    // so that a broken colour gives up itself alone.
+    if (parsingState.availableParamsCount >= 1) {
+      final kind = parsingState.nextParam;
 
-      if (param2 is CsiParamNumber && param3 is CsiParamNumber) {
-        if (param2.value == COLOR_256) {
-          final colorCode = Colors.byIndex(param3.value);
-          if (colorCode != null) {
-            color = Color256(colorCode);
+      if (kind is CsiParamNumber) {
+        if (kind.value == COLOR_256 && parsingState.availableParamsCount >= 1) {
+          final index = parsingState.nextParam;
+
+          if (index is CsiParamNumber) {
+            final colorCode = Colors.byIndex(index.value);
+            if (colorCode != null) {
+              color = Color256(colorCode);
+            }
           }
-        } else if (param2.value == COLOR_RGB &&
-            parsingState.availableParamsCount >= 2) {
-          final param4 = parsingState.nextParam;
-          final param5 = parsingState.nextParam;
+        } else if (kind.value == COLOR_RGB &&
+            parsingState.availableParamsCount >= 3) {
+          final r = parsingState.nextParam;
+          final g = parsingState.nextParam;
+          final b = parsingState.nextParam;
 
-          if (param4 is CsiParamNumber && param5 is CsiParamNumber) {
+          if (r is CsiParamNumber &&
+              g is CsiParamNumber &&
+              b is CsiParamNumber) {
             try {
               // `38;2` takes three parameters, the way xterm reads it, and
               // whatever follows them belongs to the sequence as usual.
-              color = ColorRgb(
-                param3.value,
-                param4.value,
-                param5.value,
-              );
+              color = ColorRgb(r.value, g.value, b.value);
 
               // ignore: avoid_catching_errors
             } on IndexError {
@@ -240,12 +245,9 @@ final class Sgr extends Csi {
     }
 
     if (color == null) {
-      final availableParams = parsingState.availableParams();
-      parsingState
-        ..cancelParsing()
-        ..commitFunction(
-          SgrUnknownColorFunctionFromParams(code, availableParams),
-        );
+      parsingState.commitFunction(
+        SgrUnknownColorFunctionFromParams(code, parsingState.consumedParams()),
+      );
     } else {
       parsingState
         ..state = switch (code) {
@@ -352,16 +354,14 @@ final class _SgrParsingState<S extends State<S>> {
     _savedIndex = null;
   }
 
-  void cancelParsing() {
-    _index = _params.length - 1;
-  }
-
   void savePosition() {
     _savedIndex = _index + 1;
   }
 
-  List<CsiParam> availableParams() => _params.sublist(
-        _savedIndex ?? (throw Exception('use savePosition first')),
+  /// The parameters read since [savePosition], the current one included.
+  List<CsiParam> consumedParams() => _params.sublist(
+        _savedIndex ?? (throw StateError('use savePosition first')),
+        _index + 1,
       );
 }
 
