@@ -112,7 +112,7 @@ enum ControlFunctionsC1 {
 
   static ControlFunctionsC1? byCode(String code) {
     if (code.length == 2 &&
-        code.codeUnitAt(0) == ControlFunctionsC0.ESC.index) {
+        code.codeUnitAt(0) == ControlFunctionsC0.ESC.code.codeUnitAt(0)) {
       final index = code.codeUnitAt(1) - 0x40;
 
       return index >= 0 && index < values.length ? values[index] : null;

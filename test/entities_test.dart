@@ -1,5 +1,6 @@
 import 'package:ansi_escape_codes/ansi.dart';
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+import 'package:ansi_escape_codes/extensions.dart';
 import 'package:ansi_escape_codes/parsing.dart';
 import 'package:test/test.dart';
 
@@ -38,6 +39,20 @@ void main() {
     test('an SGR with no parameters is a reset', () {
       expect(Parser('\x1B[m').showControlFunctions(), '[reset]');
       expect(Parser('\x1B[;1m').showControlFunctions(), '[reset;bold]');
+    });
+
+    test('DEL is shown, not passed through as it is', () {
+      const text = 'a\x7Fb';
+
+      expect(text.ansiHasControlCodes, isTrue);
+      expect(
+        text.ansiShowControlCodes(preferStyle: ControlCodeStyle.charCode),
+        r'a\x7Fb',
+      );
+      expect(
+        text.ansiShowControlCodes(preferStyle: ControlCodeStyle.abbr),
+        'a[DEL]b',
+      );
     });
 
     test('every control code of the C0 set is described', () {

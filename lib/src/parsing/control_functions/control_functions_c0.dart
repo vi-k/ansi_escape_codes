@@ -100,7 +100,12 @@ enum ControlFunctionsC0 {
   RS(c0.RS, null, '␞', 'Record Separator'),
 
   /// See [c0.US].
-  US(c0.US, null, '␟', 'Unit Separator');
+  US(c0.US, null, '␟', 'Unit Separator'),
+
+  /// See [c0.DEL].
+  ///
+  /// Sits apart from the set, at the end of the ASCII table.
+  DEL(c0.DEL, null, '␡', 'Delete');
 
   const ControlFunctionsC0(
     this.code,
@@ -122,6 +127,13 @@ enum ControlFunctionsC0 {
     return byIndex(code.codeUnitAt(0));
   }
 
-  static ControlFunctionsC0? byIndex(int index) =>
-      index >= 0 && index < values.length ? values[index] : null;
+  /// The control function of the given character code, if there is one.
+  ///
+  /// The set occupies `0x00`–`0x1F`, in that order, so a code inside it is
+  /// also its position here. [DEL] lies outside and is named on its own.
+  static ControlFunctionsC0? byIndex(int index) => switch (index) {
+        >= 0 && < 0x20 => values[index],
+        0x7F => DEL,
+        _ => null,
+      };
 }
