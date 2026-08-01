@@ -861,6 +861,10 @@ final class NoStyle extends Style {
   @override
   String call(String text) => text;
 
+  /// Nothing was opened, so there is nothing to close.
+  @override
+  String get close => '';
+
   @override
   String get _objectTypeName => '$NoStyle';
 }

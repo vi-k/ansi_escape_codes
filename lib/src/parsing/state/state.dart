@@ -263,6 +263,9 @@ sealed class State<S extends State<S>> {
 
   @override
   int get hashCode => Object.hash(
+        // A state that prints nothing is not the same as one that leaves the
+        // terminal to its own colours, however alike their properties look.
+        this is NoStyle,
         isBold,
         isDim,
         isItalic,
@@ -286,6 +289,7 @@ sealed class State<S extends State<S>> {
   @override
   bool operator ==(Object other) =>
       other is State<void> &&
+      (this is NoStyle) == (other is NoStyle) &&
       isBold == other.isBold &&
       isDim == other.isDim &&
       isItalic == other.isItalic &&
