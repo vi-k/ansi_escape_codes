@@ -110,8 +110,8 @@ final class _ParserBase<S extends State<S>> {
   /// String length without ANSI escape codes.
   int get length => _requirePlainString.length;
 
-  /// Whether the string is closed with the default style.
-  bool get isClosed => finalState == Style.terminalColors;
+  /// Whether the string ends in the state it began in.
+  bool get isClosed => finalState == initialState;
 
   /// Forcibly collects [matches] and prepares plain string.
   void prepare() {
@@ -234,7 +234,7 @@ final class _ParserBase<S extends State<S>> {
 
     final buf = StringBuffer();
     var pos = 0;
-    var currentState = Style.terminalColors;
+    var currentState = initialState.toStyle();
     Match<S>? lastMatch;
 
     for (final m in matches) {
@@ -282,7 +282,7 @@ final class _ParserBase<S extends State<S>> {
     if (lastMatch != null) {
       buf.write(
         currentState.transitTo(
-          close ? Style.terminalColors : lastMatch.state,
+          close ? initialState : lastMatch.state,
           skipSet: true,
         ),
       );
@@ -314,7 +314,7 @@ final class _ParserBase<S extends State<S>> {
   /// [close] is whether to close the string with the default style.
   String optimize({bool close = true}) {
     final buf = StringBuffer();
-    var currentState = Style.terminalColors;
+    var currentState = initialState.toStyle();
 
     for (final m in matches) {
       final entity = m.entity;
@@ -340,7 +340,7 @@ final class _ParserBase<S extends State<S>> {
     final lastMatch = matches.lastOrNull;
 
     if (close) {
-      buf.write(currentState.transitTo(Style.terminalColors));
+      buf.write(currentState.transitTo(initialState));
     } else if (lastMatch != null) {
       buf.write(currentState.transitTo(lastMatch.state));
     }
