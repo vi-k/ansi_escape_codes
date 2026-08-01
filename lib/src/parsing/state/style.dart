@@ -97,8 +97,8 @@ final class Style extends State<Style> {
             (frame ? _frame : 0) |
             (encircle && !frame ? _encircle : 0) |
             (overline ? _overline : 0) |
-            (superscript && !subscript ? _superscript : 0) |
-            (subscript ? _subscript : 0),
+            (superscript ? _superscript : 0) |
+            (subscript && !superscript ? _subscript : 0),
         foregroundColor = foreground,
         backgroundColor = background,
         underlineColorValue = underlineColor;
