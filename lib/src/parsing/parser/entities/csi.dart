@@ -68,6 +68,24 @@ sealed class Csi extends EscapeCode {
       }
     }
 
+    // The part left out is the one from the cursor onwards, not the first
+    // one, so these do not share the default the movements have.
+    final part = _count(params, ifLeftOut: 0);
+    if (part != null) {
+      final erased = ErasePart._byCode(part);
+      if (erased != null) {
+        final named = switch (function) {
+          ControlSequencesFunctions.ED => EraseInPage._(string, params, erased),
+          ControlSequencesFunctions.EL => EraseInLine._(string, params, erased),
+          _ => null,
+        };
+
+        if (named != null) {
+          return named;
+        }
+      }
+    }
+
     final position = _position(params);
     if (position != null) {
       final named = switch (function) {
@@ -88,8 +106,8 @@ sealed class Csi extends EscapeCode {
 
   /// The single number a sequence carries, or null when it carries anything
   /// else.
-  static int? _count(List<CsiParam> params) =>
-      params.length == 1 ? _number(params.first) : null;
+  static int? _count(List<CsiParam> params, {int ifLeftOut = 1}) =>
+      params.length == 1 ? _number(params.first, ifLeftOut: ifLeftOut) : null;
 
   /// The row and the column a sequence carries, or null when it carries
   /// anything else.
@@ -106,11 +124,10 @@ sealed class Csi extends EscapeCode {
     return row == null || col == null ? null : (row: row, col: col);
   }
 
-  /// The number a parameter carries, `1` when it is left out — the default
-  /// every one of these sequences shares — or null when it carries the
-  /// sub-parameters none of them take.
-  static int? _number(CsiParam param) => switch (param) {
-        CsiParamDefault() => 1,
+  /// The number a parameter carries, [ifLeftOut] when it is left out, or null
+  /// when it carries the sub-parameters none of these sequences take.
+  static int? _number(CsiParam param, {int ifLeftOut = 1}) => switch (param) {
+        CsiParamDefault() => ifLeftOut,
         CsiParamNumber(:final value) => value,
         CsiParamNumbers() => null,
       };
@@ -305,6 +322,50 @@ final class CursorHVPos extends CsiCommon {
 
   CursorHVPos._(String string, List<CsiParam> params, this.row, this.col)
       : super._(string, ControlSequencesFunctions.HVP, params);
+}
+
+/// The part of the page or of the line an erasing sequence takes out.
+enum ErasePart {
+  /// From the cursor to the end, the cursor included.
+  toEnd(0),
+
+  /// From the beginning to the cursor, the cursor included.
+  toBegin(1),
+
+  /// The whole of it.
+  all(2);
+
+  /// The parameter standing for this part.
+  final int code;
+
+  const ErasePart(this.code);
+
+  static ErasePart? _byCode(int code) => switch (code) {
+        0 => toEnd,
+        1 => toBegin,
+        2 => all,
+        _ => null,
+      };
+}
+
+/// Erases [part] of the page. `CSI n J`, [ControlSequencesFunctions.ED].
+final class EraseInPage extends CsiCommon {
+  /// The part of the page to erase, [ErasePart.toEnd] when the sequence
+  /// leaves it out.
+  final ErasePart part;
+
+  EraseInPage._(String string, List<CsiParam> params, this.part)
+      : super._(string, ControlSequencesFunctions.ED, params);
+}
+
+/// Erases [part] of the line. `CSI n K`, [ControlSequencesFunctions.EL].
+final class EraseInLine extends CsiCommon {
+  /// The part of the line to erase, [ErasePart.toEnd] when the sequence
+  /// leaves it out.
+  final ErasePart part;
+
+  EraseInLine._(String string, List<CsiParam> params, this.part)
+      : super._(string, ControlSequencesFunctions.EL, params);
 }
 
 /// Scrolls the page up by [n] lines. `CSI n S`,

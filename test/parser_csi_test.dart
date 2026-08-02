@@ -87,6 +87,50 @@ void main() {
     });
   });
 
+  group('the erasing sequences:', () {
+    test('carry the part they erase', () {
+      expect(
+        Parser('\x1B[0J').matches.first.entity,
+        isA<EraseInPage>().having((e) => e.part, 'part', ErasePart.toEnd),
+      );
+      expect(
+        Parser(eraseInPageToBegin).matches.first.entity,
+        isA<EraseInPage>().having((e) => e.part, 'part', ErasePart.toBegin),
+      );
+      expect(
+        Parser(erasePage).matches.first.entity,
+        isA<EraseInPage>().having((e) => e.part, 'part', ErasePart.all),
+      );
+      expect(
+        Parser(eraseInLineToBegin).matches.first.entity,
+        isA<EraseInLine>().having((e) => e.part, 'part', ErasePart.toBegin),
+      );
+      expect(
+        Parser(eraseLine).matches.first.entity,
+        isA<EraseInLine>().having((e) => e.part, 'part', ErasePart.all),
+      );
+    });
+
+    test('erase to the end when the part is left out', () {
+      expect(
+        Parser(eraseInPageToEnd).matches.first.entity,
+        isA<EraseInPage>().having((e) => e.part, 'part', ErasePart.toEnd),
+        reason: 'CSI J erases from the cursor to the end of the page',
+      );
+      expect(
+        Parser(eraseInLineToEnd).matches.first.entity,
+        isA<EraseInLine>().having((e) => e.part, 'part', ErasePart.toEnd),
+      );
+    });
+
+    test('leave the parts they cannot name alone', () {
+      // CSI 3 J clears the scrollback in xterm. ECMA-48 knows nothing of it,
+      // and neither does ErasePart.
+      expect(Parser('\x1B[3J').matches.first.entity, isNot(isA<EraseInPage>()));
+      expect(Parser('\x1B[3J').matches.first.entity, isA<CsiCommon>());
+    });
+  });
+
   group('the named sequences:', () {
     test('are the common ones with a name, not instead of them', () {
       final entity = Parser(cursorUpN(4)).matches.first.entity;
