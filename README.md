@@ -852,6 +852,26 @@ print(parser.stateAt(23) == parser.finalState); // true
 print(parser.finalState); // Style(foreground: Color16.cyan)
 ```
 
+Reading happens as late as it can. `stateAt` reads the string up to the
+position asked about and stops there, and what it read is kept, so the next
+question picks up where the last one left off instead of starting over:
+
+```dart
+final parser = Parser('$bold one $fgCyan two $resetBoldAndDim three ');
+parser.stateAt(2); // reads as far as the third character
+parser.finalState; // reads on from there, not from the beginning
+```
+
+`prepare` reads the whole string in one go rather than letting it grow question
+by question, and builds the plain text that `length`, `indexOf`, `contains` and
+the rest of the string methods work on:
+
+```dart
+final parser = Parser(text)..prepare();
+```
+
+It is worth calling when many questions are coming and pointless before one.
+
 In the above example, the text state was not set to default, i.e. the text was
 not closed:
 

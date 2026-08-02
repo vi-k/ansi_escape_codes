@@ -115,12 +115,15 @@ final class _ParserBase<S extends State<S>> {
   /// Whether the string ends in the state it began in.
   bool get isClosed => finalState == initialState;
 
-  /// Parses the string once, ahead of the questions asked of it.
+  /// Reads the whole string, ahead of the questions asked of it.
   ///
-  /// [stateAt] and [substring] read only as far as they must and keep
-  /// nothing, which is quick for one question and wasteful for many: each
-  /// one starts the reading over. This parses the string once, and every
-  /// question after it is answered from what was read.
+  /// [stateAt] and [substring] read only as far as they must, and what they
+  /// read is kept: the question after them picks up where they stopped rather
+  /// than starting over. This reads it all in one go instead of letting it
+  /// grow question by question, and builds the plain text [length], [indexOf]
+  /// and the other string methods work on.
+  ///
+  /// Worth calling when many questions are coming, pointless before one.
   void prepare() {
     matches._requireParsingResult;
     _requirePlainString;
@@ -152,8 +155,9 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// [pos] is the position in the string without ANSI escape codes.
   ///
-  /// Reads the string up to [pos] and stops. Call [prepare] first when asking
-  /// about many positions, or the reading starts over for each of them.
+  /// Reads the string up to [pos] and stops. What it read is kept, so the
+  /// next question carries on from there; see [prepare] for reading it all at
+  /// once instead.
   ///
   /// See also [finalState].
   S stateAt(int pos) {
@@ -226,8 +230,9 @@ final class _ParserBase<S extends State<S>> {
   /// [maxLength] is the maximum length of the substring.
   /// [close] is whether to close the substring with the default style.
   ///
-  /// Reads the string up to the end of the piece and stops. Call [prepare]
-  /// first when taking several pieces out of the same string.
+  /// Reads the string up to the end of the piece and stops. What it read is
+  /// kept, so taking another piece carries on from there; see [prepare] for
+  /// reading it all at once instead.
   String substring(
     int start, {
     int? maxLength,
