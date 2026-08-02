@@ -1076,6 +1076,6 @@ translating the current state into the standard escape sequence on output:
 const text = '$bold 1 $bold 2 $bold 3 $resetBoldAndDim 2 $resetBoldAndDim 1 $resetBoldAndDim';
 final printer1 = Printer();
 final printer2 = StackedPrinter();
-printer1.print(text); // '[bold] 1  2  3 [resetBoldAndDim] 2  1 '
-printer2.print(text); // '[bold] 1  2  3  2  1 [resetBoldAndDim]'
+printer1.print(text); // '[reset][bold] 1  2  3 [reset] 2  1 '
+printer2.print(text); // '[reset][bold] 1  2  3  2  1 [reset]'
 ```

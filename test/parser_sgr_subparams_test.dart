@@ -80,6 +80,21 @@ void main() {
       );
     });
 
+    test('a value out of range is refused in either form', () {
+      const outOfRange = [
+        '\x1B[38;5;256m', // no such entry in the palette
+        '\x1B[38:5:256m',
+        '\x1B[38;2;0;128;256m', // no such component
+        '\x1B[38:2:0:128:256m',
+        '\x1B[38;2;0;128m', // a component short
+        '\x1B[38:2:0:128m',
+      ];
+
+      for (final text in outOfRange) {
+        expect(Parser(text).finalState.foregroundColor, isNull, reason: text);
+      }
+    });
+
     test('leaves the functions around it alone', () {
       final state = Parser('\x1B[1;4:0;3m').finalState;
 

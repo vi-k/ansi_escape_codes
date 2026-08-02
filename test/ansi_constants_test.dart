@@ -739,6 +739,21 @@ void main() {
       });
     });
 
+    test('stacked sink unwinds one level at a time', () {
+      final buf = StringBuffer();
+
+      // Three opened, three closed: only the last of the closes ends it.
+      StackedSinkPrinter(buf).write(
+        '$bold 1 $bold 2 $bold 3 '
+        '$resetBoldAndDim 2 $resetBoldAndDim 1 $resetBoldAndDim',
+      );
+
+      expect(
+        buf.toString().ansiShowControlFunctions(),
+        '[reset][bold] 1  2  3  2  1 [reset]',
+      );
+    });
+
     test('StackedPrinter', () {
       String b(String text) => '$bold$text$resetBoldAndDim';
       String i(String text) => '$italic$text$resetItalic';
