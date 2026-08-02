@@ -834,7 +834,15 @@ const String SDS = ']';
 ///   character progression.
 const String SIMD = '^';
 
-const String RESERVED = '_';
+/// Reserved for future standardization.
+///
+/// Named after its byte, the way [RESERVED_20_4E] is, so that the name says
+/// which of the reserved bytes it is and does not claim a word as plain as
+/// `RESERVED` in the namespace this package exports.
+const String RESERVED_5F = '_';
+
+@Deprecated('Use RESERVED_5F instead')
+const String RESERVED = RESERVED_5F;
 
 /// Character Position Absolute.
 ///

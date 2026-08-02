@@ -80,8 +80,15 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   final S stateDefaults;
   final Style defaultStyle;
   final bool ansiCodesEnabled;
+
+  /// The state the last prepared line ended in, carried into the next one.
+  ///
+  /// Setting it from outside puts the printer out of step with what the
+  /// terminal has already been sent.
+  @visibleForTesting
   S? lastState;
 
+  @visibleForTesting
   bool debugForTest;
 
   _PrinterBase({

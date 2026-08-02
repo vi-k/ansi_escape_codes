@@ -93,14 +93,14 @@ final class CsiUnknown extends Csi with UnrecognizedEscapeCode {
   const CsiUnknown._(super.string) : super._();
 
   @override
-  String toString() => '$Csi(${toStringAsEscapeSquences()})';
+  String toString() => '$Csi(${toStringAsEscapeSequences()})';
 }
 
 final class CsiPrivate extends Csi with UnrecognizedEscapeCode {
   const CsiPrivate._(super.string) : super._();
 
   @override
-  String toString() => '$Csi(${toStringAsEscapeSquences()})';
+  String toString() => '$Csi(${toStringAsEscapeSequences()})';
 }
 
 final class CsiCommon extends Csi {
@@ -124,5 +124,5 @@ final class CsiCommon extends Csi {
   }
 
   @override
-  String toString() => '$Csi(${toStringAsEscapeSquences()})';
+  String toString() => '$Csi(${toStringAsEscapeSequences()})';
 }

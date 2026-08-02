@@ -15,14 +15,14 @@ sealed class Esc extends EscapeCode {
   }
 
   @override
-  String toString() => '$Esc("${toStringAsEscapeSquences()}")';
+  String toString() => '$Esc("${toStringAsEscapeSequences()}")';
 }
 
 final class EscUnknown extends Esc with UnrecognizedEscapeCode {
   const EscUnknown._(super.string) : super._();
 
   @override
-  String toString() => '$Esc("${toStringAsEscapeSquences()}")';
+  String toString() => '$Esc("${toStringAsEscapeSequences()}")';
 }
 
 final class SaveCursor extends Esc {

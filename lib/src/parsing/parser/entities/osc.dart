@@ -17,14 +17,14 @@ sealed class Osc extends EscapeCode {
   }
 
   @override
-  String toString() => '$Osc("${toStringAsEscapeSquences()}")';
+  String toString() => '$Osc("${toStringAsEscapeSequences()}")';
 }
 
 final class OscUnknown extends Osc with UnrecognizedEscapeCode {
   const OscUnknown._(super.string) : super._();
 
   @override
-  String toString() => '$Osc("${toStringAsEscapeSquences()}")';
+  String toString() => '$Osc("${toStringAsEscapeSequences()}")';
 }
 
 final class Link extends Osc {
