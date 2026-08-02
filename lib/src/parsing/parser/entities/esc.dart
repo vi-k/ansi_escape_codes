@@ -25,9 +25,6 @@ sealed class Esc extends EscapeCode {
       _ => EscUnknown._(state.string),
     };
   }
-
-  @override
-  String toString() => '$Esc("${toStringAsEscapeSequences()}")';
 }
 
 /// One of the independent control functions, ESC Fs: `RIS`, `LS2`, `DMI` and

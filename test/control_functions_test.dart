@@ -35,6 +35,35 @@ void main() {
       expect(Parser('\x1B[1!p').matches.first.entity, isA<CsiUnknown>());
     });
 
+    test('finds a C0 control by the byte it is', () {
+      expect(ControlFunctionsC0.byCode('\n'), ControlFunctionsC0.LF);
+      expect(ControlFunctionsC0.byCode('\x1B'), ControlFunctionsC0.ESC);
+
+      expect(ControlFunctionsC0.byCode(''), isNull);
+      expect(ControlFunctionsC0.byCode('ab'), isNull, reason: 'one byte only');
+      expect(
+        ControlFunctionsC0.byCode('a'),
+        isNull,
+        reason: 'a printable character is no control',
+      );
+    });
+
+    test('and says what kind a code is where it has no name of its own', () {
+      expect(ControlSequencesFunctions.CUU.description, 'Cursor Up');
+      expect(
+        ControlSequencesFunctions.values
+            .firstWhere((f) => f.isPrivate)
+            .description,
+        'Private',
+      );
+      expect(
+        ControlSequencesFunctions.values
+            .firstWhere((f) => f.isReserved)
+            .description,
+        'Reserved',
+      );
+    });
+
     test('finds a C1 function by the sequence it is written as', () {
       expect(ControlFunctionsC1.byCode('\x1B['), ControlFunctionsC1.CSI);
       expect(ControlFunctionsC1.byCode('\x1B]'), ControlFunctionsC1.OSC);

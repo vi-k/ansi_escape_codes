@@ -19,9 +19,6 @@ sealed class Osc extends EscapeCode {
       _ => OscUnknown._(state.string),
     };
   }
-
-  @override
-  String toString() => '$Osc("${toStringAsEscapeSequences()}")';
 }
 
 /// An operating system command this package has no name for: setting the

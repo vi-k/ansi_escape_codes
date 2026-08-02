@@ -3,6 +3,44 @@ import 'package:ansi_escape_codes/parsing.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('a colour describes itself:', () {
+    test('by the name it is written with, once it knows where it goes', () {
+      expect(
+        Color16.red.id,
+        '?Red',
+        reason: 'a colour on its own does not know what it is being set on',
+      );
+      expect(Color16.red.withPrefix('fg').id, 'fgRed');
+      expect(
+        Color256.gray5.withPrefix('bg').id,
+        'bg256Gray5',
+        reason: 'the 256 that says which table it comes from is its own',
+      );
+      expect(
+        ColorRgb(1, 2, 3).withPrefix('underline').id,
+        'underlineRgb(1,2,3)',
+      );
+    });
+
+    test('and says which kind it is when printed', () {
+      expect(Color16.red.toString(), 'Color16.red');
+      expect(Color256.gray5.toString(), 'Color256.gray5');
+      expect(ColorRgb(1, 2, 3).toString(), 'ColorRgb(1, 2, 3)');
+    });
+
+    test('two of the same colour are one to a Set', () {
+      const sixteen = [Color16.red, Color16.red];
+      const table = [Color256.gray5, Color256.gray5];
+      final rgb = [ColorRgb(1, 2, 3), ColorRgb(1, 2, 3)];
+      final different = [ColorRgb(1, 2, 3), ColorRgb(3, 2, 1)];
+
+      expect(sixteen.toSet(), hasLength(1));
+      expect(table.toSet(), hasLength(1));
+      expect(rgb.toSet(), hasLength(1));
+      expect(different.toSet(), hasLength(2));
+    });
+  });
+
   group('Colors:', () {
     test('order by their place in the palette', () {
       expect(Colors.red < Colors.blue, isTrue);

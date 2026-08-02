@@ -103,4 +103,30 @@ void main() {
       expect(state.isUnderline, isFalse);
     });
   });
+
+  group('what the parser cannot name, it keeps:', () {
+    String describe(String text) =>
+        Parser(text).matches.first.entity.toString();
+
+    test('sub-parameters that name no function are kept as they were', () {
+      expect(describe('\x1B[99:1m'), 'Sgr(99:1)');
+    });
+
+    test('a colour out of the table keeps the number it was given', () {
+      expect(describe('\x1B[38;5;999m'), 'Sgr(fg256?999)');
+      expect(
+        describe('\x1B[38:5:999m'),
+        'Sgr(fg256?999)',
+        reason: 'whichever way it was written',
+      );
+    });
+
+    test('a colour space nothing knows keeps its parameters', () {
+      expect(
+        describe('\x1B[38;7;1m'),
+        'Sgr(fg?7,bold)',
+        reason: 'and the 1 after it is still read as bold',
+      );
+    });
+  });
 }
