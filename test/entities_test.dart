@@ -43,7 +43,15 @@ void main() {
       expect(describe('\x1B(B'), 'Esc("[ESC (B]")');
       expect(describe('${OSC}0;title$ST'), 'Osc("[OSC 0;title ST]")');
       expect(describe(fgRed), 'Sgr(fgRed)');
-      expect(describe(cursorUp), 'Csi([CSI CUU])');
+      expect(describe(cursorUp), 'CursorUp(1)');
+      expect(describe(cursorUpN(4)), 'CursorUp(4)');
+      expect(describe(cursorPosTo(3, 7)), 'CursorPos(3, 7)');
+      expect(describe(erasePage), 'EraseInPage(ErasePart.all)');
+      expect(
+        describe('\x1B[1;2A'),
+        'Csi([CSI 1;2 CUU])',
+        reason: 'one that fits no type still reads itself out',
+      );
       expect(describe('\x1B[?7h'), 'Csi([CSI ?7 SM])');
       expect(describe('\x1B[!p'), 'Csi([CSI !p])');
       expect(const SaveCursor().toString(), 'SaveCursor()');
