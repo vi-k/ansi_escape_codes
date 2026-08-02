@@ -26,8 +26,10 @@ void main() {
       // DECSCUSR, the shape of the cursor: CSI Ps SP q.
       expect(Parser('\x1B[1 q').matches.first.entity, isA<CsiPrivate>());
 
-      // Private through its parameters rather than its final bytes.
-      expect(Parser('\x1B[?25h').matches.first.entity, isA<CsiPrivate>());
+      // Private through its parameters rather than its final bytes. The four
+      // modes this package writes itself have names of their own — see
+      // ShowCursor and the three beside it — and this is not one of them.
+      expect(Parser('\x1B[?7h').matches.first.entity, isA<CsiPrivate>());
 
       // Final bytes that name nothing at all.
       expect(Parser('\x1B[1!p').matches.first.entity, isA<CsiUnknown>());

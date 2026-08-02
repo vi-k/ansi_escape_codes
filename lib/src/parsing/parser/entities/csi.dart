@@ -19,7 +19,7 @@ sealed class Csi extends EscapeCode {
     final isPrivate =
         firstByte != null && firstByte >= 0x3C && firstByte <= 0x3F;
     if (isPrivate) {
-      return CsiPrivate._(state.string);
+      return _privateMode(function, paramsString) ?? CsiPrivate._(state.string);
     }
 
     try {
@@ -37,6 +37,25 @@ sealed class Csi extends EscapeCode {
       return CsiUnknown._(state.string);
     }
   }
+
+  /// The private modes that have earned a name: the pair the cursor is shown
+  /// and hidden by, and the pair the alternate screen is entered and left by.
+  ///
+  /// The private area belongs to the terminal, and most of what is written
+  /// there stays a [CsiPrivate]. These four are what every terminal in use
+  /// means by them, and what this package writes with [showCursor],
+  /// [hideCursor], [useAlternateScreen] and [useMainScreen].
+  static Csi? _privateMode(
+    ControlSequencesFunctions function,
+    String params,
+  ) =>
+      switch ((params, function)) {
+        ('?25', ControlSequencesFunctions.SM) => const ShowCursor(),
+        ('?25', ControlSequencesFunctions.RM) => const HideCursor(),
+        ('?1049', ControlSequencesFunctions.SM) => const UseAlternateScreen(),
+        ('?1049', ControlSequencesFunctions.RM) => const UseMainScreen(),
+        _ => null,
+      };
 
   /// The sequence under the type that speaks for it, where there is one.
   ///
@@ -322,6 +341,52 @@ final class CursorHVPos extends CsiCommon {
 
   CursorHVPos._(String string, List<CsiParam> params, this.row, this.col)
       : super._(string, ControlSequencesFunctions.HVP, params);
+}
+
+/// Shows the cursor. `CSI ? 25 h`, the sequence [showCursor] is written with.
+final class ShowCursor extends Csi {
+  const ShowCursor() : super._(showCursor);
+
+  @override
+  String get id => 'showCursor';
+
+  @override
+  String toString() => '$ShowCursor()';
+}
+
+/// Hides the cursor. `CSI ? 25 l`, the sequence [hideCursor] is written with.
+final class HideCursor extends Csi {
+  const HideCursor() : super._(hideCursor);
+
+  @override
+  String get id => 'hideCursor';
+
+  @override
+  String toString() => '$HideCursor()';
+}
+
+/// Switches to the alternate screen. `CSI ? 1049 h`, the sequence
+/// [useAlternateScreen] is written with.
+final class UseAlternateScreen extends Csi {
+  const UseAlternateScreen() : super._(useAlternateScreen);
+
+  @override
+  String get id => 'useAlternateScreen';
+
+  @override
+  String toString() => '$UseAlternateScreen()';
+}
+
+/// Switches back to the main screen. `CSI ? 1049 l`, the sequence
+/// [useMainScreen] is written with.
+final class UseMainScreen extends Csi {
+  const UseMainScreen() : super._(useMainScreen);
+
+  @override
+  String get id => 'useMainScreen';
+
+  @override
+  String toString() => '$UseMainScreen()';
 }
 
 /// The part of the page or of the line an erasing sequence takes out.

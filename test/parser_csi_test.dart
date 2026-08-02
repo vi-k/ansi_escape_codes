@@ -131,6 +131,49 @@ void main() {
     });
   });
 
+  group('the private modes with a name:', () {
+    test('are told apart by their type', () {
+      expect(Parser(showCursor).matches.first.entity, isA<ShowCursor>());
+      expect(Parser(hideCursor).matches.first.entity, isA<HideCursor>());
+      expect(
+        Parser(useAlternateScreen).matches.first.entity,
+        isA<UseAlternateScreen>(),
+      );
+      expect(
+        Parser(useMainScreen).matches.first.entity,
+        isA<UseMainScreen>(),
+      );
+    });
+
+    test('carry the sequence they stand for', () {
+      expect(const ShowCursor().string, showCursor);
+      expect(const HideCursor().string, hideCursor);
+      expect(const UseAlternateScreen().string, useAlternateScreen);
+      expect(const UseMainScreen().string, useMainScreen);
+    });
+
+    test('are shown by the name they are written with', () {
+      expect(Parser(hideCursor).showControlFunctions(), '[hideCursor]');
+      expect(
+        Parser(useAlternateScreen).showControlFunctions(),
+        '[useAlternateScreen]',
+      );
+    });
+
+    test('leave the private sequences they cannot name alone', () {
+      expect(
+        Parser('\x1B[?7h').matches.first.entity,
+        isA<CsiPrivate>(),
+        reason: 'autowrap is a mode of its own, and has no name here',
+      );
+      expect(
+        Parser('\x1B[?25;1h').matches.first.entity,
+        isA<CsiPrivate>(),
+        reason: 'two modes at once is not the sequence showCursor stands for',
+      );
+    });
+  });
+
   group('the named sequences:', () {
     test('are the common ones with a name, not instead of them', () {
       final entity = Parser(cursorUpN(4)).matches.first.entity;
