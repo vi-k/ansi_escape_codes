@@ -1,6 +1,6 @@
 part of '../parser.dart';
 
-final class ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
+final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
   final Matches<S> _parent;
   final S _initialState;
 
@@ -16,7 +16,7 @@ final class ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
   int _pos = 0;
   Match<S>? _current;
 
-  ParserIterator._(this._parent, this._initialState);
+  _ParserIterator._(this._parent, this._initialState);
 
   /// Current match.
   @override
@@ -42,7 +42,7 @@ final class ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
 
     final match = _read();
     if (match == null) {
-      _parent._parsingResult ??= MatchesResult<S>._(
+      _parent._parsingResult ??= _MatchesResult<S>._(
         matches: parsed,
         finalState: currentState,
       );
@@ -111,7 +111,7 @@ final class ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
   }
 
   Match<S> _escapeCode(RegExpMatch m) {
-    final matchingState = MatchingState(m, currentState);
+    final matchingState = _MatchingState(m, currentState);
     final entity = EscapeCode._parse(matchingState);
     _pos = m.end;
 

@@ -14,11 +14,11 @@ final class Matches<S extends State<S>> extends Iterable<Match<S>> {
   /// reading over.
   final List<Match<S>> _parsed = [];
 
-  MatchesResult<S>? _parsingResult;
+  _MatchesResult<S>? _parsingResult;
 
   Matches._(this._input, this._initialState);
 
-  MatchesResult<S> get _requireParsingResult {
+  _MatchesResult<S> get _requireParsingResult {
     final parsingResult = _parsingResult;
     if (parsingResult != null) {
       return parsingResult;
@@ -40,6 +40,6 @@ final class Matches<S extends State<S>> extends Iterable<Match<S>> {
   @visibleForTesting
   bool get isParsed => _parsingResult != null;
 
-  ParserIterator<S> _createIterator() =>
-      ParserIterator<S>._(this, _initialState);
+  _ParserIterator<S> _createIterator() =>
+      _ParserIterator<S>._(this, _initialState);
 }

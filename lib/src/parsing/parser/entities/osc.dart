@@ -3,7 +3,7 @@ part of '../parser.dart';
 sealed class Osc extends EscapeCode {
   const Osc._(super.string) : super._();
 
-  static Osc _parse<S extends State<S>>(MatchingState<S> state) {
+  static Osc _parse<S extends State<S>>(_MatchingState<S> state) {
     final params = state['osc_params']!.split(';');
     final firstParam = int.tryParse(params[0]);
 

@@ -35,7 +35,7 @@ sealed class EscapeCode extends Entity {
 
   String get id;
 
-  static EscapeCode _parse<S extends State<S>>(MatchingState<S> state) {
+  static EscapeCode _parse<S extends State<S>>(_MatchingState<S> state) {
     final csi = state['csi'];
     if (csi != null) {
       return Csi._parse(state);

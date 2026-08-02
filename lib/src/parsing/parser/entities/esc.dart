@@ -3,7 +3,7 @@ part of '../parser.dart';
 sealed class Esc extends EscapeCode {
   const Esc._(super.string) : super._();
 
-  static Esc _parse<S extends State<S>>(MatchingState<S> state) {
+  static Esc _parse<S extends State<S>>(_MatchingState<S> state) {
     final intermediate = state['esc_inter'] ?? '';
     final code = state['esc_final'];
 

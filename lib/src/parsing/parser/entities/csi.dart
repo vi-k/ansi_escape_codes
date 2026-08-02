@@ -3,7 +3,7 @@ part of '../parser.dart';
 sealed class Csi extends EscapeCode {
   const Csi._(super.string) : super._();
 
-  static Csi _parse<S extends State<S>>(MatchingState<S> state) {
+  static Csi _parse<S extends State<S>>(_MatchingState<S> state) {
     final finalBytes = state['csi_final']!;
     final function = ControlSequencesFunctions.byCode(finalBytes);
     if (function == null) {

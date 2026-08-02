@@ -13,7 +13,7 @@ final class Sgr extends Csi {
         super._();
 
   static Sgr _parse<S extends State<S>>(
-    MatchingState<S> state,
+    _MatchingState<S> state,
     List<CsiParam> params,
   ) {
     final parsingState = _SgrParsingState(params, state.state);
