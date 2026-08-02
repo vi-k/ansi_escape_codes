@@ -7,6 +7,13 @@ sealed class Esc extends EscapeCode {
     final intermediate = state['esc_inter'] ?? '';
     final code = state['esc_final'];
 
+    // The independent control functions are the whole sequence, so a
+    // sequence carrying intermediate bytes is none of them.
+    final function = ControlFunctionsEscFs.byCode(state.string);
+    if (function != null) {
+      return EscCommon._(state.string, function);
+    }
+
     return switch (code) {
       '7' when intermediate.isEmpty => SaveCursor._(state.string),
       '8' when intermediate.isEmpty => RestoreCursor._(state.string),
@@ -16,6 +23,18 @@ sealed class Esc extends EscapeCode {
 
   @override
   String toString() => '$Esc("${toStringAsEscapeSequences()}")';
+}
+
+final class EscCommon extends Esc {
+  final ControlFunctionsEscFs function;
+
+  const EscCommon._(super.string, this.function) : super._();
+
+  @override
+  String get id => '${ControlFunctionsC0.ESC.name} ${function.name}';
+
+  @override
+  String toString() => '$Esc(${function.name})';
 }
 
 final class EscUnknown extends Esc with UnrecognizedEscapeCode {

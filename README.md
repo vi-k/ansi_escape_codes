@@ -429,8 +429,49 @@ print(cursorUpN(4)); // Not constant!
 
 ### Independent control functions ESC Fs
 
-> [!NOTE]
-> The paragraph will appear later.
+These control functions are represented by 2-character escape sequences of the
+form ESC Fs, where ESC is represented by code 0x1B and Fs is represented by
+codes from 0x60 to 0x7E.
+
+They are called independent because the shift states and the announced code
+structure do not affect them: whatever the terminal has been told about the
+coding in use, these keep their meaning.
+
+| Constant | Code    | Description                                        |
+|:---------|:--------|:---------------------------------------------------|
+| `DMI`    | `ESC` `` ` `` | Disable manual input                         |
+| `INT`    | `ESC a` | Interrupt                                          |
+| `EMI`    | `ESC b` | Enable manual input                                |
+| `RIS`    | `ESC c` | Reset to initial state                             |
+| `CMD`    | `ESC d` | Coding method delimiter                            |
+| `LS2`    | `ESC n` | Locking-shift two: invoke G2 into columns 02 to 07 |
+| `LS3`    | `ESC o` | Locking-shift three: invoke G3 into columns 02 to 07 |
+| `LS3R`   | `ESC \|` | Locking-shift three right: invoke G3 into columns 10 to 15 |
+| `LS2R`   | `ESC }` | Locking-shift two right: invoke G2 into columns 10 to 15 |
+| `LS1R`   | `ESC ~` | Locking-shift one right: invoke G1 into columns 10 to 15 |
+
+The one in everyday use is `RIS`. It resets the terminal to the state it has
+when it is made operational: the screen is cleared, the tabulation stops and
+the graphic rendition go back to their defaults, and the cursor returns to the
+first position of the first line. `reset` (SGR 0), by comparison, ends the
+graphic rendition and touches nothing else.
+
+```dart
+import 'package:ansi_escape_codes/ansi.dart';
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+
+// The following examples are equivalent:
+print('\x1Bc');
+print(RIS);
+print(resetTerminal);
+```
+
+The parser names them:
+
+```dart
+print(Parser('${resetTerminal}Fresh start').showControlFunctions());
+// [ESC RIS]Fresh start
+```
 
 
 ### Select graphic rendition (SGR)

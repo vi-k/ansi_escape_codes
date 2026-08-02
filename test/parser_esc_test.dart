@@ -1,3 +1,4 @@
+import 'package:ansi_escape_codes/ansi.dart';
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:ansi_escape_codes/extensions.dart';
 import 'package:test/test.dart';
@@ -22,6 +23,33 @@ void main() {
       expect(Parser('\x1B7').matches.first.entity, const SaveCursor());
       expect(Parser('\x1B8').matches.first.entity, const RestoreCursor());
       expect(Parser('\x1B 7').matches.first.entity, isA<EscUnknown>());
+    });
+  });
+
+  group('the independent control functions:', () {
+    test('are named when they are read', () {
+      expect(Parser(RIS).showControlFunctions(), '[ESC RIS]');
+      expect(Parser(LS2).showControlFunctions(), '[ESC LS2]');
+      expect(Parser(LS1R).showControlFunctions(), '[ESC LS1R]');
+    });
+
+    test('leave the bytes reserved beside them unnamed', () {
+      // 0x65 lies between CMD and LS2, and the standard keeps it back.
+      expect(Parser('\x1Be').matches.first.entity, isA<EscUnknown>());
+    });
+
+    test('do not take the cursor sequences with them', () {
+      expect(Parser(saveCursor).matches.first.entity, const SaveCursor());
+      expect(Parser(restoreCursor).matches.first.entity, const RestoreCursor());
+    });
+
+    test('are counted as escape codes, not as text', () {
+      expect('a${RIS}b'.ansiRemoveEscapeCodes(), 'ab');
+      expect(Parser('a${RIS}b').length, 2);
+    });
+
+    test('resetTerminal is the ready-to-use name of RIS', () {
+      expect(resetTerminal, RIS);
     });
   });
 
