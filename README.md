@@ -42,6 +42,7 @@ containing them.
 - [Analyzing and parsing](#analyzing-and-parsing)
   - [Parser](#parser)
   - [Quick analysis](#quick-analysis)
+  - [Unknown sequences](#unknown-sequences)
   - [Printer](#printer)
   - [StackedPrinter](#stackedprinter)
 
@@ -961,6 +962,37 @@ print(Parser(andWithoutCsi).showControlFunctions());
 final withoutAllEscapeCodes = text.ansiRemoveEscapeCodes();
 print(withoutAllEscapeCodes.ansiShowEscapeSequences());
 // ' Text '
+```
+
+### Unknown sequences
+
+The parser never throws on what it cannot name. Whatever it fails to recognize
+comes back as an entity of its own with the raw bytes kept intact: `CsiUnknown`,
+`EscUnknown`, `OscUnknown` and `UnknownEscapeCode` for what has no meaning here,
+and `CsiPrivate` for the private-use sequences, whose meaning the standard
+leaves to the terminal. All of them carry the `UnrecognizedEscapeCode` mixin, so
+a single check covers them:
+
+```dart
+const text = 'a\x1B[!pb\x1B[?7hc';
+for (final m in Parser(text).matches) {
+  if (m.entity case final UnrecognizedEscapeCode e) {
+    print('${m.start}..${m.end}: ${e.id}');
+  }
+}
+// 1..5: CSI !p
+// 6..11: CSI ?7 SM
+```
+
+`start` and `end` are positions in the original string, so a complaint can point
+at the bytes it is about.
+
+To put something else in their place, `replaceAll` walks the string once and
+writes back whatever is returned:
+
+```dart
+print(Parser(text).replaceAll((e) => e is UnrecognizedEscapeCode ? '?' : e.string));
+// a?b?c
 ```
 
 ### Printer
