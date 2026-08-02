@@ -37,6 +37,8 @@ final class Matches<S extends State<S>> extends Iterable<Match<S>> {
   Iterator<Match<S>> get iterator =>
       _parsingResult?.matches.iterator ?? _createIterator();
 
+  /// Whether the whole string has been read, rather than as much of it as the
+  /// questions asked so far needed.
   @visibleForTesting
   bool get isParsed => _parsingResult != null;
 

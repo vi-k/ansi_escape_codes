@@ -1,7 +1,19 @@
 part of '../parser.dart';
 
+/// A Select Graphic Rendition sequence, `CSI ... m`: the one that says how
+/// the text after it is to look.
+///
+/// One sequence carries any number of functions — `CSI 1;31 m` is bold and a
+/// red foreground — and [functions] holds them in the order they were
+/// written in.
 final class Sgr extends Csi {
+  /// The parameters as they were written; see [CsiParam].
+  ///
+  /// [functions] is the same thing read: reach for this only to see how the
+  /// sequence was put together.
   final List<CsiParam> params;
+
+  /// What the sequence does, in the order it was written in.
   final List<SgrFunction> functions;
 
   Sgr._(
@@ -313,6 +325,12 @@ final class Sgr extends Csi {
   @override
   String get id => functions.join(';');
 
+  /// Whether the sequence carries the function [code] stands for.
+  ///
+  /// ```dart
+  /// final sgr = Parser('$bold').matches.first.entity as Sgr;
+  /// print(sgr.contains(ControlFunctionsSGR.bold)); // true
+  /// ```
   bool contains(ControlFunctionsSGR code) {
     for (final function in functions) {
       if (function is SgrFunctionWithCode && function.code == code) {
@@ -325,8 +343,6 @@ final class Sgr extends Csi {
 
   @override
   String toString() => '$Sgr(${functions.join(',')})';
-  // final List<AnsiCsiParam> params;
-  // final List<AnsiSgrFunction> functions;
 }
 
 final class _SgrParsingState<S extends State<S>> {
@@ -393,6 +409,7 @@ sealed class SgrFunctionWithCode extends SgrFunction {
 /// The `0` written out comes through as a [SgrSimpleFunction] carrying the
 /// same code.
 final class SgrDefaultFunction extends SgrFunctionWithCode {
+  /// The function a parameter left out stands for.
   const SgrDefaultFunction() : super(ControlFunctionsSGR.reset);
 
   @override
@@ -401,6 +418,7 @@ final class SgrDefaultFunction extends SgrFunctionWithCode {
 
 /// A function that is its code and nothing else: the `1` of `CSI 1 m`, bold.
 final class SgrSimpleFunction extends SgrFunctionWithCode {
+  /// The function [code] stands for.
   const SgrSimpleFunction(super.code);
 
   @override
@@ -413,6 +431,7 @@ final class SgrColorFunction extends SgrFunctionWithCode {
   /// The colour set, under the name of the code that sets it.
   final ExtendedColor color;
 
+  /// The [color] that [code] sets, named after the code that sets it.
   SgrColorFunction(super.code, ExtendedColor color)
       : color = color.withPrefix(code.id);
 
@@ -429,6 +448,7 @@ final class SgrUnknownColorFunctionFromParams extends SgrFunctionWithCode {
   /// The parameters as they were written, the colour space id included.
   final List<CsiParam> params;
 
+  /// The colour [code] was setting, kept as the [params] it was written with.
   SgrUnknownColorFunctionFromParams(super.code, List<CsiParam> params)
       : params = List.unmodifiable(params);
 
@@ -453,6 +473,7 @@ final class SgrUnknownColorFunctionFromValues extends SgrFunctionWithCode {
   /// The sub-parameters as they were written, the colour space id included.
   final List<int> values;
 
+  /// The colour [code] was setting, kept as the [values] it was written with.
   SgrUnknownColorFunctionFromValues(super.code, Iterable<int> values)
       : values = List.unmodifiable(values);
 
@@ -476,6 +497,7 @@ final class SgrUnknownParamFunction extends SgrFunction {
   /// The number written.
   final int number;
 
+  /// The [number] that named nothing.
   const SgrUnknownParamFunction(this.number);
 
   @override
@@ -488,6 +510,7 @@ final class SgrUnknownParamsFunction extends SgrFunction {
   /// The numbers written, in the order they were written in.
   final List<int> numbers;
 
+  /// The [numbers] that named nothing.
   SgrUnknownParamsFunction(List<int> numbers)
       : numbers = List.unmodifiable(numbers);
 

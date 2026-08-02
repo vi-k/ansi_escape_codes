@@ -10,6 +10,7 @@ import '../../extensions/remove.dart';
 import '../../extensions/show_control_codes.dart';
 import '../../extensions/show_escape_codes.dart';
 import '../../ready_to_use/csi.dart';
+import '../../ready_to_use/esc.dart';
 import '../../ready_to_use/sgr/sgr.dart';
 import '../colors/color.dart';
 import '../control_functions/control_functions_c0.dart';

@@ -1,5 +1,11 @@
 part of '../parser.dart';
 
+/// A control sequence: `CSI`, the parameters, and the byte that says what to
+/// do with them.
+///
+/// The graphic ones come back [Sgr], the named ones [CsiCommon] or a type of
+/// its own such as [CursorUp], the private ones [CsiPrivate] or one of the
+/// four modes this package writes, and what is left [CsiUnknown].
 sealed class Csi extends EscapeCode {
   const Csi._(super.string) : super._();
 
@@ -222,6 +228,8 @@ final class CsiParamNumbers extends CsiParam {
   String toString() => values.join(':');
 }
 
+/// A control sequence whose final bytes name no function the standard
+/// allots, or whose parameters could not be read as numbers.
 final class CsiUnknown extends Csi with UnrecognizedEscapeCode {
   const CsiUnknown._(super.string) : super._();
 
@@ -229,6 +237,12 @@ final class CsiUnknown extends Csi with UnrecognizedEscapeCode {
   String toString() => '$Csi(${toStringAsEscapeSequences()})';
 }
 
+/// A control sequence the standard leaves to the terminal: `CSI ? 7 h` and
+/// the rest of the private area, which is not a mistake but is not this
+/// package's to name.
+///
+/// The four modes it does name — [ShowCursor], [HideCursor],
+/// [UseAlternateScreen] and [UseMainScreen] — come back as themselves.
 final class CsiPrivate extends Csi with UnrecognizedEscapeCode {
   const CsiPrivate._(super.string) : super._();
 
@@ -243,7 +257,10 @@ final class CsiPrivate extends Csi with UnrecognizedEscapeCode {
 /// [CursorUp] and the sequences beside it. Matching [CsiCommon] catches them
 /// all the same.
 base class CsiCommon extends Csi {
+  /// The function this sequence stands for.
   final ControlSequencesFunctions controlSequence;
+
+  /// The parameters as they were written; see [CsiParam].
   final List<CsiParam> params;
 
   CsiCommon._(
@@ -365,6 +382,7 @@ final class CursorHVPos extends CsiCommon {
 
 /// Shows the cursor. `CSI ? 25 h`, the sequence [showCursor] is written with.
 final class ShowCursor extends Csi {
+  /// The sequence itself, the same one [showCursor] is written with.
   const ShowCursor() : super._(showCursor);
 
   @override
@@ -376,6 +394,7 @@ final class ShowCursor extends Csi {
 
 /// Hides the cursor. `CSI ? 25 l`, the sequence [hideCursor] is written with.
 final class HideCursor extends Csi {
+  /// The sequence itself, the same one [hideCursor] is written with.
   const HideCursor() : super._(hideCursor);
 
   @override
@@ -388,6 +407,7 @@ final class HideCursor extends Csi {
 /// Switches to the alternate screen. `CSI ? 1049 h`, the sequence
 /// [useAlternateScreen] is written with.
 final class UseAlternateScreen extends Csi {
+  /// The sequence itself, the same one [useAlternateScreen] is written with.
   const UseAlternateScreen() : super._(useAlternateScreen);
 
   @override
@@ -400,6 +420,7 @@ final class UseAlternateScreen extends Csi {
 /// Switches back to the main screen. `CSI ? 1049 l`, the sequence
 /// [useMainScreen] is written with.
 final class UseMainScreen extends Csi {
+  /// The sequence itself, the same one [useMainScreen] is written with.
   const UseMainScreen() : super._(useMainScreen);
 
   @override
