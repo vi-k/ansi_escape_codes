@@ -16,7 +16,7 @@ sealed class Color {
 
   const Color([this._prefix]);
 
-  /// What this colour is called, as [Parser.showControlFunctions] writes it:
+  /// What this colour is called, as `Parser.showControlFunctions` writes it:
   /// `fgRed`, `bg256Gray5`, `underlineRgb010203`.
   String get id;
 
