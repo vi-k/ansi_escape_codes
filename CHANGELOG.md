@@ -106,6 +106,17 @@ Breaking changes:
   table — now come from an extension, `StyleColors`, rather than from the class
   itself. Written the usual way they behave as they did; what an extension
   cannot do is answer a `dynamic` receiver.
+- The predefined styles at the top level are 20 names rather than 530: `style`,
+  which carries nothing and is where a chain starts, the sixteen colours of the
+  text, and `foreground`, `background` and `underlineColor`. Everything else —
+  the fifteen properties, the sixteen backgrounds, the 432 of the RGB cube and
+  the 48 greys — is reached through the chain: `bold` is `style.bold`, `bgRed`
+  is `style.bgRed`, `rgb531` is `style.rgb531`. `red.bold.bgYellow` is what it
+  always was.
+
+  This is what took the 31 names that `style.dart` and `ansi_escape_codes.dart`
+  both claimed out of the way, and the second now exports the styles as well:
+  one import where there were two.
 
 ## 3.1.2
 

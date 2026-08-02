@@ -78,7 +78,7 @@ void main() {
 
     test('keeps an attribute of the caller', () {
       expect(
-        Parser(styles.bold('${resetBoldAndDim}x')).showControlFunctions(),
+        Parser(styles.style.bold('${resetBoldAndDim}x')).showControlFunctions(),
         '[reset][bold]x[reset]',
       );
     });

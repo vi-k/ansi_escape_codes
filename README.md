@@ -136,7 +136,7 @@ All the ready-to-use values can be found in this folder:
 import 'package:ansi_escape_codes/style.dart';
 
 void main() {
-  final defaultStyle = gray12;
+  final defaultStyle = style.gray12;
   final greenStyle = green.bold;
   final highlighedStyle = red.bgYellow.underline;
 
@@ -150,10 +150,12 @@ void main() {
 }
 ```
 
-First, you can assemble your own style from any pieces:
+First, you can assemble your own style from any pieces. A chain starts at one
+of the sixteen colors, or at `style`, which carries nothing:
 
 ```dart
-final style = rgb050.bgRgb010.bold.italic.underline;
+final mine = style.rgb050.bgRgb010.bold.italic.underline;
+final warning = red.bold;
 ```
 
 Second, styles can be nested: after completing the action of a nested style,
@@ -176,7 +178,7 @@ void main() {
   final highlighedStyle = red.bgYellow.underline;
 
   runZonedPrinter(
-    defaultStyle: gray12,
+    defaultStyle: style.gray12,
     () {
       print(
         'Normal text'
@@ -245,27 +247,25 @@ Each entry point brings a different part of the package:
 | Import | What it brings |
 |:---|:---|
 | `ansi.dart` | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F` |
-| `ansi_escape_codes.dart` | the ready-to-use strings (`fgRed`, `cursorUp`), the parser, the state and the control function tables |
-| `style.dart` | `Style`, the parser, and the predefined styles: `red`, `bgYellow`, `bold` |
+| `ansi_escape_codes.dart` | everything but the raw bytes: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state and the control function tables |
+| `style.dart` | the styles and what they need: `Style`, `style`, the sixteen colors, and the parser |
 | `parsing.dart` | the parser, the state and the control function tables |
 | `extensions.dart` | the `String` extensions: `ansiRemoveEscapeCodes`, `ansiShowEscapeSequences` and the rest |
 | `utils.dart` | `tabs` and `currentCursorPos` |
 
-Two of them name the same things. `style.dart` calls a `Style` `bold`, and
-`ansi_escape_codes.dart` calls a `String` `bold`, and there are 31 names like
-that: the fifteen text styles — `bold`, `dim`, `italic`, `underline`,
-`doublyUnderline`, `blink`, `blinkRapid`, `inverse`, `invisible`,
-`strikethrough`, `frame`, `encircle`, `overline`, `superscript`, `subscript` —
-and the sixteen background colors, `bgBlack` through `bgHighWhite`. Importing
-both, say which one is meant:
+They can be imported together, and `ansi_escape_codes.dart` already holds the
+styles, so one import is usually enough:
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
-import 'package:ansi_escape_codes/style.dart' as style;
 
 print('${bold}by the string$reset');
 print(style.bold('by the style'));
 ```
+
+The string and the style are told apart by what they are: `bold` is a `String`
+of escape codes, and the styles are reached through `style` or through one of
+the sixteen colors — `red.bold`, `style.bgYellow`.
 
 The package also exports names Dart and Flutter use for their own: `Match` is
 `dart:core`'s, and `Text`, `State`, `Stack`, `Colors` and `Color` are Flutter's.

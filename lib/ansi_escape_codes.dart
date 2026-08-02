@@ -5,6 +5,7 @@ export 'src/parsing/control_functions/control_functions_esc_fs.dart';
 export 'src/parsing/control_functions/control_sequences.dart';
 export 'src/parsing/control_functions/sgr.dart';
 export 'src/parsing/parser/parser.dart';
+export 'src/parsing/state/predefined_styles.dart';
 export 'src/parsing/state/state.dart';
 export 'src/ready_to_use/csi.dart';
 export 'src/ready_to_use/esc.dart';
