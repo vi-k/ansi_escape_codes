@@ -779,7 +779,13 @@ print('${bgRgb(44, 43, 124)} Ultramarine $resetBg'); // Not constant!
 
 ### Parser
 
-`Parser` allows you to analyze text containing escape codes:
+`Parser` allows you to analyze text containing escape codes. There are two of
+them, and everything below holds for both: `Parser` keeps the style in force
+at each point, `StackedParser` keeps the history of how it got there, so that a
+`resetFg` goes back to the color before the last one rather than to the
+terminal's own. The difference is the one between
+[Printer and StackedPrinter](#stackedprinter), and the state it hands out is a
+`Stack` instead of a `Style`.
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
@@ -1046,6 +1052,14 @@ final withoutAllEscapeCodes = text.ansiRemoveEscapeCodes();
 print(withoutAllEscapeCodes.ansiShowEscapeSequences());
 // ' Text '
 ```
+
+The rest of the extensions, in one breath: `ansiHasUnderlineColor` and
+`ansiRemoveUnderlineColor` do for the color of the underline what the pairs
+above do for the foreground and the background; `ansiHasControlCodes` asks
+about the C0 bytes rather than the escape codes; `lengthWithoutEscapeCodes` is
+`Parser.length` for a string read once; `ansiShowControlFunctions` and
+`ansiOptimizeControlFunctions` are `Parser.showControlFunctions` and
+`Parser.optimize` for a string read once.
 
 ### Sequence types
 

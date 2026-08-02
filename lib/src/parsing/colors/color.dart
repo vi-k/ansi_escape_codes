@@ -21,6 +21,11 @@ enum ColorTarget {
   background(ControlFunctionsSGR.bg),
 
   /// The line under the text, `CSI 58`.
+  ///
+  /// Only an [ExtendedColor] can be set here — the standard gives the
+  /// underline no sixteen-colour form, and `State.underlineColor` takes
+  /// nothing else. A [Color16] put on this target with [Color.on] answers to
+  /// a name no constant has.
   underline(ControlFunctionsSGR.underlineColor);
 
   /// The SGR function that sets a colour there.
