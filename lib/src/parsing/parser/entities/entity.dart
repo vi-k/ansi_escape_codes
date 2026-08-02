@@ -58,9 +58,6 @@ sealed class EscapeCode extends Entity {
       string.ansiShowControlCodes(preferStyle: ControlCodeStyle.abbr);
 
   String toStringAsEscapeSequences() => string.ansiShowEscapeSequences();
-
-  @Deprecated('Use toStringAsEscapeSequences instead')
-  String toStringAsEscapeSquences() => toStringAsEscapeSequences();
 }
 
 mixin UnrecognizedEscapeCode on EscapeCode {

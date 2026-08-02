@@ -841,9 +841,6 @@ const String SIMD = '^';
 /// `RESERVED` in the namespace this package exports.
 const String RESERVED_5F = '_';
 
-@Deprecated('Use RESERVED_5F instead')
-const String RESERVED = RESERVED_5F;
-
 /// Character Position Absolute.
 ///
 /// Representation: CSI n \x60

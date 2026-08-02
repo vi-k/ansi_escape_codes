@@ -1,8 +1,5 @@
 part of 'state.dart';
 
-@Deprecated('Use Stack instead')
-typedef SgrStackedState = Stack;
-
 /// Represents an active text style that tracks history via a stack.
 ///
 /// Unlike [Style] which keeps only the recently active properties, [Stack]
@@ -79,9 +76,6 @@ final class Stack extends State<Stack> {
     backgroundStack: [],
     underlineColorStack: [],
   );
-
-  @Deprecated('Use `terminalColors` instead')
-  static const Stack defaults = terminalColors;
 
   @override
   bool get isBold => _boldCounter != 0;

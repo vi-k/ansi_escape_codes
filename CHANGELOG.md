@@ -63,12 +63,36 @@ Performance:
   question asked of it. Call `prepare` when there are many.
 - A control sequence is looked up in a map rather than by walking the list.
 
-Renamed, the old names deprecated beside the new ones:
+Renamed:
 
 - `RESERVED` to `RESERVED_5F`, named after its byte rather than claiming a word
   that plain in the namespace this package exports.
-- `toStringAsEscapeSquences` to `toStringAsEscapeSequences`.
+- `toStringAsEscapeSquences` to `toStringAsEscapeSequences`, which was missing
+  a letter.
 - The `standart_colors` directory is spelt `standard_colors`.
+
+Removed — every name deprecated in an earlier release is gone:
+
+- The style constants renamed in 2.0.0: `faint`, `resetBoldAndFaint`,
+  `italicized`, `resetItalicized`, `singlyUnderlined`, `doublyUnderlined`,
+  `resetUnderlined`, `slowlyBlinking`, `rapidlyBlinking`, `resetBlinking`,
+  `negative`, `resetNegative`, `concealed`, `resetConcealed`, `crossedOut`,
+  `resetCrossedOut`, `framed`, `encircled`, `resetFramedAndEncircled`,
+  `overlined`, `resetOverlined`, `superscripted`, `subscripted` and
+  `resetSuperAndSubscripted`. Use `dim`, `italic`, `underline`, `blink`,
+  `inverse`, `invisible`, `strikethrough`, `frame`, `encircle`, `overline`,
+  `superscript`, `subscript` and their `reset…` counterparts.
+- The string extensions without the `ansi` prefix: `hasEscapeCodes`, `hasCsi`,
+  `hasSgr`, `hasForeground`, `hasBackground`, `removeEscapeCodes`,
+  `removeCsi`, `removeSgr`, `removeForeground`, `removeBackground`,
+  `showEscapeCodes` and `showControlCodes`. Use the `ansi…` names.
+- The typedefs left behind by the renaming in 3.0.0: `AnsiParser`,
+  `AnsiPrinter`, `SgrState`, `SgrPlainState` and `SgrStackedState`. Use
+  `Parser`, `Printer`, `State`, `Style` and `Stack`.
+- `Style.defaults` and `Stack.defaults`. Use `terminalColors`, or `NoStyle`
+  where nothing at all should be written.
+- `Parser.stateAtPos` and `runZonedAnsiPrinter`. Use `stateAt` and
+  `runZonedPrinter`.
 
 Breaking changes:
 

@@ -32,9 +32,6 @@ part 'matches/match.dart';
 part 'matches/matches.dart';
 part 'matches/matches_result.dart';
 
-@Deprecated('Use Parser instead')
-typedef AnsiParser = Parser;
-
 /// A parser that processes strings containing ANSI escape codes and tracks the
 /// current [Style].
 ///
@@ -150,9 +147,6 @@ final class _ParserBase<S extends State<S>> {
   /// Whether the string ends with a pattern in the string without ANSI
   /// escape codes.
   bool endsWith(String other) => _requirePlainString.endsWith(other);
-
-  @Deprecated('Use stateAt instead')
-  S stateAtPos(int pos) => stateAt(pos);
 
   /// Returns the [S] of the string at the given plain text [pos].
   ///

@@ -26,9 +26,6 @@ enum FrameStyle { frame, encircle }
 
 enum ScriptStyle { superscript, subscript }
 
-@Deprecated('Use Style instead')
-typedef SgrPlainState = Style;
-
 /// Represents the currently active text style.
 ///
 /// [Style] contains the current state of ANSI graphic renditions (SGR) without
@@ -111,9 +108,6 @@ final class Style extends State<Style> {
   );
 
   static const Style terminalColors = Style();
-
-  @Deprecated('Use `terminalColors` or `NoStyle` instead')
-  static const Style defaults = terminalColors;
 
   String call(String text) {
     if (text.isEmpty) {
