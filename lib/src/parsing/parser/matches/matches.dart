@@ -9,6 +9,11 @@ final class Matches<S extends State<S>> extends Iterable<Match<S>> {
   final S _initialState;
   final String _input;
 
+  /// What has been read of the string so far, shared by every iterator over
+  /// it, so that reading part of it and then asking again does not start the
+  /// reading over.
+  final List<Match<S>> _parsed = [];
+
   MatchesResult<S>? _parsingResult;
 
   Matches._(this._input, this._initialState);

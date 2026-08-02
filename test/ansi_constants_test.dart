@@ -786,6 +786,24 @@ void main() {
       );
     });
 
+    test('a part of the string read once is not read again', () {
+      final parser = Parser('$bold one $fgCyan two $resetBoldAndDim three ');
+
+      // Stopping short leaves the string unparsed as a whole ...
+      expect(parser.stateAt(2).isBold, isTrue);
+      expect(parser.isParsed, isFalse);
+
+      // ... but what was read is kept, and reading on picks up from there and
+      // gives the same answers as reading it all at once would.
+      expect(parser.stateAt(2).isBold, isTrue);
+      expect(parser.finalState.foregroundColor, Color16.cyan);
+      expect(parser.isParsed, isTrue);
+      expect(
+        parser.matches.map((m) => m.entity.toString()).toList(),
+        Parser(parser.input).matches.map((m) => m.entity.toString()).toList(),
+      );
+    });
+
     test('runZonedStackedPrinter prints every line', () {
       final output = interceptZonedPrint(() {
         runZonedStackedPrinter(() {
