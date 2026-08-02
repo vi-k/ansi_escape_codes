@@ -35,6 +35,52 @@ void main() {
       );
     });
 
+    test('name themselves by what they stand for', () {
+      String describe(String text) =>
+          Parser(text).matches.first.entity.toString();
+
+      expect(describe(RIS), 'Esc(RIS)');
+      expect(describe('\x1B(B'), 'Esc("[ESC (B]")');
+      expect(describe('${OSC}0;title$ST'), 'Osc("[OSC 0;title ST]")');
+      expect(describe(fgRed), 'Sgr(fgRed)');
+      expect(describe(cursorUp), 'Csi([CSI CUU])');
+      expect(describe('\x1B[?7h'), 'Csi([CSI ?7 SM])');
+      expect(describe('\x1B[!p'), 'Csi([CSI !p])');
+      expect(const SaveCursor().toString(), 'SaveCursor()');
+      expect(const RestoreCursor().toString(), 'RestoreCursor()');
+    });
+
+    test('a link that closes says so, and one that opens says where', () {
+      expect(const Link('').id, 'linkClose');
+      expect(const Link('https://example.com').id, 'link(https://example.com)');
+    });
+
+    test('a match says where it was found and in what state', () {
+      expect(
+        Parser('a$fgRed').matches.first.toString(),
+        "Match<Style>(start: 0, end: 1, entity: Text('a'), state: Style())",
+      );
+    });
+
+    test('an escape code reads itself out either way', () {
+      final code = Parser(fgRed).matches.first.entity as EscapeCode;
+
+      expect(code.toStringAsControlCodes(), '[ESC][31m');
+      expect(code.toStringAsEscapeSequences(), '[CSI 31 SGR]');
+    });
+
+    test('two that carry the same string are one to a Set', () {
+      const same = [SaveCursor(), SaveCursor()];
+      const different = [Link('a'), Link('b')];
+
+      expect(same.toSet(), hasLength(1));
+      expect(different.toSet(), hasLength(2));
+      expect(
+        const SaveCursor().hashCode,
+        Parser(saveCursor).matches.first.entity.hashCode,
+      );
+    });
+
     test('an SGR with no parameters is a reset', () {
       expect(Parser('\x1B[m').showControlFunctions(), '[reset]');
       expect(Parser('\x1B[;1m').showControlFunctions(), '[reset;bold]');

@@ -35,6 +35,33 @@ void main() {
       expect(Parser('\x1B[1!p').matches.first.entity, isA<CsiUnknown>());
     });
 
+    test('finds a C1 function by the sequence it is written as', () {
+      expect(ControlFunctionsC1.byCode('\x1B['), ControlFunctionsC1.CSI);
+      expect(ControlFunctionsC1.byCode('\x1B]'), ControlFunctionsC1.OSC);
+      expect(ControlFunctionsC1.byCode('\x1B\\'), ControlFunctionsC1.ST);
+      expect(ControlFunctionsC1.byCode('\x1BN'), ControlFunctionsC1.SS2);
+    });
+
+    test('and gives nothing for a sequence that is no C1 function', () {
+      expect(ControlFunctionsC1.byCode(''), isNull);
+      expect(ControlFunctionsC1.byCode('\x1B'), isNull, reason: 'ESC alone');
+      expect(
+        ControlFunctionsC1.byCode('[['),
+        isNull,
+        reason: 'the first byte must be the ESC itself',
+      );
+      expect(
+        ControlFunctionsC1.byCode('\x1B\x1B'),
+        isNull,
+        reason: '0x1B is below the 0x40 the C1 set starts at',
+      );
+      expect(
+        ControlFunctionsC1.byCode('\x1Bz'),
+        isNull,
+        reason: 'and 0x7A is above the 0x5F it ends at',
+      );
+    });
+
     test('gives nothing for a code that names no function', () {
       expect(ControlSequencesFunctions.byCode(''), isNull);
       expect(ControlSequencesFunctions.byCode('AB'), isNull);
