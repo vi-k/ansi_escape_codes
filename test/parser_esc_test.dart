@@ -24,6 +24,27 @@ void main() {
       expect(Parser('\x1B8').matches.first.entity, const RestoreCursor());
       expect(Parser('\x1B 7').matches.first.entity, isA<EscUnknown>());
     });
+
+    test('keep those bytes when they are shown', () {
+      expect('\x1B(B'.ansiShowEscapeSequences(), '[ESC (B]');
+      expect('\x1B)0'.ansiShowEscapeSequences(), '[ESC )0]');
+      expect('\x1B#8'.ansiShowEscapeSequences(), '[ESC #8]');
+      expect(Parser('\x1B%G').showControlFunctions(), '[ESC %G]');
+    });
+
+    test('are told apart from the sequences without them', () {
+      expect(
+        '\x1B(B'.ansiShowEscapeSequences(),
+        isNot('\x1B)B'.ansiShowEscapeSequences()),
+        reason: 'G0 and G1 are designated by different sequences',
+      );
+      expect(
+        '\x1B 7'.ansiShowEscapeSequences(),
+        '[ESC ␠7]',
+        reason: 'the space is shown, or this reads as the cursor save',
+      );
+      expect('\x1B7'.ansiShowEscapeSequences(), '[ESC 7]');
+    });
   });
 
   group('the independent control functions:', () {
@@ -58,6 +79,11 @@ void main() {
       expect('a\x1B'.ansiRemoveEscapeCodes(), 'a');
       expect('\x1B\x1B'.ansiRemoveEscapeCodes(), '');
       expect('a\x1B\nb'.ansiRemoveEscapeCodes(), 'a\nb');
+    });
+
+    test('is shown instead of throwing', () {
+      expect('a\x1B'.ansiShowEscapeSequences(), 'a[ESC]');
+      expect(Parser('a\x1B').showControlFunctions(), 'a[ESC]');
     });
   });
 }

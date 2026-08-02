@@ -111,17 +111,27 @@ extension StringShowEscapeCodesExtension on String {
 
       final esc = m.namedGroup('esc');
       if (esc != null) {
-        final code = m.namedGroup('esc_final')!;
+        // The intermediate bytes belong to the code: `ESC ( B` and `ESC ) B`
+        // designate different character sets, and `ESC SP 7` is not the `ESC 7`
+        // that saves the cursor. A broken sequence has no final byte at all.
+        final code = '${m.namedGroup('esc_inter') ?? ''}'
+                '${m.namedGroup('esc_final') ?? ''}'
+            .replaceAll(' ', '␠');
 
         buf
           ..write(open)
           ..write(codeOpen)
           ..write(ControlFunctionsC0.ESC.name)
-          ..write(codeClose)
-          ..write(finalOpen)
-          ..write(code)
-          ..write(finalClose)
-          ..write(close);
+          ..write(codeClose);
+
+        if (code.isNotEmpty) {
+          buf
+            ..write(finalOpen)
+            ..write(code)
+            ..write(finalClose);
+        }
+
+        buf.write(close);
 
         continue;
       }
