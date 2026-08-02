@@ -468,7 +468,24 @@ int _checked(int value, String name) => value < 1
     : value;
 
 /// Shows the cursor.
-const String showCursor = '$CSI?25h';
+const String showCursor = '$CSI?25$SM';
 
 /// Hides the cursor.
-const String hideCursor = '$CSI?25l';
+const String hideCursor = '$CSI?25$RM';
+
+/// Switches to the screen a full-screen program draws on.
+///
+/// The cursor is saved, the alternate screen is cleared and everything is
+/// drawn there, leaving the screen the program was started from untouched.
+/// [useMainScreen] brings that one back, scrollback and all, with the cursor
+/// where it was left.
+///
+/// There is an older pair for this, `CSI ? 47 h` and `CSI ? 47 l`, which
+/// switches the screen without saving the cursor or clearing anything. This
+/// one does all three, and is what terminals have followed since.
+const String useAlternateScreen = '$CSI?1049$SM';
+
+/// Switches back to the screen the program was started from.
+///
+/// See [useAlternateScreen].
+const String useMainScreen = '$CSI?1049$RM';

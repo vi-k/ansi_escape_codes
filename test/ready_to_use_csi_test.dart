@@ -99,6 +99,8 @@ void main() {
         'scrollDown': (scrollDown, '\x1B[T'),
         'showCursor': (showCursor, '\x1B[?25h'),
         'hideCursor': (hideCursor, '\x1B[?25l'),
+        'useAlternateScreen': (useAlternateScreen, '\x1B[?1049h'),
+        'useMainScreen': (useMainScreen, '\x1B[?1049l'),
       };
 
       for (final MapEntry(key: name, value: (actual, expected))

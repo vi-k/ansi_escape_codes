@@ -416,6 +416,8 @@ the style used in Dart.
 | Show cursor                        | **constant:** `showCursor`    | Shows the cursor. |
 | Save cursor                        | **constant:** `saveCursor`    | Saves the cursor position, encoding shift state and formatting attributes. |
 | Restore cursor                     | **constant:** `restoreCursor` | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
+| Alternate screen                   | **constant:** `useAlternateScreen` | Switches to the screen a full-screen program draws on: the cursor is saved, the alternate screen is cleared, and the screen the program was started from is left untouched. |
+| Main screen                        | **constant:** `useMainScreen` | Switches back to the screen the program was started from, scrollback and all, with the cursor where `useAlternateScreen` left it. |
 
 All of the following examples are equivalent:
 
