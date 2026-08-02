@@ -19,10 +19,10 @@ final class ColorRgb extends ExtendedColor {
     return ColorRgb._(value);
   }
 
-  const ColorRgb._(this._value, [super._prefix]);
+  const ColorRgb._(this._value, [super._target]);
 
   @override
-  ColorRgb withPrefix(String prefix) => ColorRgb._(_value, prefix);
+  ColorRgb on(ColorTarget target) => ColorRgb._(_value, target);
 
   /// How much red, 0 to 255.
   int get r => _value >> 16;
@@ -40,7 +40,7 @@ final class ColorRgb extends ExtendedColor {
   bool operator ==(Object other) => other is ColorRgb && _value == other._value;
 
   @override
-  String get id => '${_prefix ?? '?'}Rgb($r,$g,$b)';
+  String get id => '${_target?.prefix ?? '?'}Rgb($r,$g,$b)';
 
   @override
   String toString() => '$ColorRgb($r, $g, $b)';

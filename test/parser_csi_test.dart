@@ -160,6 +160,13 @@ void main() {
       );
     });
 
+    test('say which of the four they are when printed', () {
+      expect(const ShowCursor().toString(), 'ShowCursor()');
+      expect(const HideCursor().toString(), 'HideCursor()');
+      expect(const UseAlternateScreen().toString(), 'UseAlternateScreen()');
+      expect(const UseMainScreen().toString(), 'UseMainScreen()');
+    });
+
     test('leave the private sequences they cannot name alone', () {
       expect(
         Parser('\x1B[?7h').matches.first.entity,
@@ -197,6 +204,22 @@ void main() {
         Parser('\x1B[1:2A').matches.first.entity,
         isNot(isA<CursorUp>()),
         reason: 'and it takes no sub-parameters either',
+      );
+      expect(
+        (Parser('\x1B[1:2A').matches.first.entity as CsiCommon)
+            .params
+            .single
+            .toString(),
+        '1:2',
+        reason: 'which are kept as they were written',
+      );
+    });
+
+    test('a parameter too large to be a number is no sequence at all', () {
+      expect(
+        Parser('\x1B[99999999999999999999999m').matches.first.entity,
+        isA<CsiUnknown>(),
+        reason: 'the bytes are kept, the meaning is given up on',
       );
     });
   });

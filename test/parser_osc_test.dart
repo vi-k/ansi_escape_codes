@@ -16,6 +16,24 @@ void main() {
       expect((entity as Link).url, url);
     });
 
+    test('linkBel writes the older form, closed by a BEL', () {
+      expect(
+        linkBel('https://example.com', text: 'go'),
+        '${OSC}8;;https://example.com${BEL}go${OSC}8;;$BEL',
+      );
+      expect(
+        linkBel('https://example.com'),
+        '${OSC}8;;https://example.com$BEL'
+        'https://example.com'
+        '${OSC}8;;$BEL',
+        reason: 'the url stands for its own text where none is given',
+      );
+      expect(
+        Parser(linkBel('https://example.com', text: 'go')).removeAll(),
+        'go',
+      );
+    });
+
     test('an unterminated one does not spill into the text', () {
       expect(
         Parser('before${OSC}8;;https://example.com').removeAll(),

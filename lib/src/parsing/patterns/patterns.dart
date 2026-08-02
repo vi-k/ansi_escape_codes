@@ -31,9 +31,6 @@ const String oscPattern = '(?<osc>$ESC\\])'
     '(?<osc_params>[^$BEL$ESC]*)'
     '(?<osc_terminator>$BEL|$ESC\\\\)?';
 
-/// Pattern for OSC.
-final oscRe = RegExp(oscPattern);
-
 /// Pattern for ESC.
 ///
 /// An escape sequence is `ESC`, any number of intermediate bytes and a final

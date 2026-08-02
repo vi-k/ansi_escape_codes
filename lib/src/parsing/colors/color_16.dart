@@ -13,10 +13,10 @@ final class Color16 extends Color {
   /// Which of the sixteen it is.
   final Colors color;
 
-  const Color16._(this.color, [super._prefix]);
+  const Color16._(this.color, [super._target]);
 
   @override
-  Color16 withPrefix(String prefix) => Color16._(color, prefix);
+  Color16 on(ColorTarget target) => Color16._(color, target);
 
   static const Color16 black = Color16._(Colors.black);
 
@@ -66,7 +66,7 @@ final class Color16 extends Color {
   bool operator ==(Object other) => other is Color16 && color == other.color;
 
   @override
-  String get id => '${_prefix ?? '?'}${color.name.capitalize()}';
+  String get id => '${_target?.prefix ?? '?'}${color.name.capitalize()}';
 
   @override
   String toString() => '$Color16.${color.name}';

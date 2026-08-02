@@ -89,8 +89,13 @@ mixin UnrecognizedEscapeCode on EscapeCode {
   String get id => string.ansiShowEscapeSequences(open: '', close: '');
 }
 
-/// An escape code that is none of [Csi], [Osc] or [Esc]: the `ESC` was there,
-/// and nothing that could follow it did.
+/// What an escape code falls back to when it is none of [Csi], [Osc] or
+/// [Esc].
+///
+/// The patterns as they stand leave nothing for it: whatever they match is one
+/// of the three, so nothing in a string being read comes back as this today.
+/// It is here so that a pattern grown wider than its reader has somewhere to
+/// put what it caught, rather than throwing.
 final class UnknownEscapeCode extends EscapeCode with UnrecognizedEscapeCode {
   const UnknownEscapeCode._(super.string) : super._();
 
