@@ -15,89 +15,194 @@ part 'stack.dart';
 /// This class represents a set of applied text styles and colors. Subclasses
 /// like [Style] and [Stack] provide specific mechanisms for how these
 /// properties are maintained.
+///
+/// A state is never changed: every getter and method below that returns an
+/// `S` gives back a new state with the change made, leaving this one as it
+/// was. `style.bold.italic` is three states, and the first two are still
+/// there to be used.
 @immutable
 sealed class State<S extends State<S>> {
   const State();
 
+  /// Whether the text is bold.
   bool get isBold;
 
+  /// Whether the text is dim.
   bool get isDim;
 
+  /// Whether the text is italic.
   bool get isItalic;
 
+  /// Whether the text is underlined once.
   bool get isUnderline;
 
+  /// Whether the text is underlined twice.
   bool get isDoublyUnderline;
 
+  /// Which underline the text carries, or null for none.
+  ///
+  /// The two are one property to the terminal: underlining twice puts the
+  /// single underline out, not another line beside it.
   UnderlineStyle? get underlineStyle;
 
+  /// Whether the text blinks slowly.
   bool get isBlink;
 
+  /// Whether the text blinks rapidly.
   bool get isBlinkRapid;
 
+  /// Which blink the text carries, or null for none.
   BlinkStyle? get blinkStyle;
 
+  /// Whether the foreground and the background are swapped.
   bool get isInverse;
 
+  /// Whether the text is there but not shown.
   bool get isInvisible;
 
+  /// Whether the text is struck through.
   bool get isStrikethrough;
 
+  /// Whether the text is framed.
   bool get isFrame;
 
+  /// Whether the text is encircled.
   bool get isEncircle;
 
+  /// Which of the two the text carries, or null for neither.
   FrameStyle? get frameStyle;
 
+  /// Whether the text is overlined.
   bool get isOverline;
 
+  /// Whether the text is raised.
   bool get isSuperscript;
 
+  /// Whether the text is lowered.
   bool get isSubscript;
 
+  /// Which of the two the text carries, or null for neither.
   ScriptStyle? get scriptStyle;
 
+  /// The colour of the text, or null where the terminal's own is in force.
   Color? get foregroundColor;
 
+  /// The colour behind the text, or null where the terminal's own is in
+  /// force.
   Color? get backgroundColor;
 
+  /// The colour of the underline, or null where it takes the colour of the
+  /// text.
   ExtendedColor? get underlineColorValue;
 
+  /// This state with bold added.
   S get bold;
+
+  /// This state with dim added.
   S get dim;
+
+  /// This state with italic added.
   S get italic;
+
+  /// This state with a single underline added.
   S get underline;
+
+  /// This state with a double underline added.
   S get doublyUnderline;
+
+  /// This state with a slow blink added.
   S get blink;
+
+  /// This state with a rapid blink added.
   S get blinkRapid;
+
+  /// This state with the foreground and the background swapped.
   S get inverse;
+
+  /// This state with the text hidden.
   S get invisible;
+
+  /// This state with a line through the text.
   S get strikethrough;
+
+  /// This state with a frame around the text.
   S get frame;
+
+  /// This state with a circle around the text.
   S get encircle;
+
+  /// This state with a line above the text.
   S get overline;
+
+  /// This state with the text raised.
   S get superscript;
+
+  /// This state with the text lowered.
   S get subscript;
 
+  /// This state with [color] as the colour of the text.
   S foreground(Color color);
+
+  /// This state with [color] as the colour behind the text.
   S background(Color color);
+
+  /// This state with [color] as the colour of the underline.
   S underlineColor(ExtendedColor color);
 
+  /// This state with everything taken off at once.
   S get reset;
+
+  /// This state with neither bold nor dim, which the terminal takes off
+  /// together.
   S get resetBoldAndDim;
+
+  /// This state with the italic taken off.
   S get resetItalic;
+
+  /// This state with the underline taken off, single or double.
   S get resetUnderline;
+
+  /// This state with the blink taken off, slow or rapid.
   S get resetBlink;
+
+  /// This state with the foreground and the background the right way round.
   S get resetInverse;
+
+  /// This state with the text shown again.
   S get resetInvisible;
+
+  /// This state with the line through the text taken off.
   S get resetStrikethrough;
+
+  /// This state with the frame and the circle taken off, which the terminal
+  /// takes off together.
   S get resetFrameAndEncircle;
+
+  /// This state with the line above the text taken off.
   S get resetOverline;
+
+  /// This state with the text back on the line, raised or lowered.
   S get resetSuperAndSubscript;
+
+  /// This state with the colour of the text left to the terminal.
   S get resetForeground;
+
+  /// This state with the colour behind the text left to the terminal.
   S get resetBackground;
+
+  /// This state with the underline back to the colour of the text.
   S get resetUnderlineColor;
 
+  /// The codes that take a terminal from this state to [other].
+  ///
+  /// Only the difference is written: going from bold red to bold green is one
+  /// colour code, not a reset and two. The result is empty where the two
+  /// states are the same, and where [other] is a [NoStyle], which is the
+  /// state that writes nothing by definition.
+  ///
+  /// [skipReset] leaves out the codes that take properties off and
+  /// [skipSet] the ones that put them on — each of use where the far end is
+  /// known to need only the other half.
   String transitTo(
     State<void> other, {
     bool skipSet = false,
@@ -212,6 +317,12 @@ sealed class State<S extends State<S>> {
             '${setParams.isEmpty ? '' : '$CSI${setParams.join(';')}$SGR'}';
   }
 
+  /// This state laid over [other]: what it sets itself it keeps, and what it
+  /// leaves alone it takes from there.
+  ///
+  /// This is how [Printer] gives text a default style — the text keeps every
+  /// property it asks for, and the gaps are filled by the default rather than
+  /// by the terminal.
   Style changeDefaultsTo(State other) => Style(
         bold: isBold || other.isBold,
         dim: isDim || other.isDim,
@@ -243,6 +354,8 @@ sealed class State<S extends State<S>> {
         underlineColor: underlineColorValue ?? other.underlineColorValue,
       );
 
+  /// This state as a plain [Style], without whatever a [Stack] remembers of
+  /// how it got here.
   Style toStyle();
 
   int _colorIndex(int offset, int highOffset, Color16? color) =>
