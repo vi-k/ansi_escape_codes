@@ -393,16 +393,18 @@ final class Style extends State<Style> {
   String get _objectTypeName => '$Style';
 }
 
-/// A style that writes nothing at all.
+/// A style that adds nothing to the text.
 ///
-/// Every other style, [Style.terminalColors] included, writes the codes that
-/// take the terminal to it. This one is asked to and does not: text goes
-/// through it as it came, and [transitTo] gives an empty string wherever it
-/// is the destination.
+/// Every other style writes something. `Style.terminalColors('text')` comes
+/// back with a reset in front of it, because a style that means "the terminal's
+/// own" still has to say so. This one is asked and answers with the text
+/// itself: [open] and [close] are empty, and `transitTo` gives an empty string
+/// wherever this is the destination.
 ///
-/// This is what a [Printer] is given where the output is not a terminal —
-/// a file, a pipe, a test — so that nothing has to be stripped back out
-/// afterwards.
+/// It is for the places that take a style and must be told to do nothing.
+/// Passing it to a [Printer] stops the printer from imposing a style of its
+/// own; the codes already in the text still go through, and taking those out
+/// is what `ansiCodesEnabled: false` is for.
 final class NoStyle extends Style {
   /// The style that writes nothing.
   const NoStyle();

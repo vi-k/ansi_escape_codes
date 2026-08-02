@@ -47,6 +47,8 @@ containing them.
   - [Unknown sequences](#unknown-sequences)
   - [Printer](#printer)
   - [StackedPrinter](#stackedprinter)
+  - [Printing to a sink](#printing-to-a-sink)
+- [Utilities](#utilities)
 - [Logging](#logging)
 
 
@@ -1295,6 +1297,65 @@ printer1.print(text); // '[reset][bold] 1  2  3 [reset] 2  1 '
 printer2.print(text); // '[reset][bold] 1  2  3  2  1 [reset]'
 ```
 
+### Printing to a sink
+
+`Printer` and `StackedPrinter` hand their output to a print function.
+`SinkPrinter` and `StackedSinkPrinter` write it to a `StringSink` instead —
+a `StringBuffer`, a file, `stdout` — and keep the style across the writes:
+
+```dart
+final buf = StringBuffer();
+SinkPrinter(buf, defaultStyle: style.bgGray3)
+  ..write('one ')
+  ..write('${fgRed}two$reset');
+
+print(Parser(buf.toString()).showControlFunctions());
+// [reset][bg256Gray3]one [reset][reset][bg256Gray3][fgRed]two[reset]
+```
+
+Both take the same `defaultStyle` as the others, and both take
+`ansiCodesEnabled`. Setting it to `false` writes the text without any escape
+codes at all — the codes the text carries included:
+
+```dart
+final plain = StringBuffer();
+SinkPrinter(plain, ansiCodesEnabled: false).write('${fgRed}two$reset');
+print(plain); // two
+```
+
+That is the switch for output that is not a terminal. `NoStyle` is a different
+thing: it stops the printer from putting a style of its own around the text,
+but the codes the text carries still go through.
+
+
+## Utilities
+
+Two things a terminal will only tell or take in person, both in `utils.dart`.
+
+`tabs` sets the tabulation stops. The stops that were there are always cleared
+first, so a call without arguments leaves the terminal with none — it does not
+bring back the ones it started with:
+
+```dart
+tabs(defaultTab: 4); // a stop every 4 columns, to the width of the terminal
+tabs(tabs: [8, 4, 4]); // stops at 8, 12 and 16
+```
+
+Nothing is written when `stdout` is not a terminal: there are no stops to set
+and no width to fit them into.
+
+`currentCursorPos` asks the terminal where the cursor is — `CSI 6 n` out, and
+`CSI n ; m R` back through stdin:
+
+```dart
+final (row, col) = await currentCursorPos(stdout, stdin);
+```
+
+The terminal is given 100 milliseconds to answer by default; a terminal that
+does not answer at all throws `UnsupportedError`. Stdin can only be listened to
+once, so to ask twice — or to keep reading input afterwards — pass a broadcast
+stream over it as `input`.
+
 
 ## Logging
 
@@ -1311,7 +1372,12 @@ print(level.length); // 15
 print(Parser(level).length); // 6
 print('[${level.padRight(10)}]'); // [SEVERE] — the codes ate the padding
 print('[${Parser(level).padRight(10)}]'); // [SEVERE    ]
+print('[${Parser(level).padLeft(10)}]'); // [    SEVERE]
 ```
+
+A padding of more than one character overshoots the width, the way
+`String.padRight` overshoots it: it is written once for every character still
+wanted, not once for every place it fills.
 
 The second is the sink. A terminal reads the codes, a log file keeps them as
 bytes nobody will read back, so the same line goes out twice in two shapes:
