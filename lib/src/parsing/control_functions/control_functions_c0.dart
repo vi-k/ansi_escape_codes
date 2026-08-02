@@ -114,11 +114,21 @@ enum ControlFunctionsC0 {
     this.description,
   );
 
+  /// The byte itself, the one this function is.
   final String code;
+
+  /// How Dart writes the byte in a string, where it has a way: `\n`, `\t`.
   final String? escapeSymbol;
+
+  /// The picture Unicode gives the byte, for showing it where it must be
+  /// seen: `␊`, `␉`.
   final String unicodeSymbol;
+
+  /// What the standard calls it in words.
   final String description;
 
+  /// The function the given byte is, or null where it is not a C0 control at
+  /// all.
   static ControlFunctionsC0? byCode(String code) {
     if (code.length != 1) {
       return null;

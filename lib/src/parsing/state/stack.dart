@@ -59,6 +59,8 @@ final class Stack extends State<Stack> {
         _backgroundStack = backgroundStack,
         _underlineColorStack = underlineColorStack;
 
+  /// The state a terminal is in before anything is written to it: its own
+  /// colours, and nothing switched on.
   static const Stack terminalColors = Stack._(
     intencityStack: [],
     boldCounter: 0,

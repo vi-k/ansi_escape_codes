@@ -1,6 +1,7 @@
 import '../internal/sgr_functions.dart';
 import '../parsing/patterns/patterns.dart';
 
+/// Taking escape codes back out of a string, all of them or by kind.
 extension StringRemoveEscapeCodesExtension on String {
   /// Removes any escape codes in the text.
   String ansiRemoveEscapeCodes() => replaceAll(escapeCodesRe, '');

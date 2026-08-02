@@ -421,6 +421,8 @@ sealed class State<S extends State<S>> {
 
   String get _objectTypeName;
 
+  /// What this state carries, listed without the name of the class around it:
+  /// `bold, foreground: fgRed`.
   String toShortString() {
     final values = [
       if (isBold) 'bold',

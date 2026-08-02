@@ -1,6 +1,7 @@
 import '../internal/sgr_functions.dart';
 import '../parsing/patterns/patterns.dart';
 
+/// Asking a string whether it carries escape codes, and of what kind.
 extension StringHasEscapeCodesExtension on String {
   /// Whether there any escape codes in the text.
   bool get ansiHasEscapeCodes => escapeCodesRe.hasMatch(this);
@@ -21,5 +22,7 @@ extension StringHasEscapeCodesExtension on String {
   bool get ansiHasUnderlineColor =>
       hasSgrFunction(this, isUnderlineColorFunction);
 
+  /// Whether there are control codes in the text: the C0 bytes, `ESC` and
+  /// `DEL`, escape sequences or not.
   bool get ansiHasControlCodes => controlCodesRe.hasMatch(this);
 }

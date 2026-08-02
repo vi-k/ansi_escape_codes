@@ -4,6 +4,7 @@ import '../parsing/control_functions/control_functions_c1.dart';
 import '../parsing/control_functions/control_sequences.dart';
 import '../parsing/patterns/patterns.dart';
 
+/// Showing the escape sequences in a string instead of sending them.
 extension StringShowEscapeCodesExtension on String {
   /// Show escape sequences.
   String ansiShowEscapeSequences({

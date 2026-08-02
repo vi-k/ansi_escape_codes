@@ -1,6 +1,12 @@
 part of 'color.dart';
 
+/// One of the sixteen colours a terminal names itself, set by `CSI 30`
+/// through `CSI 37` and their high-intensity pairs.
+///
+/// What they look like is the terminal's business: this is the colour the
+/// user chose in its settings, not a colour this package can point at.
 final class Color16 extends Color {
+  /// Which of the sixteen it is.
   final Colors color;
 
   const Color16._(this.color, [super._prefix]);
@@ -40,6 +46,10 @@ final class Color16 extends Color {
 
   static const Color16 highWhite = Color16._(Colors.highWhite);
 
+  /// The SGR parameter this colour is set by, counted from [offset] for the
+  /// first eight and from [highOffset] for the high-intensity eight.
+  ///
+  /// The foreground counts from 30 and 90, the background from 40 and 100.
   int index(int offset, int highOffset) {
     final index = color.index;
     return index < 8 ? offset + index : highOffset + index - 8;

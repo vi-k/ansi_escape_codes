@@ -386,7 +386,10 @@ enum ControlSequencesFunctions {
   /// Private.
   PRIVATEUSE_20_7E(' ~', null, _Type.private);
 
+  /// The final bytes that name this function, the intermediate ones
+  /// included: `A`, `SP q`.
   final String code;
+
   final String? _description;
   final _Type _type;
 
@@ -396,6 +399,8 @@ enum ControlSequencesFunctions {
     this._type = _Type.normal,
   ]);
 
+  /// What the standard calls it in words, or what kind of code it is where
+  /// the standard gives it no name.
   String get description =>
       _description ??
       switch (_type) {
@@ -404,8 +409,10 @@ enum ControlSequencesFunctions {
         _Type.reserved => 'Reserved',
       };
 
+  /// Whether the standard leaves this code to whoever writes the terminal.
   bool get isPrivate => _type == _Type.private;
 
+  /// Whether the standard is keeping this code back for itself.
   bool get isReserved => _type == _Type.reserved;
 
   /// The named control sequence with the given final bytes, if there is one.

@@ -106,10 +106,14 @@ enum ControlFunctionsC1 {
 
   const ControlFunctionsC1(this.code, this.description);
 
+  /// The whole sequence, `ESC` and the byte after it.
   final String code;
 
+  /// What the standard calls it in words.
   final String description;
 
+  /// The function the given sequence stands for, or null where it stands for
+  /// none.
   static ControlFunctionsC1? byCode(String code) {
     if (code.length == 2 &&
         code.codeUnitAt(0) == ControlFunctionsC0.ESC.code.codeUnitAt(0)) {

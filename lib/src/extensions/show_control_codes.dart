@@ -1,14 +1,28 @@
 import '../parsing/control_functions/control_functions_c0.dart';
 
+/// How a control code is to be shown where it must be seen rather than obeyed.
 enum ControlCodeStyle {
+  /// The number of the byte: `0x0A`.
   charCode,
+
+  /// The name the standard gives it: `[LF]`.
   abbr,
+
+  /// The picture Unicode gives it: `␊`.
   unicode,
+
+  /// The way Dart writes it in a string where there is one, `\n`, and the
+  /// number of the byte where there is not.
   escapeOrCharCode,
+
+  /// The way Dart writes it where there is one, and the name otherwise.
   escapeOrAbbr,
+
+  /// The way Dart writes it where there is one, and the picture otherwise.
   escapeOrUnicode,
 }
 
+/// Showing the control codes in a string instead of sending them.
 extension StringShowControlCodesExtension on String {
   /// Show control codes.
   String ansiShowControlCodes({

@@ -335,7 +335,10 @@ enum ControlFunctionsSGR {
   /// See [sgr.bgHighWhite] and [sgr.BG_HIGH_WHITE].
   bgHighWhite; // 107
 
+  /// Whether the standard allots this parameter to nothing, so that it is
+  /// only here to keep the ones after it at their own numbers.
   final bool isUnused;
+
   final String? _id;
 
   const ControlFunctionsSGR({
@@ -343,8 +346,12 @@ enum ControlFunctionsSGR {
     String? id,
   }) : _id = id;
 
+  /// The name the ready-to-use constant for this function is written with,
+  /// which is the enum's own name unless the two part ways.
   String get id => _id ?? name;
 
+  /// The function the given parameter stands for, or null where the standard
+  /// allots it to nothing.
   static ControlFunctionsSGR? byIndex(int index) {
     if (index >= 0 && index < values.length) {
       final value = values[index];

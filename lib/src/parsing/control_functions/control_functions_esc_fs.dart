@@ -41,6 +41,7 @@ enum ControlFunctionsEscFs {
   /// The whole sequence, ESC and the byte after it.
   final String code;
 
+  /// What the standard calls it in words.
   final String description;
 
   /// The function the given sequence stands for, if it stands for one.
