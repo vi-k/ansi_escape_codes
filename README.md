@@ -42,6 +42,7 @@ containing them.
 - [Analyzing and parsing](#analyzing-and-parsing)
   - [Parser](#parser)
   - [Quick analysis](#quick-analysis)
+  - [Sequence types](#sequence-types)
   - [Unknown sequences](#unknown-sequences)
   - [Printer](#printer)
   - [StackedPrinter](#stackedprinter)
@@ -964,6 +965,53 @@ final withoutAllEscapeCodes = text.ansiRemoveEscapeCodes();
 print(withoutAllEscapeCodes.ansiShowEscapeSequences());
 // ' Text '
 ```
+
+### Sequence types
+
+The sequences that carry something worth reading say it themselves, so a
+`switch` over `matches` can ask for the sequence and for what it holds in one
+pattern:
+
+```dart
+final text = '${cursorUpN(4)}$erasePage Hello $hideCursor';
+
+for (final m in Parser(text).matches) {
+  switch (m.entity) {
+    case CursorUp(:final n):
+      print('the cursor goes up $n lines');
+    case EraseInPage(:final part):
+      print('the page is erased: $part');
+    case HideCursor():
+      print('the cursor is hidden');
+    case Text(:final string):
+      print('the text says "$string"');
+    default:
+  }
+}
+// the cursor goes up 4 lines
+// the page is erased: ErasePart.all
+// the text says " Hello "
+// the cursor is hidden
+```
+
+`CursorUp`, `CursorDown`, `CursorRight`, `CursorLeft`, `CursorNextLine`,
+`CursorPrevLine`, `CursorHPos`, `ScrollUp` and `ScrollDown` carry `n`, the
+number of places to move by, which is `1` when the sequence leaves it out.
+`CursorPos` and `CursorHVPos` carry `row` and `col`. `EraseInPage` and
+`EraseInLine` carry an `ErasePart` — `toEnd`, `toBegin` or `all`. `ShowCursor`,
+`HideCursor`, `UseAlternateScreen` and `UseMainScreen` stand for the four
+private modes this package writes itself.
+
+All but the last four extend `CsiCommon`, so `is CsiCommon`, `controlSequence`
+and the identifiers they are shown by are what they always were; the four
+private modes stand beside `CsiPrivate` instead, the way `SaveCursor` stands
+beside the other ESC sequences, and are shown by the name of the constant they
+are written with.
+
+A sequence carrying something other than what its type promises — two
+parameters where one is taken, or a part `ErasePart` has no name for, like the
+xterm `CSI 3 J` — keeps its parameters and stays a plain `CsiCommon` rather
+than being given made-up values.
 
 ### Unknown sequences
 
