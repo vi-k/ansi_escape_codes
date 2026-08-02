@@ -80,7 +80,13 @@ final class StackedParser extends _ParserBase<Stack> {
 }
 
 final class _ParserBase<S extends State<S>> {
+  /// The string being read, escape codes and all.
   final String input;
+
+  /// The state the string is read as starting in.
+  ///
+  /// The terminal's own colours for a [Parser] and a [StackedParser]; a
+  /// [Printer] reads each line from where the last one ended.
   final S initialState;
 
   Matches<S>? _matches;
@@ -100,6 +106,8 @@ final class _ParserBase<S extends State<S>> {
         return buf.toString();
       }();
 
+  /// Whether the whole string has been read, rather than as much of it as the
+  /// questions asked so far needed. See [prepare].
   @visibleForTesting
   bool get isParsed => _matches?.isParsed ?? false;
 
