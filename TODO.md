@@ -38,10 +38,3 @@
 
 - Подумать: интеграция с популярными логгерами: Многие проекты используют
   пакеты для логирования (например, logging).
-
-## Etc
-
-- Switch to the terminal's secondary context	CSI ? 1049 h
-- Switch back to the terminal's primary context	CSI ? 1049 l
-- CSI ? 47 h save screen?
-- CSI ? 47 l restore screen?
