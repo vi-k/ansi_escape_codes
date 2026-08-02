@@ -53,6 +53,78 @@ void main() {
     });
   });
 
+  group('going from one state to another:', () {
+    test('writes the difference and nothing besides', () {
+      final transitions = <String, (Style, Style, String)>{
+        'a second underline replaces the single one, it is not added to it': (
+          style.underline,
+          style.doublyUnderline,
+          '\x1B[21m',
+        ),
+        'and back the same way': (
+          style.doublyUnderline,
+          style.underline,
+          '\x1B[4m',
+        ),
+        'one blink replaces the other': (
+          style.blink,
+          style.blinkRapid,
+          '\x1B[6m',
+        ),
+        'the circle replaces the frame': (
+          style.frame,
+          style.encircle,
+          '\x1B[52m',
+        ),
+        'and the frame the circle': (
+          style.encircle,
+          style.frame,
+          '\x1B[51m',
+        ),
+        'the text goes from raised to lowered in one code': (
+          style.superscript,
+          style.subscript,
+          '\x1B[74m',
+        ),
+        'a property nothing carried before is simply put on': (
+          Style.terminalColors,
+          style.overline,
+          '\x1B[53m',
+        ),
+        'a new colour of the underline is set over the old': (
+          underlineColor(Color256.red),
+          underlineColor(Color256.blue),
+          '\x1B[58;5;4m',
+        ),
+        'and dropping it takes the code that drops it': (
+          underlineColor(Color256.red),
+          style.bold,
+          '\x1B[59;1m',
+        ),
+        'what is taken off comes before what is put on': (
+          style.inverse,
+          style.invisible,
+          '\x1B[27;8m',
+        ),
+      };
+
+      for (final MapEntry(key: what, value: (from, to, expected))
+          in transitions.entries) {
+        expect(from.transitTo(to), expected, reason: what);
+      }
+    });
+
+    test('and nothing at all where there is no difference', () {
+      expect(style.bold.transitTo(style.bold), isEmpty);
+      expect(Style.terminalColors.transitTo(Style.terminalColors), isEmpty);
+      expect(
+        style.bold.transitTo(const NoStyle()),
+        isEmpty,
+        reason: 'nothing is ever written to reach a NoStyle',
+      );
+    });
+  });
+
   group('the terminal colours:', () {
     test('compare equal whichever state holds them', () {
       expect(Stack.terminalColors, Style.terminalColors);

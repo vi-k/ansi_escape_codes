@@ -6,6 +6,64 @@ import 'package:test/test.dart';
 import 'utils.dart';
 
 void main() {
+  group('the stack unwinds one level at a time:', () {
+    test('a property put on twice comes back to the first of the two', () {
+      final frames = Stack.terminalColors.frame.encircle;
+      expect(frames.frameStyle, FrameStyle.encircle);
+      expect(frames.resetFrameAndEncircle.frameStyle, FrameStyle.frame);
+
+      final blinks = Stack.terminalColors.blink.blinkRapid;
+      expect(blinks.blinkStyle, BlinkStyle.rapid);
+      expect(blinks.resetBlink.blinkStyle, BlinkStyle.slow);
+
+      final underlines = Stack.terminalColors.underline.doublyUnderline;
+      expect(underlines.underlineStyle, UnderlineStyle.doubly);
+      expect(underlines.isDoublyUnderline, isTrue);
+      expect(underlines.resetUnderline.underlineStyle, UnderlineStyle.singly);
+
+      final scripts = Stack.terminalColors.superscript.subscript;
+      expect(scripts.scriptStyle, ScriptStyle.subscript);
+      expect(
+        scripts.resetSuperAndSubscript.scriptStyle,
+        ScriptStyle.superscript,
+      );
+    });
+
+    test('and the ones that only count are counted', () {
+      final twice = Stack.terminalColors.inverse.inverse;
+      expect(twice.isInverse, isTrue);
+      expect(
+        twice.resetInverse.isInverse,
+        isTrue,
+        reason: 'one reset undoes one of the two',
+      );
+      expect(twice.resetInverse.resetInverse.isInverse, isFalse);
+
+      final once = Stack.terminalColors.invisible.overline;
+      expect(once.isInvisible, isTrue);
+      expect(once.isOverline, isTrue);
+      expect(once.resetInvisible.isInvisible, isFalse);
+      expect(once.resetOverline.isOverline, isFalse);
+    });
+
+    test('a colour of the underline is remembered under the next one', () {
+      final colours = Stack.terminalColors
+          .underlineColor(Color256.red)
+          .underlineColor(Color256.blue);
+
+      expect(colours.underlineColorValue, Color256.blue);
+      expect(colours.resetUnderlineColor.underlineColorValue, Color256.red);
+      expect(
+        colours.resetUnderlineColor.resetUnderlineColor.underlineColorValue,
+        isNull,
+      );
+    });
+
+    test('and says which it is when asked', () {
+      expect(Stack.terminalColors.bold.toString(), 'Stack(bold)');
+    });
+  });
+
   group('Stack tolerates unbalanced resets:', () {
     test('every reset code alone leaves the state at terminal colors', () {
       const resets = {
