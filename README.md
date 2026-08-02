@@ -45,6 +45,7 @@ containing them.
   - [Unknown sequences](#unknown-sequences)
   - [Printer](#printer)
   - [StackedPrinter](#stackedprinter)
+- [Logging](#logging)
 
 
 ## Quick start
@@ -1181,3 +1182,36 @@ final printer2 = StackedPrinter();
 printer1.print(text); // '[reset][bold] 1  2  3 [reset] 2  1 '
 printer2.print(text); // '[reset][bold] 1  2  3  2  1 [reset]'
 ```
+
+
+## Logging
+
+Nothing has to be tied to a logging package: a record is a string and the
+constants are strings, so coloring a level name needs no help. What does need
+help are the two places where escape codes bite.
+
+The first is width. `String.length` counts the escape codes, so padding a
+colored level name pads it by the wrong amount. `Parser` counts what is seen:
+
+```dart
+const level = '${fgRed}SEVERE$reset';
+print(level.length); // 15
+print(Parser(level).length); // 6
+print('[${level.padRight(10)}]'); // [SEVERE] — the codes ate the padding
+print('[${Parser(level).padRight(10)}]'); // [SEVERE    ]
+```
+
+The second is the sink. A terminal reads the codes, a log file keeps them as
+bytes nobody will read back, so the same line goes out twice in two shapes:
+
+```dart
+void write(String line) {
+  stdout.writeln(line);
+  logFile.writeAsStringSync('${line.ansiRemoveEscapeCodes()}\n',
+      mode: FileMode.append);
+}
+```
+
+And a message that arrives already styled from elsewhere is the case
+[StackedPrinter](#stackedprinter) was written for: whatever the message opens is
+closed at its end, and the next line starts in the style it should.
