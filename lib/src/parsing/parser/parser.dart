@@ -43,6 +43,8 @@ typedef AnsiParser = Parser;
 /// * Optimizing the string to remove redundant codes using [optimize].
 /// * Extracting a substring while preserving the active style using
 ///   [substring].
+/// * Inserting text that takes the style of the place it lands in and leaves
+///   the rest of the string as it was using [insertBefore] and [insertAfter].
 /// * Retrieving the computed [Style] at a specific text position using
 ///   [stateAt] and [finalState].
 /// * Analyzing a string using [matches].
@@ -302,6 +304,88 @@ final class _ParserBase<S extends State<S>> {
     }
 
     return buf.toString();
+  }
+
+  /// Inserts [text] at the plain text [pos], in front of the escape codes
+  /// standing there.
+  ///
+  /// [pos] is the position in the string without ANSI escape codes.
+  ///
+  /// The inserted text takes the style of the place it lands in, and gives it
+  /// back: whatever codes the text carries are closed after it, so the string
+  /// that follows keeps the look it had.
+  ///
+  /// ```dart
+  /// const text = '${fgRed}Hello$reset world';
+  /// print(Parser(text).insertBefore(5, '!')); // '${fgRed}Hello!$reset world'
+  /// ```
+  ///
+  /// The exclamation mark is red: at position 5 stands the `reset`, and this
+  /// goes in front of it. See [insertAfter] for the other side of it.
+  String insertBefore(int pos, String text) => _insert(pos, text, after: false);
+
+  /// Inserts [text] at the plain text [pos], behind the escape codes standing
+  /// there.
+  ///
+  /// [pos] is the position in the string without ANSI escape codes.
+  ///
+  /// The same as [insertBefore] in every other way, and the same as it when no
+  /// escape code stands at [pos].
+  ///
+  /// ```dart
+  /// const text = '${fgRed}Hello$reset world';
+  /// print(Parser(text).insertAfter(5, '!')); // '${fgRed}Hello$reset! world'
+  /// ```
+  ///
+  /// The exclamation mark is not red: it goes behind the `reset` standing at
+  /// position 5.
+  String insertAfter(int pos, String text) => _insert(pos, text, after: true);
+
+  String _insert(int pos, String text, {required bool after}) {
+    final (cut, ambient) = _seamAt(pos, after: after);
+    final stateAfterText =
+        Matches<S>._(text, ambient)._requireParsingResult.finalState;
+
+    return '${input.substring(0, cut)}'
+        '$text'
+        '${stateAfterText.toStyle().transitTo(ambient)}'
+        '${input.substring(cut)}';
+  }
+
+  /// The place in [input] an insertion at the plain text [pos] goes to, and
+  /// the state it lands in.
+  ///
+  /// A seam is what lies between two neighbouring characters of the plain
+  /// text: nothing at all, or the escape codes written between them. [after]
+  /// chooses which end of it the insertion takes.
+  (int, S) _seamAt(int pos, {required bool after}) {
+    RangeError.checkNotNegative(pos, 'pos');
+
+    if (!after && pos == 0) {
+      return (0, initialState);
+    }
+
+    var plainPos = 0;
+
+    for (final m in matches) {
+      if (m.entity case Text(:final string)) {
+        final end = plainPos + string.length;
+
+        // Both ends of the seam sit inside a piece of text when the position
+        // falls within one, and there the two insertions are the same.
+        if (after ? pos < end : pos > plainPos && pos <= end) {
+          return (m.start + (pos - plainPos), m.state);
+        }
+
+        plainPos = end;
+      }
+    }
+
+    if (pos > plainPos) {
+      throw RangeError.range(pos, 0, plainPos, 'pos');
+    }
+
+    return (input.length, finalState);
   }
 
   String padRight(int width, [String padding = ' ']) {

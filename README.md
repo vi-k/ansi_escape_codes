@@ -862,6 +862,33 @@ print(Parser(optimizedText).showControlFunctions());
 // [fgGreen;dim] What's in here? [reset]
 ```
 
+The `insertBefore` and `insertAfter` methods put text into a string without
+disturbing what is already there. The inserted text takes the style of the
+place it lands in, and whatever codes it carries of its own are closed after
+it, so the rest of the string keeps the look it had:
+
+```dart
+const text = '${fgRed}Hello world$reset';
+final inserted = Parser(text).insertBefore(6, '${fgGreen}brave ');
+print(Parser(inserted).showControlFunctions());
+// [fgRed]Hello [fgGreen]brave [fgRed]world[reset]
+```
+
+The position is counted in the string without escape codes, as everywhere else
+in `Parser`. The two methods part ways only when escape codes stand at that
+very position: one goes in front of them, the other behind:
+
+```dart
+const text = '${fgRed}Hello$reset world';
+print(Parser(text).insertBefore(5, '!').ansiShowControlFunctions());
+// [fgRed]Hello![reset] world
+print(Parser(text).insertAfter(5, '!').ansiShowControlFunctions());
+// [fgRed]Hello[reset]! world
+```
+
+For a string parsed only once there are the `ansiInsertBefore` and
+`ansiInsertAfter` extensions, like the other shortcuts below.
+
 ### Quick analysis
 
 You can quickly analyze a string without using `Parser` by using extensions.

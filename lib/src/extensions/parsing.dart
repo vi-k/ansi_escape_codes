@@ -23,6 +23,30 @@ extension StringParsingExtension on String {
   }) =>
       Parser(this).showControlFunctions(open: open, close: close);
 
+  /// Returns the string with [text] inserted at the plain text [pos], in
+  /// front of the escape codes standing there.
+  ///
+  /// ```dart
+  /// print('${fgRed}Hello$reset world'.ansiInsertBefore(5, '!'));
+  /// // '${fgRed}Hello!$reset world'
+  /// ```
+  ///
+  /// See [Parser.insertBefore].
+  String ansiInsertBefore(int pos, String text) =>
+      Parser(this).insertBefore(pos, text);
+
+  /// Returns the string with [text] inserted at the plain text [pos], behind
+  /// the escape codes standing there.
+  ///
+  /// ```dart
+  /// print('${fgRed}Hello$reset world'.ansiInsertAfter(5, '!'));
+  /// // '${fgRed}Hello$reset! world'
+  /// ```
+  ///
+  /// See [Parser.insertAfter].
+  String ansiInsertAfter(int pos, String text) =>
+      Parser(this).insertAfter(pos, text);
+
   /// Returns the string with the escape codes folded together.
   ///
   /// [close] is whether to end the string in the state it began in.
