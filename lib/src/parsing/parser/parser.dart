@@ -389,6 +389,17 @@ final class _ParserBase<S extends State<S>> {
     return (input.length, finalState);
   }
 
+  /// The string with [padding] written after it until the text is [width]
+  /// wide.
+  ///
+  /// [width] is counted in the string without ANSI escape codes, which is the
+  /// whole point of it being here: to [String.padRight] the codes are
+  /// characters like any other, and a coloured word comes out narrower than
+  /// it was asked to be.
+  ///
+  /// A [padding] longer than one character overshoots the width, the way
+  /// [String.padRight] overshoots it: it is written once for every character
+  /// still wanted, not once for every place it fills.
   String padRight(int width, [String padding = ' ']) {
     final needToAdd = width - length;
     if (needToAdd <= 0) {
@@ -398,6 +409,11 @@ final class _ParserBase<S extends State<S>> {
     return input.padRight(input.length + needToAdd, padding);
   }
 
+  /// The string with [padding] written before it until the text is [width]
+  /// wide.
+  ///
+  /// See [padRight]: [width] is counted without the escape codes, and a
+  /// [padding] longer than one character overshoots it.
   String padLeft(int width, [String padding = ' ']) {
     final needToAdd = width - length;
     if (needToAdd <= 0) {
