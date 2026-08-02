@@ -3,7 +3,7 @@ import '../../ready_to_use/sgr/colors256/bg256.dart' as sgr;
 import '../../ready_to_use/sgr/colors256/fg256.dart' as sgr;
 import '../../ready_to_use/sgr/colors256/underline256.dart' as sgr;
 import '../../ready_to_use/sgr/sgr.dart' as sgr;
-import '../../ready_to_use/sgr/standart_colors/standart_colors.dart' as sgr;
+import '../../ready_to_use/sgr/standard_colors/standard_colors.dart' as sgr;
 
 /// SGR control functions.
 enum ControlFunctionsSGR {

@@ -16,4 +16,4 @@ export 'src/ready_to_use/sgr/rgb/bg_rgb.dart';
 export 'src/ready_to_use/sgr/rgb/fg_rgb.dart';
 export 'src/ready_to_use/sgr/rgb/underline_rgb.dart';
 export 'src/ready_to_use/sgr/sgr.dart';
-export 'src/ready_to_use/sgr/standart_colors/standart_colors.dart';
+export 'src/ready_to_use/sgr/standard_colors/standard_colors.dart';
