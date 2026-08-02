@@ -321,7 +321,7 @@ final class Style extends State<Style> {
         _flags,
         foregroundColor,
         backgroundColor,
-        color.withPrefix('underlineColor'),
+        color.withPrefix('underline'),
       );
 
   @override

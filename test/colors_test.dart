@@ -1,5 +1,4 @@
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
-import 'package:ansi_escape_codes/parsing.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -19,6 +18,33 @@ void main() {
       expect(
         ColorRgb(1, 2, 3).withPrefix('underline').id,
         'underlineRgb(1,2,3)',
+      );
+    });
+
+    test('by the name of the constant that writes it, whoever set it', () {
+      const red = Color256.red;
+
+      expect(style.foreground(red).foregroundColor?.id, 'fg256Red');
+      expect(style.background(red).backgroundColor?.id, 'bg256Red');
+      expect(
+        style.underlineColor(red).underlineColorValue?.id,
+        'underline256Red',
+        reason: 'the constant is underline256Red, not underlineColor256Red',
+      );
+
+      expect(
+        Stack.terminalColors.foreground(red).foregroundColor?.id,
+        'fg256Red',
+        reason: 'and a stack names it the same as a style does',
+      );
+      expect(
+        Stack.terminalColors.underlineColor(red).underlineColorValue?.id,
+        'underline256Red',
+      );
+      expect(
+        StackedParser(underline256(1)).finalState.underlineColorValue?.id,
+        'underline256Red',
+        reason: 'as does the state a parser ends in',
       );
     });
 

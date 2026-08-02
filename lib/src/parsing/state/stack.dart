@@ -243,16 +243,20 @@ final class Stack extends State<Stack> {
       );
 
   @override
-  Stack foreground(Color color) =>
-      _copyWith(foregroundStack: List.of(_foregroundStack)..add(color));
+  Stack foreground(Color color) => _copyWith(
+        foregroundStack: List.of(_foregroundStack)..add(color.withPrefix('fg')),
+      );
 
   @override
-  Stack background(Color color) =>
-      _copyWith(backgroundStack: List.of(_backgroundStack)..add(color));
+  Stack background(Color color) => _copyWith(
+        backgroundStack: List.of(_backgroundStack)..add(color.withPrefix('bg')),
+      );
 
   @override
-  Stack underlineColor(ExtendedColor color) =>
-      _copyWith(underlineColorStack: List.of(_underlineColorStack)..add(color));
+  Stack underlineColor(ExtendedColor color) => _copyWith(
+        underlineColorStack: List.of(_underlineColorStack)
+          ..add(color.withPrefix('underline')),
+      );
 
   @override
   Stack get reset => terminalColors;
