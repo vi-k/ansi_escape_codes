@@ -7,7 +7,6 @@ import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:ansi_escape_codes/extensions.dart';
 import 'package:ansi_escape_codes/utils.dart';
 
-import '../test/utils.dart';
 import 'utils.dart';
 
 /// Usage:

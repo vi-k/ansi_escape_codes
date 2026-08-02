@@ -1,4 +1,5 @@
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+import 'package:ansi_escape_codes/extensions.dart';
 import 'package:ansi_escape_codes/style.dart' as styles;
 import 'package:test/test.dart';
 
