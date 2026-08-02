@@ -7,7 +7,9 @@ sealed class Csi extends EscapeCode {
     final finalBytes = state['csi_final']!;
     final function = ControlSequencesFunctions.byCode(finalBytes);
     if (function == null) {
-      return CsiUnknown._(state.string);
+      return ControlSequencesFunctions.isPrivateCode(finalBytes)
+          ? CsiPrivate._(state.string)
+          : CsiUnknown._(state.string);
     }
 
     final paramsString = state['csi_params']!;

@@ -415,6 +415,17 @@ enum ControlSequencesFunctions {
     for (final v in values)
       if (v._description != null && v._type == _Type.normal) v.code: v,
   };
+
+  /// Whether the given final bytes belong to a sequence kept for private use.
+  ///
+  /// Such a sequence has no meaning to give, but it is not an unknown one
+  /// either: the standard sets those bytes aside on purpose.
+  static bool isPrivateCode(String code) => _privateCodes.contains(code);
+
+  static final Set<String> _privateCodes = {
+    for (final v in values)
+      if (v._type == _Type.private) v.code,
+  };
 }
 
 enum _Type { normal, private, reserved }

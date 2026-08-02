@@ -22,6 +22,17 @@ void main() {
       expect(found, greaterThan(90));
     });
 
+    test('a sequence kept for private use is not an unknown one', () {
+      // DECSCUSR, the shape of the cursor: CSI Ps SP q.
+      expect(Parser('\x1B[1 q').matches.first.entity, isA<CsiPrivate>());
+
+      // Private through its parameters rather than its final bytes.
+      expect(Parser('\x1B[?25h').matches.first.entity, isA<CsiPrivate>());
+
+      // Final bytes that name nothing at all.
+      expect(Parser('\x1B[1!p').matches.first.entity, isA<CsiUnknown>());
+    });
+
     test('gives nothing for a code that names no function', () {
       expect(ControlSequencesFunctions.byCode(''), isNull);
       expect(ControlSequencesFunctions.byCode('AB'), isNull);
