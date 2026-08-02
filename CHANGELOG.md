@@ -93,6 +93,9 @@ Removed — every name deprecated in an earlier release is gone:
   where nothing at all should be written.
 - `Parser.stateAtPos` and `runZonedAnsiPrinter`. Use `stateAt` and
   `runZonedPrinter`.
+- `MatchingState`, `MatchesResult` and `ParserIterator`, which the parser
+  passes to and gets back from its own private methods and nothing else could
+  reach. `Matches` and `Match` are unchanged.
 
 Breaking changes:
 
