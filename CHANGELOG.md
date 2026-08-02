@@ -102,6 +102,10 @@ Breaking changes:
 - `Csi`, `Esc` and `EscapeCode` are sealed, and this release adds types under
   them. A `switch` that covers them exhaustively has to name the new ones. `is`
   checks, casts and the identifiers entities are shown by are unchanged.
+- The colours on `Style` — `red`, `bgYellow`, `rgb531` and the rest of that
+  table — now come from an extension, `StyleColors`, rather than from the class
+  itself. Written the usual way they behave as they did; what an extension
+  cannot do is answer a `dynamic` receiver.
 
 ## 3.1.2
 

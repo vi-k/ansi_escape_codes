@@ -8,6 +8,7 @@ import '../colors/color.dart';
 import '../parser/parser.dart';
 
 part 'style.dart';
+part 'style_colors.dart';
 part 'stack.dart';
 
 /// The base class for tracking the state of ANSI escape codes.
