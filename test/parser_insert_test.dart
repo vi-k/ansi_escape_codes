@@ -47,6 +47,33 @@ void main() {
       );
     });
 
+    test('a hyperlink the insertion opens is closed after it', () {
+      const link = '${linkOpen}https://example.com$linkTextOpen';
+
+      expect(
+        Parser('tail').insertBefore(0, '${link}inserted'),
+        '${link}inserted$linkClose'
+        'tail',
+        reason: 'or the tail is clickable and points somewhere else',
+      );
+      expect(
+        Parser('tail').insertBefore(0, '${link}inserted$linkClose'),
+        '${link}inserted${linkClose}tail',
+        reason: 'and one the insertion closed itself is not closed twice',
+      );
+    });
+
+    test('a style and a hyperlink are both given back', () {
+      const link = '${linkOpen}https://example.com$linkTextOpen';
+
+      expect(
+        Parser('tail').insertBefore(0, '$fgGreen${link}inserted'),
+        '$fgGreen${link}inserted$linkClose$reset'
+        'tail',
+        reason: 'the link first, then the style around it',
+      );
+    });
+
     test('a reset inside the insertion does not reach the tail', () {
       const text = '${fgRed}Hello world$reset';
 

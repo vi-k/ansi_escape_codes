@@ -11,6 +11,7 @@ import '../../extensions/show_control_codes.dart';
 import '../../extensions/show_escape_codes.dart';
 import '../../ready_to_use/csi.dart';
 import '../../ready_to_use/esc.dart';
+import '../../ready_to_use/osc.dart';
 import '../../ready_to_use/sgr/sgr.dart';
 import '../colors/color.dart';
 import '../control_functions/control_functions_c0.dart';
@@ -313,8 +314,9 @@ final class _ParserBase<S extends State<S>> {
   /// [pos] is the position in the string without ANSI escape codes.
   ///
   /// The inserted text takes the style of the place it lands in, and gives it
-  /// back: whatever codes the text carries are closed after it, so the string
-  /// that follows keeps the look it had.
+  /// back: the style it opens of its own is closed after it, and so is a
+  /// hyperlink, so the string that follows keeps the look it had and stays
+  /// outside whatever the insertion pointed at.
   ///
   /// ```dart
   /// const text = '${fgRed}Hello$reset world';
@@ -344,13 +346,31 @@ final class _ParserBase<S extends State<S>> {
 
   String _insert(int pos, String text, {required bool after}) {
     final (cut, ambient) = _seamAt(pos, after: after);
-    final stateAfterText =
-        Matches<S>._(text, ambient)._requireParsingResult.finalState;
+    final read = Matches<S>._(text, ambient)._requireParsingResult;
 
     return '${input.substring(0, cut)}'
         '$text'
-        '${stateAfterText.toStyle().transitTo(ambient)}'
+        '${_closeLink(read.matches)}'
+        '${read.finalState.toStyle().transitTo(ambient)}'
         '${input.substring(cut)}';
+  }
+
+  /// The sequence that closes a hyperlink the inserted text left open, or
+  /// nothing where it left none.
+  ///
+  /// A [Link] carries no style, so the state says nothing about it, and text
+  /// that follows an unclosed one is inside it — clickable, and pointing
+  /// somewhere it has nothing to do with.
+  String _closeLink(List<Match<S>> matches) {
+    var isOpen = false;
+
+    for (final m in matches) {
+      if (m.entity case Link(:final url)) {
+        isOpen = url.isNotEmpty;
+      }
+    }
+
+    return isOpen ? linkClose : '';
   }
 
   /// The place in [input] an insertion at the plain text [pos] goes to, and
