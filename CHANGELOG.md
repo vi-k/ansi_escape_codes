@@ -27,6 +27,12 @@ Added:
 - The control function types the API returns — `ControlFunctionsSGR`,
   `ControlSequencesFunctions` and the rest — are exported from the main entry
   point.
+- `ansi_escape_codes.dart` brings the `String` extensions and the two terminal
+  utilities as well, so it is now what its name says: one import for all of it.
+  `extensions.dart` and `utils.dart` still bring those alone, as `style.dart`
+  and `parsing.dart` bring the parser without the tables of constants — the
+  smaller imports are for a smaller namespace, not for reaching something the
+  main one lacks.
 
 Fixed:
 

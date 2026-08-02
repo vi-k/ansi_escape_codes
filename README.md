@@ -247,21 +247,20 @@ void main() {
 
 Each entry point brings a different part of the package:
 
-| Import | What it brings |
-|:---|:---|
-| `ansi.dart` | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F` |
-| `ansi_escape_codes.dart` | the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state and the control function tables |
-| `style.dart` | the styles — `Style`, `style`, the sixteen colors — and, because the styles are built on it, the whole parser |
-| `parsing.dart` | the parser, the state and the control function tables |
-| `extensions.dart` | the `String` extensions: `ansiRemoveEscapeCodes`, `ansiShowEscapeSequences` and the rest |
-| `utils.dart` | `tabs` and `currentCursorPos` |
+| Import | Names | What it brings |
+|:---|---:|:---|
+| `ansi_escape_codes.dart` | ~1000 | all of it: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state, the control function tables, the `String` extensions and the two terminal utilities |
+| `ansi.dart` | ~500 | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F`. The only one that is not part of the first — the ready-to-use strings are built from these, and neither brings the other |
+| `style.dart` | 96 | the styles and the parser, without the tables of ready-to-use strings |
+| `parsing.dart` | 81 | the parser, the state and the control function tables |
+| `extensions.dart` | 6 | the `String` extensions alone |
+| `utils.dart` | 2 | `tabs` and `currentCursorPos` alone |
 
-The last two are separate imports on purpose: everything else can be had from
-`ansi_escape_codes.dart`, but the extensions and the terminal utilities are
-brought only by their own.
+The bottom four are parts of the first, and are there for the times a smaller
+namespace is worth an import of its own — a program that only reads escape
+codes has no use for the 900 constants that write them.
 
-They can be imported together, and `ansi_escape_codes.dart` already holds the
-styles, so one import is usually enough:
+One import is usually enough:
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
@@ -293,9 +292,9 @@ The parser is still `Parser`, and `Matches` — its own name — is untouched by
 this.
 
 The colors and `style` are exported as plain lowercase names — `red`, `green`,
-`blue` and the thirteen others, `foreground`, `background`, `underlineColor`.
-They are the ones most likely to meet a name of your own, and `hide` or a
-prefix settles that the same way.
+`blue` and the thirteen others, `foreground`, `background`, `underlineColor`,
+and `tabs` beside them. They are the ones most likely to meet a name of your
+own, and `hide` or a prefix settles that the same way.
 
 
 ## Control function constants and ready-to-use values
