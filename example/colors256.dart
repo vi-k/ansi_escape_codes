@@ -21,7 +21,10 @@ void main() {
 
     final values = List<(Color256, Color256)>.generate(16, (i) {
       final color = Color256(Colors.values[i]);
-      return (color.withPrefix('fg'), color.withPrefix('bg'));
+      return (
+        color.on(ColorTarget.foreground),
+        color.on(ColorTarget.background),
+      );
     });
 
     int combine(int max, (Color256, Color256) value) =>
@@ -67,10 +70,10 @@ void main() {
         stdout
           ..write(index.toString().padRight(3))
           ..write(fg256(index))
-          ..write(_c(color.withPrefix('fg').id, fieldWidth))
+          ..write(_c(color.on(ColorTarget.foreground).id, fieldWidth))
           ..write(reset)
           ..write(bg256(index))
-          ..write(_c(color.withPrefix('bg').id, fieldWidth))
+          ..write(_c(color.on(ColorTarget.background).id, fieldWidth))
           ..write(reset);
       }
       stdout.writeln();
@@ -94,10 +97,10 @@ void main() {
         stdout
           ..write(index.toString().padRight(3))
           ..write(fg256(index))
-          ..write(_c(color.withPrefix('fg').id, fieldWidth))
+          ..write(_c(color.on(ColorTarget.foreground).id, fieldWidth))
           ..write(reset)
           ..write(bg256(index))
-          ..write(_c(color.withPrefix('bg').id, fieldWidth))
+          ..write(_c(color.on(ColorTarget.background).id, fieldWidth))
           ..write(reset);
       }
       stdout.writeln();

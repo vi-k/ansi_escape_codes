@@ -244,18 +244,20 @@ final class Stack extends State<Stack> {
 
   @override
   Stack foreground(Color color) => _copyWith(
-        foregroundStack: List.of(_foregroundStack)..add(color.withPrefix('fg')),
+        foregroundStack: List.of(_foregroundStack)
+          ..add(color.on(ColorTarget.foreground)),
       );
 
   @override
   Stack background(Color color) => _copyWith(
-        backgroundStack: List.of(_backgroundStack)..add(color.withPrefix('bg')),
+        backgroundStack: List.of(_backgroundStack)
+          ..add(color.on(ColorTarget.background)),
       );
 
   @override
   Stack underlineColor(ExtendedColor color) => _copyWith(
         underlineColorStack: List.of(_underlineColorStack)
-          ..add(color.withPrefix('underline')),
+          ..add(color.on(ColorTarget.underline)),
       );
 
   @override

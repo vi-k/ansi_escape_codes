@@ -9,14 +9,14 @@ void main() {
         '?Red',
         reason: 'a colour on its own does not know what it is being set on',
       );
-      expect(Color16.red.withPrefix('fg').id, 'fgRed');
+      expect(Color16.red.on(ColorTarget.foreground).id, 'fgRed');
       expect(
-        Color256.gray5.withPrefix('bg').id,
+        Color256.gray5.on(ColorTarget.background).id,
         'bg256Gray5',
         reason: 'the 256 that says which table it comes from is its own',
       );
       expect(
-        ColorRgb(1, 2, 3).withPrefix('underline').id,
+        ColorRgb(1, 2, 3).on(ColorTarget.underline).id,
         'underlineRgb(1,2,3)',
       );
     });

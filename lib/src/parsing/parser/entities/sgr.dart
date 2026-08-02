@@ -431,9 +431,14 @@ final class SgrColorFunction extends SgrFunctionWithCode {
   /// The colour set, under the name of the code that sets it.
   final ExtendedColor color;
 
-  /// The [color] that [code] sets, named after the code that sets it.
+  /// The [color] that [code] sets, named after where the code sets it.
   SgrColorFunction(super.code, ExtendedColor color)
-      : color = color.withPrefix(code.id);
+      : color = switch (ColorTarget.of(code)) {
+          final target? => color.on(target),
+          // Only the three that set a colour reach this, and each of them has
+          // a target; a code that has none leaves the colour as it came.
+          null => color,
+        };
 
   @override
   String toString() => color.id;

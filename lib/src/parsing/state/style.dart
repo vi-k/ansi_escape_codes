@@ -303,7 +303,7 @@ final class Style extends State<Style> {
   @override
   Style foreground(Color color) => Style._(
         _flags,
-        color.withPrefix('fg'),
+        color.on(ColorTarget.foreground),
         backgroundColor,
         underlineColorValue,
       );
@@ -312,7 +312,7 @@ final class Style extends State<Style> {
   Style background(Color color) => Style._(
         _flags,
         foregroundColor,
-        color.withPrefix('bg'),
+        color.on(ColorTarget.background),
         underlineColorValue,
       );
 
@@ -321,7 +321,7 @@ final class Style extends State<Style> {
         _flags,
         foregroundColor,
         backgroundColor,
-        color.withPrefix('underline'),
+        color.on(ColorTarget.underline),
       );
 
   @override

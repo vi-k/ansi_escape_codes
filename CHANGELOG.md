@@ -102,6 +102,12 @@ Breaking changes:
 - `Csi`, `Esc` and `EscapeCode` are sealed, and this release adds types under
   them. A `switch` that covers them exhaustively has to name the new ones. `is`
   checks, casts and the identifiers entities are shown by are unchanged.
+- `Color.withPrefix(String)` is `Color.on(ColorTarget)`. The string was a way
+  to be wrong — `withPrefix('bg256')` gave `bg256256Gray5` — and it let the
+  name of a target be written out by hand, which is how the colour of the
+  underline came to call itself `underlineColor256Red` where the constant is
+  `underline256Red`. `ColorTarget` takes the three that can be set, and takes
+  the name from the SGR function that sets them, so there is one place for it.
 - The colours on `Style` — `red`, `bgYellow`, `rgb531` and the rest of that
   table — now come from an extension, `StyleColors`, rather than from the class
   itself. Written the usual way they behave as they did; what an extension

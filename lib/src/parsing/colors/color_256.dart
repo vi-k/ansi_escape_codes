@@ -33,10 +33,10 @@ final class Color256 extends ExtendedColor {
     return Color256(Colors.values[232 + level]);
   }
 
-  const Color256._(this.color, [super._prefix]);
+  const Color256._(this.color, [super._target]);
 
   @override
-  Color256 withPrefix(String prefix) => Color256._(color, prefix);
+  Color256 on(ColorTarget target) => Color256._(color, target);
 
   static const Color256 black = Color256(Colors.black);
   static const Color256 red = Color256(Colors.red);
@@ -304,7 +304,7 @@ final class Color256 extends ExtendedColor {
   bool operator ==(Object other) => other is Color256 && color == other.color;
 
   @override
-  String get id => '${_prefix ?? '?'}256${color.name.capitalize()}';
+  String get id => '${_target?.prefix ?? '?'}256${color.name.capitalize()}';
 
   @override
   String toString() => '$Color256.${color.name}';
