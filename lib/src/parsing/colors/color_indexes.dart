@@ -1,3 +1,6 @@
+// The 256 indexes of the colour table, where the name is the documentation.
+// ignore_for_file: public_member_api_docs
+
 part of 'color.dart';
 
 enum Colors implements Comparable<Colors> {

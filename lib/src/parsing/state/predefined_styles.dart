@@ -1,3 +1,6 @@
+// A table of ready-made styles, where the name is the documentation.
+// ignore_for_file: public_member_api_docs
+
 import '../colors/color.dart';
 import 'state.dart';
 

@@ -1,3 +1,7 @@
+// Most of this file is the table of the sixteen colours, where the name is
+// the documentation.
+// ignore_for_file: public_member_api_docs
+
 part of 'color.dart';
 
 /// One of the sixteen colours a terminal names itself, set by `CSI 30`

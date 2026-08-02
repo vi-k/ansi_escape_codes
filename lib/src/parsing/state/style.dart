@@ -1,3 +1,8 @@
+// Most of this file is the table of predefined colours — rgb000 through
+// bgGray23 — where the name is the documentation. Everything here that is not
+// part of that table carries a doc comment of its own.
+// ignore_for_file: public_member_api_docs
+
 part of 'state.dart';
 
 const _bold = 0x0001;
@@ -16,15 +21,52 @@ const _overline = 0x1000;
 const _superscript = 0x2000;
 const _subscript = 0x4000;
 
-enum IntensityStyle { bold, dim }
+/// Which of the two intensities the text carries; the terminal has room for
+/// one at a time, and one code takes both off.
+enum IntensityStyle {
+  /// Brighter or heavier, whichever the terminal does.
+  bold,
 
-enum UnderlineStyle { singly, doubly }
+  /// Fainter.
+  dim,
+}
 
-enum BlinkStyle { slow, rapid }
+/// Which underline the text carries; underlining twice puts the single line
+/// out rather than adding to it.
+enum UnderlineStyle {
+  /// One line.
+  singly,
 
-enum FrameStyle { frame, encircle }
+  /// Two.
+  doubly,
+}
 
-enum ScriptStyle { superscript, subscript }
+/// Which blink the text carries.
+enum BlinkStyle {
+  /// Under 150 a minute, as the standard puts it.
+  slow,
+
+  /// Faster, where the terminal blinks at all.
+  rapid,
+}
+
+/// Which of the two the text is wrapped in.
+enum FrameStyle {
+  /// A frame.
+  frame,
+
+  /// A circle.
+  encircle,
+}
+
+/// Where the text sits on the line.
+enum ScriptStyle {
+  /// Raised.
+  superscript,
+
+  /// Lowered.
+  subscript,
+}
 
 /// Represents the currently active text style.
 ///
@@ -849,7 +891,18 @@ final class Style extends State<Style> {
   Style get bgGray23 => background(Color256.gray23);
 }
 
+/// A style that writes nothing at all.
+///
+/// Every other style, [Style.terminalColors] included, writes the codes that
+/// take the terminal to it. This one is asked to and does not: text goes
+/// through it as it came, and [transitTo] gives an empty string wherever it
+/// is the destination.
+///
+/// This is what a [Printer] is given where the output is not a terminal —
+/// a file, a pipe, a test — so that nothing has to be stripped back out
+/// afterwards.
 final class NoStyle extends Style {
+  /// The style that writes nothing.
   const NoStyle();
 
   @override

@@ -1,8 +1,16 @@
+// Most of this file is the table of 256 colours, where the name is the
+// documentation.
+// ignore_for_file: public_member_api_docs
+
 part of 'color.dart';
 
+/// One of the 256 colours of the table `CSI 38;5`, `CSI 48;5` and `CSI 58;5`
+/// reach: the sixteen the terminal names, a 6×6×6 cube, and 24 greys.
 final class Color256 extends ExtendedColor {
+  /// Which of the 256 it is.
   final Colors color;
 
+  /// The colour at that index of the table.
   const Color256(this.color);
 
   /// A colour of the 6 × 6 × 6 cube, each component from `0` to `5`.
