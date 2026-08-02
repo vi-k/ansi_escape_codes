@@ -152,6 +152,16 @@ sealed class Csi extends EscapeCode {
       };
 }
 
+/// A parameter of a control sequence, as it was written.
+///
+/// A sequence carries its parameters separated by `;`, and any of them may
+/// carry sub-parameters separated by `:`. This is what [CsiCommon.params]
+/// holds: a [CsiParamDefault] where the parameter was left out, a
+/// [CsiParamNumber] where it is a number, a [CsiParamNumbers] where it carries
+/// sub-parameters.
+///
+/// The sequences that have a type of their own have read these already: see
+/// [CursorUp] and the types beside it.
 sealed class CsiParam {
   factory CsiParam._parse(String param) {
     final list = param.split(':');
@@ -175,6 +185,8 @@ sealed class CsiParam {
   const CsiParam._();
 }
 
+/// A parameter left out, standing for whatever default the sequence gives it:
+/// the row of `CSI ;5 H`, and both of `CSI H`.
 final class CsiParamDefault extends CsiParam {
   const CsiParamDefault._() : super._();
 
@@ -182,7 +194,9 @@ final class CsiParamDefault extends CsiParam {
   String toString() => '';
 }
 
+/// A parameter carrying one number: the `5` of `CSI 5 A`.
 final class CsiParamNumber extends CsiParam {
+  /// The number written.
   final int value;
 
   const CsiParamNumber._(this.value) : super._();
@@ -191,7 +205,13 @@ final class CsiParamNumber extends CsiParam {
   String toString() => '$value';
 }
 
+/// A parameter carrying sub-parameters, separated by `:`: the `4:3` of
+/// `CSI 4:3 m`, the curly underline.
+///
+/// A sub-parameter left out counts as `0`, the way `38:2::1:2:3` leaves the
+/// colour space id out.
 final class CsiParamNumbers extends CsiParam {
+  /// The numbers written, in the order they were written in.
   final List<int> values;
 
   CsiParamNumbers._(List<int> values)

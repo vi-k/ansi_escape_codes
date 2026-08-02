@@ -365,16 +365,33 @@ final class _SgrParsingState<S extends State<S>> {
       );
 }
 
+/// One of the functions an [Sgr] sequence carries.
+///
+/// `CSI 1;31 m` carries two of them, and [Sgr.functions] holds them in the
+/// order they were written in. Which kind each one is says how much of it the
+/// parser could make out: a [SgrSimpleFunction] where the code is one it
+/// names, a [SgrColorFunction] where that code sets a colour, and one of the
+/// `SgrUnknown…` kinds where the numbers are none it knows.
+///
+/// Nothing is thrown away by not being understood: the unknown kinds keep
+/// what was written, and the sequence is written back out as it came in.
 sealed class SgrFunction {
   const SgrFunction();
 }
 
+/// A function whose code this package has a name for.
 sealed class SgrFunctionWithCode extends SgrFunction {
+  /// The SGR code this function stands for.
   final ControlFunctionsSGR code;
 
   const SgrFunctionWithCode(this.code);
 }
 
+/// A parameter left out, which stands for the reset: `CSI m` takes every
+/// style off, as `CSI 0 m` does.
+///
+/// The `0` written out comes through as a [SgrSimpleFunction] carrying the
+/// same code.
 final class SgrDefaultFunction extends SgrFunctionWithCode {
   const SgrDefaultFunction() : super(ControlFunctionsSGR.reset);
 
@@ -382,6 +399,7 @@ final class SgrDefaultFunction extends SgrFunctionWithCode {
   String toString() => code.id;
 }
 
+/// A function that is its code and nothing else: the `1` of `CSI 1 m`, bold.
 final class SgrSimpleFunction extends SgrFunctionWithCode {
   const SgrSimpleFunction(super.code);
 
@@ -389,7 +407,10 @@ final class SgrSimpleFunction extends SgrFunctionWithCode {
   String toString() => code.id;
 }
 
+/// A function setting one of the three colours: the foreground, the
+/// background or the underline.
 final class SgrColorFunction extends SgrFunctionWithCode {
+  /// The colour set, under the name of the code that sets it.
   final ExtendedColor color;
 
   SgrColorFunction(super.code, ExtendedColor color)
@@ -399,7 +420,13 @@ final class SgrColorFunction extends SgrFunctionWithCode {
   String toString() => color.id;
 }
 
+/// A colour whose parameters name no colour space this package reads: the
+/// `7` of `CSI 38;7;1 m`, where a `5` or a `2` was expected.
+///
+/// Only the colour is given up on. The `1` after it is still read, and still
+/// bold.
 final class SgrUnknownColorFunctionFromParams extends SgrFunctionWithCode {
+  /// The parameters as they were written, the colour space id included.
   final List<CsiParam> params;
 
   SgrUnknownColorFunctionFromParams(super.code, List<CsiParam> params)
@@ -420,7 +447,10 @@ final class SgrUnknownColorFunctionFromParams extends SgrFunctionWithCode {
   }
 }
 
+/// What [SgrUnknownColorFunctionFromParams] is, for a colour written with
+/// sub-parameters: the `38:7:1` of `CSI 38:7:1 m`.
 final class SgrUnknownColorFunctionFromValues extends SgrFunctionWithCode {
+  /// The sub-parameters as they were written, the colour space id included.
   final List<int> values;
 
   SgrUnknownColorFunctionFromValues(super.code, Iterable<int> values)
@@ -440,7 +470,10 @@ final class SgrUnknownColorFunctionFromValues extends SgrFunctionWithCode {
   }
 }
 
+/// A parameter naming no function this package knows: the `99` of
+/// `CSI 99 m`.
 final class SgrUnknownParamFunction extends SgrFunction {
+  /// The number written.
   final int number;
 
   const SgrUnknownParamFunction(this.number);
@@ -449,7 +482,10 @@ final class SgrUnknownParamFunction extends SgrFunction {
   String toString() => '$number';
 }
 
+/// Sub-parameters naming no function this package knows: the `99:1` of
+/// `CSI 99:1 m`.
 final class SgrUnknownParamsFunction extends SgrFunction {
+  /// The numbers written, in the order they were written in.
   final List<int> numbers;
 
   SgrUnknownParamsFunction(List<int> numbers)
