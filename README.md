@@ -236,11 +236,12 @@ void main() {
 }
 ```
 
-> [!IMPORTANT]
+> [!NOTE]
 >
-> Please note that when using styles and applying ready-to-use values,
-> different imports are used. This is because some of the names are the same in
-> both options.
+> The two ways of writing a colour can be used side by side, and
+> `ansi_escape_codes.dart` brings both: `bold` is the string of escape codes,
+> `style.bold` is the style. See [the names this package
+> brings](#the-names-this-package-brings).
 
 ## The names this package brings
 
@@ -836,12 +837,12 @@ The style at a particular position can be found with `stateAt`.
 
 ```dart
 final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
-final style = parser.stateAt(7);
-print(style); // Style(bold, foreground: Color16.cyan)
-print(style.isBold); // true
-print(style.isItalic); // false
-print(style.foregroundColor?.id); // fgCyan
-print(style.backgroundColor?.id); // null
+final atSeven = parser.stateAt(7);
+print(atSeven); // Style(bold, foreground: Color16.cyan)
+print(atSeven.isBold); // true
+print(atSeven.isItalic); // false
+print(atSeven.foregroundColor?.id); // fgCyan
+print(atSeven.backgroundColor?.id); // null
 ```
 
 The position in `stateAt` is specified in the plaintext range
