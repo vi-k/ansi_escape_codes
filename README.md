@@ -1372,7 +1372,12 @@ print(level.length); // 15
 print(Parser(level).length); // 6
 print('[${level.padRight(10)}]'); // [SEVERE] — the codes ate the padding
 print('[${Parser(level).padRight(10)}]'); // [SEVERE    ]
+print('[${Parser(level).padLeft(10)}]'); // [    SEVERE]
 ```
+
+A padding of more than one character overshoots the width, the way
+`String.padRight` overshoots it: it is written once for every character still
+wanted, not once for every place it fills.
 
 The second is the sink. A terminal reads the codes, a log file keeps them as
 bytes nobody will read back, so the same line goes out twice in two shapes:
