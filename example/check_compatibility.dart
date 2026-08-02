@@ -275,8 +275,8 @@ void main() {
     ' / Normal$reset',
   );
 
-  // Superscipt and Subscript.
-  title('Superscipt: ');
+  // Superscript and Subscript.
+  title('Superscript: ');
   print(
     '    Normal'
     ' / $superscript Superscript $resetSuperAndSubscript'
