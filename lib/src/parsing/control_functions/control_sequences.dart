@@ -408,15 +408,13 @@ enum ControlSequencesFunctions {
 
   bool get isReserved => _type == _Type.reserved;
 
-  static ControlSequencesFunctions? byCode(String code) {
-    for (final v in values) {
-      if (v.code == code && v._description != null && v._type == _Type.normal) {
-        return v;
-      }
-    }
+  /// The named control sequence with the given final bytes, if there is one.
+  static ControlSequencesFunctions? byCode(String code) => _byCode[code];
 
-    return null;
-  }
+  static final Map<String, ControlSequencesFunctions> _byCode = {
+    for (final v in values)
+      if (v._description != null && v._type == _Type.normal) v.code: v,
+  };
 }
 
 enum _Type { normal, private, reserved }
