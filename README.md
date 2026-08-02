@@ -250,11 +250,15 @@ Each entry point brings a different part of the package:
 | Import | What it brings |
 |:---|:---|
 | `ansi.dart` | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F` |
-| `ansi_escape_codes.dart` | everything but the raw bytes: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state and the control function tables |
-| `style.dart` | the styles and what they need: `Style`, `style`, the sixteen colors, and the parser |
+| `ansi_escape_codes.dart` | the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state and the control function tables |
+| `style.dart` | the styles — `Style`, `style`, the sixteen colors — and, because the styles are built on it, the whole parser |
 | `parsing.dart` | the parser, the state and the control function tables |
 | `extensions.dart` | the `String` extensions: `ansiRemoveEscapeCodes`, `ansiShowEscapeSequences` and the rest |
 | `utils.dart` | `tabs` and `currentCursorPos` |
+
+The last two are separate imports on purpose: everything else can be had from
+`ansi_escape_codes.dart`, but the extensions and the terminal utilities are
+brought only by their own.
 
 They can be imported together, and `ansi_escape_codes.dart` already holds the
 styles, so one import is usually enough:
@@ -280,8 +284,18 @@ import 'package:ansi_escape_codes/ansi_escape_codes.dart'
     hide Color, Colors, Match, Stack, State, Text;
 ```
 
+The same hiding is wanted for `style.dart` and `parsing.dart`: the parser is
+what defines those six names, and all three of these imports bring it. Only
+`ansi.dart`, `extensions.dart` and `utils.dart` are free of them — the first
+brings constants, the last two nothing but functions.
+
 The parser is still `Parser`, and `Matches` — its own name — is untouched by
 this.
+
+The colors and `style` are exported as plain lowercase names — `red`, `green`,
+`blue` and the thirteen others, `foreground`, `background`, `underlineColor`.
+They are the ones most likely to meet a name of your own, and `hide` or a
+prefix settles that the same way.
 
 
 ## Control function constants and ready-to-use values
@@ -457,7 +471,7 @@ the style used in Dart.
 | Cursor prev line                   | **template:** `${cursorPrevLineOpen}$n$cursorPrevLineClose`  <br>**function:** `cursorPrevLineN(int n)`          <br>**default constant:** `cursorPrevLine`       | Moves cursor to beginning of the line `n` (default 1) lines up. |
 | Cursor horizontal pos              | **template:** `${cursorHPosOpen}$n$cursorHPosClose`          <br>**function:** `cursorHPosTo(int n)`             <br>**default constant:** `cursorHPosToBegin`    | Moves the cursor to column `n` (default 1). |
 | Cursor pos                         | **template:** `${cursorPosOpen}$row;$col$cursorPosClose`     <br>**function:** `cursorPosTo(int row, int col)`   <br>**default constant:** `cursorPosToTopLeft`   | Moves the cursor to `row` and `col`. |
-| Cursor horizontal and vertical pos | **template:** `${cursorHVPosOpen}$row;$col$cursorHVPosClose` <br>**function:** `cursorHVPosTo(int row, int col)` <br>**default constant:** `cursorHVPosToTopLeft` | Same as `cursorPos`, just with some differences. |
+| Cursor horizontal and vertical pos | **template:** `${cursorHVPosOpen}$row;$col$cursorHVPosClose` <br>**function:** `cursorHVPosTo(int row, int col)` <br>**default constant:** `cursorHVPosToTopLeft` | Same as `cursorPosTo`, just with some differences. |
 | Erase in page                      | **template:** `${eraseInPageOpen}$s$eraseInPageClose`        <br>**function:**                                   <br>**default constants:** `erasePage`, `eraseInPageToBegin`, `eraseInPageToEnd` | Erases part of the page: `s`=0 (or missing) - to end, `s`=1 - to beginning, `s`=2 - entire page. |
 | Erase in line                      | **template:** `${eraseInLineOpen}$s$eraseInLineClose`        <br>**function:**                                   <br>**default constants:** `eraseLine`, `eraseInLineToBegin`, `eraseInLineToEnd` | Erases part of the line: `s`=0 (or missing) - to end, `s`=1 - to beginning, `s`=2 - entire line. |
 | Scroll up                          | **template:** `${scrollUpOpen}$n$scrollUpClose`              <br>**function:** `scrollUpN(int n)`                <br>**default constant:** `scrollUp`             | Scroll page up by `n` (default 1) lines. New lines are added at the bottom. |
