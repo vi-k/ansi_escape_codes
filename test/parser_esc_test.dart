@@ -74,6 +74,58 @@ void main() {
     });
   });
 
+  group('the cursor pair carries the style with it:', () {
+    test('what was saved comes back', () {
+      final parser = Parser('$fgRed$saveCursor$fgBlue$restoreCursor');
+
+      expect(
+        parser.finalState.foregroundColor,
+        Color16.red,
+        reason: 'ESC 8 restores the rendition ESC 7 put away',
+      );
+    });
+
+    test('and the whole of it, not just the colour', () {
+      final parser = Parser(
+        '$bold$fgRed$saveCursor$resetBoldAndDim$fgBlue$restoreCursor',
+      );
+
+      expect(parser.finalState.isBold, isTrue);
+      expect(parser.finalState.foregroundColor, Color16.red);
+    });
+
+    test('a restore with nothing saved goes back to the beginning', () {
+      final parser = Parser('$fgRed$restoreCursor');
+
+      expect(parser.finalState, Style.terminalColors);
+    });
+
+    test('the stacked parser does the same', () {
+      final parser = StackedParser('$fgRed$saveCursor$fgBlue$restoreCursor');
+
+      expect(parser.finalState.foregroundColor, Color16.red);
+    });
+
+    test('and a string read in two goes remembers across the pause', () {
+      final parser = Parser('$fgRed$saveCursor' 'text$fgBlue$restoreCursor');
+
+      expect(parser.stateAt(1).foregroundColor, Color16.red);
+      expect(parser.isParsed, isFalse, reason: 'stopping short of the restore');
+      expect(
+        parser.finalState.foregroundColor,
+        Color16.red,
+        reason: 'and reading on still knows what was saved before the pause',
+      );
+    });
+
+    test('the sequences are still the entities they were', () {
+      final matches = Parser('$saveCursor$restoreCursor').matches.toList();
+
+      expect(matches.first.entity, const SaveCursor());
+      expect(matches.last.entity, const RestoreCursor());
+    });
+  });
+
   group('a broken ESC:', () {
     test('is not left in the text', () {
       expect('a\x1B'.ansiRemoveEscapeCodes(), 'a');
