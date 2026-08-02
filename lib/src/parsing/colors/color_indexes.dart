@@ -1,6 +1,6 @@
 part of 'color.dart';
 
-enum Colors {
+enum Colors implements Comparable<Colors> {
   black,
   red,
   green,
@@ -261,7 +261,10 @@ enum Colors {
   const Colors();
 
   static Colors? byIndex(int index) =>
-      index >= 0 && index <= 255 ? values[index] : null;
+      index >= 0 && index < values.length ? values[index] : null;
+
+  @override
+  int compareTo(Colors other) => index - other.index;
 
   bool operator <(Colors other) => index < other.index;
 

@@ -60,6 +60,41 @@ void main() {
     });
   });
 
+  group('underline colour:', () {
+    test('is found whatever else the sequence carries', () {
+      const found = [
+        '\x1B[58;5;196m',
+        '\x1B[4;58;5;196m',
+        '\x1B[58;2;1;2;3m',
+        '\x1B[58:5:196m',
+        '\x1B[59m', // back to the default one
+      ];
+
+      for (final text in found) {
+        expect(text.ansiHasUnderlineColor, isTrue, reason: text);
+      }
+    });
+
+    test('is not confused with the colours of the text', () {
+      for (final text in ['\x1B[38;5;196m', '\x1B[48;5;196m', '\x1B[4m']) {
+        expect(text.ansiHasUnderlineColor, isFalse, reason: text);
+      }
+    });
+
+    test('is removed without dropping the underline itself', () {
+      const removed = {
+        '\x1B[58;5;196m': '',
+        '\x1B[4;58;5;196m': '\x1B[4m',
+        '\x1B[4;59m': '\x1B[4m',
+        '\x1B[38;5;196m': '\x1B[38;5;196m',
+      };
+
+      for (final MapEntry(key: text, value: expected) in removed.entries) {
+        expect(text.ansiRemoveUnderlineColor(), expected, reason: text);
+      }
+    });
+  });
+
   group('background:', () {
     test('is found whatever else the sequence carries', () {
       const found = [

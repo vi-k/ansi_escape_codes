@@ -37,6 +37,13 @@ extension StringRemoveEscapeCodesExtension on String {
   String ansiRemoveBackground() =>
       removeSgrFunction(this, isBackgroundFunction);
 
+  /// Removes the colors of the underline in the text.
+  ///
+  /// The other functions of a sequence are kept: `CSI 4;58;5;1 SGR` becomes
+  /// `CSI 4 SGR`, leaving the underline itself.
+  String ansiRemoveUnderlineColor() =>
+      removeSgrFunction(this, isUnderlineColorFunction);
+
   @Deprecated('Use ansiRemoveBackground instead')
   String removeBackground() => ansiRemoveBackground();
 

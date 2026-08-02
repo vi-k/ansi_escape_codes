@@ -32,5 +32,9 @@ extension StringHasEscapeCodesExtension on String {
   /// Whether the background color in the text changes.
   bool get ansiHasBackground => hasSgrFunction(this, isBackgroundFunction);
 
+  /// Whether the color of the underline in the text changes.
+  bool get ansiHasUnderlineColor =>
+      hasSgrFunction(this, isUnderlineColorFunction);
+
   bool get ansiHasControlCodes => controlCodesRe.hasMatch(this);
 }

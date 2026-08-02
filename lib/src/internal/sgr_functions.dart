@@ -46,6 +46,16 @@ bool isForegroundFunction(String function) =>
 bool isBackgroundFunction(String function) =>
     _isColorFunction(function, BG_BLACK, BG_HIGH_BLACK, BACKGROUND);
 
+/// Whether the function sets the color of the underline.
+///
+/// This one has no sixteen-colour forms — only the palette, RGB, and back to
+/// the default.
+bool isUnderlineColorFunction(String function) {
+  final value = int.tryParse(_head(function));
+
+  return value == UNDERLINE_COLOR || value == UNDERLINE_COLOR_DEFAULT;
+}
+
 /// Whether any SGR sequence in the text contains a function [test] accepts.
 bool hasSgrFunction(String text, bool Function(String function) test) {
   for (final match in sgrRe.allMatches(text)) {
