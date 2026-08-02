@@ -30,6 +30,7 @@ containing them.
 - [Quick start](#quick-start)
   - [How do I color text?](#how-do-i-color-text)
   - [How can I change the default style?](#how-can-i-change-the-default-style)
+- [The names this package brings](#the-names-this-package-brings)
 - [Control function constants and ready-to-use values](#control-function-constants-and-ready-to-use-values)
   - [Control codes (C0 set)](#control-codes-c0-set)
   - [Control functions ESC Fe (C1 set)](#control-functions-esc-fe-c1-set)
@@ -236,6 +237,49 @@ void main() {
 > Please note that when using styles and applying ready-to-use values,
 > different imports are used. This is because some of the names are the same in
 > both options.
+
+## The names this package brings
+
+Each entry point brings a different part of the package:
+
+| Import | What it brings |
+|:---|:---|
+| `ansi.dart` | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F` |
+| `ansi_escape_codes.dart` | the ready-to-use strings (`fgRed`, `cursorUp`), the parser, the state and the control function tables |
+| `style.dart` | `Style`, the parser, and the predefined styles: `red`, `bgYellow`, `bold` |
+| `parsing.dart` | the parser, the state and the control function tables |
+| `extensions.dart` | the `String` extensions: `ansiRemoveEscapeCodes`, `ansiShowEscapeSequences` and the rest |
+| `utils.dart` | `tabs` and `currentCursorPos` |
+
+Two of them name the same things. `style.dart` calls a `Style` `bold`, and
+`ansi_escape_codes.dart` calls a `String` `bold`, and there are 31 names like
+that: the fifteen text styles — `bold`, `dim`, `italic`, `underline`,
+`doublyUnderline`, `blink`, `blinkRapid`, `inverse`, `invisible`,
+`strikethrough`, `frame`, `encircle`, `overline`, `superscript`, `subscript` —
+and the sixteen background colors, `bgBlack` through `bgHighWhite`. Importing
+both, say which one is meant:
+
+```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+import 'package:ansi_escape_codes/style.dart' as style;
+
+print('${bold}by the string$reset');
+print(style.bold('by the style'));
+```
+
+The package also exports names Dart and Flutter use for their own: `Match` is
+`dart:core`'s, and `Text`, `State`, `Stack`, `Colors` and `Color` are Flutter's.
+Nothing breaks until one of them is written, and then the compiler asks which
+was meant. In a Flutter app, hide the side you are not calling by that name:
+
+```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart'
+    hide Color, Colors, Match, Stack, State, Text;
+```
+
+The parser is still `Parser`, and `Matches` — its own name — is untouched by
+this.
+
 
 ## Control function constants and ready-to-use values
 
