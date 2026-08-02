@@ -1,0 +1,8 @@
+# Written for whoever works on the package, not for whoever installs it.
+#
+# doc/ is where the design notes and specs live: pub.dev renders only README,
+# CHANGELOG and LICENSE, so everything else would ride along in the archive
+# unread. What `dart doc` generates under doc/api/ is kept out of git instead.
+doc/
+SPEC.md
+TODO.md
