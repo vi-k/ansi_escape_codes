@@ -1,8 +1,5 @@
 part of 'parser.dart';
 
-@Deprecated('Use Printer instead')
-typedef AnsiPrinter = Printer;
-
 /// A printer that processes ANSI escape codes and replaces the default text
 /// style.
 ///
@@ -80,8 +77,15 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   final S stateDefaults;
   final Style defaultStyle;
   final bool ansiCodesEnabled;
+
+  /// The state the last prepared line ended in, carried into the next one.
+  ///
+  /// Setting it from outside puts the printer out of step with what the
+  /// terminal has already been sent.
+  @visibleForTesting
   S? lastState;
 
+  @visibleForTesting
   bool debugForTest;
 
   _PrinterBase({
@@ -263,22 +267,6 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   }
 }
 
-@Deprecated('Use runZonedPrinter instead')
-R runZonedAnsiPrinter<R>(
-  R Function() run, {
-  Style defaultStyle = Style.defaults,
-  void Function(String s)? output,
-  bool ansiCodesEnabled = true,
-  @visibleForTesting bool debugForTest = false,
-}) =>
-    runZonedPrinter(
-      run,
-      defaultStyle: defaultStyle,
-      output: output,
-      ansiCodesEnabled: ansiCodesEnabled,
-      debugForTest: debugForTest,
-    );
-
 /// Runs the given function in a zone where all print statements are processed
 /// by the printer.
 R runZonedPrinter<R>(
@@ -321,12 +309,13 @@ R runZonedStackedPrinter<R>(
     run,
     zoneSpecification: ZoneSpecification(
       print: (self, parent, zone, line) {
-        printer ??= StackedPrinter(
+        (printer ??= StackedPrinter(
           defaultStyle: defaultStyle,
           output: output ?? (line) => parent.print(zone, line),
           ansiCodesEnabled: ansiCodesEnabled,
           debugForTest: debugForTest,
-        )..print(line);
+        ))
+            .print(line);
       },
     ),
   );

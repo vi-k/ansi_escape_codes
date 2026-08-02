@@ -1,5 +1,11 @@
 export 'src/parsing/colors/color.dart';
+export 'src/parsing/control_functions/control_functions_c0.dart';
+export 'src/parsing/control_functions/control_functions_c1.dart';
+export 'src/parsing/control_functions/control_functions_esc_fs.dart';
+export 'src/parsing/control_functions/control_sequences.dart';
+export 'src/parsing/control_functions/sgr.dart';
 export 'src/parsing/parser/parser.dart';
+export 'src/parsing/state/predefined_styles.dart';
 export 'src/parsing/state/state.dart';
 export 'src/ready_to_use/csi.dart';
 export 'src/ready_to_use/esc.dart';
@@ -12,4 +18,4 @@ export 'src/ready_to_use/sgr/rgb/bg_rgb.dart';
 export 'src/ready_to_use/sgr/rgb/fg_rgb.dart';
 export 'src/ready_to_use/sgr/rgb/underline_rgb.dart';
 export 'src/ready_to_use/sgr/sgr.dart';
-export 'src/ready_to_use/sgr/standart_colors/standart_colors.dart';
+export 'src/ready_to_use/sgr/standard_colors/standard_colors.dart';

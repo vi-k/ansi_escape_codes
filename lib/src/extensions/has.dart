@@ -1,35 +1,28 @@
+import '../internal/sgr_functions.dart';
 import '../parsing/patterns/patterns.dart';
 
+/// Asking a string whether it carries escape codes, and of what kind.
 extension StringHasEscapeCodesExtension on String {
-  @Deprecated('Use ansiHasEscapeCodes instead')
-  bool get hasEscapeCodes => ansiHasEscapeCodes;
-
   /// Whether there any escape codes in the text.
   bool get ansiHasEscapeCodes => escapeCodesRe.hasMatch(this);
-
-  @Deprecated('Use ansiHasCsi instead')
-  bool get hasCsi => ansiHasCsi;
 
   /// Whether there control sequences (CSI) in the text.
   bool get ansiHasCsi => csiRe.hasMatch(this);
 
-  @Deprecated('Use ansiHasSgr instead')
-  bool get hasSgr => ansiHasSgr;
-
   /// Whether there SGR (Select Graphic Rendition) codes in the text.
   bool get ansiHasSgr => sgrRe.hasMatch(this);
 
-  @Deprecated('Use ansiHasForeground instead')
-  bool get hasForeground => ansiHasForeground;
-
   /// Whether the foreground color in the text changes.
-  bool get ansiHasForeground => foregroundRe.hasMatch(this);
-
-  @Deprecated('Use ansiHasBackground instead')
-  bool get hasBackground => ansiHasBackground;
+  bool get ansiHasForeground => hasSgrFunction(this, isForegroundFunction);
 
   /// Whether the background color in the text changes.
-  bool get ansiHasBackground => backgroundRe.hasMatch(this);
+  bool get ansiHasBackground => hasSgrFunction(this, isBackgroundFunction);
 
+  /// Whether the color of the underline in the text changes.
+  bool get ansiHasUnderlineColor =>
+      hasSgrFunction(this, isUnderlineColorFunction);
+
+  /// Whether there are control codes in the text: the C0 bytes, `ESC` and
+  /// `DEL`, escape sequences or not.
   bool get ansiHasControlCodes => controlCodesRe.hasMatch(this);
 }

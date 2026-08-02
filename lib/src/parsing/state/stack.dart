@@ -1,14 +1,15 @@
 part of 'state.dart';
 
-@Deprecated('Use Stack instead')
-typedef SgrStackedState = Stack;
-
 /// Represents an active text style that tracks history via a stack.
 ///
 /// Unlike [Style] which keeps only the recently active properties, [Stack]
 /// remembers the order in which styles and colors were applied. When applied,
 /// items are pushed onto the history stack. When a reset is called, the last
 /// value is popped, reverting the property to its previous state.
+///
+/// A reset of a property that was never applied does nothing: text may come
+/// from anywhere and close an attribute it has not opened, so such resets are
+/// ignored rather than treated as an error.
 final class Stack extends State<Stack> {
   final List<IntensityStyle> _intensityStack;
   final int _boldCounter;
@@ -58,6 +59,8 @@ final class Stack extends State<Stack> {
         _backgroundStack = backgroundStack,
         _underlineColorStack = underlineColorStack;
 
+  /// The state a terminal is in before anything is written to it: its own
+  /// colours, and nothing switched on.
   static const Stack terminalColors = Stack._(
     intencityStack: [],
     boldCounter: 0,
@@ -75,9 +78,6 @@ final class Stack extends State<Stack> {
     backgroundStack: [],
     underlineColorStack: [],
   );
-
-  @Deprecated('Use `terminalColors` instead')
-  static const Stack defaults = terminalColors;
 
   @override
   bool get isBold => _boldCounter != 0;
@@ -251,7 +251,7 @@ final class Stack extends State<Stack> {
       _copyWith(backgroundStack: List.of(_backgroundStack)..add(color));
 
   @override
-  Stack underlineColor(Color color) =>
+  Stack underlineColor(ExtendedColor color) =>
       _copyWith(underlineColorStack: List.of(_underlineColorStack)..add(color));
 
   @override
@@ -260,7 +260,7 @@ final class Stack extends State<Stack> {
   @override
   Stack get resetBoldAndDim {
     if (_intensityStack.isEmpty) {
-      throw StateError('Intensity stack is empty');
+      return this;
     }
 
     final list = List.of(_intensityStack);
@@ -277,7 +277,7 @@ final class Stack extends State<Stack> {
   @override
   Stack get resetItalic {
     if (_italicCounter == 0) {
-      throw StateError('Italic stack is empty');
+      return this;
     }
 
     return _copyWith(italicCounter: _italicCounter - 1);
@@ -286,7 +286,7 @@ final class Stack extends State<Stack> {
   @override
   Stack get resetUnderline {
     if (_underlineStack.isEmpty) {
-      throw StateError('Underline stack is empty');
+      return this;
     }
 
     return _copyWith(underlineStack: List.of(_underlineStack)..removeLast());
@@ -295,7 +295,7 @@ final class Stack extends State<Stack> {
   @override
   Stack get resetBlink {
     if (_blinkStack.isEmpty) {
-      throw StateError('Blink stack is empty');
+      return this;
     }
 
     return _copyWith(blinkStack: List.of(_blinkStack)..removeLast());
@@ -304,7 +304,7 @@ final class Stack extends State<Stack> {
   @override
   Stack get resetInverse {
     if (_inverseCounter == 0) {
-      throw StateError('Inverse stack is empty');
+      return this;
     }
 
     return _copyWith(inverseCounter: _inverseCounter - 1);
@@ -313,7 +313,7 @@ final class Stack extends State<Stack> {
   @override
   Stack get resetInvisible {
     if (_invisibleCounter == 0) {
-      throw StateError('Invisible stack is empty');
+      return this;
     }
 
     return _copyWith(invisibleCounter: _invisibleCounter - 1);
@@ -322,7 +322,7 @@ final class Stack extends State<Stack> {
   @override
   Stack get resetStrikethrough {
     if (_strikethroughCounter == 0) {
-      throw StateError('Strikethrough stack is empty');
+      return this;
     }
 
     return _copyWith(strikethroughCounter: _strikethroughCounter - 1);
@@ -331,7 +331,7 @@ final class Stack extends State<Stack> {
   @override
   Stack get resetFrameAndEncircle {
     if (_frameStack.isEmpty) {
-      throw StateError('Frame stack is empty');
+      return this;
     }
 
     return _copyWith(
@@ -342,7 +342,7 @@ final class Stack extends State<Stack> {
   @override
   Stack get resetOverline {
     if (_overlineCounter == 0) {
-      throw StateError('Overline stack is empty');
+      return this;
     }
 
     return _copyWith(overlineCounter: _overlineCounter - 1);
@@ -351,7 +351,7 @@ final class Stack extends State<Stack> {
   @override
   Stack get resetSuperAndSubscript {
     if (_scriptStack.isEmpty) {
-      throw StateError('Script stack is empty');
+      return this;
     }
 
     return _copyWith(
@@ -362,7 +362,7 @@ final class Stack extends State<Stack> {
   @override
   Stack get resetForeground {
     if (_foregroundStack.isEmpty) {
-      throw StateError('Foreground color stack is empty');
+      return this;
     }
 
     return _copyWith(
@@ -373,7 +373,7 @@ final class Stack extends State<Stack> {
   @override
   Stack get resetBackground {
     if (_backgroundStack.isEmpty) {
-      throw StateError('Foreground color stack is empty');
+      return this;
     }
 
     return _copyWith(
@@ -383,8 +383,8 @@ final class Stack extends State<Stack> {
 
   @override
   Stack get resetUnderlineColor {
-    if (_foregroundStack.isEmpty) {
-      throw StateError('Foreground color stack is empty');
+    if (_underlineColorStack.isEmpty) {
+      return this;
     }
 
     return _copyWith(
@@ -407,7 +407,7 @@ final class Stack extends State<Stack> {
     List<ScriptStyle>? scripStack,
     List<Color>? foregroundStack,
     List<Color>? backgroundStack,
-    List<Color>? underlineColorStack,
+    List<ExtendedColor>? underlineColorStack,
   }) =>
       Stack._(
         intencityStack: intencityStack == null

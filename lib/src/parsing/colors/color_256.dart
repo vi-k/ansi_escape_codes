@@ -1,23 +1,37 @@
+// Most of this file is the table of 256 colours, where the name is the
+// documentation.
+// ignore_for_file: public_member_api_docs
+
 part of 'color.dart';
 
+/// One of the 256 colours of the table `CSI 38;5`, `CSI 48;5` and `CSI 58;5`
+/// reach: the sixteen the terminal names, a 6×6×6 cube, and 24 greys.
 final class Color256 extends ExtendedColor {
+  /// Which of the 256 it is.
   final Colors color;
 
+  /// The colour at that index of the table.
   const Color256(this.color);
 
-  Color256.rgb(int r, int g, int b)
-      : assert(
-          r >= 0 && r <= 5 && g >= 0 && g <= 5 && b >= 0 && b <= 5,
-          'RGB values must be between 0 and 5',
-        ),
-        color = Colors.values[16 + r * 36 + g * 6 + b];
+  /// A colour of the 6 × 6 × 6 cube, each component from `0` to `5`.
+  ///
+  /// The check is not an assert: out of that range the arithmetic still lands
+  /// somewhere in the palette, so an unchecked call would quietly return the
+  /// wrong colour rather than fail.
+  factory Color256.rgb(int r, int g, int b) {
+    RangeError.checkValueInInterval(r, 0, 5, 'r');
+    RangeError.checkValueInInterval(g, 0, 5, 'g');
+    RangeError.checkValueInInterval(b, 0, 5, 'b');
 
-  Color256.gray(int level)
-      : assert(
-          level >= 0 && level <= 23,
-          'Grayscale level must be between 0 and 23',
-        ),
-        color = Colors.values[232 + level];
+    return Color256(Colors.values[16 + r * 36 + g * 6 + b]);
+  }
+
+  /// A shade of the grayscale, from `0` to `23`.
+  factory Color256.gray(int level) {
+    RangeError.checkValueInInterval(level, 0, 23, 'level');
+
+    return Color256(Colors.values[232 + level]);
+  }
 
   const Color256._(this.color, [super._prefix]);
 

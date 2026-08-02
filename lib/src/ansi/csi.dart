@@ -834,7 +834,12 @@ const String SDS = ']';
 ///   character progression.
 const String SIMD = '^';
 
-const String RESERVED = '_';
+/// Reserved for future standardization.
+///
+/// Named after its byte, the way [RESERVED_20_4E] is, so that the name says
+/// which of the reserved bytes it is and does not claim a word as plain as
+/// `RESERVED` in the namespace this package exports.
+const String RESERVED_5F = '_';
 
 /// Character Position Absolute.
 ///
@@ -1217,16 +1222,27 @@ const String DSR = 'n';
 /// should not be used within an SRS string or an SDS string.
 const String DAQ = 'o';
 
+/// Left to the terminal, named after its byte.
 const String PRIVATEUSE_70 = 'p';
+
+/// Left to the terminal, named after its byte.
+///
+/// DECSCUSR, the shape of the cursor, is written with this one and a space
+/// before it: `CSI Ps SP q`.
 const String PRIVATEUSE_71 = 'q';
+
+/// Left to the terminal, named after its byte.
+///
+/// DECSTBM, the scrolling region, is written with this one.
 const String PRIVATEUSE_72 = 'r';
 
-/// Save Cursor (not standart).
+/// Save Cursor (not standard).
 const String SAVE_CURSOR = 's';
 
+/// Left to the terminal, named after its byte.
 const String PRIVATEUSE_74 = 't';
 
-/// Restore Cursor (not standart).
+/// Restore Cursor (not standard).
 const String RESTORE_CURSOR = 'u';
 
 // Final Bytes of control sequences with a single Intermediate Byte 0x20.
@@ -1529,6 +1545,7 @@ const String SVS = ' L';
 /// registered in accordance with ISO/IEC 7350.
 const String IGS = ' M';
 
+/// Reserved for future standardization, named after its bytes.
 const String RESERVED_20_4E = ' N';
 
 /// Identify Device Control String.

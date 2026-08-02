@@ -1,10 +1,10 @@
 part of '../parser.dart';
 
-final class MatchingState<S extends State<S>> {
+final class _MatchingState<S extends State<S>> {
   final RegExpMatch match;
   S state;
 
-  MatchingState(this.match, this.state);
+  _MatchingState(this.match, this.state);
 
   String get string => match.namedGroup('all')!;
 

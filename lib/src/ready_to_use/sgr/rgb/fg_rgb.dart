@@ -18,7 +18,6 @@ import '../../../ansi/sgr.dart';
 /// - +mac Warp
 ///
 /// See also [fgRgb].
-/// Foreground rgbOpen.
 const String fgRgbOpen = '$CSI$FOREGROUND;$COLOR_RGB;';
 
 /// Closing tag for foreground by RGB.

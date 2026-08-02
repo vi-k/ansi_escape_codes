@@ -1,16 +1,22 @@
 part of '../parser.dart';
 
-final class ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
+final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
   final Matches<S> _parent;
-  final List<Match<S>> _readyMatches = [];
-  final Iterator<RegExpMatch> _regExpIterator;
-  RegExpMatch? _next;
-  int _pos = 0;
-  Match<S>? _current;
   final S _initialState;
 
-  ParserIterator._(this._parent, this._initialState)
-      : _regExpIterator = escapeCodesRe.allMatches(_parent._input).iterator;
+  /// Created once this iterator has to read past what was read before, and
+  /// started from there rather than from the beginning of the string.
+  Iterator<RegExpMatch>? _regExpIterator;
+
+  RegExpMatch? _next;
+
+  /// How many matches this iterator has handed out.
+  int _index = 0;
+
+  int _pos = 0;
+  Match<S>? _current;
+
+  _ParserIterator._(this._parent, this._initialState);
 
   /// Current match.
   @override
@@ -21,86 +27,99 @@ final class ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
 
   @override
   bool moveNext() {
-    final string = _parent._input;
-    final pos = _pos;
+    final parsed = _parent._parsed;
 
-    // End of string.
-    if (pos == string.length) {
-      _parent._parsingResult ??= MatchesResult<S>._(
-        matches: _readyMatches,
+    // Already read once, by this iterator or another one over the same
+    // string. Reading it again would give the same answer.
+    if (_index < parsed.length) {
+      final match = parsed[_index];
+      _index++;
+      _current = match;
+      _pos = match.end;
+
+      return true;
+    }
+
+    final match = _read();
+    if (match == null) {
+      _parent._parsingResult ??= _MatchesResult<S>._(
+        matches: parsed,
         finalState: currentState,
       );
 
       return false;
     }
 
+    // Another iterator may have got here first while this one was reading.
+    if (_index == parsed.length) {
+      parsed.add(match);
+    }
+
+    _index++;
+    _current = match;
+
+    return true;
+  }
+
+  /// Reads the next match of the string, or `null` at the end of it.
+  Match<S>? _read() {
+    final string = _parent._input;
+    final pos = _pos;
+
+    // End of string.
+    if (pos == string.length) {
+      return null;
+    }
+
     // There's the next escape code.
     final next = _next;
     if (next != null) {
-      final matchingState = MatchingState(next, currentState);
-      final entity = EscapeCode._parse(matchingState);
-      final match = Match<S>._(
-        state: matchingState.state,
-        entity: entity,
-        start: next.start,
-        end: next.end,
-      );
-      _readyMatches.add(match);
-      _current = match;
       _next = null;
-      _pos = next.end;
 
-      return true;
+      return _escapeCode(next);
     }
+
+    final regExpIterator =
+        _regExpIterator ??= escapeCodesRe.allMatches(string, pos).iterator;
 
     // There is nothing further to move, so we return the rest of the string.
-    if (!_regExpIterator.moveNext()) {
-      final entity = Text._(string.substring(pos));
-      final match = Match<S>._(
-        state: currentState,
-        entity: entity,
-        start: pos,
-        end: string.length,
-      );
-      _readyMatches.add(match);
-      _current = match;
-      _pos = string.length;
-
-      return true;
+    if (!regExpIterator.moveNext()) {
+      return _text(pos, string.length);
     }
 
-    final m = _regExpIterator.current;
+    final m = regExpIterator.current;
 
     // There is plain text before the escape code.
     if (pos != m.start) {
-      final entity = Text._(string.substring(pos, m.start));
-      final match = Match<S>._(
-        state: currentState,
-        entity: entity,
-        start: pos,
-        end: m.start,
-      );
-      _readyMatches.add(match);
-      _current = match;
-      _pos = m.start;
       _next = m;
 
-      return true;
+      return _text(pos, m.start);
     }
 
-    // Escape code.
-    final matchingState = MatchingState(m, currentState);
+    return _escapeCode(m);
+  }
+
+  Match<S> _text(int start, int end) {
+    _pos = end;
+
+    return Match<S>._(
+      state: currentState,
+      entity: Text._(_parent._input.substring(start, end)),
+      start: start,
+      end: end,
+    );
+  }
+
+  Match<S> _escapeCode(RegExpMatch m) {
+    final matchingState = _MatchingState(m, currentState);
     final entity = EscapeCode._parse(matchingState);
-    final match = Match<S>._(
+    _pos = m.end;
+
+    return Match<S>._(
       state: matchingState.state,
       entity: entity,
       start: m.start,
       end: m.end,
     );
-    _readyMatches.add(match);
-    _current = match;
-    _pos = m.end;
-
-    return true;
   }
 }

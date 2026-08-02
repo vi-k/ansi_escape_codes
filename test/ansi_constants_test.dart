@@ -2,7 +2,7 @@
 
 import 'package:ansi_escape_codes/ansi.dart';
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
-import 'package:ansi_escape_codes/parsing.dart';
+import 'package:ansi_escape_codes/extensions.dart';
 import 'package:test/test.dart';
 
 import 'utils.dart';
@@ -64,6 +64,8 @@ void main() {
       expect(
         parser.showControlFunctions(),
         '['
+        // The sequence opens with an empty parameter, which stands for 0.
+        'reset'
         ';reset;bold;dim;italic;underline'
         ';blink;blinkRapid;inverse;invisible;strikethrough'
         ';10;11;12;13;14;15;16;17;18;19;20'
@@ -737,6 +739,21 @@ void main() {
       });
     });
 
+    test('stacked sink unwinds one level at a time', () {
+      final buf = StringBuffer();
+
+      // Three opened, three closed: only the last of the closes ends it.
+      StackedSinkPrinter(buf).write(
+        '$bold 1 $bold 2 $bold 3 '
+        '$resetBoldAndDim 2 $resetBoldAndDim 1 $resetBoldAndDim',
+      );
+
+      expect(
+        buf.toString().ansiShowControlFunctions(),
+        '[reset][bold] 1  2  3  2  1 [reset]',
+      );
+    });
+
     test('StackedPrinter', () {
       String b(String text) => '$bold$text$resetBoldAndDim';
       String i(String text) => '$italic$text$resetItalic';
@@ -781,6 +798,39 @@ void main() {
         '[resetUnderline][fg256Rgb555][bgCyan])'
         '[resetBoldAndDim;resetItalic][bg256Rgb320])'
         '[reset]',
+      );
+    });
+
+    test('a part of the string read once is not read again', () {
+      final parser = Parser('$bold one $fgCyan two $resetBoldAndDim three ');
+
+      // Stopping short leaves the string unparsed as a whole ...
+      expect(parser.stateAt(2).isBold, isTrue);
+      expect(parser.isParsed, isFalse);
+
+      // ... but what was read is kept, and reading on picks up from there and
+      // gives the same answers as reading it all at once would.
+      expect(parser.stateAt(2).isBold, isTrue);
+      expect(parser.finalState.foregroundColor, Color16.cyan);
+      expect(parser.isParsed, isTrue);
+      expect(
+        parser.matches.map((m) => m.entity.toString()).toList(),
+        Parser(parser.input).matches.map((m) => m.entity.toString()).toList(),
+      );
+    });
+
+    test('runZonedStackedPrinter prints every line', () {
+      final output = interceptZonedPrint(() {
+        runZonedStackedPrinter(() {
+          print('first');
+          print('second');
+          print('third');
+        });
+      });
+
+      expect(
+        output.map((line) => line.ansiShowControlFunctions()).toList(),
+        ['[reset]first', '[reset]second', '[reset]third'],
       );
     });
   });

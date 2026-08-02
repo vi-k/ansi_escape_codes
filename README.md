@@ -30,6 +30,7 @@ containing them.
 - [Quick start](#quick-start)
   - [How do I color text?](#how-do-i-color-text)
   - [How can I change the default style?](#how-can-i-change-the-default-style)
+- [The names this package brings](#the-names-this-package-brings)
 - [Control function constants and ready-to-use values](#control-function-constants-and-ready-to-use-values)
   - [Control codes (C0 set)](#control-codes-c0-set)
   - [Control functions ESC Fe (C1 set)](#control-functions-esc-fe-c1-set)
@@ -42,8 +43,11 @@ containing them.
 - [Analyzing and parsing](#analyzing-and-parsing)
   - [Parser](#parser)
   - [Quick analysis](#quick-analysis)
+  - [Sequence types](#sequence-types)
+  - [Unknown sequences](#unknown-sequences)
   - [Printer](#printer)
   - [StackedPrinter](#stackedprinter)
+- [Logging](#logging)
 
 
 ## Quick start
@@ -132,7 +136,7 @@ All the ready-to-use values can be found in this folder:
 import 'package:ansi_escape_codes/style.dart';
 
 void main() {
-  final defaultStyle = gray12;
+  final defaultStyle = style.gray12;
   final greenStyle = green.bold;
   final highlighedStyle = red.bgYellow.underline;
 
@@ -146,10 +150,12 @@ void main() {
 }
 ```
 
-First, you can assemble your own style from any pieces:
+First, you can assemble your own style from any pieces. A chain starts at one
+of the sixteen colors, or at `style`, which carries nothing:
 
 ```dart
-final style = rgb050.bgRgb010.bold.italic.underline;
+final mine = style.rgb050.bgRgb010.bold.italic.underline;
+final warning = red.bold;
 ```
 
 Second, styles can be nested: after completing the action of a nested style,
@@ -172,7 +178,7 @@ void main() {
   final highlighedStyle = red.bgYellow.underline;
 
   runZonedPrinter(
-    defaultStyle: gray12,
+    defaultStyle: style.gray12,
     () {
       print(
         'Normal text'
@@ -228,11 +234,52 @@ void main() {
 }
 ```
 
-> ![IMPORTANT]
+> [!IMPORTANT]
 >
 > Please note that when using styles and applying ready-to-use values,
 > different imports are used. This is because some of the names are the same in
 > both options.
+
+## The names this package brings
+
+Each entry point brings a different part of the package:
+
+| Import | What it brings |
+|:---|:---|
+| `ansi.dart` | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F` |
+| `ansi_escape_codes.dart` | everything but the raw bytes: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state and the control function tables |
+| `style.dart` | the styles and what they need: `Style`, `style`, the sixteen colors, and the parser |
+| `parsing.dart` | the parser, the state and the control function tables |
+| `extensions.dart` | the `String` extensions: `ansiRemoveEscapeCodes`, `ansiShowEscapeSequences` and the rest |
+| `utils.dart` | `tabs` and `currentCursorPos` |
+
+They can be imported together, and `ansi_escape_codes.dart` already holds the
+styles, so one import is usually enough:
+
+```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+
+print('${bold}by the string$reset');
+print(style.bold('by the style'));
+```
+
+The string and the style are told apart by what they are: `bold` is a `String`
+of escape codes, and the styles are reached through `style` or through one of
+the sixteen colors — `red.bold`, `style.bgYellow`.
+
+The package also exports names Dart and Flutter use for their own: `Match` is
+`dart:core`'s, and `Text`, `State`, `Stack`, `Colors` and `Color` are Flutter's.
+Nothing breaks until one of them is written, and then the compiler asks which
+was meant. In a Flutter app, hide the side you are not calling by that name:
+
+```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart'
+    hide Color, Colors, Match, Stack, State, Text;
+```
+
+The parser is still `Parser`, and `Matches` — its own name — is untouched by
+this.
+
 
 ## Control function constants and ready-to-use values
 
@@ -343,7 +390,7 @@ print('1\t2\t3\t4'); // 1 2 3 4
 print('${CSI}3g'); // Reset tabulations stops to default
 
 // Link (it doesn't work everywhere)
-print('Go to ${OSC}8;;https://pub.dev/packages/ansi_escape_codes${ST}pub.dev${OSC}8;;$ST')
+print('Go to ${OSC}8;;https://pub.dev/packages/ansi_escape_codes${ST}pub.dev${OSC}8;;$ST');
 ```
 
 
@@ -367,7 +414,7 @@ Some control functions from this set:
 | `ED`       | `CSI s J`    | Erase in page (in display) (`s`=2 - entire screen)                    |
 | `DCH`      | `CSI n P`    | Delete n characters                                                   |
 | `ECH`      | `CSI n X`    | Erase n characters                                                    |
-| `TBC`      | `CSI n g`    | Tabulation clear (`s`=3 - all character tabulation stops are cleared) |
+| `TBC`      | `CSI s g`    | Tabulation clear (`s`=3 - all character tabulation stops are cleared) |
 | `SM`       | `CSI s h`    | Set mode (`s`=4 - INSERTION REPLACEMENT MODE)                         |
 | `RM`       | `CSI s l`    | Reset mode                                                            |
 | `SGR`      | `CSI s… m`   | Select graphic rendition                                              |
@@ -405,17 +452,19 @@ the style used in Dart.
 | Cursor back                        | **template:** `${cursorLeftOpen}$n$cursorLeftClose`          <br>**function:** `cursorLeftN(int n)`              <br>**default constant:** `cursorLeft`           | Moves the cursor left `n` (default 1) characters. |
 | Cursor next line                   | **template:** `${cursorNextLineOpen}$n$cursorNextLineClose`  <br>**function:** `cursorNextLineN(int n)`          <br>**default constant:** `cursorNextLine`       | Moves cursor to beginning of the line `n` (default 1) lines down. |
 | Cursor prev line                   | **template:** `${cursorPrevLineOpen}$n$cursorPrevLineClose`  <br>**function:** `cursorPrevLineN(int n)`          <br>**default constant:** `cursorPrevLine`       | Moves cursor to beginning of the line `n` (default 1) lines up. |
-| Cursor horizontal pos              | **template:** `${cursorHPosOpen}$n$cursorHPosClose`          <br>**function:** `cursorHPosN(int n)`              <br>**default constant:** `cursorHPosToBegin`    | Moves the cursor to column `n` (default 1). |
+| Cursor horizontal pos              | **template:** `${cursorHPosOpen}$n$cursorHPosClose`          <br>**function:** `cursorHPosTo(int n)`             <br>**default constant:** `cursorHPosToBegin`    | Moves the cursor to column `n` (default 1). |
 | Cursor pos                         | **template:** `${cursorPosOpen}$row;$col$cursorPosClose`     <br>**function:** `cursorPosTo(int row, int col)`   <br>**default constant:** `cursorPosToTopLeft`   | Moves the cursor to `row` and `col`. |
 | Cursor horizontal and vertical pos | **template:** `${cursorHVPosOpen}$row;$col$cursorHVPosClose` <br>**function:** `cursorHVPosTo(int row, int col)` <br>**default constant:** `cursorHVPosToTopLeft` | Same as `cursorPos`, just with some differences. |
 | Erase in page                      | **template:** `${eraseInPageOpen}$s$eraseInPageClose`        <br>**function:**                                   <br>**default constants:** `erasePage`, `eraseInPageToBegin`, `eraseInPageToEnd` | Erases part of the page: `s`=0 (or missing) - to end, `s`=1 - to beginning, `s`=2 - entire page. |
-| Erase in line                      | **template:** `${eraseInLineOpen}$s$eraseInLineClose`        <br>**function:**                                   <br>**default constant:** `eraseLine`, `eraseInLineToBegin`, `eraseInLineToEnd` | Erases part of the line: `s`=0 (or missing) - to end, `s`=2 - to beginning, `s`=2 - entire line. |
+| Erase in line                      | **template:** `${eraseInLineOpen}$s$eraseInLineClose`        <br>**function:**                                   <br>**default constants:** `eraseLine`, `eraseInLineToBegin`, `eraseInLineToEnd` | Erases part of the line: `s`=0 (or missing) - to end, `s`=1 - to beginning, `s`=2 - entire line. |
 | Scroll up                          | **template:** `${scrollUpOpen}$n$scrollUpClose`              <br>**function:** `scrollUpN(int n)`                <br>**default constant:** `scrollUp`             | Scroll page up by `n` (default 1) lines. New lines are added at the bottom. |
 | Scroll down                        | **template:** `${scrollDownOpen}$n$scrollDownClose`          <br>**function:** `scrollDownN(int n)`              <br>**default constant:** `scrollDown`           | Scroll page down by `n` (default 1) lines. New lines are added at the top. |
-| Hide cursor                        | **constant:** `hideCursor`    | Shows the cursor. |
-| Show cursor                        | **constant:** `showCursor`    | Hides the cursor. |
+| Hide cursor                        | **constant:** `hideCursor`    | Hides the cursor. |
+| Show cursor                        | **constant:** `showCursor`    | Shows the cursor. |
 | Save cursor                        | **constant:** `saveCursor`    | Saves the cursor position, encoding shift state and formatting attributes. |
 | Restore cursor                     | **constant:** `restoreCursor` | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
+| Alternate screen                   | **constant:** `useAlternateScreen` | Switches to the screen a full-screen program draws on: the cursor is saved, the alternate screen is cleared, and the screen the program was started from is left untouched. |
+| Main screen                        | **constant:** `useMainScreen` | Switches back to the screen the program was started from, scrollback and all, with the cursor where `useAlternateScreen` left it. |
 
 All of the following examples are equivalent:
 
@@ -429,8 +478,49 @@ print(cursorUpN(4)); // Not constant!
 
 ### Independent control functions ESC Fs
 
-> [!NOTE]
-> The paragraph will appear later.
+These control functions are represented by 2-character escape sequences of the
+form ESC Fs, where ESC is represented by code 0x1B and Fs is represented by
+codes from 0x60 to 0x7E.
+
+They are called independent because the shift states and the announced code
+structure do not affect them: whatever the terminal has been told about the
+coding in use, these keep their meaning.
+
+| Constant | Code    | Description                                        |
+|:---------|:--------|:---------------------------------------------------|
+| `DMI`    | `ESC` `` ` `` | Disable manual input                         |
+| `INT`    | `ESC a` | Interrupt                                          |
+| `EMI`    | `ESC b` | Enable manual input                                |
+| `RIS`    | `ESC c` | Reset to initial state                             |
+| `CMD`    | `ESC d` | Coding method delimiter                            |
+| `LS2`    | `ESC n` | Locking-shift two: invoke G2 into columns 02 to 07 |
+| `LS3`    | `ESC o` | Locking-shift three: invoke G3 into columns 02 to 07 |
+| `LS3R`   | `ESC \|` | Locking-shift three right: invoke G3 into columns 10 to 15 |
+| `LS2R`   | `ESC }` | Locking-shift two right: invoke G2 into columns 10 to 15 |
+| `LS1R`   | `ESC ~` | Locking-shift one right: invoke G1 into columns 10 to 15 |
+
+The one in everyday use is `RIS`. It resets the terminal to the state it has
+when it is made operational: the screen is cleared, the tabulation stops and
+the graphic rendition go back to their defaults, and the cursor returns to the
+first position of the first line. `reset` (SGR 0), by comparison, ends the
+graphic rendition and touches nothing else.
+
+```dart
+import 'package:ansi_escape_codes/ansi.dart';
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+
+// The following examples are equivalent:
+print('\x1Bc');
+print(RIS);
+print(resetTerminal);
+```
+
+The parser names them:
+
+```dart
+print(Parser('${resetTerminal}Fresh start').showControlFunctions());
+// [ESC RIS]Fresh start
+```
 
 
 ### Select graphic rendition (SGR)
@@ -505,11 +595,11 @@ Where `s` is:
 |    53 | `OVERLINE`                | `overline`               | Overline |
 |    54 | `NOT_FRAME_NOT_ENCIRCLE`  | `resetFrameAndEncircle`  | Not frame, not encircle |
 |    55 | `NOT_OVERLINE`            | `resetOverline`          | Not overline |
-|    58 | `UNDERLINE_COLOR`         | `underlineColor256…/underlineColorRgb…` | Underline color from [256-color table](#256-color-table) or by [RGB](#24-bit-rgb-colors) |
-|    59 | `UNDERLINE_COLOR_DEFAULT` | `underlineColorDefault`  | Default underline color |
-|    73 | `SUPERSCRIPTED`           | `superscript`            | Superscript |
+|    58 | `UNDERLINE_COLOR`         | `underline256…/underlineRgb…` | Underline color from [256-color table](#256-color-table) or by [RGB](#24-bit-rgb-colors) |
+|    59 | `UNDERLINE_COLOR_DEFAULT` | `resetUnderlineColor`    | Default underline color |
+|    73 | `SUPERSCRIPT`             | `superscript`            | Superscript |
 |    74 | `SUBSCRIPT`               | `subscript`              | Subscript |
-|    75 | `NOT_SUPER_NOT_SUBSCRIPT` | `resetSuperAnsSubscript` | Not superscript, not subscipt |
+|    75 | `NOT_SUPER_NOT_SUBSCRIPT` | `resetSuperAndSubscript` | Not superscript, not subscript |
 |    90 | `FG_HIGH_BLACK`           | `fgHighBlack`            | High black display |
 |    91 | `FG_HIGH_RED`             | `fgHighRed`              | High red display |
 |    92 | `FG_HIGH_GREEN`           | `fgHighGreen`            | High green display |
@@ -533,7 +623,7 @@ All of the following examples are equivalent:
 import 'package:ansi_escape_codes/ansi.dart';
 
 print('\x1B[1m bold \x1B[0m');
-print('$CSI$BOLD$SGR bold $SCI$RESET$SGR');
+print('$CSI$BOLD$SGR bold $CSI$RESET$SGR');
 print('$bold bold $reset');
 ```
 
@@ -676,16 +766,17 @@ print('${bgRgb(44, 43, 124)} Ultramarine $resetBg'); // Not constant!
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+import 'package:ansi_escape_codes/extensions.dart';
 
 const text = '$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ';
 final parser = Parser(text);
 parser.matches.forEach(print);
 // Match<Style>(start: 0, end: 4, entity: Sgr(bold), state: Style(bold))
 // Match<Style>(start: 4, end: 10, entity: Text(' Bold '), state: Style(bold))
-// Match<Style>(start: 10, end: 15, entity: Sgr(fgCyan), state: Style(bold, foreground: Color16(Colors.cyan)))
-// Match<Style>(start: 15, end: 26, entity: Text(' Bold+cyan '), state: Style(bold, foreground: Color16(Colors.cyan)))
-// Match<Style>(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: Style(foreground: Color16(Colors.cyan)))
-// Match<Style>(start: 31, end: 37, entity: Text(' Cyan '), state: Style(foreground: Color16(Colors.cyan)))
+// Match<Style>(start: 10, end: 15, entity: Sgr(fgCyan), state: Style(bold, foreground: Color16.cyan))
+// Match<Style>(start: 15, end: 26, entity: Text(' Bold+cyan '), state: Style(bold, foreground: Color16.cyan))
+// Match<Style>(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: Style(foreground: Color16.cyan))
+// Match<Style>(start: 31, end: 37, entity: Text(' Cyan '), state: Style(foreground: Color16.cyan))
 ```
 
 In this way we can, for example, remove all escape codes:
@@ -744,11 +835,11 @@ The style at a particular position can be found with `stateAt`.
 ```dart
 final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
 final style = parser.stateAt(7);
-print(style); // Style(bold, foreground: Color16(Colors.cyan))
+print(style); // Style(bold, foreground: Color16.cyan)
 print(style.isBold); // true
 print(style.isItalic); // false
-print(style.foreground?.id); // fgCyan
-print(style.background?.id); // null
+print(style.foregroundColor?.id); // fgCyan
+print(style.backgroundColor?.id); // null
 ```
 
 The position in `stateAt` is specified in the plaintext range
@@ -760,6 +851,26 @@ also be obtained using `finalState`.
 print(parser.stateAt(23) == parser.finalState); // true
 print(parser.finalState); // Style(foreground: Color16.cyan)
 ```
+
+Reading happens as late as it can. `stateAt` reads the string up to the
+position asked about and stops there, and what it read is kept, so the next
+question picks up where the last one left off instead of starting over:
+
+```dart
+final parser = Parser('$bold one $fgCyan two $resetBoldAndDim three ');
+parser.stateAt(2); // reads as far as the third character
+parser.finalState; // reads on from there, not from the beginning
+```
+
+`prepare` reads the whole string in one go rather than letting it grow question
+by question, and builds the plain text that `length`, `indexOf`, `contains` and
+the rest of the string methods work on:
+
+```dart
+final parser = Parser(text)..prepare();
+```
+
+It is worth calling when many questions are coming and pointless before one.
 
 In the above example, the text state was not set to default, i.e. the text was
 not closed:
@@ -783,7 +894,7 @@ together its state:
 ```dart
 final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
 final substr = parser.substring(7, maxLength: 9); // "Bold+cyan"
-print(Parser(substr).ansiShowControlFunctions()); // [fgCyan;bold]Bold+cyan[reset]
+print(Parser(substr).showControlFunctions()); // [fgCyan;bold]Bold+cyan[reset]
 ```
 
 By default, the substring is closed. Escape codes is always included in the
@@ -794,8 +905,8 @@ final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
 final substr = parser.substring(7, maxLength: 9); // "Bold+cyan"
 const test1 = '$fgCyan$bold';
 final test2 = substr.substring(0, substr.indexOf('Bold'));
-print(test1.showEscapeCodes()); // [CSI 36 SGR][CSI 1 SGR]
-print(test2.showEscapeCodes()); // [CSI 36;1 SGR]
+print(test1.ansiShowEscapeSequences()); // [CSI 36 SGR][CSI 1 SGR]
+print(test2.ansiShowEscapeSequences()); // [CSI 36;1 SGR]
 print(Parser(test1).showControlFunctions()); // [fgCyan][bold]
 print(Parser(test2).showControlFunctions()); // [fgCyan;bold]
 print(test1.length); // 9
@@ -818,11 +929,39 @@ print(Parser(optimizedText).showControlFunctions());
 // [fgGreen;dim] What's in here? [reset]
 ```
 
+The `insertBefore` and `insertAfter` methods put text into a string without
+disturbing what is already there. The inserted text takes the style of the
+place it lands in, and whatever codes it carries of its own are closed after
+it, so the rest of the string keeps the look it had:
+
+```dart
+const text = '${fgRed}Hello world$reset';
+final inserted = Parser(text).insertBefore(6, '${fgGreen}brave ');
+print(Parser(inserted).showControlFunctions());
+// [fgRed]Hello [fgGreen]brave [fgRed]world[reset]
+```
+
+The position is counted in the string without escape codes, as everywhere else
+in `Parser`. The two methods part ways only when escape codes stand at that
+very position: one goes in front of them, the other behind:
+
+```dart
+const text = '${fgRed}Hello$reset world';
+print(Parser(text).insertBefore(5, '!').ansiShowControlFunctions());
+// [fgRed]Hello![reset] world
+print(Parser(text).insertAfter(5, '!').ansiShowControlFunctions());
+// [fgRed]Hello[reset]! world
+```
+
+For a string parsed only once there are the `ansiInsertBefore` and
+`ansiInsertAfter` extensions, like the other shortcuts below.
+
 ### Quick analysis
 
 You can quickly analyze a string without using `Parser` by using extensions.
 
 ```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:ansi_escape_codes/extensions.dart';
 
 …
@@ -882,13 +1021,91 @@ final andWithoutSgr = andWithoutForeground.ansiRemoveSgr();
 print(Parser(andWithoutSgr).showControlFunctions());
 // [saveCursor][CSI CUF] Text [restoreCursor]
 
-final andWithoutCsi = andWithoutSgr.ansiRemoveSgr();
+final andWithoutCsi = andWithoutSgr.ansiRemoveCsi();
 print(Parser(andWithoutCsi).showControlFunctions());
 // [saveCursor] Text [restoreCursor]
 
 final withoutAllEscapeCodes = text.ansiRemoveEscapeCodes();
 print(withoutAllEscapeCodes.ansiShowEscapeSequences());
 // ' Text '
+```
+
+### Sequence types
+
+The sequences that carry something worth reading say it themselves, so a
+`switch` over `matches` can ask for the sequence and for what it holds in one
+pattern:
+
+```dart
+final text = '${cursorUpN(4)}$erasePage Hello $hideCursor';
+
+for (final m in Parser(text).matches) {
+  switch (m.entity) {
+    case CursorUp(:final n):
+      print('the cursor goes up $n lines');
+    case EraseInPage(:final part):
+      print('the page is erased: $part');
+    case HideCursor():
+      print('the cursor is hidden');
+    case Text(:final string):
+      print('the text says "$string"');
+    default:
+  }
+}
+// the cursor goes up 4 lines
+// the page is erased: ErasePart.all
+// the text says " Hello "
+// the cursor is hidden
+```
+
+`CursorUp`, `CursorDown`, `CursorRight`, `CursorLeft`, `CursorNextLine`,
+`CursorPrevLine`, `CursorHPos`, `ScrollUp` and `ScrollDown` carry `n`, the
+number of places to move by, which is `1` when the sequence leaves it out.
+`CursorPos` and `CursorHVPos` carry `row` and `col`. `EraseInPage` and
+`EraseInLine` carry an `ErasePart` — `toEnd`, `toBegin` or `all`. `ShowCursor`,
+`HideCursor`, `UseAlternateScreen` and `UseMainScreen` stand for the four
+private modes this package writes itself.
+
+All but the last four extend `CsiCommon`, so `is CsiCommon`, `controlSequence`
+and the identifiers they are shown by are what they always were; the four
+private modes stand beside `CsiPrivate` instead, the way `SaveCursor` stands
+beside the other ESC sequences, and are shown by the name of the constant they
+are written with.
+
+A sequence carrying something other than what its type promises — two
+parameters where one is taken, or a part `ErasePart` has no name for, like the
+xterm `CSI 3 J` — keeps its parameters and stays a plain `CsiCommon` rather
+than being given made-up values.
+
+### Unknown sequences
+
+The parser never throws on what it cannot name. Whatever it fails to recognize
+comes back as an entity of its own with the raw bytes kept intact: `CsiUnknown`,
+`EscUnknown`, `OscUnknown` and `UnknownEscapeCode` for what has no meaning here,
+and `CsiPrivate` for the private-use sequences, whose meaning the standard
+leaves to the terminal. All of them carry the `UnrecognizedEscapeCode` mixin, so
+a single check covers them:
+
+```dart
+const text = 'a\x1B[!pb\x1B[?7hc';
+for (final m in Parser(text).matches) {
+  if (m.entity case final UnrecognizedEscapeCode e) {
+    print('${m.start}..${m.end}: ${e.id}');
+  }
+}
+// 1..5: CSI !p
+// 6..11: CSI ?7 SM
+```
+
+`start` and `end` are positions in the original string, so a complaint can point
+at the bytes it is about.
+
+To put something else in their place, `replaceAll` walks the string once and
+writes back whatever is returned:
+
+```dart
+print(Parser(text).replaceAll((e) => e is UnrecognizedEscapeCode ? '?' : e.string));
+// a?b?c
 ```
 
 ### Printer
@@ -977,7 +1194,7 @@ import 'dart:developer';
 …
 
 runZonedPrinter(
-  defaultState: const Style(
+  defaultStyle: const Style(
     background: Color16.green,
     foreground: Color16.yellow,
   ),
@@ -1074,6 +1291,39 @@ translating the current state into the standard escape sequence on output:
 const text = '$bold 1 $bold 2 $bold 3 $resetBoldAndDim 2 $resetBoldAndDim 1 $resetBoldAndDim';
 final printer1 = Printer();
 final printer2 = StackedPrinter();
-printer1.print(text); // '[bold] 1  2  3 [resetBoldAndDim] 2  1 '
-printer2.print(text); // '[bold] 1  2  3  2  1 [resetBoldAndDim]'
+printer1.print(text); // '[reset][bold] 1  2  3 [reset] 2  1 '
+printer2.print(text); // '[reset][bold] 1  2  3  2  1 [reset]'
 ```
+
+
+## Logging
+
+Nothing has to be tied to a logging package: a record is a string and the
+constants are strings, so coloring a level name needs no help. What does need
+help are the two places where escape codes bite.
+
+The first is width. `String.length` counts the escape codes, so padding a
+colored level name pads it by the wrong amount. `Parser` counts what is seen:
+
+```dart
+const level = '${fgRed}SEVERE$reset';
+print(level.length); // 15
+print(Parser(level).length); // 6
+print('[${level.padRight(10)}]'); // [SEVERE] — the codes ate the padding
+print('[${Parser(level).padRight(10)}]'); // [SEVERE    ]
+```
+
+The second is the sink. A terminal reads the codes, a log file keeps them as
+bytes nobody will read back, so the same line goes out twice in two shapes:
+
+```dart
+void write(String line) {
+  stdout.writeln(line);
+  logFile.writeAsStringSync('${line.ansiRemoveEscapeCodes()}\n',
+      mode: FileMode.append);
+}
+```
+
+And a message that arrives already styled from elsewhere is the case
+[StackedPrinter](#stackedprinter) was written for: whatever the message opens is
+closed at its end, and the next line starts in the style it should.

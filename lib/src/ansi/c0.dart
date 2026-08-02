@@ -329,3 +329,10 @@ const String RS = '\x1E';
 /// has to be defined for each application. If this control function is used
 /// in hierarchical order, it may delimit a data item called a unit.
 const String US = '\x1F';
+
+/// Delete.
+///
+/// DEL is not a member of the C0 set — it sits on its own at the end of the
+/// ASCII table — but it is a control character all the same, and terminals
+/// treat it as one.
+const String DEL = '\x7F';

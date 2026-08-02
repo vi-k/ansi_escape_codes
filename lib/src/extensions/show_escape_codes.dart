@@ -4,29 +4,8 @@ import '../parsing/control_functions/control_functions_c1.dart';
 import '../parsing/control_functions/control_sequences.dart';
 import '../parsing/patterns/patterns.dart';
 
+/// Showing the escape sequences in a string instead of sending them.
 extension StringShowEscapeCodesExtension on String {
-  @Deprecated('Use ansiShowEscapeSequences instead')
-  String showEscapeCodes({
-    String open = '[',
-    String codeOpen = '',
-    String codeClose = '',
-    String paramsOpen = ' ',
-    String paramsClose = '',
-    String finalOpen = ' ',
-    String finalClose = '',
-    String close = ']',
-  }) =>
-      ansiShowEscapeSequences(
-        open: open,
-        codeOpen: codeOpen,
-        codeClose: codeClose,
-        paramsOpen: paramsOpen,
-        paramsClose: paramsClose,
-        finalOpen: finalOpen,
-        finalClose: finalClose,
-        close: close,
-      );
-
   /// Show escape sequences.
   String ansiShowEscapeSequences({
     String open = '[',
@@ -84,7 +63,7 @@ extension StringShowEscapeCodesExtension on String {
       final osc = m.namedGroup('osc');
       if (osc != null) {
         final params = m.namedGroup('osc_params')!;
-        final terminator = m.namedGroup('osc_terminator')!;
+        final terminator = m.namedGroup('osc_terminator');
 
         buf
           ..write(open)
@@ -96,9 +75,12 @@ extension StringShowEscapeCodesExtension on String {
           ..write(paramsClose)
           ..write(finalOpen)
           ..write(
-            terminator == BEL
-                ? ControlFunctionsC0.BEL.name
-                : ControlFunctionsC1.ST.name,
+            switch (terminator) {
+              BEL => ControlFunctionsC0.BEL.name,
+              // The string was never terminated.
+              null => '',
+              _ => ControlFunctionsC1.ST.name,
+            },
           )
           ..write(finalClose)
           ..write(close);
@@ -108,17 +90,27 @@ extension StringShowEscapeCodesExtension on String {
 
       final esc = m.namedGroup('esc');
       if (esc != null) {
-        final code = m.namedGroup('esc_final')!;
+        // The intermediate bytes belong to the code: `ESC ( B` and `ESC ) B`
+        // designate different character sets, and `ESC SP 7` is not the `ESC 7`
+        // that saves the cursor. A broken sequence has no final byte at all.
+        final code = '${m.namedGroup('esc_inter') ?? ''}'
+                '${m.namedGroup('esc_final') ?? ''}'
+            .replaceAll(' ', '␠');
 
         buf
           ..write(open)
           ..write(codeOpen)
           ..write(ControlFunctionsC0.ESC.name)
-          ..write(codeClose)
-          ..write(finalOpen)
-          ..write(code)
-          ..write(finalClose)
-          ..write(close);
+          ..write(codeClose);
+
+        if (code.isNotEmpty) {
+          buf
+            ..write(finalOpen)
+            ..write(code)
+            ..write(finalClose);
+        }
+
+        buf.write(close);
 
         continue;
       }

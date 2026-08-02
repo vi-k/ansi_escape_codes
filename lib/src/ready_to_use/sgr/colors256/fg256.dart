@@ -8,10 +8,10 @@ import '../../../ansi/sgr.dart';
 
 /// Opening tag for foreground with 256-color table.
 ///
-/// Template: `${fg256Open}{colorIndex}${fg256Close}`
+/// Template: `${fg256Open}${colorIndex}${fg256Close}`
 ///
 /// Predefined constants:
-/// `$fg256Open$black$fg256Close` = `fg256Black`
+/// `$fg256Open$BLACK$fg256Close` = `fg256Black`
 ///
 /// Compatibility:
 /// - +vscode
@@ -21,7 +21,7 @@ import '../../../ansi/sgr.dart';
 /// - +mac Warp
 ///
 /// See color indexes in the
-/// [colors_8bit/indexes.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/values/sgr/colors_8bit/indexes.dart).
+/// [colors.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/ansi/colors.dart).
 ///
 /// See also [fg256].
 const String fg256Open = '$CSI$FOREGROUND;$COLOR_256;';

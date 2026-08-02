@@ -29,7 +29,7 @@ const String cursorUp = '$cursorUpOpen$cursorUpClose';
 /// Cursor Up: moves the cursor up [n] lines.
 ///
 /// See also [cursorUpOpen], [cursorUpClose] and [cursorUp].
-String cursorUpN(int n) => '$cursorUpOpen$n$cursorUpClose';
+String cursorUpN(int n) => '$cursorUpOpen${_checked(n, 'n')}$cursorUpClose';
 
 /// Cursor Down: opening tag.
 ///
@@ -47,21 +47,22 @@ const String cursorDownOpen = CSI;
 /// Template: `'$cursorDownOpen[$n]$cursorDownClose'`.
 ///
 /// See also [cursorDown] and [cursorDownN].
-const String cursorDownClose = CUB;
+const String cursorDownClose = CUD;
 
-/// Cursor Down: moves the cursor up `1` line.
+/// Cursor Down: moves the cursor down `1` line.
 ///
 /// See [CUD].
 ///
 /// See also [cursorDownOpen], [cursorDownClose] and [cursorDownN].
 const String cursorDown = '$cursorDownOpen$cursorDownClose';
 
-/// Cursor Down: moves the cursor up [n] line.
+/// Cursor Down: moves the cursor down [n] lines.
 ///
 /// See [CUD].
 ///
 /// See also [cursorDownOpen], [cursorDownClose] and [cursorDownN].
-String cursorDownN(int n) => '$cursorDownOpen$n$cursorDownClose';
+String cursorDownN(int n) =>
+    '$cursorDownOpen${_checked(n, 'n')}$cursorDownClose';
 
 /// Cursor Right: opening tag.
 ///
@@ -81,19 +82,20 @@ const String cursorRightOpen = CSI;
 /// See also [cursorRight] and [cursorRightN].
 const String cursorRightClose = CUF;
 
-/// Cursor Right: moves the cursor right `1` line.
+/// Cursor Right: moves the cursor right `1` column.
 ///
 /// See [CUF].
 ///
 /// See also [cursorRightOpen], [cursorRightClose] and [cursorRightN].
 const String cursorRight = '$cursorRightOpen$cursorRightClose';
 
-/// Cursor Right: moves the cursor right [n] line.
+/// Cursor Right: moves the cursor right [n] columns.
 ///
 /// See [CUF].
 ///
 /// See also [cursorRightOpen], [cursorRightClose] and [cursorRightN].
-String cursorRightN(int n) => '$cursorRightOpen$n$cursorRightClose';
+String cursorRightN(int n) =>
+    '$cursorRightOpen${_checked(n, 'n')}$cursorRightClose';
 
 /// Cursor Left: opening tag.
 ///
@@ -113,19 +115,20 @@ const String cursorLeftOpen = CSI;
 /// See also [cursorLeft] and [cursorLeftN].
 const String cursorLeftClose = CUB;
 
-/// Cursor Left: moves the cursor left `1` line.
+/// Cursor Left: moves the cursor left `1` column.
 ///
 /// See [CUB].
 ///
 /// See also [cursorLeftOpen], [cursorLeftClose] and [cursorLeftN].
 const String cursorLeft = '$cursorLeftOpen$cursorLeftClose';
 
-/// Cursor Left: moves the cursor left [n] line.
+/// Cursor Left: moves the cursor left [n] columns.
 ///
 /// See [CUB].
 ///
 /// See also [cursorLeftOpen], [cursorLeftClose] and [cursorLeftN].
-String cursorLeftN(int n) => '$cursorLeftOpen$n$cursorLeftClose';
+String cursorLeftN(int n) =>
+    '$cursorLeftOpen${_checked(n, 'n')}$cursorLeftClose';
 
 /// Cursor Next Line: opening tag.
 ///
@@ -157,7 +160,8 @@ const String cursorNextLine = '$cursorNextLineOpen$cursorNextLineClose';
 /// See [CNL].
 ///
 /// See also [cursorNextLineOpen], [cursorNextLineClose] and [cursorNextLineN].
-String cursorNextLineN(int n) => '$cursorNextLineOpen$n$cursorNextLineClose';
+String cursorNextLineN(int n) =>
+    '$cursorNextLineOpen${_checked(n, 'n')}$cursorNextLineClose';
 
 /// Cursor Preceding Line: opening tag.
 ///
@@ -189,7 +193,8 @@ const String cursorPrevLine = '$cursorPrevLineOpen$cursorPrevLineClose';
 /// See [CPL].
 ///
 /// See also [cursorPrevLineOpen], [cursorPrevLineClose] and [cursorPrevLineN].
-String cursorPrevLineN(int n) => '$cursorPrevLineOpen$n$cursorPrevLineClose';
+String cursorPrevLineN(int n) =>
+    '$cursorPrevLineOpen${_checked(n, 'n')}$cursorPrevLineClose';
 
 /// Cursor Character Absolute: opening tag.
 ///
@@ -221,13 +226,14 @@ const String cursorHPosToBegin = '$cursorHPosOpen$cursorHPosClose';
 /// See [CHA].
 ///
 /// See also [cursorHPosOpen], [cursorHPosClose] and [cursorHPosTo].
-String cursorHPosTo(int n) => '$cursorHPosOpen$n$cursorHPosClose';
+String cursorHPosTo(int n) =>
+    '$cursorHPosOpen${_checked(n, 'n')}$cursorHPosClose';
 
 /// Cursor Position: opening tag.
 ///
 /// See [CUP].
 ///
-/// Template: `'$cursorPosOpen[$n]$cursorPosClose'`.
+/// Template: `'$cursorPosOpen[$row];[$col]$cursorPosClose'`.
 ///
 /// See also [cursorPosToTopLeft] and [cursorPosTo].
 const String cursorPosOpen = CSI;
@@ -236,7 +242,7 @@ const String cursorPosOpen = CSI;
 ///
 /// See [CUP].
 ///
-/// Template: `'$cursorPosOpen[$n]$cursorPosClose'`.
+/// Template: `'$cursorPosOpen[$row];[$col]$cursorPosClose'`.
 ///
 /// See also [cursorPosToTopLeft] and [cursorPosTo].
 const String cursorPosClose = CUP;
@@ -248,19 +254,20 @@ const String cursorPosClose = CUP;
 /// See also [cursorPosOpen], [cursorPosClose] and [cursorPosTo].
 const String cursorPosToTopLeft = '$cursorPosOpen$cursorPosClose';
 
-/// Cursor Position: moves the cursor to to [row] and [col].
+/// Cursor Position: moves the cursor to [row] and [col].
 ///
 /// See [CUP].
 ///
 /// See also [cursorPosOpen], [cursorPosClose] and [cursorPosTo].
 String cursorPosTo(int row, int col) =>
-    '$cursorPosOpen$row;$col$cursorPosClose';
+    '$cursorPosOpen${_checked(row, 'row')};${_checked(col, 'col')}'
+    '$cursorPosClose';
 
 /// Character And Line Position: opening tag.
 ///
 /// See [HVP].
 ///
-/// Template: `'$cursorHVPosOpen[$n]$cursorHVPosClose'`.
+/// Template: `'$cursorHVPosOpen[$row];[$col]$cursorHVPosClose'`.
 ///
 /// See also [cursorHVPosToTopLeft] and [cursorHVPosTo].
 const String cursorHVPosOpen = CSI;
@@ -269,7 +276,7 @@ const String cursorHVPosOpen = CSI;
 ///
 /// See [HVP].
 ///
-/// Template: `'$cursorHVPosOpen[$n]$cursorHVPosClose'`.
+/// Template: `'$cursorHVPosOpen[$row];[$col]$cursorHVPosClose'`.
 ///
 /// See also [cursorHVPosToTopLeft] and [cursorHVPosTo].
 const String cursorHVPosClose = HVP;
@@ -287,7 +294,8 @@ const String cursorHVPosToTopLeft = '$cursorHVPosOpen$cursorHVPosClose';
 ///
 /// See also [cursorHVPosOpen], [cursorHVPosClose] and [cursorHVPosTo].
 String cursorHVPosTo(int row, int col) =>
-    '$cursorHVPosOpen$row;$col$cursorHVPosClose';
+    '$cursorHVPosOpen${_checked(row, 'row')};${_checked(col, 'col')}'
+    '$cursorHVPosClose';
 
 /// Erase In Page: opening tag.
 ///
@@ -342,28 +350,28 @@ const String erasePage = '${eraseInPageOpen}2$eraseInPageClose';
 ///
 /// See [EL].
 ///
-/// Template: `'$eraseLineOpen[$s]$eraseLineClose'`.
+/// Template: `'$eraseInLineOpen[$s]$eraseInLineClose'`.
 ///
-/// Erase part of the screen:
-/// - If n is 0 (or missing), clear from cursor to the end of the line. See
+/// Erases part of the line:
+/// - If `s` is `0` (or missing), clear from cursor to the end of the line. See
 ///   [eraseInLineToEnd].
-/// - If n is 1, clear from cursor to beginning of the line. See
+/// - If `s` is `1`, clear from cursor to beginning of the line. See
 ///   [eraseInLineToBegin].
-/// - If n is 2, clear entire line. See [eraseLine].
+/// - If `s` is `2`, clear entire line. See [eraseLine].
 const String eraseInLineOpen = CSI;
 
 /// Erase In Line: closing tag.
 ///
 /// See [EL].
 ///
-/// Template: `'$eraseLineOpen[$s]$eraseLineClose'`.
+/// Template: `'$eraseInLineOpen[$s]$eraseInLineClose'`.
 ///
 /// See also [eraseInLineToEnd], [eraseInLineToBegin] and [eraseLine].
 const String eraseInLineClose = EL;
 
 /// Erase In Line: erases from cursor to the end of the line.
 ///
-/// See [ED].
+/// See [EL].
 ///
 /// See also [eraseInLineOpen], [eraseInLineClose], [eraseInLineToBegin] and
 /// [eraseLine].
@@ -371,7 +379,7 @@ const String eraseInLineToEnd = '$eraseInLineOpen$eraseInLineClose';
 
 /// Erase In Line: erases from cursor to beginning of the line.
 ///
-/// See [ED].
+/// See [EL].
 ///
 /// See also [eraseInLineOpen], [eraseInLineClose], [eraseInLineToEnd] and
 /// [eraseLine].
@@ -379,7 +387,7 @@ const String eraseInLineToBegin = '${eraseInLineOpen}1$eraseInLineClose';
 
 /// Erase In Line: erases entire line.
 ///
-/// See [ED].
+/// See [EL].
 ///
 /// See also [eraseInLineOpen], [eraseInLineClose], [eraseInLineToEnd] and
 /// [eraseInLineToBegin].
@@ -415,7 +423,7 @@ const String scrollUp = '$scrollUpOpen$scrollUpClose';
 /// See [SU].
 ///
 /// See also [scrollUpOpen], [scrollUpClose] and [scrollUpN].
-String scrollUpN(int n) => '$scrollUpOpen$n$scrollUpClose';
+String scrollUpN(int n) => '$scrollUpOpen${_checked(n, 'n')}$scrollUpClose';
 
 /// Scroll Down: opening tag.
 ///
@@ -447,10 +455,37 @@ const String scrollDown = '$scrollDownOpen$scrollDownClose';
 /// See [SD].
 ///
 /// See also [scrollDownOpen], [scrollDownClose] and [scrollDownN].
-String scrollDownN(int n) => '$scrollDownOpen$n$scrollDownClose';
+String scrollDownN(int n) =>
+    '$scrollDownOpen${_checked(n, 'n')}$scrollDownClose';
+
+/// Checks a parameter that is meant to move the cursor or the page.
+///
+/// Below `1` there is nothing to move by, and a negative value would not even
+/// leave a valid sequence behind: `-` is not a parameter byte, so the terminal
+/// would have to find its way out of the middle of a broken one.
+int _checked(int value, String name) => value < 1
+    ? throw RangeError.value(value, name, 'Must be greater than 0')
+    : value;
 
 /// Shows the cursor.
-const String showCursor = '$CSI?25h';
+const String showCursor = '$CSI?25$SM';
 
 /// Hides the cursor.
-const String hideCursor = '$CSI?25l';
+const String hideCursor = '$CSI?25$RM';
+
+/// Switches to the screen a full-screen program draws on.
+///
+/// The cursor is saved, the alternate screen is cleared and everything is
+/// drawn there, leaving the screen the program was started from untouched.
+/// [useMainScreen] brings that one back, scrollback and all, with the cursor
+/// where it was left.
+///
+/// There is an older pair for this, `CSI ? 47 h` and `CSI ? 47 l`, which
+/// switches the screen without saving the cursor or clearing anything. This
+/// one does all three, and is what terminals have followed since.
+const String useAlternateScreen = '$CSI?1049$SM';
+
+/// Switches back to the screen the program was started from.
+///
+/// See [useAlternateScreen].
+const String useMainScreen = '$CSI?1049$RM';

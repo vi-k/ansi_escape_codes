@@ -9,11 +9,16 @@ final class Matches<S extends State<S>> extends Iterable<Match<S>> {
   final S _initialState;
   final String _input;
 
-  MatchesResult<S>? _parsingResult;
+  /// What has been read of the string so far, shared by every iterator over
+  /// it, so that reading part of it and then asking again does not start the
+  /// reading over.
+  final List<Match<S>> _parsed = [];
+
+  _MatchesResult<S>? _parsingResult;
 
   Matches._(this._input, this._initialState);
 
-  MatchesResult<S> get _requireParsingResult {
+  _MatchesResult<S> get _requireParsingResult {
     final parsingResult = _parsingResult;
     if (parsingResult != null) {
       return parsingResult;
@@ -32,9 +37,11 @@ final class Matches<S extends State<S>> extends Iterable<Match<S>> {
   Iterator<Match<S>> get iterator =>
       _parsingResult?.matches.iterator ?? _createIterator();
 
+  /// Whether the whole string has been read, rather than as much of it as the
+  /// questions asked so far needed.
   @visibleForTesting
   bool get isParsed => _parsingResult != null;
 
-  ParserIterator<S> _createIterator() =>
-      ParserIterator<S>._(this, _initialState);
+  _ParserIterator<S> _createIterator() =>
+      _ParserIterator<S>._(this, _initialState);
 }

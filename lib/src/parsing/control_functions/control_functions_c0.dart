@@ -70,7 +70,7 @@ enum ControlFunctionsC0 {
   DC4(c0.DC4, null, '␔', 'Device Control Four'),
 
   /// See [c0.NAK].
-  NAK(c0.NAK, null, '␕', ''),
+  NAK(c0.NAK, null, '␕', 'Negative Acknowledge'),
 
   /// See [c0.SYN].
   SYN(c0.SYN, null, '␖', 'Synchronous Idle'),
@@ -100,7 +100,12 @@ enum ControlFunctionsC0 {
   RS(c0.RS, null, '␞', 'Record Separator'),
 
   /// See [c0.US].
-  US(c0.US, null, '␟', 'Unit Separator');
+  US(c0.US, null, '␟', 'Unit Separator'),
+
+  /// See [c0.DEL].
+  ///
+  /// Sits apart from the set, at the end of the ASCII table.
+  DEL(c0.DEL, null, '␡', 'Delete');
 
   const ControlFunctionsC0(
     this.code,
@@ -109,11 +114,21 @@ enum ControlFunctionsC0 {
     this.description,
   );
 
+  /// The byte itself, the one this function is.
   final String code;
+
+  /// How Dart writes the byte in a string, where it has a way: `\n`, `\t`.
   final String? escapeSymbol;
+
+  /// The picture Unicode gives the byte, for showing it where it must be
+  /// seen: `␊`, `␉`.
   final String unicodeSymbol;
+
+  /// What the standard calls it in words.
   final String description;
 
+  /// The function the given byte is, or null where it is not a C0 control at
+  /// all.
   static ControlFunctionsC0? byCode(String code) {
     if (code.length != 1) {
       return null;
@@ -122,6 +137,13 @@ enum ControlFunctionsC0 {
     return byIndex(code.codeUnitAt(0));
   }
 
-  static ControlFunctionsC0? byIndex(int index) =>
-      index >= 0 && index < values.length ? values[index] : null;
+  /// The control function of the given character code, if there is one.
+  ///
+  /// The set occupies `0x00`–`0x1F`, in that order, so a code inside it is
+  /// also its position here. [DEL] lies outside and is named on its own.
+  static ControlFunctionsC0? byIndex(int index) => switch (index) {
+        >= 0 && < 0x20 => values[index],
+        0x7F => DEL,
+        _ => null,
+      };
 }

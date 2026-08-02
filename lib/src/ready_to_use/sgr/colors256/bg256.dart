@@ -15,7 +15,7 @@ import '../../../ansi/sgr.dart';
 /// Template: `${bg256Open}${colorIndex}${bg256Close}`
 ///
 /// Predefined constants:
-/// `$bg256Open$black$bg256Close` = `bg256Black`
+/// `$bg256Open$BLACK$bg256Close` = `bg256Black`
 ///
 /// Compatibility:
 /// - +vscode
@@ -25,14 +25,14 @@ import '../../../ansi/sgr.dart';
 /// - +mac Warp
 ///
 /// See color indexes in the
-/// [colors_8bit/indexes.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/values/sgr/colors_8bit/indexes.dart).
+/// [colors.dart](https://github.com/vi-k/ansi_escape_codes/blob/main/lib/src/ansi/colors.dart).
 ///
 /// See also [bg256].
 const String bg256Open = '$CSI$BACKGROUND;$COLOR_256;';
 
 /// Closing tag for background with 256-color table.
 ///
-/// See [bg256Open] and [bg256Close].
+/// See [bg256Open].
 const String bg256Close = SGR;
 
 /// Set color to background from 256-color table.

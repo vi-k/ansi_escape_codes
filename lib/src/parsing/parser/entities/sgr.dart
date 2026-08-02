@@ -1,7 +1,19 @@
 part of '../parser.dart';
 
+/// A Select Graphic Rendition sequence, `CSI ... m`: the one that says how
+/// the text after it is to look.
+///
+/// One sequence carries any number of functions — `CSI 1;31 m` is bold and a
+/// red foreground — and [functions] holds them in the order they were
+/// written in.
 final class Sgr extends Csi {
+  /// The parameters as they were written; see [CsiParam].
+  ///
+  /// [functions] is the same thing read: reach for this only to see how the
+  /// sequence was put together.
   final List<CsiParam> params;
+
+  /// What the sequence does, in the order it was written in.
   final List<SgrFunction> functions;
 
   Sgr._(
@@ -13,7 +25,7 @@ final class Sgr extends Csi {
         super._();
 
   static Sgr _parse<S extends State<S>>(
-    MatchingState<S> state,
+    _MatchingState<S> state,
     List<CsiParam> params,
   ) {
     final parsingState = _SgrParsingState(params, state.state);
@@ -77,6 +89,16 @@ final class Sgr extends Csi {
                 ControlFunctionsSGR.underlineColor,
               );
 
+            case UNDERLINE:
+              if (!_parseSimpleFunction(
+                parsingState,
+                _underlineFunctionFromValues(values),
+              )) {
+                parsingState.commitFunction(
+                  SgrUnknownParamsFunction(values),
+                );
+              }
+
             default:
               if (!_parseSimpleFunction(parsingState, firstValue)) {
                 parsingState.commitFunction(
@@ -91,6 +113,17 @@ final class Sgr extends Csi {
 
     return Sgr._(state.string, params, parsingState.functions);
   }
+
+  /// The function `4:n` stands for.
+  ///
+  /// The kinds this package does not tell apart — curly, dotted and dashed —
+  /// are read as a plain underline.
+  static int _underlineFunctionFromValues(List<int> values) =>
+      switch (values.length > 1 ? values[1] : 1) {
+        0 => NOT_UNDERLINE,
+        2 => DOUBLY_UNDERLINE,
+        _ => UNDERLINE,
+      };
 
   static bool _parseSimpleFunction<S extends State<S>>(
     _SgrParsingState<S> parsingState,
@@ -184,35 +217,35 @@ final class Sgr extends Csi {
 
     parsingState.savePosition();
 
-    if (parsingState.availableParamsCount >= 2) {
-      final param2 = parsingState.nextParam;
-      final param3 = parsingState.nextParam;
+    // The introducer is followed by the kind of colour, and the kind says how
+    // many parameters it takes. Nothing else is read until the kind is known,
+    // so that a broken colour gives up itself alone.
+    if (parsingState.availableParamsCount >= 1) {
+      final kind = parsingState.nextParam;
 
-      if (param2 is CsiParamNumber && param3 is CsiParamNumber) {
-        if (param2.value == COLOR_256) {
-          final colorCode = Colors.byIndex(param3.value);
-          if (colorCode != null) {
-            color = Color256(colorCode);
+      if (kind is CsiParamNumber) {
+        if (kind.value == COLOR_256 && parsingState.availableParamsCount >= 1) {
+          final index = parsingState.nextParam;
+
+          if (index is CsiParamNumber) {
+            final colorCode = Colors.byIndex(index.value);
+            if (colorCode != null) {
+              color = Color256(colorCode);
+            }
           }
-        } else if (param2.value == COLOR_RGB &&
-            parsingState.availableParamsCount >= 2) {
-          final param4 = parsingState.nextParam;
-          final param5 = parsingState.nextParam;
+        } else if (kind.value == COLOR_RGB &&
+            parsingState.availableParamsCount >= 3) {
+          final r = parsingState.nextParam;
+          final g = parsingState.nextParam;
+          final b = parsingState.nextParam;
 
-          if (param4 is CsiParamNumber && param5 is CsiParamNumber) {
+          if (r is CsiParamNumber &&
+              g is CsiParamNumber &&
+              b is CsiParamNumber) {
             try {
-              color = ColorRgb(
-                param3.value,
-                param4.value,
-                param5.value,
-              );
-
-              // В rgb параметров может быть больше, чем только r, g и b.
-              // Трудно понять, как терминалы могут реагировать на это.
-              // Поэтому лучшим вариантом вижу считать, что цвет в RGB
-              // задаётся всегда отдельным блоком, и дальнейший парсинг нужно
-              // отменить.
-              parsingState.cancelParsing();
+              // `38;2` takes three parameters, the way xterm reads it, and
+              // whatever follows them belongs to the sequence as usual.
+              color = ColorRgb(r.value, g.value, b.value);
 
               // ignore: avoid_catching_errors
             } on IndexError {
@@ -224,12 +257,9 @@ final class Sgr extends Csi {
     }
 
     if (color == null) {
-      final availableParams = parsingState.availableParams();
-      parsingState
-        ..cancelParsing()
-        ..commitFunction(
-          SgrUnknownColorFunctionFromParams(code, availableParams),
-        );
+      parsingState.commitFunction(
+        SgrUnknownColorFunctionFromParams(code, parsingState.consumedParams()),
+      );
     } else {
       parsingState
         ..state = switch (code) {
@@ -295,6 +325,12 @@ final class Sgr extends Csi {
   @override
   String get id => functions.join(';');
 
+  /// Whether the sequence carries the function [code] stands for.
+  ///
+  /// ```dart
+  /// final sgr = Parser('$bold').matches.first.entity as Sgr;
+  /// print(sgr.contains(ControlFunctionsSGR.bold)); // true
+  /// ```
   bool contains(ControlFunctionsSGR code) {
     for (final function in functions) {
       if (function is SgrFunctionWithCode && function.code == code) {
@@ -307,8 +343,6 @@ final class Sgr extends Csi {
 
   @override
   String toString() => '$Sgr(${functions.join(',')})';
-  // final List<AnsiCsiParam> params;
-  // final List<AnsiSgrFunction> functions;
 }
 
 final class _SgrParsingState<S extends State<S>> {
@@ -336,46 +370,68 @@ final class _SgrParsingState<S extends State<S>> {
     _savedIndex = null;
   }
 
-  void cancelParsing() {
-    _index = _params.length - 1;
-  }
-
   void savePosition() {
     _savedIndex = _index + 1;
   }
 
-  List<CsiParam> availableParams() => _params.sublist(
-        _savedIndex ?? (throw Exception('use savePosition first')),
+  /// The parameters read since [savePosition], the current one included.
+  List<CsiParam> consumedParams() => _params.sublist(
+        _savedIndex ?? (throw StateError('use savePosition first')),
+        _index + 1,
       );
 }
 
+/// One of the functions an [Sgr] sequence carries.
+///
+/// `CSI 1;31 m` carries two of them, and [Sgr.functions] holds them in the
+/// order they were written in. Which kind each one is says how much of it the
+/// parser could make out: a [SgrSimpleFunction] where the code is one it
+/// names, a [SgrColorFunction] where that code sets a colour, and one of the
+/// `SgrUnknown…` kinds where the numbers are none it knows.
+///
+/// Nothing is thrown away by not being understood: the unknown kinds keep
+/// what was written, and the sequence is written back out as it came in.
 sealed class SgrFunction {
   const SgrFunction();
 }
 
+/// A function whose code this package has a name for.
 sealed class SgrFunctionWithCode extends SgrFunction {
+  /// The SGR code this function stands for.
   final ControlFunctionsSGR code;
 
   const SgrFunctionWithCode(this.code);
 }
 
+/// A parameter left out, which stands for the reset: `CSI m` takes every
+/// style off, as `CSI 0 m` does.
+///
+/// The `0` written out comes through as a [SgrSimpleFunction] carrying the
+/// same code.
 final class SgrDefaultFunction extends SgrFunctionWithCode {
+  /// The function a parameter left out stands for.
   const SgrDefaultFunction() : super(ControlFunctionsSGR.reset);
 
   @override
-  String toString() => '';
+  String toString() => code.id;
 }
 
+/// A function that is its code and nothing else: the `1` of `CSI 1 m`, bold.
 final class SgrSimpleFunction extends SgrFunctionWithCode {
+  /// The function [code] stands for.
   const SgrSimpleFunction(super.code);
 
   @override
   String toString() => code.id;
 }
 
+/// A function setting one of the three colours: the foreground, the
+/// background or the underline.
 final class SgrColorFunction extends SgrFunctionWithCode {
+  /// The colour set, under the name of the code that sets it.
   final ExtendedColor color;
 
+  /// The [color] that [code] sets, named after the code that sets it.
   SgrColorFunction(super.code, ExtendedColor color)
       : color = color.withPrefix(code.id);
 
@@ -383,9 +439,16 @@ final class SgrColorFunction extends SgrFunctionWithCode {
   String toString() => color.id;
 }
 
+/// A colour whose parameters name no colour space this package reads: the
+/// `7` of `CSI 38;7;1 m`, where a `5` or a `2` was expected.
+///
+/// Only the colour is given up on. The `1` after it is still read, and still
+/// bold.
 final class SgrUnknownColorFunctionFromParams extends SgrFunctionWithCode {
+  /// The parameters as they were written, the colour space id included.
   final List<CsiParam> params;
 
+  /// The colour [code] was setting, kept as the [params] it was written with.
   SgrUnknownColorFunctionFromParams(super.code, List<CsiParam> params)
       : params = List.unmodifiable(params);
 
@@ -404,9 +467,13 @@ final class SgrUnknownColorFunctionFromParams extends SgrFunctionWithCode {
   }
 }
 
+/// What [SgrUnknownColorFunctionFromParams] is, for a colour written with
+/// sub-parameters: the `38:7:1` of `CSI 38:7:1 m`.
 final class SgrUnknownColorFunctionFromValues extends SgrFunctionWithCode {
+  /// The sub-parameters as they were written, the colour space id included.
   final List<int> values;
 
+  /// The colour [code] was setting, kept as the [values] it was written with.
   SgrUnknownColorFunctionFromValues(super.code, Iterable<int> values)
       : values = List.unmodifiable(values);
 
@@ -424,18 +491,26 @@ final class SgrUnknownColorFunctionFromValues extends SgrFunctionWithCode {
   }
 }
 
+/// A parameter naming no function this package knows: the `99` of
+/// `CSI 99 m`.
 final class SgrUnknownParamFunction extends SgrFunction {
+  /// The number written.
   final int number;
 
+  /// The [number] that named nothing.
   const SgrUnknownParamFunction(this.number);
 
   @override
   String toString() => '$number';
 }
 
+/// Sub-parameters naming no function this package knows: the `99:1` of
+/// `CSI 99:1 m`.
 final class SgrUnknownParamsFunction extends SgrFunction {
+  /// The numbers written, in the order they were written in.
   final List<int> numbers;
 
+  /// The [numbers] that named nothing.
   SgrUnknownParamsFunction(List<int> numbers)
       : numbers = List.unmodifiable(numbers);
 

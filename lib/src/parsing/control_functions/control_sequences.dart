@@ -160,7 +160,7 @@ enum ControlSequencesFunctions {
   PRIVATEUSE_72('r', null, _Type.private),
 
   /// See [csi.SAVE_CURSOR].
-  SAVE_CURSOR(csi.SAVE_CURSOR, 'Save Crusor'),
+  SAVE_CURSOR(csi.SAVE_CURSOR, 'Save Cursor'),
 
   /// Private.
   PRIVATEUSE_74('t', null, _Type.private),
@@ -386,7 +386,10 @@ enum ControlSequencesFunctions {
   /// Private.
   PRIVATEUSE_20_7E(' ~', null, _Type.private);
 
+  /// The final bytes that name this function, the intermediate ones
+  /// included: `A`, `SP q`.
   final String code;
+
   final String? _description;
   final _Type _type;
 
@@ -396,6 +399,8 @@ enum ControlSequencesFunctions {
     this._type = _Type.normal,
   ]);
 
+  /// What the standard calls it in words, or what kind of code it is where
+  /// the standard gives it no name.
   String get description =>
       _description ??
       switch (_type) {
@@ -404,19 +409,30 @@ enum ControlSequencesFunctions {
         _Type.reserved => 'Reserved',
       };
 
+  /// Whether the standard leaves this code to whoever writes the terminal.
   bool get isPrivate => _type == _Type.private;
 
+  /// Whether the standard is keeping this code back for itself.
   bool get isReserved => _type == _Type.reserved;
 
-  static ControlSequencesFunctions? byCode(String code) {
-    for (final v in values) {
-      if (v.code == code && v._description != null && v._type == _Type.normal) {
-        return v;
-      }
-    }
+  /// The named control sequence with the given final bytes, if there is one.
+  static ControlSequencesFunctions? byCode(String code) => _byCode[code];
 
-    return null;
-  }
+  static final Map<String, ControlSequencesFunctions> _byCode = {
+    for (final v in values)
+      if (v._description != null && v._type == _Type.normal) v.code: v,
+  };
+
+  /// Whether the given final bytes belong to a sequence kept for private use.
+  ///
+  /// Such a sequence has no meaning to give, but it is not an unknown one
+  /// either: the standard sets those bytes aside on purpose.
+  static bool isPrivateCode(String code) => _privateCodes.contains(code);
+
+  static final Set<String> _privateCodes = {
+    for (final v in values)
+      if (v._type == _Type.private) v.code,
+  };
 }
 
 enum _Type { normal, private, reserved }

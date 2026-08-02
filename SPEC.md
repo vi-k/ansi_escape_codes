@@ -1,0 +1,472 @@
+# Спека на исправления — ansi_escape_codes
+
+По результатам полного ревью кода v3.1.2 (commit `a655eb0`, 2026-07-29).
+
+Базовый статус на момент ревью: `dart analyze` — чисто, `dart test` — 9/9 зелёные.
+
+Что проверялось и оказалось **корректным** (чтобы не перепроверять заново):
+
+- все 98 final-байтов CSI в `lib/src/ansi/csi.dart` сверены с ECMA-48 — без ошибок;
+- все SGR-коды 0–107 в `lib/src/ansi/sgr.dart` — без ошибок, high/normal не перепутаны;
+- все 256 констант `lib/src/ansi/colors.dart` (формулы `16+36r+6g+b` и `232+n`) — без ошибок;
+- все 3×256 констант fg256/bg256/underline256 — префиксы 38;5/48;5/58;5 верные, cross-contamination нет;
+- 35 констант `standart_colors.dart` — fg/bg/high не перепутаны;
+- showCursor/hideCursor, saveCursor/restoreCursor (ESC 7/8), OSC-8 link/linkBel — верные байты;
+- дублей и коллизий экспортов между `ansi.dart` и `ansi_escape_codes.dart` нет;
+- операторы `<, <=, >, >=` у `Colors` (релиз 3.1.2) — корректны;
+- regex-паттерны не подвержены катастрофическому бэктрекингу; компилируются один раз.
+
+Приоритеты: **P0** — критические баги, чинить немедленно (патч 3.1.3); **P1** — баги
+(минор 3.2.0); **P2** — устойчивость парсера (3.2.0); **P3** — документация;
+**P4** — улучшения. Каждый фикс P0–P2 сопровождать регрессионным тестом.
+
+---
+
+## P0 — критические баги (патч-релиз 3.1.3)
+
+### P0.1. `cursorDown` двигает курсор влево
+
+`lib/src/ready_to_use/csi.dart:50`
+
+```dart
+const String cursorDownClose = CUB; // CUB = 'D' — Cursor Back!
+```
+
+`cursorDown`, `cursorDownN(n)` и пара Open/Close генерируют `ESC[D` (влево)
+вместо `ESC[B` (вниз). Баг живёт с v2.0 (~18 месяцев), воспроизводится в
+`example/control.dart:59`.
+
+**Фикс:** `cursorDownClose = CUD`. Заодно поправить док-комменты строк 52 и 59
+(«moves the cursor up» → «down»).
+**Тест:** табличный тест «каждый `xxxClose` равен константе из своего `See [XXX]`»
+для всех 13 пар Open/Close (см. P4.1) — он же ловит рецидивы.
+
+### P0.2. `runZonedStackedPrinter` печатает только первую строку
+
+`lib/src/parsing/parser/printer.dart:324-329`
+
+```dart
+printer ??= StackedPrinter(...)..print(line);
+```
+
+`a ??= b..c()` выполняет RHS только когда `a == null`, поэтому `print(line)`
+вызывается один раз; весь дальнейший вывод в зоне молча теряется.
+
+**Фикс:** как в соседнем `runZonedPrinter` (`printer.dart:297-303`):
+`(printer ??= StackedPrinter(...)).print(line);`
+**Тест:** `runZonedStackedPrinter` с двумя `print` — оба попадают в output.
+
+### P0.3. `Style.call` бросает `StateError` на чужом вводе
+
+`lib/src/parsing/state/style.dart:124` + `lib/src/parsing/state/stack.dart:262-393`
+
+`Style.call` прогоняет текст через `StackedPrinter`, то есть парсит его состоянием
+`Stack`, чьи reset-геттеры кидают `StateError` при пустом стеке. В итоге
+`red('\x1b[39mhello')` или `bold('\x1b[22mx')` (типичный вывод chalk и любого
+кода, закрывающего цвета через 39/49/22) — исключение.
+
+**Фикс:** `Style.call` не нуждается в stack-семантике — использовать `Printer`
+(или `SinkPrinter`). Либо сделать reset при пустом стеке no-op'ом (возврат `this`)
+вместо исключения — парсинг чужого ввода не должен бросать.
+**Тест:** `red('\x1b[39mhello')`, `bold('\x1b[22mx')`, `StackedParser('\x1b[22m').finalState`
+не бросают.
+
+### P0.4. `Stack.resetUnderlineColor` проверяет чужой стек
+
+`lib/src/parsing/state/stack.dart:384-393`
+
+```dart
+Stack get resetUnderlineColor {
+  if (_foregroundStack.isEmpty) {            // не тот стек
+    throw StateError('Foreground color stack is empty');
+  }
+  return _copyWith(
+    underlineColorStack: List.of(_underlineColorStack)..removeLast(),
+```
+
+Guard смотрит на `_foregroundStack`, pop — из `_underlineColorStack`: либо
+`RangeError` на пустом underline-стеке, либо ложный `StateError` при пустом
+foreground.
+
+**Фикс:** guard по `_underlineColorStack`; заодно исправить copy-paste сообщение
+«Foreground color stack is empty» в `resetBackground` (`stack.dart:376`).
+**Тест:** underline-цвет + `resetUnderlineColor` без foreground; и наоборот.
+
+### P0.5. `currentCursorPos` оставляет терминал в raw-режиме
+
+`lib/src/utils/current_cursor_pos.dart:18-44`
+
+Восстановление `echoMode`/`lineMode` (строки 36–38) стоит внутри `try` **до**
+catch, а не в `finally`. По таймауту 100 мс — а это ожидаемый путь на терминале
+без поддержки DSR, ради которого и существует `UnsupportedError` — echo и line
+mode остаются выключенными, шелл пользователя сломан.
+
+**Фикс:** сохранить режимы до `try`, восстановление — в `finally`.
+**Тест:** застабить Stdin/Stdout (параметры уже принимаются), проверить
+восстановление режимов на пути таймаута.
+
+### P0.6. `tabs(defaultTab: 0)` — бесконечный цикл
+
+`lib/src/utils/tabs.dart:38-46`
+
+```dart
+while (true) {
+  pos += defaultTab;      // 0 → pos не растёт
+  if (pos >= width) break;
+```
+
+`defaultTab: 0` — вечный цикл, пишущий HTS в stdout. Отрицательный — тоже
+вечный цикл: `pos` уходит в минус и никогда не достигнет `width`, а `' ' * -1`
+в Dart возвращает пустую строку, а не бросает.
+
+**Фикс:** валидация `defaultTab` и элементов `tabs` (`> 0`) в начале функции —
+до первой записи, иначе сброс табстопов (`CSI 3 g`) успевает уйти в терминал.
+**Тест:** `tabs(defaultTab: 0)` и `tabs(defaultTab: -1)` бросают `RangeError`,
+в stdout ничего не записано. Тест-дубль `Stdout` должен падать после N записей,
+иначе красный прогон повиснет вместо того, чтобы упасть.
+
+### P0.7. Deprecated-алиас `faint` указывает на `bold`
+
+`lib/src/ready_to_use/sgr/sgr.dart:76-77`
+
+```dart
+@Deprecated('Use bold instead')
+const String faint = bold;
+```
+
+Faint в ECMA-48/xterm — это SGR **2** (dim, пониженная интенсивность); пакет сам
+описывает `DIM = 2` как «Dim, decreased intensity». Алиас молча заменяет
+пониженную интенсивность на повышенную. Соседний `resetBoldAndFaint =
+resetBoldAndDim` (строка 87) — правильный.
+
+**Фикс:** `@Deprecated('Use dim instead') const String faint = dim;`
+**Тест:** `expect(faint, dim)` (с `// ignore: deprecated_member_use_from_same_package`).
+
+---
+
+## P1 — баги (минор-релиз 3.2.0)
+
+### P1.1. `SaveCursor()` / `RestoreCursor()` / `Link()` хранят `reset`
+
+`lib/src/parsing/parser/entities/esc.dart:28,40`, `lib/src/parsing/parser/entities/osc.dart:30`
+
+```dart
+const SaveCursor() : super._(reset);   // reset == '\x1B[0m'
+```
+
+Публичные const-конструкторы кладут в `string` SGR-reset вместо `ESC 7` /
+`ESC 8` / OSC-8. Так как `Entity.==`/`hashCode` сравнивают только `string`
+(`entity.dart:10-14`), `SaveCursor() == RestoreCursor() == Link('x')` — `true`,
+а `.string` и `toStringAsControlCodes()` врут.
+
+**Фикс:** `super._('${ESC}7')`, `super._('${ESC}8')`, для `Link` — собрать
+настоящую OSC-8 строку из url.
+
+### P1.2. `ansiHas*/ansiRemove*` не видят комбинированные и colon-SGR
+
+`lib/src/parsing/patterns/patterns.dart:26,33`
+
+Группа `params` (`3[0-79]|9[0-7]|38;5;\d+|38;2;\d+;\d+;\d+`) должна покрыть весь
+список параметров, поэтому:
+
+- `'\x1B[1;31m'.ansiHasForeground` → `false`, `ansiRemoveForeground()` — no-op.
+  При этом `1;31m` — ровно то, что генерирует собственный `Parser.optimize()`;
+- colon-форма `38:5:n` / `38:2:r:g:b` не матчится вовсе (парсер её поддерживает,
+  тесты `ansi_constants_test.dart:37-52` её проверяют).
+
+**Фикс:** либо переписать регэкспы так, чтобы выцеплять fg/bg-параметры из
+произвольного списка (сложно и хрупко), либо — предпочтительно — реализовать
+`ansiRemoveForeground/Background` через `Parser`/пересборку SGR, оставив regex
+только для дешёвых `has*`-проверок с честной документацией ограничений.
+**Тест:** `'\x1B[1;31m'`, `'\x1B[38:5:196m'`, вывод `optimize()`.
+
+### P1.3. `escPattern` матчит ровно два символа
+
+`lib/src/parsing/patterns/patterns.dart:48`
+
+```dart
+const String escPattern = '(?<esc>$ESC)(?<esc_final>.)';
+```
+
+- ESC-последовательности с intermediate-байтами (`ESC ( B` — designate charset,
+  эмиттится ncurses/less/tput; `ESC # 8`; `ESC % G`) съедаются частично: хвост
+  (`B`) утекает в `Text` — ломаются `removeAll()`, `length`, `substring`, принтеры;
+- `.` не матчит `\n` (`ESC` + перевод строки);
+- одиночный ESC в конце ввода не матчится вообще.
+
+**Фикс:** `(?<esc>$ESC)(?<esc_inter>[\x20-\x2F]*)(?<esc_final>[\x30-\x7E])`
++ отдельная альтернатива для голого ESC в конце. DCS/SOS/PM/APC-строки
+(`ESC P|X|^|_ ... ST`) сейчас тоже не имеют паттерна — payload виден как текст;
+добавить аналогично oscPattern.
+
+### P1.4. `optimize()` и `substring()` теряют все не-SGR коды
+
+`lib/src/parsing/parser/parser.dart:238-263, 311-322`
+
+Оба метода пишут в буфер только `Text` и SGR-переходы; OSC-8 гиперссылки,
+курсорные CSI, приватные последовательности молча выбрасываются.
+`Parser(text).optimize()` на тексте со ссылкой — потеря данных, хотя метод
+документирован как «удаление последовательных escape-кодов».
+
+**Фикс:** пропускать в вывод все `EscapeCode`, не являющиеся `Sgr`, как есть
+(они не участвуют в стейте, но и не подлежат «оптимизации»). Задокументировать.
+**Тест:** `optimize()` на строке с OSC-8 сохраняет ссылку.
+
+### P1.5. `CSI 4:0 m` включает подчёркивание
+
+`lib/src/parsing/parser/entities/sgr.dart:80-86`
+
+Любая colon-группа, кроме 38/48/58, редуцируется до первого значения:
+`4:0` (kitty/ECMA «no underline») попадает в `UNDERLINE` → underline **включён**;
+`4:3` (curly) — обычный underline.
+
+**Фикс:** минимум — обработать `4:0` как `resetUnderline`; остальные `4:n`
+трактовать как underline (стили пока не моделируются).
+**Тест:** `Parser('\x1b[4:0m').finalState.isUnderline == false`.
+
+### P1.6. `Stack.underlineColor(Color16)` — TypeError в рантайме
+
+`lib/src/parsing/state/stack.dart:253-255, 410, 438-440`
+
+Оверрайд расширяет тип параметра до `Color` (база объявляет `ExtendedColor`),
+а `_copyWith` кастит `List.unmodifiable` к `List<ExtendedColor>` —
+`Stack.terminalColors.underlineColor(Color16.red)` компилируется и падает.
+
+**Фикс:** вернуть тип `ExtendedColor` в оверрайде, `_copyWith` принимает
+`List<ExtendedColor>?`.
+
+### P1.7. `currentCursorPos` — одноразовый и гоночный
+
+`lib/src/utils/current_cursor_pos.dart:25-34, 47-53`
+
+- каждый вызов оборачивает single-subscription `stdin` в новый broadcast и в
+  `onCancel` убивает подписку — второй вызов бросает, stdin для приложения потерян;
+- ответ читается одним чанком `stream.first`: нажатая пользователем клавиша,
+  успевшая раньше CPR, или разрезанный на два чтения ответ → ложный
+  `UnsupportedError`;
+- таймаут 100 мс захардкожен.
+
+**Фикс:** аккумулировать байты до `R` с фильтрацией префикса `ESC [`; параметр
+`timeout`; задокументировать требование монопольного доступа к stdin (или
+принимать `Stream<List<int>>` снаружи).
+
+### P1.8. `tabs()` без аргументов очищает все табстопы
+
+`lib/src/utils/tabs.dart:15` + `example/ansi_escape_codes_example.dart:282`
+
+`CSI 3 g` (TBC 3) удаляет **все** табстопы; пример комментирует вызов как
+«Reset to defaults», но после него табов в терминале нет вообще. Плюс:
+`stdout.terminalColumns` без guard'а бросает `StdoutException` вне терминала
+(`tabs.dart:12`); продвижение курсора пробелами затирает содержимое строки
+(`:26-28,43-45` — лучше `cursorRightN`); параметры `tabs`/`stdout` затеняют
+функцию и `io.stdout`.
+
+**Фикс:** honest-документация (`tabs()` = очистить все) или отказ от вызова без
+аргументов; guard `hasTerminal`; `cursorRightN` вместо пробелов.
+
+### P1.9. Мелкие toString-баги сущностей
+
+- `lib/src/parsing/parser/entities/esc.dart:17` — `Esc.toString` печатает `$Osc`
+  вместо `$Esc`;
+- `lib/src/parsing/parser/entities/entity.dart:22-25` — `Text.toString`
+  экранирует `\` **после** `ansiShowControlCodes()`, который сам производит
+  бэкслеши: `Text('a\nb')` → `Text('a\\nb')`. Порядок replaceAll — до;
+- `lib/src/parsing/parser/entities/sgr.dart:362-367` — `SgrDefaultFunction.toString`
+  возвращает `''`: `Parser('\x1b[m').showControlFunctions()` печатает `[]`,
+  `'\x1b[;1m'` → `[;bold]`. Возвращать `'reset'`;
+- `lib/src/parsing/control_functions/control_functions_c0.dart:73` — у `NAK`
+  пустое description (`''` → `'Negative Acknowledge'`).
+
+---
+
+## P2 — устойчивость парсера и API (3.2.0)
+
+- **Валидация 11 CSI-функций** (`lib/src/ready_to_use/csi.dart:32...450`):
+  `cursorUpN(-1)` генерирует `ESC[-1A` — malformed-последовательность (`-` вне
+  диапазона параметр-байтов 0x30–0x3F), терминал ресинхронизируется
+  непредсказуемо. Добавить `RangeError.checkValueInInterval(n, 1, ...)` — по
+  образцу цветовых функций, где валидация уже есть.
+- **RGB-цвет отменяет хвост SGR** (`entities/sgr.dart:203-216`):
+  после `38;2;1;2;3` `cancelParsing()` съедает оставшиеся параметры —
+  `CSI 38;2;1;2;3;1m` теряет `bold`. Несогласовано с веткой 256 цветов
+  (`:192-196`), которая хвост сохраняет. Убрать `cancelParsing` из RGB-ветки.
+- **Malformed introducer глотает всё** (`entities/sgr.dart:226-232`):
+  `CSI 38;9;1m` — `availableParams()` + `cancelParsing()` съедают и `1`.
+  Восстанавливаться со следующего параметра.
+- **Пустой sub-параметр** (`entities/csi.dart:48-55`): `int.parse('')` на
+  `38:2::r:g:b` (форма ITU-T T.416, эмиттится libvte) роняет весь CSI в
+  `CsiUnknown`. Использовать `CsiParamDefault`-логику и на уровне `:`.
+- **OSC-8 c `;` в URL** (`entities/osc.dart:7-13`): `params.length == 3`
+  отвергает URL с `;` (`?a=1;b=2`). URI — всё после второго `;`:
+  `params.sublist(2).join(';')`.
+- **Незавершённый OSC** (`patterns.dart:41-42`): без терминатора альтернация
+  деградирует до `escPattern`, и payload (заголовок окна, URL) утекает в
+  видимый текст. После фикса P1.3 добавить альтернативу «OSC до конца ввода».
+- **`NoStyle` неотличим от `Style.terminalColors`** (`state/state.dart:264-306`):
+  `==`/`hashCode` не учитывают runtime-тип, а поведение (`transitTo`, `call`,
+  `open`) разное — в `Set`/`Map` объекты сливаются. Учесть тип в equality
+  или задокументировать. Плюс `NoStyle().close == '\x1B[0m'`
+  (`style.dart:858-866`) — для стиля, обещающего «ничего не выводить»,
+  переопределить `close` на `''`.
+- **`optimize`/`substring`/`isClosed` игнорируют `initialState`**
+  (`parser.dart:112, 235, 309`): захардкожен `Style.terminalColors`. Латентно,
+  пока `initialState` не публичен, но `Printer.prepare` его уже варьирует.
+- **Приоритет superscript/subscript несогласован** (`style.dart:87-101`):
+  в трёх парах побеждает первый флаг, в script-паре — второй; assert прячет это
+  только в debug. Выровнять.
+- **`\x7F` (DEL)**: `ansiHasControlCodes` его видит (`patterns.dart:51`), а
+  `ansiShowControlCodes` пропускает как есть (`show_control_codes.dart:74`),
+  и константы `DEL` в c0.dart нет. Синхронизировать.
+- **Типы недоступны из главного entrypoint**: `Sgr.contains(ControlFunctionsSGR)`
+  и `Csi.controlSequence` (`ControlSequencesFunctions`) видны из
+  `ansi_escape_codes.dart`, но сами типы экспортируются только из
+  `parsing.dart`. Добавить экспорт `control_functions/*` в
+  `ansi_escape_codes.dart`.
+- **`Color256.rgb`/`gray` валидируют только assert'ом** (`color_256.dart:8-20`):
+  в release `Color256.rgb(9,0,0)` — либо RangeError из недр, либо неверный цвет.
+  Перейти на `RangeError.checkValueInInterval` (как в `ColorRgb`).
+- **C1-lookup сравнивает код с ordinal** (`control_functions_c1.dart:113-119`):
+  `ControlFunctionsC0.ESC.index` случайно равен 0x1B, пока enum объявлен строго
+  по порядку NUL→US. Заменить на `.code.codeUnitAt(0)`.
+
+---
+
+## P3 — документация
+
+### README.md
+
+| Строка | Сейчас | Должно быть |
+|---|---|---|
+| 231 | `> ![IMPORTANT]` | `> [!IMPORTANT]` (сейчас рендерится битой картинкой) |
+| 346 | `print(...)` без `;` | добавить `;` |
+| 370 | `CSI n g` в коде, `s=3` в описании | привести к одной букве |
+| 403 | `cursorDown` «работает» | после P0.1 — верно |
+| 408 | `cursorHPosN(int n)` | `cursorHPosTo(int n)` |
+| 412 | `s=2 - to beginning, s=2 - entire line` | `s=1 - to beginning` |
+| 415–416 | Hide cursor → «Shows», Show cursor → «Hides» | поменять описания местами |
+| 508 | `underlineColor256…`/`underlineColorRgb…` | `underline256…`/`underlineRgb…` |
+| 509 | `underlineColorDefault` | `resetUnderlineColor` |
+| 510 | `SUPERSCRIPTED` | `SUPERSCRIPT` |
+| 512 | `resetSuperAnsSubscript` | `resetSuperAndSubscript` |
+| 536 | `$SCI$RESET$SGR` | `$CSI$RESET$SGR` |
+| 685–688, 747 | `Color16(Colors.cyan)` в выводе | `Color16.cyan` (реальный toString) |
+| 750–751 | `style.foreground?.id` | `style.foregroundColor?.id` (foreground — метод) |
+| 786 | `Parser(substr).ansiShowControlFunctions()` | `Parser(substr).showControlFunctions()` — extension в lib не существует (см. P4.2) |
+| 793–803 | `showEscapeCodes()` | deprecated; `ansiShowEscapeSequences()`; секции не хватает импорта `extensions.dart` |
+| 821–892 | импорт только `extensions.dart` | коду нужен и `ansi_escape_codes.dart` |
+| 885 | `andWithoutSgr.ansiRemoveSgr()` | `.ansiRemoveCsi()` (сейчас строка — no-op, вывод из 887 не получится) |
+| 980 | `defaultState:` | `defaultStyle:` |
+| — | `utils.dart` и `parsing.dart` не упомянуты вообще | добавить разделы |
+
+### Dartdoc в lib/
+
+- `fg256.dart:24`, `bg256.dart:28`, `underline256.dart:36` — мёртвые ссылки на
+  `lib/src/values/sgr/colors_8bit/indexes.dart` → `lib/src/ansi/colors.dart`;
+- `ready_to_use/csi.dart:52,59` — «Cursor Down: moves the cursor up»;
+  `:84,91,116,123` — «right/left `1` line» → columns; `:230,263` — CUP/HVP
+  шаблон показывает один `[$n]` вместо `[$row];[$col]`; `:251` — «to to»;
+  `:345,359,366,374,382` — блок EL ссылается на `eraseLine*`-имена и `[ED]`
+  вместо `eraseInLine*` и `[EL]`, «part of the screen» → «line»;
+- `ansi/csi.dart:837` — `RESERVED = '_'` без суффикса (см. P4.4);
+  `:1224,1229` — «standart» → «standard»;
+- `ansi/sgr.dart:238`, `ready_to_use/sgr/sgr.dart:459` — «subscipted» → «subscripted»;
+- `control_sequences.dart:163` — `'Save Crusor'` → `'Save Cursor'`;
+- `fg_rgb.dart:20-21` — обрывок «Foreground rgbOpen.» после «See also»;
+- `bg256.dart:35` — self-reference в doc `bg256Close`;
+- шаблоны в fg256/underline256 (`{colorIndex}` без `$`, `black` vs `BLACK`) —
+  выровнять по bg256;
+- `example/check_compatibility.dart:8` — usage-строка говорит `sgr.dart`;
+- CHANGELOG:8 — «Rename `defaults` to `terminalColors`» → «Deprecate … in favor
+  of …» (алиасы живы); `printer.dart:269` сам использует deprecated
+  `Style.defaults` как default-значение.
+
+---
+
+## P4 — улучшения
+
+### P4.1. Тесты (главный системный долг)
+
+Сейчас один содержательный файл `test/ansi_constants_test.dart` (787 строк,
+9 тестов — и вопреки имени констант не тестирует). Ноль тестов на:
+
+- константы `ansi.dart` и всё `ready_to_use/csi.dart` — именно поэтому P0.1
+  прожил ~18 месяцев. Минимум: табличный тест 13 пар Open/Close против
+  констант из `ansi/csi.dart`;
+- операторы `<, <=, >, >=` у `Colors` — весь релиз 3.1.2 не покрыт;
+- `extensions.dart` — все `ansiHas*/ansiRemove*/ansiShow*` (P1.2 всплыл бы сразу);
+- `utils.dart` — `tabs`, `currentCursorPos` (P0.5, P0.6);
+- `style.dart` — ~530 predefined-стилей, `Style.call`, `NoStyle`, вложенность;
+- `Stack` напрямую, `StackedParser`, `StackedSinkPrinter`;
+- `Parser.indexOf/lastIndexOf/contains/startsWith/endsWith/padLeft/padRight/replaceAll`;
+- границы `fg256/bg256/underline256/fgRgb/rgb()/gray()`.
+
+### P4.2. API
+
+- перенести `ansiShowControlFunctions` / `ansiOptimizeControlFunctions` из
+  `test/utils.dart:26-34` в `lib/src/extensions/` — README:786 и
+  `example/ansi_escape_codes_example.dart:92` уже используют их как публичные,
+  а пример ради этого импортирует `../test/utils.dart`;
+- каталог `standart_colors` → `standard_colors` (проверено: non-breaking —
+  путь под `lib/src/`, 2 внутренние ссылки: `ansi_escape_codes.dart:15`,
+  `parsing/control_functions/sgr.dart:6`);
+- `Colors implements Comparable<Colors>` — операторы уже есть, `sort()`/`min`
+  не работают;
+- задокументировать коллизии экспортируемых имён с Flutter/dart:core
+  (`Text`, `State`, `Stack`, `Colors`, `Match`, `Link`) и 31 коллизию
+  `style.dart` × `ansi_escape_codes.dart` (список: bg*/стили текста);
+- скрыть или задокументировать внутренние типы, торчащие из entrypoint'ов:
+  `MatchingState`, `MatchesResult`, `ParserIterator`, `CsiParam*`,
+  `SgrUnknown*Function`;
+- `predefined_styles.dart` строит 8 базовых цветов на `Color256` →
+  `CSI 38;5;1m` вместо более совместимого и короткого `CSI 31m`; рассмотреть
+  `Color16`-вариант;
+- унифицировать `withPrefix`: `Style({foreground: ...})` и `Stack` кладут цвет
+  без префикса, `.foreground()` — с; `Color.id` из-за этого даёт `?256Red` vs
+  `fg256Red`; для underline префикс `underlineColor` не совпадает с реальным
+  именем констант `underline256*`.
+
+### P4.3. Производительность
+
+- кэш результата парсинга заполняется только при полной итерации
+  (`parser_iterator.dart:28-34`), а `stateAt`/`substring` выходят раньше —
+  каждый вызов пере-парсит строку заново (`stateAt` + `finalState` — трижды);
+- `ControlSequencesFunctions.byCode` — линейный скан ~130 значений на каждый
+  CSI (`control_sequences.dart:411-419`) → статическая map;
+- intermediate-байты внутри группы `csi_final` (`patterns.dart:11`) ломают
+  `byCode(' q')` → `CSI 1 SP q` (DECSCUSR, форма курсора) падает в `CsiUnknown`
+  вместо `CsiPrivate`; вынести intermediates в отдельную группу;
+- `lengthWithoutEscapeCodes` строит целую строку ради `.length` и считает
+  UTF-16 code units (суррогатные пары = 2) — расходится с `Parser.length`;
+- `padLeft/padRight` с многосимвольным padding пишут его `needToAdd` раз
+  (`parser.dart:286-302`) — перелёт по ширине.
+
+### P4.4. Breaking (копить на 4.0.0)
+
+- `RESERVED = '_'` (`ansi/csi.dart:837`) → `RESERVED_5F` (сейчас — generic-имя
+  в глобальном неймспейсе `ansi.dart`); с deprecated-алиасом;
+- `toStringAsEscapeSquences` (`entity.dart:58`) → `...Sequences` (опечатка в
+  публичном имени метода); с deprecated-алиасом;
+- публичные мутабельные поля принтеров `lastState`, `debugForTest`
+  (`printer.dart:83,85`) — скрыть/сделать `@visibleForTesting` на уровне полей.
+
+### P4.5. CI (.github/workflows/dart.yml)
+
+- раскомментировать `dart format --output=none --set-exit-if-changed .`;
+- матрица SDK: `3.6.0` (нижняя граница из pubspec) + `stable`;
+- `dart analyze --fatal-infos`;
+- шаг `dart pub publish --dry-run`.
+
+---
+
+## Порядок работ
+
+| Этап | Содержимое | Релиз |
+|---|---|---|
+| 1 | P0.1–P0.7 + регрессионные тесты + P3 (README, он тоже «в проде» на pub.dev) | 3.1.3 |
+| 2 | P1.1–P1.9, P2, P4.1 (тесты), P4.2 (non-breaking), P4.3, P4.5 | 3.2.0 |
+| 3 | P4.4 (breaking переименования с deprecated-алиасами в 3.2.0 и удалением в 4.0.0) | 4.0.0 |
+
+Верификация каждого этапа: `dart analyze --fatal-infos && dart format
+--output=none --set-exit-if-changed . && dart test` + ручной прогон
+`example/control.dart` (курсор), `example/styles.dart` (стили) в реальном
+терминале.

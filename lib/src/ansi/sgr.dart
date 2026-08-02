@@ -235,7 +235,7 @@ const int SUPERSCRIPT = 73;
 /// See also [SUPERSCRIPT] and [NOT_SUPER_NOT_SUBSCRIPT].
 const int SUBSCRIPT = 74;
 
-/// Not superscripted, not subscipted.
+/// Not superscripted, not subscripted.
 ///
 /// See also [SUPERSCRIPT] and [SUBSCRIPT].
 const int NOT_SUPER_NOT_SUBSCRIPT = 75;

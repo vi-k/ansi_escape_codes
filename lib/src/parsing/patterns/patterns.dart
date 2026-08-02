@@ -21,31 +21,31 @@ const String sgrPattern = '(?<csi>$ESC\\[)'
 /// Pattern for SGR.
 final RegExp sgrRe = RegExp(sgrPattern);
 
-/// Pattern for background color.
-const String backgroundPattern = '(?<csi>$ESC\\[)'
-    r'(?<params>4[0-79]|10[0-7]|48;5;\d+|48;2;\d+;\d+;\d+)'
-    '(?<sgr>m)';
-
-/// Pattern for background color.
-final backgroundRe = RegExp(backgroundPattern);
-
-/// Pattern for foreground color.
-const String foregroundPattern = '(?<csi>$ESC\\[)'
-    r'(?<params>3[0-79]|9[0-7]|38;5;\d+|38;2;\d+;\d+;\d+)'
-    '(?<sgr>m)';
-
-/// Pattern for foreground color.
-final foregroundRe = RegExp(foregroundPattern);
-
 /// Pattern for OSC.
+///
+/// The string runs until its terminator, and a terminator that never comes —
+/// a truncated stream, or a sequence the writer forgot to close — ends it at
+/// the next `ESC` or at the end of the text. Without that the string would be
+/// read as a two-character escape code and its payload would surface as text.
 const String oscPattern = '(?<osc>$ESC\\])'
-    '(?<osc_params>.*?)(?<osc_terminator>$BEL|$ESC\\\\)';
+    '(?<osc_params>[^$BEL$ESC]*)'
+    '(?<osc_terminator>$BEL|$ESC\\\\)?';
 
 /// Pattern for OSC.
 final oscRe = RegExp(oscPattern);
 
 /// Pattern for ESC.
-const String escPattern = '(?<esc>$ESC)(?<esc_final>.)';
+///
+/// An escape sequence is `ESC`, any number of intermediate bytes and a final
+/// byte. The final byte is optional here so that a broken sequence — a lone
+/// `ESC` at the end of the text, or one followed by a byte that cannot end a
+/// sequence — is still recognized as an escape code rather than left in the
+/// text.
+const String escPattern =
+    '(?<esc>$ESC)(?<esc_inter>$_intermediates*)(?<esc_final>[\x30-\x7E])?';
+
+/// Bytes that may precede the final byte of a sequence.
+const String _intermediates = '[\x20-\x2F]';
 
 /// Pattern for control codes.
 final controlCodesRe = RegExp('[\x00-\x1F\x7F]');

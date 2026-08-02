@@ -73,18 +73,12 @@ const String bold = '$CSI$BOLD$SGR';
 /// See also [bold] and [resetBoldAndDim].
 const String dim = '$CSI$DIM$SGR';
 
-@Deprecated('Use bold instead')
-const String faint = bold;
-
 /// Normal colour or normal intensity (neither bold nor dim).
 ///
 /// See [NOT_BOLD_NOT_DIM].
 ///
 /// See also [bold] and [dim].
 const String resetBoldAndDim = '$CSI$NOT_BOLD_NOT_DIM$SGR';
-
-@Deprecated('Use resetBoldAndDim instead')
-const String resetBoldAndFaint = resetBoldAndDim;
 
 /// Italic.
 ///
@@ -103,18 +97,12 @@ const String resetBoldAndFaint = resetBoldAndDim;
 /// See also [resetItalic].
 const String italic = '$CSI$ITALIC$SGR';
 
-@Deprecated('Use italic instead')
-const String italicized = italic;
-
 /// Not italic, not fraktur.
 ///
 /// See [NOT_ITALIC].
 ///
 /// See also [italic].
 const String resetItalic = '$CSI$NOT_ITALIC$SGR';
-
-@Deprecated('Use resetItalic instead')
-const String resetItalicized = resetItalic;
 
 /// Underline.
 ///
@@ -135,9 +123,6 @@ const String resetItalicized = resetItalic;
 ///
 /// See also [resetUnderline] and [doublyUnderline].
 const String underline = '$CSI$UNDERLINE$SGR';
-
-@Deprecated('Use underline instead')
-const String singlyUnderlined = underline;
 
 /// Doubly underline.
 ///
@@ -163,18 +148,12 @@ const String singlyUnderlined = underline;
 /// See also [resetUnderline] and [underline].
 const String doublyUnderline = '$CSI$DOUBLY_UNDERLINE$SGR';
 
-@Deprecated('Use doublyUnderline instead')
-const String doublyUnderlined = doublyUnderline;
-
 /// Not underline (neither singly nor doubly).
 ///
 /// See [NOT_UNDERLINE].
 ///
 /// See also [underline] and [doublyUnderline].
 const String resetUnderline = '$CSI$NOT_UNDERLINE$SGR';
-
-@Deprecated('Use resetUnderline instead')
-const String resetUnderlined = resetUnderline;
 
 /// Blink.
 ///
@@ -193,9 +172,6 @@ const String resetUnderlined = resetUnderline;
 /// See also [blinkRapid] and [resetBlink].
 const String blink = '$CSI$BLINK$SGR';
 
-@Deprecated('Use blink instead')
-const String slowlyBlinking = blink;
-
 /// Blink rapid.
 ///
 /// See [BLINK_RAPID].
@@ -213,18 +189,12 @@ const String slowlyBlinking = blink;
 /// See also [blink] and [resetBlink].
 const String blinkRapid = '$CSI$BLINK_RAPID$SGR';
 
-@Deprecated('Use blinkRapid instead')
-const String rapidlyBlinking = blinkRapid;
-
 /// Steady (not blink).
 ///
 /// See [NOT_BLINK].
 ///
 /// See also [blink] and [blinkRapid].
 const String resetBlink = '$CSI$NOT_BLINK$SGR';
-
-@Deprecated('Use resetBlink instead')
-const String resetBlinking = resetBlink;
 
 /// Inverse.
 ///
@@ -245,18 +215,12 @@ const String resetBlinking = resetBlink;
 /// See also [resetInverse].
 const String inverse = '$CSI$INVERSE$SGR';
 
-@Deprecated('Use inverse instead')
-const String negative = inverse;
-
 /// Positive (not inverse).
 ///
 /// See [NOT_INVERSE].
 ///
 /// See also [inverse].
 const String resetInverse = '$CSI$NOT_INVERSE$SGR';
-
-@Deprecated('Use resetInverse instead')
-const String resetNegative = resetInverse;
 
 /// Invisible.
 ///
@@ -275,18 +239,12 @@ const String resetNegative = resetInverse;
 /// See also [resetInvisible].
 const String invisible = '$CSI$INVISIBLE$SGR';
 
-@Deprecated('Use invisible instead')
-const String concealed = invisible;
-
 /// Revealed characters (not concealed).
 ///
 /// See [NOT_INVISIBLE].
 ///
 /// See also [invisible].
 const String resetInvisible = '$CSI$NOT_INVISIBLE$SGR';
-
-@Deprecated('Use resetInvisible instead')
-const String resetConcealed = resetInvisible;
 
 /// Strikethrough (characters still legible but marked as to be deleted).
 ///
@@ -311,18 +269,12 @@ const String resetConcealed = resetInvisible;
 /// See also [resetStrikethrough].
 const String strikethrough = '$CSI$STRIKETHROUGH$SGR';
 
-@Deprecated('Use strikethrough instead')
-const String crossedOut = strikethrough;
-
 /// Not strikethrough.
 ///
 /// See [NOT_STRIKETHROUGH].
 ///
 /// See also [strikethrough].
 const String resetStrikethrough = '$CSI$NOT_STRIKETHROUGH$SGR';
-
-@Deprecated('Use resetStrikethrough instead')
-const String resetCrossedOut = resetStrikethrough;
 
 /// Frame.
 ///
@@ -341,9 +293,6 @@ const String resetCrossedOut = resetStrikethrough;
 /// See also [resetFrameAndEncircle].
 const String frame = '$CSI$FRAME$SGR';
 
-@Deprecated('Use frame instead')
-const String framed = frame;
-
 /// Encircle.
 ///
 /// See [ENCIRCLE].
@@ -361,18 +310,12 @@ const String framed = frame;
 /// See also [resetFrameAndEncircle].
 const String encircle = '$CSI$ENCIRCLE$SGR';
 
-@Deprecated('Use encircle instead')
-const String encircled = encircle;
-
 /// Not frame, not encircle.
 ///
 /// See [NOT_FRAME_NOT_ENCIRCLE].
 ///
 /// See [frame] and [encircle].
 const String resetFrameAndEncircle = '$CSI$NOT_FRAME_NOT_ENCIRCLE$SGR';
-
-@Deprecated('Use resetFrameAndEncircle instead')
-const String resetFramedAndEncircled = resetFrameAndEncircle;
 
 /// Overlined.
 ///
@@ -403,18 +346,12 @@ const String resetFramedAndEncircled = resetFrameAndEncircle;
 /// See also [resetOverline].
 const String overline = '$CSI$OVERLINE$SGR';
 
-@Deprecated('Use overline instead')
-const String overlined = overline;
-
 /// Not overlined.
 ///
 /// See [NOT_OVERLINE].
 ///
 /// See also [overline].
 const String resetOverline = '$CSI$NOT_OVERLINE$SGR';
-
-@Deprecated('Use resetOverline instead')
-const String resetOverlined = resetOverline;
 
 /// Superscripted.
 ///
@@ -433,9 +370,6 @@ const String resetOverlined = resetOverline;
 /// See also [subscript] and [resetSuperAndSubscript].
 const String superscript = '$CSI$SUPERSCRIPT$SGR';
 
-@Deprecated('Use superscript instead')
-const String superscripted = superscript;
-
 /// Subscripted.
 ///
 /// See [SUBSCRIPT].
@@ -453,15 +387,9 @@ const String superscripted = superscript;
 /// See also [superscript] and [resetSuperAndSubscript].
 const String subscript = '$CSI$SUBSCRIPT$SGR';
 
-@Deprecated('Use subscript instead')
-const String subscripted = subscript;
-
-/// Not superscripted, not subscipted.
+/// Not superscripted, not subscripted.
 ///
 /// See [NOT_SUPER_NOT_SUBSCRIPT].
 ///
 /// See also [superscript] and [subscript].
 const String resetSuperAndSubscript = '$CSI$NOT_SUPER_NOT_SUBSCRIPT$SGR';
-
-@Deprecated('Use resetSuperAndSubscript instead')
-const String resetSuperAndSubscripted = resetSuperAndSubscript;
