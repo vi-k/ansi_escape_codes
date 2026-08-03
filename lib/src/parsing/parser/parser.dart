@@ -376,6 +376,11 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// The exclamation mark is red: at position 5 stands the `reset`, and this
   /// goes in front of it. See [insertAfter] for the other side of it.
+  ///
+  /// Hyperlinks are the one thing that cannot be given back. They do not nest
+  /// — the sequence that closes one closes them all — so text that opens a
+  /// link of its own, inserted inside a link that was already open, ends that
+  /// one too, and the rest of it is no longer clickable.
   String insertBefore(int pos, String text) => _insert(pos, text, after: false);
 
   /// Inserts [text] at the plain text [pos], behind the escape codes standing
