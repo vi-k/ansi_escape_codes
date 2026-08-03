@@ -78,7 +78,10 @@ Fixed:
   keeps the functions standing beside the colour: `CSI 1;31 SGR` becomes
   `CSI 1 SGR` rather than going whole.
 - A colour held by a `Stack` named itself `?256Red`, where the same colour from
-  a `Parser` said `fg256Red`.
+  a `Parser` said `fg256Red`. A `Style` written as a constant said the same,
+  and a colour set on one target and then held in another slot answered under
+  the target rather than the slot — `bg256Red` for the colour of the text. The
+  slot names it now, whichever way the style was built.
 - `NoStyle` passed for the colours of the terminal.
 - A private-use sequence was reported as an unknown one.
 - `Color256.rgb` and `Color256.gray` checked their arguments in an assert only,
@@ -139,12 +142,15 @@ Breaking changes:
 - `Csi`, `Esc` and `EscapeCode` are sealed, and this release adds types under
   them. A `switch` that covers them exhaustively has to name the new ones. `is`
   checks, casts and the identifiers entities are shown by are unchanged.
-- `Color.withPrefix(String)` is `Color.on(ColorTarget)`. The string was a way
-  to be wrong — `withPrefix('bg256')` gave `bg256256Gray5` — and it let the
-  name of a target be written out by hand, which is how the colour of the
-  underline came to call itself `underlineColor256Red` where the constant is
-  `underline256Red`. `ColorTarget` takes the three that can be set, and takes
-  the name from the SGR function that sets them, so there is one place for it.
+- `Color.withPrefix(String)` is gone, and nothing public stands in its place:
+  a colour is named by the slot of the state it is held in, so
+  `Style(background: c).backgroundColor?.id` is what `c.withPrefix('bg256')`
+  was for. The string was a way to be wrong — `withPrefix('bg256')` gave
+  `bg256256Gray5` — and it let the name of a target be written out by hand,
+  which is how the colour of the underline came to call itself
+  `underlineColor256Red` where the constant is `underline256Red`. `ColorTarget`
+  names the three slots now, and takes the name from the SGR function that sets
+  them, so there is one place for it.
 - The colours on `Style` — `red`, `bgYellow`, `rgb531` and the rest of that
   table — now come from an extension, `StyleColors`, rather than from the class
   itself. Written the usual way they behave as they did; what an extension

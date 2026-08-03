@@ -13,6 +13,18 @@ final class Color256 extends ExtendedColor {
   /// The colour at that index of the table.
   const Color256(this.color);
 
+  /// The colour at that index, set on a target already.
+  ///
+  /// This is [on] as a constructor, for the places a const expression is
+  /// wanted and a method call will not do: the constants of `Styles` are built
+  /// with it, which is how they name themselves `fg256Red` rather than
+  /// `?256Red`.
+  ///
+  /// It is the package's own — [on] is the way to set a colour on a target
+  /// from outside it.
+  @internal
+  const Color256.on(this.color, super._target);
+
   /// A colour of the 6 × 6 × 6 cube, each component from `0` to `5`.
   ///
   /// The check is not an assert: out of that range the arithmetic still lands
@@ -33,10 +45,10 @@ final class Color256 extends ExtendedColor {
     return Color256(Colors.values[232 + level]);
   }
 
-  const Color256._(this.color, [super._target]);
-
+  @internal
   @override
-  Color256 on(ColorTarget target) => Color256._(color, target);
+  Color256 on(ColorTarget target) =>
+      _target == target ? this : Color256.on(color, target);
 
   static const Color256 black = Color256(Colors.black);
   static const Color256 red = Color256(Colors.red);

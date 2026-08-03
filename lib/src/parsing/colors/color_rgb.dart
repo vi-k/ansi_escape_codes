@@ -21,8 +21,10 @@ final class ColorRgb extends ExtendedColor {
 
   const ColorRgb._(this._value, [super._target]);
 
+  @internal
   @override
-  ColorRgb on(ColorTarget target) => ColorRgb._(_value, target);
+  ColorRgb on(ColorTarget target) =>
+      _target == target ? this : ColorRgb._(_value, target);
 
   /// How much red, 0 to 255.
   int get r => _value >> 16;

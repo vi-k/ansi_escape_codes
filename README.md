@@ -366,22 +366,26 @@ terminal names itself, which are the ones the short `CSI 31` form writes. The
 underline is the one that takes no `Color16`: the standard gives it no
 sixteen-color form, so `underlineColor` asks for an `ExtendedColor`.
 
-A style hands the colors back as it was given them, and each knows what it was
-set on:
+A style hands the colors back under the name of the slot they are held in,
+whichever way the style was built:
 
 ```dart
 print(mine.foregroundColor?.id); // fg256Rgb520
 print(mine.backgroundColor?.id); // bgRgb(51,102,153)
 print(mine.underlineColorValue?.id); // underline256Gray12
+
+// The same from a style written as a constant, where nothing could be
+// called to set the target.
+print(const Style(foreground: Color16.red).foregroundColor?.id); // fgRed
 ```
 
-That is what `ColorTarget` is for. A color on its own has no target and says so
-with a `?`; `foreground`, `background` and `underlineColor` set it themselves,
-so `on` is only needed to name a color outside a style:
+That is what `ColorTarget` is for. A color standing on its own has no slot to
+be named by, and says so with a `?`; putting it in one is what gives it a name:
 
 ```dart
 print(Color256.rgb(5, 2, 0).id); // ?256Rgb520
-print(Color256.rgb(5, 2, 0).on(ColorTarget.background).id); // bg256Rgb520
+print(Style(background: Color256.rgb(5, 2, 0)).backgroundColor?.id);
+// bg256Rgb520
 ```
 
 Calling a style wraps a string. Where the two halves are wanted apart — a

@@ -278,6 +278,4 @@ void main() {
 
     tabs(); // Clears every stop, leaving the terminal with none
   }
-
-  print(Styles.red);
 }

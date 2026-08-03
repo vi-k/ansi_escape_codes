@@ -15,8 +15,10 @@ final class Color16 extends Color {
 
   const Color16._(this.color, [super._target]);
 
+  @internal
   @override
-  Color16 on(ColorTarget target) => Color16._(color, target);
+  Color16 on(ColorTarget target) =>
+      _target == target ? this : Color16._(color, target);
 
   static const Color16 black = Color16._(Colors.black);
 
