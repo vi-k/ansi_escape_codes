@@ -18,6 +18,25 @@ extension StringRemoveEscapeCodesExtension on String {
   /// it is a character of its own.
   String ansiRemoveEscapeCodes() => replaceAll(escapeCodesRe, '');
 
+  /// Removes the control codes in the text: the C0 set and `DEL`.
+  ///
+  /// This is what `ansiHasControlCodes` asks about, taken out — the tabs, the
+  /// line feeds, the carriage returns and the rest of the bytes below `0x20`,
+  /// which is more than an escape code and less than a character. A text meant
+  /// to stay in lines should be split into them first.
+  ///
+  /// `ESC` is a control code itself, so on a string that carries escape codes
+  /// this leaves their bodies behind as text: `${fgRed}x` becomes `[31mx`.
+  /// Take those out first:
+  ///
+  /// ```dart
+  /// print(text.ansiRemoveEscapeCodes().ansiRemoveControlCodes());
+  /// ```
+  ///
+  /// The eight-bit forms of the C1 controls are not touched: `0x9B` is above
+  /// `DEL`, and in a Dart string it is a character of its own.
+  String ansiRemoveControlCodes() => replaceAll(controlCodesRe, '');
+
   /// Removes control sequences (CSI) in the text.
   String ansiRemoveCsi() => replaceAll(csiRe, '');
 

@@ -1064,8 +1064,10 @@ print(withoutAllEscapeCodes.ansiShowEscapeSequences());
 
 The rest of the extensions, in one breath: `ansiHasUnderlineColor` and
 `ansiRemoveUnderlineColor` do for the color of the underline what the pairs
-above do for the foreground and the background; `ansiHasControlCodes` asks
-about the C0 bytes rather than the escape codes; `lengthWithoutEscapeCodes` is
+above do for the foreground and the background; `ansiHasControlCodes` and
+`ansiRemoveControlCodes` ask about and take out the C0 bytes and `DEL` rather
+than the escape codes — `ESC` is one of those bytes, so take the escape codes
+out first or their bodies are left behind as text; `lengthWithoutEscapeCodes` is
 `Parser.length` for a string read once; `ansiShowControlFunctions` and
 `ansiOptimizeControlFunctions` are `Parser.showControlFunctions` and
 `Parser.optimize` for a string read once.
