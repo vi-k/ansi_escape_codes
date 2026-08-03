@@ -16,8 +16,12 @@ const _overline = 0x1000;
 const _superscript = 0x2000;
 const _subscript = 0x4000;
 
-/// Which of the two intensities the text carries; the terminal has room for
-/// one at a time, and one code takes both off.
+/// Which of the two intensities was asked for: `CSI 1` for bold, `CSI 2` for
+/// dim.
+///
+/// Both can be on at once — `style.bold.dim` writes `CSI 1;2` — and one code,
+/// `CSI 22`, takes both off. That is why a [Stack] keeps the order they were
+/// opened in: a reset closes the last one and leaves the other standing.
 enum IntensityStyle {
   /// Brighter or heavier, whichever the terminal does.
   bold,
