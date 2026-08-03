@@ -19,10 +19,13 @@ sealed class Entity {
       identical(this, other) || other is Entity && string == other.string;
 }
 
-/// A run of plain text, carrying no escape codes.
+/// A run of text, carrying no escape codes.
 ///
-/// This is what the terminal shows, and what the positions [Parser] is asked
-/// about are counted in.
+/// This is everything the escape codes are not, and what the positions
+/// [Parser] is asked about are counted in. Control codes are part of it: a
+/// tab, a line feed and a `BEL` are text to this parser, so a string of them
+/// is one [Text] and every byte counts towards the length, however many
+/// columns the terminal then puts them in.
 final class Text extends Entity {
   const Text._(super.string) : super._();
 
