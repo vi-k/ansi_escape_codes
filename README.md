@@ -13,6 +13,26 @@ containing them.
 > terminal interprets these sequences as commands, rather than text to display
 > verbatim. [Wikipedia](https://en.wikipedia.org/wiki/ANSI_escape_code)
 
+Both halves of that, in one import:
+
+```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+
+// Writing: by a style, or by constants that cost nothing at run time.
+print('${red.bold('ERROR')} the roof is on fire');
+print('${fgCyan}the same in cyan$reset');
+
+// Reading: what a string says, how long it is without the codes, and what
+// the style is at any point of it.
+const line = '${fgRed}ERROR$reset: the roof is on fire';
+final parser = Parser(line);
+
+print(parser.removeAll()); // ERROR: the roof is on fire
+print(parser.length); // 26
+print(parser.stateAt(3).foregroundColor?.id); // fgRed
+print(parser.showControlFunctions()); // [fgRed]ERROR[reset]: the roof is on fire
+```
+
 
 ## Features
 
@@ -20,34 +40,34 @@ containing them.
   [maximize performance](#maximum-performance), or choose the power of
   [styles](#the-power-of-styles).
 - cursor and terminal control
-- [analyzing and parsing](#analyzing-and-parsing) strings containing escape
-  codes
-- [default style](#printer) for all application output
+- [reading](#reading) strings that carry escape codes: what they say, how wide
+  they are, what style is in force at any point
+- [a default style](#printer) for everything the application prints
 
 
 ## Table of contents
 
 - [Quick start](#quick-start)
   - [How do I color text?](#how-do-i-color-text)
-  - [How can I change the default style?](#how-can-i-change-the-default-style)
 - [The names this package brings](#the-names-this-package-brings)
-- [Control function constants and ready-to-use values](#control-function-constants-and-ready-to-use-values)
+- [Writing](#writing)
+  - [Constants, and the strings built from them](#constants-and-the-strings-built-from-them)
   - [Ready-to-use functions and constants](#ready-to-use-functions-and-constants)
-- [Analyzing and parsing](#analyzing-and-parsing)
+  - [Printer](#printer)
+  - [StackedPrinter](#stackedprinter)
+  - [Printing to a sink](#printing-to-a-sink)
+  - [A default style for everything printed](#a-default-style-for-everything-printed)
+  - [Logging](#logging)
+- [Reading](#reading)
   - [Parser](#parser)
   - [Quick analysis](#quick-analysis)
   - [Sequence types](#sequence-types)
   - [Unknown sequences](#unknown-sequences)
-  - [Printer](#printer)
-  - [StackedPrinter](#stackedprinter)
-  - [Printing to a sink](#printing-to-a-sink)
 - [Utilities](#utilities)
-- [Logging](#logging)
 - [The bytes and what they mean](doc/reference.md) — the tables of the standard
 
 
 ## Quick start
-
 
 ### How do I color text?
 
@@ -125,7 +145,6 @@ sequence is used in ANSI to reset both: `resetBoldAndDim`.
 The reference names them beside the codes they write, and they live in
 [lib/src/ready_to_use](https://github.com/vi-k/ansi_escape_codes/tree/main/lib/src/ready_to_use).
 
-
 #### The power of styles
 
 ```dart
@@ -158,7 +177,378 @@ Second, styles can be nested: after completing the action of a nested style,
 the style will return to the parent style.
 
 
-### How can I change the default style?
+## The names this package brings
+
+Each entry point brings a different part of the package:
+
+| Import | Names | What it brings |
+|:---|---:|:---|
+| `ansi_escape_codes.dart` | ~1000 | all of it: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state, the control function tables, the `String` extensions and the two terminal utilities |
+| `ansi.dart` | ~500 | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F`. The only one that is not part of the first — the ready-to-use strings are built from these, and neither brings the other |
+| `style.dart` | 96 | the styles and the parser, without the tables of ready-to-use strings |
+| `parsing.dart` | 81 | the parser, the state and the control function tables |
+| `extensions.dart` | 6 | the `String` extensions alone |
+| `utils.dart` | 2 | `tabs` and `currentCursorPos` alone |
+
+The bottom four are parts of the first, and are there for the times a smaller
+namespace is worth an import of its own — a program that only reads escape
+codes has no use for the 900 constants that write them.
+
+One import is usually enough:
+
+```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+
+print('${bold}by the string$reset');
+print(style.bold('by the style'));
+```
+
+The string and the style are told apart by what they are: `bold` is a `String`
+of escape codes, and the styles are reached through `style` or through one of
+the sixteen colors — `red.bold`, `style.bgYellow`.
+
+The package also exports names Dart and Flutter use for their own: `Match` is
+`dart:core`'s, and `Text`, `State`, `Stack`, `Colors` and `Color` are Flutter's.
+Nothing breaks until one of them is written, and then the compiler asks which
+was meant. In a Flutter app, hide the side you are not calling by that name:
+
+```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart'
+    hide Color, Colors, Match, Stack, State, Text;
+```
+
+The same hiding is wanted for `style.dart` and `parsing.dart`: the parser is
+what defines those six names, and all three of these imports bring it. Only
+`ansi.dart`, `extensions.dart` and `utils.dart` are free of them — the first
+brings constants, the last two nothing but functions.
+
+The parser is still `Parser`, and `Matches` — its own name — is untouched by
+this.
+
+The colors and `style` are exported as plain lowercase names — `red`, `green`,
+`blue` and the thirteen others, `foreground`, `background`, `underlineColor`,
+and `tabs` beside them. They are the ones most likely to meet a name of your
+own, and `hide` or a prefix settles that the same way.
+
+
+## Writing
+
+The constants and the styles are the two ways of dressing a string; the
+printers are for dressing everything a program prints, whether it asked to
+be dressed or not.
+
+### Constants, and the strings built from them
+
+Strings containing ANSI escape codes can be constants:
+
+```dart
+const text = '$fgGreen Green text $resetFg'
+    '$bgYellow Yellow background $resetBg'
+    '$bold Bold text $resetBoldAndDim'
+    '$italic Italic text $resetItalic'
+    '$underline Underline text $resetUnderline';
+print(text);
+```
+
+For complex cases there are functions:
+
+```dart
+final nonConstantText = '${fgRgb(255, 128, 0)} Orange text $resetFg';
+print(nonConstantText);
+```
+
+But even in these cases it is possible to switch to constants:
+
+```dart
+const constantText = '${fgRgbOpen}255;128;0$fgRgbClose Orange text $resetFg';
+print(constantText);
+```
+
+Of course, nothing prevents you from using the escape codes themselves
+directly. But even in this case you can use predefined constants to make the
+text more readable.
+
+All of the following examples are equivalent:
+
+```dart
+import 'package:ansi_escape_codes/ansi.dart';
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+
+print('\x1B[38;2;255;128;0m Orange text \x1B[0m');
+print('$ESC[38;2;255;128;0m Orange text $ESC[0m');
+print('${CSI}38;2;255;128;0$SGR Orange text ${CSI}0$SGR');
+print('$CSI$FOREGROUND;$COLOR_RGB;255;128;0$SGR Orange text $CSI$RESET$SGR');
+print('${fgRgbOpen}255;128;0$fgRgbClose Orange text $reset');
+print('${fgRgb(255, 128, 0)} Orange text $reset'); // Not constant!
+```
+
+Control codes are deliberately named in **SCREAMING_SNAKE_CASE** as opposed to
+the common Dart **camelCase**.  First, this is how they are named in the
+Standard. Second, in this form they will not prevent you from naming your own
+variables. **Thirdly, and most importantly, most users do not need to use them
+directly.**
+
+Every one of them is listed in
+[the reference](doc/reference.md) — the C0 and C1 sets, the final bytes of the
+control sequences, the independent functions, all the SGR parameters, the
+256-color table and the 24-bit colors — with what each does and the
+ready-to-use name beside it. What follows here is the table that is reached for
+while writing rather than searched.
+
+### Ready-to-use functions and constants
+
+Ready-to-use functions and constants replace the use of control functions with
+the style used in Dart.
+
+| Goal                               | Using                         | Description       |
+|:-----------------------------------|:------------------------------|:------------------|
+| Cursor up                          | **template:** `${cursorUpOpen}$n$cursorUpClose`              <br>**function:** `cursorUpN(int n)`                <br>**default constant:** `cursorUp`             | Moves the cursor up `n` (default 1) lines. |
+| Cursor down                        | **template:** `${cursorDownOpen}$n$cursorDownClose`          <br>**function:** `cursorDownN(int n)`              <br>**default constant:** `cursorDown`           | Moves the cursor down `n` (default 1) lines. |
+| Cursor forward                     | **template:** `${cursorRightOpen}$n$cursorRightClose`        <br>**function:** `cursorRightN(int n)`             <br>**default constant:** `cursorRight`          | Moves the cursor right `n` (default 1) characters. |
+| Cursor back                        | **template:** `${cursorLeftOpen}$n$cursorLeftClose`          <br>**function:** `cursorLeftN(int n)`              <br>**default constant:** `cursorLeft`           | Moves the cursor left `n` (default 1) characters. |
+| Cursor next line                   | **template:** `${cursorNextLineOpen}$n$cursorNextLineClose`  <br>**function:** `cursorNextLineN(int n)`          <br>**default constant:** `cursorNextLine`       | Moves cursor to beginning of the line `n` (default 1) lines down. |
+| Cursor prev line                   | **template:** `${cursorPrevLineOpen}$n$cursorPrevLineClose`  <br>**function:** `cursorPrevLineN(int n)`          <br>**default constant:** `cursorPrevLine`       | Moves cursor to beginning of the line `n` (default 1) lines up. |
+| Cursor horizontal pos              | **template:** `${cursorHPosOpen}$n$cursorHPosClose`          <br>**function:** `cursorHPosTo(int n)`             <br>**default constant:** `cursorHPosToBegin`    | Moves the cursor to column `n` (default 1). |
+| Cursor pos                         | **template:** `${cursorPosOpen}$row;$col$cursorPosClose`     <br>**function:** `cursorPosTo(int row, int col)`   <br>**default constant:** `cursorPosToTopLeft`   | Moves the cursor to `row` and `col`. |
+| Cursor horizontal and vertical pos | **template:** `${cursorHVPosOpen}$row;$col$cursorHVPosClose` <br>**function:** `cursorHVPosTo(int row, int col)` <br>**default constant:** `cursorHVPosToTopLeft` | Same as `cursorPosTo`, just with some differences. |
+| Erase in page                      | **template:** `${eraseInPageOpen}$s$eraseInPageClose`        <br>**function:**                                   <br>**default constants:** `erasePage`, `eraseInPageToBegin`, `eraseInPageToEnd` | Erases part of the page: `s`=0 (or missing) - to end, `s`=1 - to beginning, `s`=2 - entire page. |
+| Erase in line                      | **template:** `${eraseInLineOpen}$s$eraseInLineClose`        <br>**function:**                                   <br>**default constants:** `eraseLine`, `eraseInLineToBegin`, `eraseInLineToEnd` | Erases part of the line: `s`=0 (or missing) - to end, `s`=1 - to beginning, `s`=2 - entire line. |
+| Scroll up                          | **template:** `${scrollUpOpen}$n$scrollUpClose`              <br>**function:** `scrollUpN(int n)`                <br>**default constant:** `scrollUp`             | Scroll page up by `n` (default 1) lines. New lines are added at the bottom. |
+| Scroll down                        | **template:** `${scrollDownOpen}$n$scrollDownClose`          <br>**function:** `scrollDownN(int n)`              <br>**default constant:** `scrollDown`           | Scroll page down by `n` (default 1) lines. New lines are added at the top. |
+| Hide cursor                        | **constant:** `hideCursor`    | Hides the cursor. |
+| Show cursor                        | **constant:** `showCursor`    | Shows the cursor. |
+| Save cursor                        | **constant:** `saveCursor`    | Saves the cursor position, encoding shift state and formatting attributes. |
+| Restore cursor                     | **constant:** `restoreCursor` | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
+| Alternate screen                   | **constant:** `useAlternateScreen` | Switches to the screen a full-screen program draws on: the cursor is saved, the alternate screen is cleared, and the screen the program was started from is left untouched. |
+| Main screen                        | **constant:** `useMainScreen` | Switches back to the screen the program was started from, scrollback and all, with the cursor where `useAlternateScreen` left it. |
+
+All of the following examples are equivalent:
+
+```dart
+print('\x1B[4A');
+print('${CSI}4$CUU');
+print('${cursorUpOpen}4$cursorUpClose');
+print(cursorUpN(4)); // Not constant!
+```
+
+### Printer
+
+Escape codes do not allow you to set default values for your text. The
+foreground and background colors depend on the implementation of the terminal
+you are using. And so if you want to use some other values, you cannot use
+`resetFg` (CSI FOREGROUND_DEFAULT SGR) and `resetBg` (CSI BACKGROUND_DEFAULT
+SGR). Each time you will have to substitute your own values instead:
+
+```dart
+const text =
+    '$bg256Rgb113$fg256Rgb442 Default text '
+    '$bgWhite$fgBlack Highlighted text '
+    '$bg256Rgb113$fg256Rgb442 Default text again $reset';
+print(text);
+```
+
+You can move the color setting to constants and use them everywhere:
+
+```dart
+const defaultStyle = '$bg256Rgb113$fg256Rgb442';
+const text = '$defaultStyle Default text '
+    '$bgWhite$fgBlack Highlighted text '
+    '$defaultStyle Default text again $reset';
+print(text);
+```
+
+Or you can use `Printer`:
+
+```dart
+const text = ' Default text '
+    '$bgWhite$fgBlack Highlighted text $reset'
+    ' Default text again';
+final printer = Printer(
+  defaultStyle: const Style(
+    background: Color256.rgb113,
+    foreground: Color256.rgb442,
+  ),
+);
+printer.print(text);
+```
+
+The printer itself will substitute the correct values where the state returns
+to default. The texts will remain clean, and you can change the default values
+or remove them altogether at any time.
+
+Additionally, Dart allows you to use zones to hide the use of the printer under
+the hood:
+
+```dart
+void main() {
+  runZonedPrinter(
+    defaultStyle: const Style(
+    background: Color256.rgb113,
+    foreground: Color256.rgb442,
+    ),
+    () {
+      // … Your application code …
+
+      const text = ' Default text '
+          '$bgWhite$fgBlack Highlighted text $reset'
+          ' Default text again';
+
+      print(text); // Use the usual print
+    },
+  );
+}
+```
+
+All calls to the `print` function will be intercepted and modified to use the
+values you need.
+
+If you need the codes for debugging Flutter apps, you'll notice that when
+debugging iOS apps, the console will receive messages with escaped escape codes
+in them. This is a known issue and is currently (02.2025) unresolved:
+https://github.com/flutter/flutter/issues/20663. There is no way around this
+issue. But there are two ways to minimize it.
+
+The first way is to use the `log` method from 'dart:developer'. The `log`
+outputs the escape codes on iOS correctly:
+
+```dart
+import 'dart:developer';
+
+…
+
+runZonedPrinter(
+  defaultStyle: const Style(
+    background: Color16.green,
+    foreground: Color16.yellow,
+  ),
+  output: log,
+  () {
+    const text = ' Default text '
+        '$bgWhite$fgBlack Highlighted text $resetBg$resetFg'
+        ' Default text again $reset';
+    print(text);
+  },
+);
+```
+
+Unfortunately, the `log` method outputs long messages (more than 128
+characters) as `<collected>`. And it is easy to exceed the allowed size when
+using escape codes. In the example above, the `text` does not fit in this size
+if RGB colors are used.
+
+And secondly, `log` works only from IDE. Testers who don't use IDE won't
+see anything in the console.
+
+So in most cases on iOS, it's left to disable escape codes for the most part:
+
+```dart
+runZonedPrinter(
+  defaultStyle: …,
+  ansiCodesEnabled: !Platform.isIOS,
+  () {
+    const text = ' Default text '
+        '$bgWhite$fgBlack Highlighted text $reset'
+        ' Default text again';
+    print(text);
+  },
+);
+```
+
+### StackedPrinter
+
+Escape codes allow you to do simple text decoration. But a slightly more
+complex design requires much more effort. One example is given above, when you
+need a default style different from the one provided by the terminal.
+
+Imagine that you have a template for text into which you will insert other
+text, that is sent to you externally. But the person who sends you this text
+decides to highlight it:
+
+```dart
+String makeMessage(String name) {
+  const template = 'Dear {name}! We are pleased to present to you …';
+
+  return template.replaceAll('{name}', name);
+}
+
+…
+
+const name = '${bold}Sam$resetBoldAndDim';
+
+…
+
+final text = makeMessage(name);
+print(text);
+// Dear [bold]Sam[resetBoldAndDim]! We are pleased to present to you …
+```
+
+Without noticing it, at some point your designer decides to make changes to the
+template:
+
+```dart
+const template = '${bold}Dear {name}, welcome to us!$resetBoldAndDim We are pleased to present to you …';
+
+…
+
+final text = makeMessage(name);
+print(text);
+// [bold]Dear [bold]Sam[resetBoldAndDim], welcome to us![resetBoldAndDim] We are pleased to present to you …
+```
+
+But the escape codes don't accumulate, double `bold` equals single `bold`. And
+first `resetBoldAndDim` cancels the bold text. And we don't get what we want
+at all. To fix it, we need to return the state of the text after insertion to
+the state it was before insertion. But it makes it much more difficult to use
+the escape codes. `StackedPrinter` helps solve this problem:
+
+```dart
+final printer = StackedPrinter();
+printer.print(text);
+// [reset][bold]Dear Sam, welcome to us![reset] We are pleased to present to you …
+```
+
+`StackedPrinter` accumulates state changes and sequentially disables them,
+translating the current state into the standard escape sequence on output:
+
+```dart
+const text = '$bold 1 $bold 2 $bold 3 $resetBoldAndDim 2 $resetBoldAndDim 1 $resetBoldAndDim';
+final printer1 = Printer();
+final printer2 = StackedPrinter();
+printer1.print(text); // '[reset][bold] 1  2  3 [reset] 2  1 '
+printer2.print(text); // '[reset][bold] 1  2  3  2  1 [reset]'
+```
+
+### Printing to a sink
+
+`Printer` and `StackedPrinter` hand their output to a print function.
+`SinkPrinter` and `StackedSinkPrinter` write it to a `StringSink` instead —
+a `StringBuffer`, a file, `stdout` — and keep the style across the writes:
+
+```dart
+final buf = StringBuffer();
+SinkPrinter(buf, defaultStyle: style.bgGray3)
+  ..write('one ')
+  ..write('${fgRed}two$reset');
+
+print(Parser(buf.toString()).showControlFunctions());
+// [reset][bg256Gray3]one [reset][reset][bg256Gray3][fgRed]two[reset]
+```
+
+Both take the same `defaultStyle` as the others, and both take
+`ansiCodesEnabled`. Setting it to `false` writes the text without any escape
+codes at all — the codes the text carries included:
+
+```dart
+final plain = StringBuffer();
+SinkPrinter(plain, ansiCodesEnabled: false).write('${fgRed}two$reset');
+print(plain); // two
+```
+
+That is the switch for output that is not a terminal. `NoStyle` is a different
+thing: it stops the printer from putting a style of its own around the text,
+but the codes the text carries still go through.
+
+### A default style for everything printed
 
 You cannot set default colors for the entire terminal. However, Dart allows you
 to intercept calls to the `print` and override the default style in those
@@ -237,158 +627,49 @@ void main() {
 > `style.bold` is the style. See [the names this package
 > brings](#the-names-this-package-brings).
 
-## The names this package brings
+### Logging
 
-Each entry point brings a different part of the package:
+Nothing has to be tied to a logging package: a record is a string and the
+constants are strings, so coloring a level name needs no help. What does need
+help are the two places where escape codes bite.
 
-| Import | Names | What it brings |
-|:---|---:|:---|
-| `ansi_escape_codes.dart` | ~1000 | all of it: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state, the control function tables, the `String` extensions and the two terminal utilities |
-| `ansi.dart` | ~500 | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F`. The only one that is not part of the first — the ready-to-use strings are built from these, and neither brings the other |
-| `style.dart` | 96 | the styles and the parser, without the tables of ready-to-use strings |
-| `parsing.dart` | 81 | the parser, the state and the control function tables |
-| `extensions.dart` | 6 | the `String` extensions alone |
-| `utils.dart` | 2 | `tabs` and `currentCursorPos` alone |
-
-The bottom four are parts of the first, and are there for the times a smaller
-namespace is worth an import of its own — a program that only reads escape
-codes has no use for the 900 constants that write them.
-
-One import is usually enough:
+The first is width. `String.length` counts the escape codes, so padding a
+colored level name pads it by the wrong amount. `Parser` counts what is seen:
 
 ```dart
-import 'package:ansi_escape_codes/ansi_escape_codes.dart';
-
-print('${bold}by the string$reset');
-print(style.bold('by the style'));
+const level = '${fgRed}SEVERE$reset';
+print(level.length); // 15
+print(Parser(level).length); // 6
+print('[${level.padRight(10)}]'); // [SEVERE] — the codes ate the padding
+print('[${Parser(level).padRight(10)}]'); // [SEVERE    ]
+print('[${Parser(level).padLeft(10)}]'); // [    SEVERE]
 ```
 
-The string and the style are told apart by what they are: `bold` is a `String`
-of escape codes, and the styles are reached through `style` or through one of
-the sixteen colors — `red.bold`, `style.bgYellow`.
+A padding of more than one character overshoots the width, the way
+`String.padRight` overshoots it: it is written once for every character still
+wanted, not once for every place it fills.
 
-The package also exports names Dart and Flutter use for their own: `Match` is
-`dart:core`'s, and `Text`, `State`, `Stack`, `Colors` and `Color` are Flutter's.
-Nothing breaks until one of them is written, and then the compiler asks which
-was meant. In a Flutter app, hide the side you are not calling by that name:
+The second is the sink. A terminal reads the codes, a log file keeps them as
+bytes nobody will read back, so the same line goes out twice in two shapes:
 
 ```dart
-import 'package:ansi_escape_codes/ansi_escape_codes.dart'
-    hide Color, Colors, Match, Stack, State, Text;
+void write(String line) {
+  stdout.writeln(line);
+  logFile.writeAsStringSync('${line.ansiRemoveEscapeCodes()}\n',
+      mode: FileMode.append);
+}
 ```
 
-The same hiding is wanted for `style.dart` and `parsing.dart`: the parser is
-what defines those six names, and all three of these imports bring it. Only
-`ansi.dart`, `extensions.dart` and `utils.dart` are free of them — the first
-brings constants, the last two nothing but functions.
-
-The parser is still `Parser`, and `Matches` — its own name — is untouched by
-this.
-
-The colors and `style` are exported as plain lowercase names — `red`, `green`,
-`blue` and the thirteen others, `foreground`, `background`, `underlineColor`,
-and `tabs` beside them. They are the ones most likely to meet a name of your
-own, and `hide` or a prefix settles that the same way.
+And a message that arrives already styled from elsewhere is the case
+[StackedPrinter](#stackedprinter) was written for: whatever the message opens is
+closed at its end, and the next line starts in the style it should.
 
 
-## Control function constants and ready-to-use values
+## Reading
 
-Strings containing ANSI escape codes can be constants:
-
-```dart
-const text = '$fgGreen Green text $resetFg'
-    '$bgYellow Yellow background $resetBg'
-    '$bold Bold text $resetBoldAndDim'
-    '$italic Italic text $resetItalic'
-    '$underline Underline text $resetUnderline';
-print(text);
-```
-
-For complex cases there are functions:
-
-```dart
-final nonConstantText = '${fgRgb(255, 128, 0)} Orange text $resetFg';
-print(nonConstantText);
-```
-
-But even in these cases it is possible to switch to constants:
-
-```dart
-const constantText = '${fgRgbOpen}255;128;0$fgRgbClose Orange text $resetFg';
-print(constantText);
-```
-
-Of course, nothing prevents you from using the escape codes themselves
-directly. But even in this case you can use predefined constants to make the
-text more readable.
-
-All of the following examples are equivalent:
-
-```dart
-import 'package:ansi_escape_codes/ansi.dart';
-import 'package:ansi_escape_codes/ansi_escape_codes.dart';
-
-print('\x1B[38;2;255;128;0m Orange text \x1B[0m');
-print('$ESC[38;2;255;128;0m Orange text $ESC[0m');
-print('${CSI}38;2;255;128;0$SGR Orange text ${CSI}0$SGR');
-print('$CSI$FOREGROUND;$COLOR_RGB;255;128;0$SGR Orange text $CSI$RESET$SGR');
-print('${fgRgbOpen}255;128;0$fgRgbClose Orange text $reset');
-print('${fgRgb(255, 128, 0)} Orange text $reset'); // Not constant!
-```
-
-Control codes are deliberately named in **SCREAMING_SNAKE_CASE** as opposed to
-the common Dart **camelCase**.  First, this is how they are named in the
-Standard. Second, in this form they will not prevent you from naming your own
-variables. **Thirdly, and most importantly, most users do not need to use them
-directly.**
-
-Every one of them is listed in
-[the reference](doc/reference.md) — the C0 and C1 sets, the final bytes of the
-control sequences, the independent functions, all the SGR parameters, the
-256-color table and the 24-bit colors — with what each does and the
-ready-to-use name beside it. What follows here is the table that is reached for
-while writing rather than searched.
-
-
-### Ready-to-use functions and constants
-
-Ready-to-use functions and constants replace the use of control functions with
-the style used in Dart.
-
-| Goal                               | Using                         | Description       |
-|:-----------------------------------|:------------------------------|:------------------|
-| Cursor up                          | **template:** `${cursorUpOpen}$n$cursorUpClose`              <br>**function:** `cursorUpN(int n)`                <br>**default constant:** `cursorUp`             | Moves the cursor up `n` (default 1) lines. |
-| Cursor down                        | **template:** `${cursorDownOpen}$n$cursorDownClose`          <br>**function:** `cursorDownN(int n)`              <br>**default constant:** `cursorDown`           | Moves the cursor down `n` (default 1) lines. |
-| Cursor forward                     | **template:** `${cursorRightOpen}$n$cursorRightClose`        <br>**function:** `cursorRightN(int n)`             <br>**default constant:** `cursorRight`          | Moves the cursor right `n` (default 1) characters. |
-| Cursor back                        | **template:** `${cursorLeftOpen}$n$cursorLeftClose`          <br>**function:** `cursorLeftN(int n)`              <br>**default constant:** `cursorLeft`           | Moves the cursor left `n` (default 1) characters. |
-| Cursor next line                   | **template:** `${cursorNextLineOpen}$n$cursorNextLineClose`  <br>**function:** `cursorNextLineN(int n)`          <br>**default constant:** `cursorNextLine`       | Moves cursor to beginning of the line `n` (default 1) lines down. |
-| Cursor prev line                   | **template:** `${cursorPrevLineOpen}$n$cursorPrevLineClose`  <br>**function:** `cursorPrevLineN(int n)`          <br>**default constant:** `cursorPrevLine`       | Moves cursor to beginning of the line `n` (default 1) lines up. |
-| Cursor horizontal pos              | **template:** `${cursorHPosOpen}$n$cursorHPosClose`          <br>**function:** `cursorHPosTo(int n)`             <br>**default constant:** `cursorHPosToBegin`    | Moves the cursor to column `n` (default 1). |
-| Cursor pos                         | **template:** `${cursorPosOpen}$row;$col$cursorPosClose`     <br>**function:** `cursorPosTo(int row, int col)`   <br>**default constant:** `cursorPosToTopLeft`   | Moves the cursor to `row` and `col`. |
-| Cursor horizontal and vertical pos | **template:** `${cursorHVPosOpen}$row;$col$cursorHVPosClose` <br>**function:** `cursorHVPosTo(int row, int col)` <br>**default constant:** `cursorHVPosToTopLeft` | Same as `cursorPosTo`, just with some differences. |
-| Erase in page                      | **template:** `${eraseInPageOpen}$s$eraseInPageClose`        <br>**function:**                                   <br>**default constants:** `erasePage`, `eraseInPageToBegin`, `eraseInPageToEnd` | Erases part of the page: `s`=0 (or missing) - to end, `s`=1 - to beginning, `s`=2 - entire page. |
-| Erase in line                      | **template:** `${eraseInLineOpen}$s$eraseInLineClose`        <br>**function:**                                   <br>**default constants:** `eraseLine`, `eraseInLineToBegin`, `eraseInLineToEnd` | Erases part of the line: `s`=0 (or missing) - to end, `s`=1 - to beginning, `s`=2 - entire line. |
-| Scroll up                          | **template:** `${scrollUpOpen}$n$scrollUpClose`              <br>**function:** `scrollUpN(int n)`                <br>**default constant:** `scrollUp`             | Scroll page up by `n` (default 1) lines. New lines are added at the bottom. |
-| Scroll down                        | **template:** `${scrollDownOpen}$n$scrollDownClose`          <br>**function:** `scrollDownN(int n)`              <br>**default constant:** `scrollDown`           | Scroll page down by `n` (default 1) lines. New lines are added at the top. |
-| Hide cursor                        | **constant:** `hideCursor`    | Hides the cursor. |
-| Show cursor                        | **constant:** `showCursor`    | Shows the cursor. |
-| Save cursor                        | **constant:** `saveCursor`    | Saves the cursor position, encoding shift state and formatting attributes. |
-| Restore cursor                     | **constant:** `restoreCursor` | Restores the cursor position, encoding shift state and formatting attributes from the previous `saveCursor` if any, otherwise resets these all to their defaults. |
-| Alternate screen                   | **constant:** `useAlternateScreen` | Switches to the screen a full-screen program draws on: the cursor is saved, the alternate screen is cleared, and the screen the program was started from is left untouched. |
-| Main screen                        | **constant:** `useMainScreen` | Switches back to the screen the program was started from, scrollback and all, with the cursor where `useAlternateScreen` left it. |
-
-All of the following examples are equivalent:
-
-```dart
-print('\x1B[4A');
-print('${CSI}4$CUU');
-print('${cursorUpOpen}4$cursorUpClose');
-print(cursorUpN(4)); // Not constant!
-```
-
-
-## Analyzing and parsing
-
+A string that already carries escape codes is what `Parser` is for: what it
+says with the codes taken out, how wide it is on the screen, what style is in
+force at any point of it, and what every sequence in it means.
 
 ### Parser
 
@@ -765,223 +1046,6 @@ print(Parser(text).replaceAll((e) => e is UnrecognizedEscapeCode ? '?' : e.strin
 // a?b?c
 ```
 
-### Printer
-
-Escape codes do not allow you to set default values for your text. The
-foreground and background colors depend on the implementation of the terminal
-you are using. And so if you want to use some other values, you cannot use
-`resetFg` (CSI FOREGROUND_DEFAULT SGR) and `resetBg` (CSI BACKGROUND_DEFAULT
-SGR). Each time you will have to substitute your own values instead:
-
-```dart
-const text =
-    '$bg256Rgb113$fg256Rgb442 Default text '
-    '$bgWhite$fgBlack Highlighted text '
-    '$bg256Rgb113$fg256Rgb442 Default text again $reset';
-print(text);
-```
-
-You can move the color setting to constants and use them everywhere:
-
-```dart
-const defaultStyle = '$bg256Rgb113$fg256Rgb442';
-const text = '$defaultStyle Default text '
-    '$bgWhite$fgBlack Highlighted text '
-    '$defaultStyle Default text again $reset';
-print(text);
-```
-
-Or you can use `Printer`:
-
-```dart
-const text = ' Default text '
-    '$bgWhite$fgBlack Highlighted text $reset'
-    ' Default text again';
-final printer = Printer(
-  defaultStyle: const Style(
-    background: Color256.rgb113,
-    foreground: Color256.rgb442,
-  ),
-);
-printer.print(text);
-```
-
-The printer itself will substitute the correct values where the state returns
-to default. The texts will remain clean, and you can change the default values
-or remove them altogether at any time.
-
-Additionally, Dart allows you to use zones to hide the use of the printer under
-the hood:
-
-```dart
-void main() {
-  runZonedPrinter(
-    defaultStyle: const Style(
-    background: Color256.rgb113,
-    foreground: Color256.rgb442,
-    ),
-    () {
-      // … Your application code …
-
-      const text = ' Default text '
-          '$bgWhite$fgBlack Highlighted text $reset'
-          ' Default text again';
-
-      print(text); // Use the usual print
-    },
-  );
-}
-```
-
-All calls to the `print` function will be intercepted and modified to use the
-values you need.
-
-If you need the codes for debugging Flutter apps, you'll notice that when
-debugging iOS apps, the console will receive messages with escaped escape codes
-in them. This is a known issue and is currently (02.2025) unresolved:
-https://github.com/flutter/flutter/issues/20663. There is no way around this
-issue. But there are two ways to minimize it.
-
-The first way is to use the `log` method from 'dart:developer'. The `log`
-outputs the escape codes on iOS correctly:
-
-```dart
-import 'dart:developer';
-
-…
-
-runZonedPrinter(
-  defaultStyle: const Style(
-    background: Color16.green,
-    foreground: Color16.yellow,
-  ),
-  output: log,
-  () {
-    const text = ' Default text '
-        '$bgWhite$fgBlack Highlighted text $resetBg$resetFg'
-        ' Default text again $reset';
-    print(text);
-  },
-);
-```
-
-Unfortunately, the `log` method outputs long messages (more than 128
-characters) as `<collected>`. And it is easy to exceed the allowed size when
-using escape codes. In the example above, the `text` does not fit in this size
-if RGB colors are used.
-
-And secondly, `log` works only from IDE. Testers who don't use IDE won't
-see anything in the console.
-
-So in most cases on iOS, it's left to disable escape codes for the most part:
-
-```dart
-runZonedPrinter(
-  defaultStyle: …,
-  ansiCodesEnabled: !Platform.isIOS,
-  () {
-    const text = ' Default text '
-        '$bgWhite$fgBlack Highlighted text $reset'
-        ' Default text again';
-    print(text);
-  },
-);
-```
-
-### StackedPrinter
-
-Escape codes allow you to do simple text decoration. But a slightly more
-complex design requires much more effort. One example is given above, when you
-need a default style different from the one provided by the terminal.
-
-Imagine that you have a template for text into which you will insert other
-text, that is sent to you externally. But the person who sends you this text
-decides to highlight it:
-
-```dart
-String makeMessage(String name) {
-  const template = 'Dear {name}! We are pleased to present to you …';
-
-  return template.replaceAll('{name}', name);
-}
-
-…
-
-const name = '${bold}Sam$resetBoldAndDim';
-
-…
-
-final text = makeMessage(name);
-print(text);
-// Dear [bold]Sam[resetBoldAndDim]! We are pleased to present to you …
-```
-
-Without noticing it, at some point your designer decides to make changes to the
-template:
-
-```dart
-const template = '${bold}Dear {name}, welcome to us!$resetBoldAndDim We are pleased to present to you …';
-
-…
-
-final text = makeMessage(name);
-print(text);
-// [bold]Dear [bold]Sam[resetBoldAndDim], welcome to us![resetBoldAndDim] We are pleased to present to you …
-```
-
-But the escape codes don't accumulate, double `bold` equals single `bold`. And
-first `resetBoldAndDim` cancels the bold text. And we don't get what we want
-at all. To fix it, we need to return the state of the text after insertion to
-the state it was before insertion. But it makes it much more difficult to use
-the escape codes. `StackedPrinter` helps solve this problem:
-
-```dart
-final printer = StackedPrinter();
-printer.print(text);
-// [reset][bold]Dear Sam, welcome to us![reset] We are pleased to present to you …
-```
-
-`StackedPrinter` accumulates state changes and sequentially disables them,
-translating the current state into the standard escape sequence on output:
-
-```dart
-const text = '$bold 1 $bold 2 $bold 3 $resetBoldAndDim 2 $resetBoldAndDim 1 $resetBoldAndDim';
-final printer1 = Printer();
-final printer2 = StackedPrinter();
-printer1.print(text); // '[reset][bold] 1  2  3 [reset] 2  1 '
-printer2.print(text); // '[reset][bold] 1  2  3  2  1 [reset]'
-```
-
-### Printing to a sink
-
-`Printer` and `StackedPrinter` hand their output to a print function.
-`SinkPrinter` and `StackedSinkPrinter` write it to a `StringSink` instead —
-a `StringBuffer`, a file, `stdout` — and keep the style across the writes:
-
-```dart
-final buf = StringBuffer();
-SinkPrinter(buf, defaultStyle: style.bgGray3)
-  ..write('one ')
-  ..write('${fgRed}two$reset');
-
-print(Parser(buf.toString()).showControlFunctions());
-// [reset][bg256Gray3]one [reset][reset][bg256Gray3][fgRed]two[reset]
-```
-
-Both take the same `defaultStyle` as the others, and both take
-`ansiCodesEnabled`. Setting it to `false` writes the text without any escape
-codes at all — the codes the text carries included:
-
-```dart
-final plain = StringBuffer();
-SinkPrinter(plain, ansiCodesEnabled: false).write('${fgRed}two$reset');
-print(plain); // two
-```
-
-That is the switch for output that is not a terminal. `NoStyle` is a different
-thing: it stops the printer from putting a style of its own around the text,
-but the codes the text carries still go through.
-
 
 ## Utilities
 
@@ -1010,41 +1074,3 @@ The terminal is given 100 milliseconds to answer by default; a terminal that
 does not answer at all throws `UnsupportedError`. Stdin can only be listened to
 once, so to ask twice — or to keep reading input afterwards — pass a broadcast
 stream over it as `input`.
-
-
-## Logging
-
-Nothing has to be tied to a logging package: a record is a string and the
-constants are strings, so coloring a level name needs no help. What does need
-help are the two places where escape codes bite.
-
-The first is width. `String.length` counts the escape codes, so padding a
-colored level name pads it by the wrong amount. `Parser` counts what is seen:
-
-```dart
-const level = '${fgRed}SEVERE$reset';
-print(level.length); // 15
-print(Parser(level).length); // 6
-print('[${level.padRight(10)}]'); // [SEVERE] — the codes ate the padding
-print('[${Parser(level).padRight(10)}]'); // [SEVERE    ]
-print('[${Parser(level).padLeft(10)}]'); // [    SEVERE]
-```
-
-A padding of more than one character overshoots the width, the way
-`String.padRight` overshoots it: it is written once for every character still
-wanted, not once for every place it fills.
-
-The second is the sink. A terminal reads the codes, a log file keeps them as
-bytes nobody will read back, so the same line goes out twice in two shapes:
-
-```dart
-void write(String line) {
-  stdout.writeln(line);
-  logFile.writeAsStringSync('${line.ansiRemoveEscapeCodes()}\n',
-      mode: FileMode.append);
-}
-```
-
-And a message that arrives already styled from elsewhere is the case
-[StackedPrinter](#stackedprinter) was written for: whatever the message opens is
-closed at its end, and the next line starts in the style it should.
