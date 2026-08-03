@@ -7,7 +7,9 @@ Added:
   styled string takes the style of the place it lands in and closes whatever
   it opens of its own, leaving the rest of the string as it was.
 - The independent control functions, ESC Fs: constants for all ten of them,
-  `ControlFunctionsEscFs`, and `resetTerminal` for RIS.
+  `ControlFunctionsEscFs`, `EscCommon` — the entity a `switch` over them
+  matches — and `resetTerminal` for RIS.
+- `DEL`, which the C0 set was missing.
 - `useAlternateScreen` and `useMainScreen`, the screen a full-screen program
   draws on.
 - Types for the control sequences that carry something worth reading:
@@ -25,9 +27,22 @@ Added:
 - The control function types the API returns — `ControlFunctionsSGR`,
   `ControlSequencesFunctions` and the rest — are exported from the main entry
   point.
+- `ansi_escape_codes.dart` brings the `String` extensions and the two terminal
+  utilities as well, so it is now what its name says: one import for all of it.
+  `extensions.dart` and `utils.dart` still bring those alone, as `style.dart`
+  and `parsing.dart` bring the parser without the tables of constants — the
+  smaller imports are for a smaller namespace, not for reaching something the
+  main one lacks.
 
 Fixed:
 
+- `ESC 7` and `ESC 8` carried no style. A terminal saves the rendition along
+  with the cursor and restores both, so `${fgRed}ESC7${fgBlue}ESC8` shows red
+  where the parser said blue — and every question asked after it was answered
+  from the wrong state.
+- An insertion left a hyperlink open. `Link` carries no style, and the closing
+  was worked out from the style alone, so text inserted with an unclosed
+  `OSC 8` swallowed everything after it.
 - `cursorDown` moved the cursor left, and the cursor functions built sequences
   out of any number, `-1` included.
 - `runZonedStackedPrinter` printed only the first line.
@@ -99,6 +114,9 @@ Removed — every name deprecated in an earlier release is gone:
 
 Breaking changes:
 
+- The named control sequences print as themselves: `CursorUp(4)`,
+  `CursorPos(3, 7)`, `EraseInPage(ErasePart.all)` where `Csi([CSI 4 CUU])` was
+  written before. Nothing reads `toString` but a person and a golden test.
 - `Csi`, `Esc` and `EscapeCode` are sealed, and this release adds types under
   them. A `switch` that covers them exhaustively has to name the new ones. `is`
   checks, casts and the identifiers entities are shown by are unchanged.

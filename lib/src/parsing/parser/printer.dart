@@ -74,8 +74,16 @@ final class StackedSinkPrinter extends _SinkPrinterBase<Stack> {
 }
 
 sealed class _PrinterBase<S extends State<S>> implements StringSink {
+  /// The state a line is closed back to: the terminal's own colours.
   final S stateDefaults;
+
+  /// The style the text is given where it asks for none of its own.
   final Style defaultStyle;
+
+  /// Whether escape codes are written at all.
+  ///
+  /// With this off the text goes out bare — the codes it carried included —
+  /// which is what output that is not a terminal wants.
   final bool ansiCodesEnabled;
 
   /// The state the last prepared line ended in, carried into the next one.
@@ -85,6 +93,8 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   @visibleForTesting
   S? lastState;
 
+  /// Whether each line is followed by the same line with its codes named,
+  /// which is how the tests read what was written.
   @visibleForTesting
   bool debugForTest;
 
@@ -193,6 +203,7 @@ final class _PrintPrinterBase<S extends State<S>> extends _PrinterBase<S> {
 }
 
 final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
+  /// Where the output goes.
   final StringSink sink;
 
   _SinkPrinterBase(
@@ -269,6 +280,11 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
 
 /// Runs the given function in a zone where all print statements are processed
 /// by the printer.
+///
+/// [output] takes each line once the printer is done with it, and goes to the
+/// print outside the zone when it is left out. Do not pass `print` itself: the
+/// zone catches it, hands it back to the printer, and the two go round until
+/// the stack runs out.
 R runZonedPrinter<R>(
   R Function() run, {
   Style defaultStyle = Style.terminalColors,
@@ -296,6 +312,8 @@ R runZonedPrinter<R>(
 
 /// Runs the given function in a zone where all print statements are processed
 /// by the stacked printer.
+///
+/// See [runZonedPrinter] for [output], which must not be `print` itself.
 R runZonedStackedPrinter<R>(
   R Function() run, {
   Style defaultStyle = Style.terminalColors,

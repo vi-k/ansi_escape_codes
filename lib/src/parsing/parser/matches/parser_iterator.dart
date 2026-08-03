@@ -16,6 +16,13 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
   int _pos = 0;
   Match<S>? _current;
 
+  /// The state [SaveCursor] put away, for [RestoreCursor] to bring back.
+  ///
+  /// `ESC 7` saves the rendition along with the cursor, and `ESC 8` restores
+  /// both, so a reader that ignored them would report a style the terminal is
+  /// no longer showing.
+  S? _saved;
+
   _ParserIterator._(this._parent, this._initialState);
 
   /// Current match.
@@ -33,6 +40,14 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
     // string. Reading it again would give the same answer.
     if (_index < parsed.length) {
       final match = parsed[_index];
+
+      // Read before, and read again from the start by another iterator: the
+      // state of each match is settled, but what was saved along the way has
+      // to be picked up again for the restore that may still be ahead.
+      if (match.entity is SaveCursor) {
+        _saved = match.state;
+      }
+
       _index++;
       _current = match;
       _pos = match.end;
@@ -113,6 +128,17 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
   Match<S> _escapeCode(RegExpMatch m) {
     final matchingState = _MatchingState(m, currentState);
     final entity = EscapeCode._parse(matchingState);
+
+    switch (entity) {
+      case SaveCursor():
+        _saved = matchingState.state;
+      case RestoreCursor():
+        // With nothing saved the terminal goes back to its defaults, which
+        // for a parser is the state it was started in.
+        matchingState.state = _saved ?? _parent._initialState;
+      default:
+    }
+
     _pos = m.end;
 
     return Match<S>._(

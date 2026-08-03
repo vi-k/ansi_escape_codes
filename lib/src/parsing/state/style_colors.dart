@@ -5,10 +5,12 @@ part of 'state.dart';
 
 /// Every colour of the 256-colour table, as a style of its own.
 ///
-/// `style.red` is `style.foreground(Color256.red)` written shorter, `bg…` sets
-/// the colour behind the text and `underline…` the colour of the underline.
-/// The names are those of [Color256], and the ready-to-use strings carry the
-/// same ones.
+/// `style.red` is `style.foreground(Color256.red)` written shorter, and `bg…`
+/// sets the colour behind the text. The names are those of [Color256], and the
+/// ready-to-use strings carry the same ones.
+///
+/// The colour of the underline has no getters here: it is set with
+/// [State.underlineColor], which takes any [ExtendedColor].
 extension StyleColors on Style {
   Style get black => foreground(Color256.black);
   Style get red => foreground(Color256.red);

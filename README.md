@@ -236,27 +236,31 @@ void main() {
 }
 ```
 
-> [!IMPORTANT]
+> [!NOTE]
 >
-> Please note that when using styles and applying ready-to-use values,
-> different imports are used. This is because some of the names are the same in
-> both options.
+> The two ways of writing a colour can be used side by side, and
+> `ansi_escape_codes.dart` brings both: `bold` is the string of escape codes,
+> `style.bold` is the style. See [the names this package
+> brings](#the-names-this-package-brings).
 
 ## The names this package brings
 
 Each entry point brings a different part of the package:
 
-| Import | What it brings |
-|:---|:---|
-| `ansi.dart` | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F` |
-| `ansi_escape_codes.dart` | everything but the raw bytes: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state and the control function tables |
-| `style.dart` | the styles and what they need: `Style`, `style`, the sixteen colors, and the parser |
-| `parsing.dart` | the parser, the state and the control function tables |
-| `extensions.dart` | the `String` extensions: `ansiRemoveEscapeCodes`, `ansiShowEscapeSequences` and the rest |
-| `utils.dart` | `tabs` and `currentCursorPos` |
+| Import | Names | What it brings |
+|:---|---:|:---|
+| `ansi_escape_codes.dart` | ~1000 | all of it: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state, the control function tables, the `String` extensions and the two terminal utilities |
+| `ansi.dart` | ~500 | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F`. The only one that is not part of the first — the ready-to-use strings are built from these, and neither brings the other |
+| `style.dart` | 96 | the styles and the parser, without the tables of ready-to-use strings |
+| `parsing.dart` | 81 | the parser, the state and the control function tables |
+| `extensions.dart` | 6 | the `String` extensions alone |
+| `utils.dart` | 2 | `tabs` and `currentCursorPos` alone |
 
-They can be imported together, and `ansi_escape_codes.dart` already holds the
-styles, so one import is usually enough:
+The bottom four are parts of the first, and are there for the times a smaller
+namespace is worth an import of its own — a program that only reads escape
+codes has no use for the 900 constants that write them.
+
+One import is usually enough:
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
@@ -279,8 +283,18 @@ import 'package:ansi_escape_codes/ansi_escape_codes.dart'
     hide Color, Colors, Match, Stack, State, Text;
 ```
 
+The same hiding is wanted for `style.dart` and `parsing.dart`: the parser is
+what defines those six names, and all three of these imports bring it. Only
+`ansi.dart`, `extensions.dart` and `utils.dart` are free of them — the first
+brings constants, the last two nothing but functions.
+
 The parser is still `Parser`, and `Matches` — its own name — is untouched by
 this.
+
+The colors and `style` are exported as plain lowercase names — `red`, `green`,
+`blue` and the thirteen others, `foreground`, `background`, `underlineColor`,
+and `tabs` beside them. They are the ones most likely to meet a name of your
+own, and `hide` or a prefix settles that the same way.
 
 
 ## Control function constants and ready-to-use values
@@ -456,7 +470,7 @@ the style used in Dart.
 | Cursor prev line                   | **template:** `${cursorPrevLineOpen}$n$cursorPrevLineClose`  <br>**function:** `cursorPrevLineN(int n)`          <br>**default constant:** `cursorPrevLine`       | Moves cursor to beginning of the line `n` (default 1) lines up. |
 | Cursor horizontal pos              | **template:** `${cursorHPosOpen}$n$cursorHPosClose`          <br>**function:** `cursorHPosTo(int n)`             <br>**default constant:** `cursorHPosToBegin`    | Moves the cursor to column `n` (default 1). |
 | Cursor pos                         | **template:** `${cursorPosOpen}$row;$col$cursorPosClose`     <br>**function:** `cursorPosTo(int row, int col)`   <br>**default constant:** `cursorPosToTopLeft`   | Moves the cursor to `row` and `col`. |
-| Cursor horizontal and vertical pos | **template:** `${cursorHVPosOpen}$row;$col$cursorHVPosClose` <br>**function:** `cursorHVPosTo(int row, int col)` <br>**default constant:** `cursorHVPosToTopLeft` | Same as `cursorPos`, just with some differences. |
+| Cursor horizontal and vertical pos | **template:** `${cursorHVPosOpen}$row;$col$cursorHVPosClose` <br>**function:** `cursorHVPosTo(int row, int col)` <br>**default constant:** `cursorHVPosToTopLeft` | Same as `cursorPosTo`, just with some differences. |
 | Erase in page                      | **template:** `${eraseInPageOpen}$s$eraseInPageClose`        <br>**function:**                                   <br>**default constants:** `erasePage`, `eraseInPageToBegin`, `eraseInPageToEnd` | Erases part of the page: `s`=0 (or missing) - to end, `s`=1 - to beginning, `s`=2 - entire page. |
 | Erase in line                      | **template:** `${eraseInLineOpen}$s$eraseInLineClose`        <br>**function:**                                   <br>**default constants:** `eraseLine`, `eraseInLineToBegin`, `eraseInLineToEnd` | Erases part of the line: `s`=0 (or missing) - to end, `s`=1 - to beginning, `s`=2 - entire line. |
 | Scroll up                          | **template:** `${scrollUpOpen}$n$scrollUpClose`              <br>**function:** `scrollUpN(int n)`                <br>**default constant:** `scrollUp`             | Scroll page up by `n` (default 1) lines. New lines are added at the bottom. |
@@ -764,7 +778,13 @@ print('${bgRgb(44, 43, 124)} Ultramarine $resetBg'); // Not constant!
 
 ### Parser
 
-`Parser` allows you to analyze text containing escape codes:
+`Parser` allows you to analyze text containing escape codes. There are two of
+them, and everything below holds for both: `Parser` keeps the style in force
+at each point, `StackedParser` keeps the history of how it got there, so that a
+`resetFg` goes back to the color before the last one rather than to the
+terminal's own. The difference is the one between
+[Printer and StackedPrinter](#stackedprinter), and the state it hands out is a
+`Stack` instead of a `Style`.
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
@@ -836,12 +856,12 @@ The style at a particular position can be found with `stateAt`.
 
 ```dart
 final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
-final style = parser.stateAt(7);
-print(style); // Style(bold, foreground: Color16.cyan)
-print(style.isBold); // true
-print(style.isItalic); // false
-print(style.foregroundColor?.id); // fgCyan
-print(style.backgroundColor?.id); // null
+final atSeven = parser.stateAt(7);
+print(atSeven); // Style(bold, foreground: Color16.cyan)
+print(atSeven.isBold); // true
+print(atSeven.isItalic); // false
+print(atSeven.foregroundColor?.id); // fgCyan
+print(atSeven.backgroundColor?.id); // null
 ```
 
 The position in `stateAt` is specified in the plaintext range
@@ -1031,6 +1051,14 @@ final withoutAllEscapeCodes = text.ansiRemoveEscapeCodes();
 print(withoutAllEscapeCodes.ansiShowEscapeSequences());
 // ' Text '
 ```
+
+The rest of the extensions, in one breath: `ansiHasUnderlineColor` and
+`ansiRemoveUnderlineColor` do for the color of the underline what the pairs
+above do for the foreground and the background; `ansiHasControlCodes` asks
+about the C0 bytes rather than the escape codes; `lengthWithoutEscapeCodes` is
+`Parser.length` for a string read once; `ansiShowControlFunctions` and
+`ansiOptimizeControlFunctions` are `Parser.showControlFunctions` and
+`Parser.optimize` for a string read once.
 
 ### Sequence types
 

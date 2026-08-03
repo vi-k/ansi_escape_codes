@@ -1,3 +1,8 @@
+export 'src/extensions/has.dart';
+export 'src/extensions/parsing.dart';
+export 'src/extensions/remove.dart';
+export 'src/extensions/show_control_codes.dart';
+export 'src/extensions/show_escape_codes.dart';
 export 'src/parsing/colors/color.dart';
 export 'src/parsing/control_functions/control_functions_c0.dart';
 export 'src/parsing/control_functions/control_functions_c1.dart';
@@ -19,3 +24,5 @@ export 'src/ready_to_use/sgr/rgb/fg_rgb.dart';
 export 'src/ready_to_use/sgr/rgb/underline_rgb.dart';
 export 'src/ready_to_use/sgr/sgr.dart';
 export 'src/ready_to_use/sgr/standard_colors/standard_colors.dart';
+export 'src/utils/current_cursor_pos.dart';
+export 'src/utils/tabs.dart';

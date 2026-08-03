@@ -290,6 +290,9 @@ final class CursorUp extends CsiCommon {
 
   CursorUp._(String string, List<CsiParam> params, this.n)
       : super._(string, ControlSequencesFunctions.CUU, params);
+
+  @override
+  String toString() => '$CursorUp($n)';
 }
 
 /// Moves the cursor down [n] lines. `CSI n B`,
@@ -300,6 +303,9 @@ final class CursorDown extends CsiCommon {
 
   CursorDown._(String string, List<CsiParam> params, this.n)
       : super._(string, ControlSequencesFunctions.CUD, params);
+
+  @override
+  String toString() => '$CursorDown($n)';
 }
 
 /// Moves the cursor right [n] characters. `CSI n C`,
@@ -310,6 +316,9 @@ final class CursorRight extends CsiCommon {
 
   CursorRight._(String string, List<CsiParam> params, this.n)
       : super._(string, ControlSequencesFunctions.CUF, params);
+
+  @override
+  String toString() => '$CursorRight($n)';
 }
 
 /// Moves the cursor left [n] characters. `CSI n D`,
@@ -320,6 +329,9 @@ final class CursorLeft extends CsiCommon {
 
   CursorLeft._(String string, List<CsiParam> params, this.n)
       : super._(string, ControlSequencesFunctions.CUB, params);
+
+  @override
+  String toString() => '$CursorLeft($n)';
 }
 
 /// Moves the cursor to the beginning of the line [n] lines down. `CSI n E`,
@@ -330,6 +342,9 @@ final class CursorNextLine extends CsiCommon {
 
   CursorNextLine._(String string, List<CsiParam> params, this.n)
       : super._(string, ControlSequencesFunctions.CNL, params);
+
+  @override
+  String toString() => '$CursorNextLine($n)';
 }
 
 /// Moves the cursor to the beginning of the line [n] lines up. `CSI n F`,
@@ -340,6 +355,9 @@ final class CursorPrevLine extends CsiCommon {
 
   CursorPrevLine._(String string, List<CsiParam> params, this.n)
       : super._(string, ControlSequencesFunctions.CPL, params);
+
+  @override
+  String toString() => '$CursorPrevLine($n)';
 }
 
 /// Moves the cursor to column [n]. `CSI n G`,
@@ -350,6 +368,9 @@ final class CursorHPos extends CsiCommon {
 
   CursorHPos._(String string, List<CsiParam> params, this.n)
       : super._(string, ControlSequencesFunctions.CHA, params);
+
+  @override
+  String toString() => '$CursorHPos($n)';
 }
 
 /// Moves the cursor to [row] and [col]. `CSI row ; col H`,
@@ -363,6 +384,9 @@ final class CursorPos extends CsiCommon {
 
   CursorPos._(String string, List<CsiParam> params, this.row, this.col)
       : super._(string, ControlSequencesFunctions.CUP, params);
+
+  @override
+  String toString() => '$CursorPos($row, $col)';
 }
 
 /// Moves the cursor to [row] and [col]. `CSI row ; col f`,
@@ -378,6 +402,9 @@ final class CursorHVPos extends CsiCommon {
 
   CursorHVPos._(String string, List<CsiParam> params, this.row, this.col)
       : super._(string, ControlSequencesFunctions.HVP, params);
+
+  @override
+  String toString() => '$CursorHVPos($row, $col)';
 }
 
 /// Shows the cursor. `CSI ? 25 h`, the sequence [showCursor] is written with.
@@ -462,6 +489,9 @@ final class EraseInPage extends CsiCommon {
 
   EraseInPage._(String string, List<CsiParam> params, this.part)
       : super._(string, ControlSequencesFunctions.ED, params);
+
+  @override
+  String toString() => '$EraseInPage($part)';
 }
 
 /// Erases [part] of the line. `CSI n K`, [ControlSequencesFunctions.EL].
@@ -472,6 +502,9 @@ final class EraseInLine extends CsiCommon {
 
   EraseInLine._(String string, List<CsiParam> params, this.part)
       : super._(string, ControlSequencesFunctions.EL, params);
+
+  @override
+  String toString() => '$EraseInLine($part)';
 }
 
 /// Scrolls the page up by [n] lines. `CSI n S`,
@@ -482,6 +515,9 @@ final class ScrollUp extends CsiCommon {
 
   ScrollUp._(String string, List<CsiParam> params, this.n)
       : super._(string, ControlSequencesFunctions.SU, params);
+
+  @override
+  String toString() => '$ScrollUp($n)';
 }
 
 /// Scrolls the page down by [n] lines. `CSI n T`,
@@ -492,4 +528,7 @@ final class ScrollDown extends CsiCommon {
 
   ScrollDown._(String string, List<CsiParam> params, this.n)
       : super._(string, ControlSequencesFunctions.SD, params);
+
+  @override
+  String toString() => '$ScrollDown($n)';
 }

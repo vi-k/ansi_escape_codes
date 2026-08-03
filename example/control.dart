@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
-import 'package:ansi_escape_codes/utils.dart';
 
 /// Usage:
 ///

@@ -62,6 +62,54 @@ void main() {
       expect(await ask('\x1B[3;4R'), (3, 4));
     });
 
+    test('refuses an answer too short to be a report', () async {
+      final stdin = _FakeStdin(Stream.value('${CSI}12R'.codeUnits));
+
+      await expectLater(
+        currentCursorPos(_FakeStdout(), stdin),
+        throwsA(isA<UnsupportedError>()),
+      );
+      expect(stdin.echoMode, isTrue, reason: 'and puts the terminal back');
+    });
+
+    test('refuses an answer carrying something that is not a number', () async {
+      final stdin = _FakeStdin(Stream.value('${CSI}1;2aR'.codeUnits));
+
+      await expectLater(
+        currentCursorPos(_FakeStdout(), stdin),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
+
+    test('refuses an answer that names no column', () async {
+      final stdin = _FakeStdin(Stream.value('${CSI}1234R'.codeUnits));
+
+      await expectLater(
+        currentCursorPos(_FakeStdout(), stdin),
+        throwsA(isA<UnsupportedError>()),
+        reason: 'a report without a semicolon is half an answer',
+      );
+    });
+
+    test('refuses when the input ends before the answer comes', () async {
+      final stdin = _FakeStdin(Stream.value('typed'.codeUnits));
+
+      await expectLater(
+        currentCursorPos(_FakeStdout(), stdin),
+        throwsA(isA<UnsupportedError>()),
+      );
+      expect(stdin.lineMode, isTrue, reason: 'and puts the terminal back');
+    });
+
+    test('refuses when the input fails', () async {
+      final stdin = _FakeStdin(Stream<List<int>>.error(StateError('gone')));
+
+      await expectLater(
+        currentCursorPos(_FakeStdout(), stdin),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
+
     test('restores the terminal modes when there is no answer', () async {
       final controller = StreamController<List<int>>();
       addTearDown(controller.close);

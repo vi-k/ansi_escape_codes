@@ -100,5 +100,5 @@ final class UnknownEscapeCode extends EscapeCode with UnrecognizedEscapeCode {
   const UnknownEscapeCode._(super.string) : super._();
 
   @override
-  String toString() => '$EscapeCode(${toStringAsControlCodes()})';
+  String toString() => '$UnknownEscapeCode(${toStringAsControlCodes()})';
 }
