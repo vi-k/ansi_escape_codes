@@ -70,7 +70,8 @@ void main(List<String> args) {
   });
 
   // The three pages differ in length as well as in density, so each says how
-  // long it is: a page of dressed words is three times the characters.
+  // long it is: the same words carry half again as many characters with a
+  // colour on some of them, and four times as many with a colour on every one.
   _group('The same, by the shape of the input');
   _bench(
     'a third codes (${_coloured.length} chars)',
