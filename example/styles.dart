@@ -6,17 +6,17 @@ import 'package:ansi_escape_codes/style.dart';
 /// dart run example/styles.dart
 /// ```
 void main() {
-  final text1 = 'Hello, ${red.bold('World')}!!';
-  final text2 = 'Hello, ${style.bold.underline.green('World')}!!';
+  final text1 = 'Hello, ${Styles.red.bold('World')}!!';
+  final text2 = 'Hello, ${Styles.bold.underline.green('World')}!!';
   final text3 = 'Hello, '
-      '${style.strikethrough.bold.blue.background(Color16.yellow)('World')}!!';
+      '${Styles.strikethrough.bold.blue.background(Color16.yellow)('World')}!!';
 
   print('The default colors are set by the terminal:');
   print(text1);
   print(text2);
   print(text3);
 
-  final defaultStyle = style.rgb442.background(Color256.rgb110);
+  final defaultStyle = Styles.rgb442.background(Color256.rgb110);
 
   print('');
   print('The custom default colors:');

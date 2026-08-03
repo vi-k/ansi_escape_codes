@@ -149,13 +149,20 @@ Breaking changes:
   table — now come from an extension, `StyleColors`, rather than from the class
   itself. Written the usual way they behave as they did; what an extension
   cannot do is answer a `dynamic` receiver.
-- The predefined styles at the top level are 20 names rather than 530: `style`,
-  which carries nothing and is where a chain starts, the sixteen colours of the
-  text, and `foreground`, `background` and `underlineColor`. Everything else —
-  the fifteen properties, the sixteen backgrounds, the 432 of the RGB cube and
-  the 48 greys — is reached through the chain: `bold` is `style.bold`, `bgRed`
-  is `style.bgRed`, `rgb531` is `style.rgb531`. `red.bold.bgYellow` is what it
-  always was.
+- The predefined styles are constants of one class, `Styles`, and there are 783
+  of them: the fifteen properties — `Styles.bold`, `Styles.italic` — and the
+  256-colour table three times over, `Styles.red` for the colour of the text,
+  `Styles.bgRed` for the colour behind it, and `Styles.underlineRed` for the
+  colour of the underline, which had a name in neither the 530 nor the getters.
+  Being constants, a style can be held in one: `const error = Styles.red`.
+
+  The 530 top-level names are gone, and with them `style`, `foreground`,
+  `background` and `underlineColor`. A chain that starts at nothing at all
+  starts at `Style.terminalColors`; the three functions are the constructor,
+  `Style(foreground: c)`, or the methods of the same name on a style.
+
+  The colours are still getters as well — the `StyleColors` extension — so
+  `Styles.red.bold.bgYellow` is one chain, as `red.bold.bgYellow` was.
 
   This is what took the 31 names that `style.dart` and `ansi_escape_codes.dart`
   both claimed out of the way, and the second now exports the styles as well:

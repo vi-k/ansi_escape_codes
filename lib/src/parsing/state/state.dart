@@ -9,6 +9,7 @@ import '../parser/parser.dart';
 
 part 'style.dart';
 part 'style_colors.dart';
+part 'styles.dart';
 part 'stack.dart';
 
 /// The base class for tracking the state of ANSI escape codes.

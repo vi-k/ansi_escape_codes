@@ -24,10 +24,16 @@ void main() {
     test('by the name of the constant that writes it, whoever set it', () {
       const red = Color256.red;
 
-      expect(style.foreground(red).foregroundColor?.id, 'fg256Red');
-      expect(style.background(red).backgroundColor?.id, 'bg256Red');
       expect(
-        style.underlineColor(red).underlineColorValue?.id,
+        Style.terminalColors.foreground(red).foregroundColor?.id,
+        'fg256Red',
+      );
+      expect(
+        Style.terminalColors.background(red).backgroundColor?.id,
+        'bg256Red',
+      );
+      expect(
+        Style.terminalColors.underlineColor(red).underlineColorValue?.id,
         'underline256Red',
         reason: 'the constant is underline256Red, not underlineColor256Red',
       );

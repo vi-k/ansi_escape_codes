@@ -19,7 +19,7 @@ Both halves of that, in one import:
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
 // Writing: by a style, or by constants that cost nothing at run time.
-print('${red.bold('ERROR')} the roof is on fire');
+print('${Styles.red.bold('ERROR')} the roof is on fire');
 print('${fgCyan}the same in cyan$reset');
 
 // Reading: what a string says, how long it is without the codes, and what
@@ -152,9 +152,9 @@ The reference names them beside the codes they write, and they live in
 import 'package:ansi_escape_codes/style.dart';
 
 void main() {
-  final defaultStyle = style.gray12;
-  final greenStyle = green.bold;
-  final highlighedStyle = red.bgYellow.underline;
+  final defaultStyle = Styles.gray12;
+  final greenStyle = Styles.green.bold;
+  final highlighedStyle = Styles.red.bgYellow.underline;
 
   print(
     defaultStyle(
@@ -166,12 +166,13 @@ void main() {
 }
 ```
 
-First, you can assemble your own style from any pieces. A chain starts at one
-of the sixteen colors, or at `style`, which carries nothing:
+First, you can assemble your own style from any pieces. Every style that
+carries one thing is a constant on `Styles` — a property, or a colour of the
+table — and a chain goes on from whichever of them comes first:
 
 ```dart
-final mine = style.rgb050.bgRgb010.bold.italic.underline;
-final warning = red.bold;
+final mine = Styles.rgb050.bgRgb010.bold.italic.underline;
+final warning = Styles.red.bold;
 ```
 
 Second, styles can be nested: after completing the action of a nested style,
@@ -186,8 +187,8 @@ Each entry point brings a different part of the package:
 |:---|---:|:---|
 | `ansi_escape_codes.dart` | ~1000 | all of it: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state, the control function tables, the `String` extensions and the two terminal utilities |
 | `ansi.dart` | ~500 | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F`. The only one that is not part of the first — the ready-to-use strings are built from these, and neither brings the other |
-| `style.dart` | 96 | the styles and the parser, without the tables of ready-to-use strings |
-| `parsing.dart` | 81 | the parser, the state and the control function tables |
+| `style.dart` | 77 | the styles and the parser, without the tables of ready-to-use strings |
+| `parsing.dart` | 82 | the parser, the state and the control function tables |
 | `extensions.dart` | 6 | the `String` extensions alone |
 | `utils.dart` | 2 | `tabs` and `currentCursorPos` alone |
 
@@ -201,12 +202,12 @@ One import is usually enough:
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
 print('${bold}by the string$reset');
-print(style.bold('by the style'));
+print(Styles.bold('by the style'));
 ```
 
-The string and the style are told apart by what they are: `bold` is a `String`
-of escape codes, and the styles are reached through `style` or through one of
-the sixteen colors — `red.bold`, `style.bgYellow`.
+The string and the style are told apart by where they are: `bold` is a `String`
+of escape codes, `Styles.bold` is the style. Of the styles nothing is written
+in lowercase, so the two never collide.
 
 The package also exports names Dart and Flutter use for their own: `Match` is
 `dart:core`'s, and `Text`, `State`, `Stack`, `Colors` and `Color` are Flutter's.
@@ -226,10 +227,10 @@ brings constants, the last two nothing but functions.
 The parser is still `Parser`, and `Matches` — its own name — is untouched by
 this.
 
-The colors and `style` are exported as plain lowercase names — `red`, `green`,
-`blue` and the thirteen others, `foreground`, `background`, `underlineColor`,
-and `tabs` beside them. They are the ones most likely to meet a name of your
-own, and `hide` or a prefix settles that the same way.
+What is exported in lowercase is the ready-to-use strings — `fgRed`,
+`cursorUp`, `bold` — and `tabs`. The styles are not among them: they are
+constants on `Styles`, so the name most likely to meet one of your own is
+`tabs`, and `hide` or a prefix settles that the same way.
 
 
 ## Writing
@@ -334,14 +335,21 @@ print(cursorUpN(4)); // Not constant!
 
 ### Styles
 
-The chain — `red.bold`, `style.rgb050.bgRgb010.italic` — reaches the colors
-that have a name. The ones that do not are passed as values:
+`Styles` holds every style that carries one thing, and there are 783 of them:
+the fifteen properties — `Styles.bold`, `Styles.italic` — and the 256-colour
+table three times over, `Styles.red` for the colour of the text, `Styles.bgRed`
+for the colour behind it, `Styles.underlineRed` for the colour of the
+underline. Being constants, a style can be held in one:
+`const error = Styles.red`.
+
+A chain builds on them — `Styles.red.bold.bgYellow` — and the colors the table
+does not name are passed as values:
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:ansi_escape_codes/extensions.dart';
 
-final mine = style
+final mine = Styles.underline
     .foreground(Color256.rgb(5, 2, 0)) // the 6x6x6 cube
     .background(ColorRgb(0x33, 0x66, 0x99)) // 24-bit
     .underlineColor(Color256.gray(12)) // one of the 24 grays
@@ -381,7 +389,7 @@ buffer written to in pieces, a style that outlives one call — they are `open`
 and `close`:
 
 ```dart
-final warning = red.bold;
+final warning = Styles.red.bold;
 
 print(warning.open.ansiShowEscapeSequences()); // [CSI 38;5;1 SGR][CSI 1 SGR]
 print(warning.close.ansiShowEscapeSequences()); // [CSI 0 SGR]
@@ -589,7 +597,7 @@ a `StringBuffer`, a file, `stdout` — and keep the style across the writes:
 
 ```dart
 final buf = StringBuffer();
-SinkPrinter(buf, defaultStyle: style.bgGray3)
+SinkPrinter(buf, defaultStyle: Styles.bgGray3)
   ..write('one ')
   ..write('${fgRed}two$reset');
 
@@ -623,11 +631,11 @@ Example (if you use styles):
 import 'package:ansi_escape_codes/style.dart';
 
 void main() {
-  final greenStyle = green.bold;
-  final highlighedStyle = red.bgYellow.underline;
+  final greenStyle = Styles.green.bold;
+  final highlighedStyle = Styles.red.bgYellow.underline;
 
   runZonedPrinter(
-    defaultStyle: style.gray12,
+    defaultStyle: Styles.gray12,
     () {
       print(
         'Normal text'
@@ -687,7 +695,7 @@ void main() {
 >
 > The two ways of writing a colour can be used side by side, and
 > `ansi_escape_codes.dart` brings both: `bold` is the string of escape codes,
-> `style.bold` is the style. See [the names this package
+> `Styles.bold` is the style. See [the names this package
 > brings](#the-names-this-package-brings).
 
 ### Logging

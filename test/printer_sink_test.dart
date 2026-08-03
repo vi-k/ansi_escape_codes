@@ -6,7 +6,7 @@ void main() {
     test('the one that prints holds the line until it is ended', () {
       final lines = <String>[];
 
-      Printer(output: lines.add, defaultStyle: red)
+      Printer(output: lines.add, defaultStyle: Styles.red)
         ..write('a')
         ..writeAll(['b', 'c'], '-')
         ..writeCharCode(0x64)
@@ -27,7 +27,7 @@ void main() {
     test('the one that writes to a sink lets each piece through', () {
       final buf = StringBuffer();
 
-      SinkPrinter(buf, defaultStyle: red)
+      SinkPrinter(buf, defaultStyle: Styles.red)
         ..write('a')
         ..writeAll(['b', 'c'], '-')
         ..writeCharCode(0x64)
