@@ -145,10 +145,9 @@ final class _ParserBase<S extends State<S>> {
   /// Reads the whole string, ahead of the questions asked of it.
   ///
   /// [stateAt] and [substring] read only as far as they must, and what they
-  /// read is kept: the question after them picks up where they stopped rather
-  /// than starting over. This reads it all in one go instead of letting it
-  /// grow question by question, and builds the plain text [length], [indexOf]
-  /// and the other string methods work on.
+  /// read is kept, so nothing is parsed twice. This reads it all in one go
+  /// instead of letting it grow question by question, and builds the plain
+  /// text [length], [indexOf] and the other string methods work on.
   ///
   /// It is for [length], [indexOf] and the other string methods, which need
   /// the whole of the text before they can answer anything. [stateAt] and
@@ -284,8 +283,9 @@ final class _ParserBase<S extends State<S>> {
   /// [close] is whether to close the substring with the default style.
   ///
   /// Reads the string up to the end of the piece and stops. What it read is
-  /// kept, so taking another piece carries on from there; see [prepare] for
-  /// reading it all at once instead.
+  /// kept, so a second piece is not parsed again — though it is walked again,
+  /// from the start of the string every time. See [prepare] for reading it all
+  /// at once instead.
   String substring(
     int start, {
     int? maxLength,
