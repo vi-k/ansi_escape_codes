@@ -2,8 +2,15 @@
 // something much slower is noticed rather than shipped.
 //
 // ```bash
-// dart run benchmark/parser_benchmark.dart
+// dart run benchmark/parser_benchmark.dart            # colours if it can
+// dart run benchmark/parser_benchmark.dart --color    # colours regardless
+// dart run benchmark/parser_benchmark.dart --no-color # never
 // ```
+//
+// Left to itself it asks `stdout.supportsAnsiEscapes`, which the terminals
+// built into editors answer `false` to even where they show the colours
+// perfectly well. `--color` is how to disagree with them, and the `benchmark`
+// configuration in `.vscode/launch.json` passes it.
 //
 // The numbers are of this machine and this Dart, and mean nothing on their
 // own: run it before a change and after it, and compare the two. What does
@@ -40,7 +47,11 @@ final _coloured = _pageOf(_line);
 final _plain = _pageOf(_plainLine);
 final _dense = _pageOf(_denseLine);
 
-void main() {
+void main(List<String> args) {
+  if (!_readArguments(args)) {
+    return;
+  }
+
   _title();
 
   _group('Reading a page of coloured log');
@@ -175,7 +186,43 @@ void _removeColoured() => _sink = _coloured.ansiRemoveEscapeCodes();
 // Running and showing
 // ---------------------------------------------------------------------------
 
-final bool _inColour = stdout.supportsAnsiEscapes;
+/// Whether the output is dressed, which [_readArguments] settles.
+bool _inColour = false;
+
+/// Reads the command line, and says whether there is anything to run.
+bool _readArguments(List<String> args) {
+  const usage = 'Usage: dart run benchmark/parser_benchmark.dart '
+      '[--color | --no-color]\n'
+      '\n'
+      '  --color     write the colours whatever the terminal says it can do.\n'
+      '              The terminals built into editors say they can do\n'
+      '              nothing, and show them all the same.\n'
+      '  --no-color  leave the colours out.\n'
+      '\n'
+      'With neither, stdout is asked and answers for itself.';
+
+  _inColour = stdout.supportsAnsiEscapes;
+
+  for (final arg in args) {
+    switch (arg) {
+      case '--color' || '--colour':
+        _inColour = true;
+      case '--no-color' || '--no-colour':
+        _inColour = false;
+      case '--help' || '-h':
+        print(usage);
+
+        return false;
+      default:
+        stderr.writeln('unknown argument: $arg\n\n$usage');
+        exitCode = 64;
+
+        return false;
+    }
+  }
+
+  return true;
+}
 
 String _paint(String text, String open, [String close = reset]) =>
     _inColour ? '$open$text$close' : text;
