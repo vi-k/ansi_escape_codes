@@ -1,4 +1,5 @@
 import '../internal/sgr_functions.dart';
+import '../parsing/control_functions/control_functions_c0.dart';
 import '../parsing/patterns/patterns.dart';
 
 /// Taking escape codes back out of a string, all of them or by kind.
@@ -22,8 +23,14 @@ extension StringRemoveEscapeCodesExtension on String {
   ///
   /// This is what `ansiHasControlCodes` asks about, taken out — the tabs, the
   /// line feeds, the carriage returns and the rest of the bytes below `0x20`,
-  /// which is more than an escape code and less than a character. A text meant
-  /// to stay in lines should be split into them first.
+  /// which is more than an escape code and less than a character.
+  ///
+  /// [exclude] names the ones to keep, for a text that is to stay in lines or
+  /// in columns:
+  ///
+  /// ```dart
+  /// print(text.ansiRemoveControlCodes(exclude: {ControlFunctionsC0.LF}));
+  /// ```
   ///
   /// `ESC` is a control code itself, so on a string that carries escape codes
   /// this leaves their bodies behind as text: `${fgRed}x` becomes `[31mx`.
@@ -35,7 +42,20 @@ extension StringRemoveEscapeCodesExtension on String {
   ///
   /// The eight-bit forms of the C1 controls are not touched: `0x9B` is above
   /// `DEL`, and in a Dart string it is a character of its own.
-  String ansiRemoveControlCodes() => replaceAll(controlCodesRe, '');
+  String ansiRemoveControlCodes({
+    Set<ControlFunctionsC0> exclude = const {},
+  }) {
+    if (exclude.isEmpty) {
+      return replaceAll(controlCodesRe, '');
+    }
+
+    final kept = {for (final code in exclude) code.code};
+
+    return replaceAllMapped(
+      controlCodesRe,
+      (m) => kept.contains(m[0]) ? m[0]! : '',
+    );
+  }
 
   /// Removes control sequences (CSI) in the text.
   String ansiRemoveCsi() => replaceAll(csiRe, '');

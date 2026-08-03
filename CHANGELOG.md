@@ -22,8 +22,9 @@ Added:
 - `ansiHasUnderlineColor` and `ansiRemoveUnderlineColor`: the extensions knew
   the foreground and the background but not the underline colour.
 - `ansiRemoveControlCodes`, the other half of `ansiHasControlCodes`: the C0
-  set and `DEL` taken out. `ESC` is one of them, so the escape codes come out
-  first or their bodies are left behind as text.
+  set and `DEL` taken out, with `exclude` for the ones to keep — a text that
+  is to stay in lines keeps its `LF`. `ESC` is one of them, so the escape
+  codes come out first or their bodies are left behind as text.
 - `Colors implements Comparable`, so a list of them can be sorted.
 - `ansiShowControlFunctions` and `ansiOptimizeControlFunctions`, which used to
   live in the tests though the README and the examples took them for public.

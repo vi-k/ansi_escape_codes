@@ -1067,7 +1067,8 @@ The rest of the extensions, in one breath: `ansiHasUnderlineColor` and
 above do for the foreground and the background; `ansiHasControlCodes` and
 `ansiRemoveControlCodes` ask about and take out the C0 bytes and `DEL` rather
 than the escape codes — `ESC` is one of those bytes, so take the escape codes
-out first or their bodies are left behind as text; `lengthWithoutEscapeCodes` is
+out first or their bodies are left behind as text, and name the ones to keep
+with `exclude: {ControlFunctionsC0.LF}`; `lengthWithoutEscapeCodes` is
 `Parser.length` for a string read once; `ansiShowControlFunctions` and
 `ansiOptimizeControlFunctions` are `Parser.showControlFunctions` and
 `Parser.optimize` for a string read once.
