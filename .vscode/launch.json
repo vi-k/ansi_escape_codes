@@ -53,12 +53,16 @@
             "program": "example/progress_indicator.dart",
         },
         {
-            // Without the debugger attached: it slows the VM down unevenly,
-            // and a benchmark run under it measures the debugger.
+            // noDebug: the debugger slows the VM down unevenly, and a
+            // benchmark run under it measures the debugger.
+            //
+            // --color: this terminal answers "no" to being asked whether it
+            // can do escape codes, and then shows them perfectly well.
             "name": "benchmark",
             "request": "launch",
             "type": "dart",
             "program": "benchmark/parser_benchmark.dart",
+            "args": ["--color"],
             "noDebug": true,
         },
     ]
