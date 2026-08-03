@@ -66,6 +66,10 @@ sealed class Color {
   String get id;
 
   /// The same colour, set on [target] — which is what [id] then names it by.
+  ///
+  /// The package's own: a colour is named by the slot of the state it is held
+  /// in, and the states set the target themselves.
+  @internal
   Color on(ColorTarget target);
 }
 
@@ -77,6 +81,7 @@ sealed class Color {
 sealed class ExtendedColor extends Color {
   const ExtendedColor([super._target]);
 
+  @internal
   @override
   ExtendedColor on(ColorTarget target);
 }

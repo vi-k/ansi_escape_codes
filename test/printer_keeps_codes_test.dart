@@ -39,12 +39,12 @@ void main() {
 
     test('and the style is still written by the printer', () {
       expect(
-        printed('$cursorUp x', defaultStyle: red),
+        printed('$cursorUp x', defaultStyle: Styles.red),
         '[reset][fg256Red][CSI CUU] x[reset]',
         reason: 'the default style is put on before the code that reads it',
       );
       expect(
-        printed('${fgGreen}x${resetFg}y', defaultStyle: red),
+        printed('${fgGreen}x${resetFg}y', defaultStyle: Styles.red),
         '[reset][fgGreen]x[fg256Red]y[reset]',
         reason: 'an SGR sequence is written by the transition, not passed on, '
             'and what it resets to is the default style',

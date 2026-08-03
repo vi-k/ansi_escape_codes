@@ -95,7 +95,7 @@ void main(List<String> args) {
   _bench('by the ready-to-use constants', () {
     _sink = '$fgRed$bold$subject$resetBoldAndDim$resetFg';
   });
-  _bench('by a style', () => _sink = red.bold(subject));
+  _bench('by a style', () => _sink = Styles.red.bold(subject));
   final printer = Printer(output: (_) {});
   _bench('by a printer', () => _sink = printer.prepare(subject));
   final stacked = StackedPrinter(output: (_) {});

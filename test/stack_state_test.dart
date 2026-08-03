@@ -1,5 +1,4 @@
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
-import 'package:ansi_escape_codes/style.dart' as styles;
 import 'package:test/test.dart';
 
 import 'utils.dart';
@@ -128,14 +127,14 @@ void main() {
   group('Style.call on unbalanced input:', () {
     test('keeps the style of the caller', () {
       expect(
-        Parser(styles.red('${resetFg}hello')).showControlFunctions(),
+        Parser(Styles.red('${resetFg}hello')).showControlFunctions(),
         '[reset][fg256Red]hello[reset]',
       );
     });
 
     test('keeps an attribute of the caller', () {
       expect(
-        Parser(styles.style.bold('${resetBoldAndDim}x')).showControlFunctions(),
+        Parser(Styles.bold('${resetBoldAndDim}x')).showControlFunctions(),
         '[reset][bold]x[reset]',
       );
     });

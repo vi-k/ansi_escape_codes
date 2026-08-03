@@ -21,13 +21,58 @@ void main() {
       );
     });
 
+    test('by the slot it is held in, however the style was built', () {
+      expect(
+        const Style(foreground: Color16.red).foregroundColor?.id,
+        'fgRed',
+        reason: 'a const constructor cannot dress a colour; the slot does',
+      );
+      expect(
+        const Style(background: Color256.red).backgroundColor?.id,
+        'bg256Red',
+      );
+      expect(
+        const Style(underlineColor: Color256.red).underlineColorValue?.id,
+        'underline256Red',
+      );
+
+      final asBackground = Color256.red.on(ColorTarget.background);
+      expect(
+        Style(foreground: asBackground).foregroundColor?.id,
+        'fg256Red',
+        reason: 'the colour was set on the background and put in front',
+      );
+      expect(
+        Style(foreground: asBackground)('x'),
+        Style.terminalColors.foreground(Color256.red)('x'),
+        reason: 'and the codes were right all along',
+      );
+    });
+
+    test('the same from a constant of Styles, which is dressed already', () {
+      expect(Styles.red.foregroundColor?.id, 'fg256Red');
+      expect(Styles.bgRed.backgroundColor?.id, 'bg256Red');
+      expect(Styles.underlineRed.underlineColorValue?.id, 'underline256Red');
+      expect(
+        Styles.gray12.foregroundColor?.id,
+        Style.terminalColors.gray12.foregroundColor?.id,
+        reason: 'the constant and the getter name it alike',
+      );
+    });
+
     test('by the name of the constant that writes it, whoever set it', () {
       const red = Color256.red;
 
-      expect(style.foreground(red).foregroundColor?.id, 'fg256Red');
-      expect(style.background(red).backgroundColor?.id, 'bg256Red');
       expect(
-        style.underlineColor(red).underlineColorValue?.id,
+        Style.terminalColors.foreground(red).foregroundColor?.id,
+        'fg256Red',
+      );
+      expect(
+        Style.terminalColors.background(red).backgroundColor?.id,
+        'bg256Red',
+      );
+      expect(
+        Style.terminalColors.underlineColor(red).underlineColorValue?.id,
         'underline256Red',
         reason: 'the constant is underline256Red, not underlineColor256Red',
       );

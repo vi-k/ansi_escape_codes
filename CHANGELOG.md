@@ -78,7 +78,10 @@ Fixed:
   keeps the functions standing beside the colour: `CSI 1;31 SGR` becomes
   `CSI 1 SGR` rather than going whole.
 - A colour held by a `Stack` named itself `?256Red`, where the same colour from
-  a `Parser` said `fg256Red`.
+  a `Parser` said `fg256Red`. A `Style` written as a constant said the same,
+  and a colour set on one target and then held in another slot answered under
+  the target rather than the slot — `bg256Red` for the colour of the text. The
+  slot names it now, whichever way the style was built.
 - `NoStyle` passed for the colours of the terminal.
 - A private-use sequence was reported as an unknown one.
 - `Color256.rgb` and `Color256.gray` checked their arguments in an assert only,
@@ -139,23 +142,33 @@ Breaking changes:
 - `Csi`, `Esc` and `EscapeCode` are sealed, and this release adds types under
   them. A `switch` that covers them exhaustively has to name the new ones. `is`
   checks, casts and the identifiers entities are shown by are unchanged.
-- `Color.withPrefix(String)` is `Color.on(ColorTarget)`. The string was a way
-  to be wrong — `withPrefix('bg256')` gave `bg256256Gray5` — and it let the
-  name of a target be written out by hand, which is how the colour of the
-  underline came to call itself `underlineColor256Red` where the constant is
-  `underline256Red`. `ColorTarget` takes the three that can be set, and takes
-  the name from the SGR function that sets them, so there is one place for it.
+- `Color.withPrefix(String)` is gone, and nothing public stands in its place:
+  a colour is named by the slot of the state it is held in, so
+  `Style(background: c).backgroundColor?.id` is what `c.withPrefix('bg256')`
+  was for. The string was a way to be wrong — `withPrefix('bg256')` gave
+  `bg256256Gray5` — and it let the name of a target be written out by hand,
+  which is how the colour of the underline came to call itself
+  `underlineColor256Red` where the constant is `underline256Red`. `ColorTarget`
+  names the three slots now, and takes the name from the SGR function that sets
+  them, so there is one place for it.
 - The colours on `Style` — `red`, `bgYellow`, `rgb531` and the rest of that
   table — now come from an extension, `StyleColors`, rather than from the class
   itself. Written the usual way they behave as they did; what an extension
   cannot do is answer a `dynamic` receiver.
-- The predefined styles at the top level are 20 names rather than 530: `style`,
-  which carries nothing and is where a chain starts, the sixteen colours of the
-  text, and `foreground`, `background` and `underlineColor`. Everything else —
-  the fifteen properties, the sixteen backgrounds, the 432 of the RGB cube and
-  the 48 greys — is reached through the chain: `bold` is `style.bold`, `bgRed`
-  is `style.bgRed`, `rgb531` is `style.rgb531`. `red.bold.bgYellow` is what it
-  always was.
+- The predefined styles are constants of one class, `Styles`, and there are 783
+  of them: the fifteen properties — `Styles.bold`, `Styles.italic` — and the
+  256-colour table three times over, `Styles.red` for the colour of the text,
+  `Styles.bgRed` for the colour behind it, and `Styles.underlineRed` for the
+  colour of the underline, which had a name in neither the 530 nor the getters.
+  Being constants, a style can be held in one: `const error = Styles.red`.
+
+  The 530 top-level names are gone, and with them `style`, `foreground`,
+  `background` and `underlineColor`. A chain that starts at nothing at all
+  starts at `Style.terminalColors`; the three functions are the constructor,
+  `Style(foreground: c)`, or the methods of the same name on a style.
+
+  The colours are still getters as well — the `StyleColors` extension — so
+  `Styles.red.bold.bgYellow` is one chain, as `red.bold.bgYellow` was.
 
   This is what took the 31 names that `style.dart` and `ansi_escape_codes.dart`
   both claimed out of the way, and the second now exports the styles as well:

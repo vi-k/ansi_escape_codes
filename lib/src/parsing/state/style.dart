@@ -78,14 +78,30 @@ enum ScriptStyle {
 final class Style extends State<Style> {
   final int _flags;
 
-  @override
-  final Color? foregroundColor;
+  final Color? _foreground;
+  final Color? _background;
+  final ExtendedColor? _underlineColor;
 
+  /// The colour of the text, or null where the terminal's own is in force.
+  ///
+  /// {@macro ansi_escape_codes.State.slotNamesTheColour}
   @override
-  final Color? backgroundColor;
+  Color? get foregroundColor => _foreground?.on(ColorTarget.foreground);
 
+  /// The colour behind the text, or null where the terminal's own is in
+  /// force.
+  ///
+  /// {@macro ansi_escape_codes.State.slotNamesTheColour}
   @override
-  final ExtendedColor? underlineColorValue;
+  Color? get backgroundColor => _background?.on(ColorTarget.background);
+
+  /// The colour of the underline, or null where it takes the colour of the
+  /// text.
+  ///
+  /// {@macro ansi_escape_codes.State.slotNamesTheColour}
+  @override
+  ExtendedColor? get underlineColorValue =>
+      _underlineColor?.on(ColorTarget.underline);
 
   /// A style carrying whatever is asked for here, and the terminal's own
   /// where nothing is.
@@ -143,15 +159,15 @@ final class Style extends State<Style> {
             (overline ? _overline : 0) |
             (superscript ? _superscript : 0) |
             (subscript && !superscript ? _subscript : 0),
-        foregroundColor = foreground,
-        backgroundColor = background,
-        underlineColorValue = underlineColor;
+        _foreground = foreground,
+        _background = background,
+        _underlineColor = underlineColor;
 
   const Style._(
     this._flags,
-    this.foregroundColor,
-    this.backgroundColor,
-    this.underlineColorValue,
+    this._foreground,
+    this._background,
+    this._underlineColor,
   );
 
   /// The state a terminal is in before anything is written to it: its own
@@ -308,23 +324,23 @@ final class Style extends State<Style> {
   Style foreground(Color color) => Style._(
         _flags,
         color.on(ColorTarget.foreground),
-        backgroundColor,
-        underlineColorValue,
+        _background,
+        _underlineColor,
       );
 
   @override
   Style background(Color color) => Style._(
         _flags,
-        foregroundColor,
+        _foreground,
         color.on(ColorTarget.background),
-        underlineColorValue,
+        _underlineColor,
       );
 
   @override
   Style underlineColor(ExtendedColor color) => Style._(
         _flags,
-        foregroundColor,
-        backgroundColor,
+        _foreground,
+        _background,
         color.on(ColorTarget.underline),
       );
 
@@ -365,15 +381,15 @@ final class Style extends State<Style> {
       );
   @override
   Style get resetForeground =>
-      Style._(_flags, null, backgroundColor, underlineColorValue);
+      Style._(_flags, null, _background, _underlineColor);
 
   @override
   Style get resetBackground =>
-      Style._(_flags, foregroundColor, null, underlineColorValue);
+      Style._(_flags, _foreground, null, _underlineColor);
 
   @override
   Style get resetUnderlineColor =>
-      Style._(_flags, foregroundColor, backgroundColor, null);
+      Style._(_flags, _foreground, _background, null);
 
   /// The codes that take a terminal from its own colours to this style.
   ///
@@ -385,9 +401,9 @@ final class Style extends State<Style> {
 
   Style _setFlags(int flags) => Style._(
         flags,
-        foregroundColor,
-        backgroundColor,
-        underlineColorValue,
+        _foreground,
+        _background,
+        _underlineColor,
       );
 
   @override

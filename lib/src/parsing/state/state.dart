@@ -9,6 +9,7 @@ import '../parser/parser.dart';
 
 part 'style.dart';
 part 'style_colors.dart';
+part 'styles.dart';
 part 'stack.dart';
 
 /// The base class for tracking the state of ANSI escape codes.
@@ -87,14 +88,25 @@ sealed class State<S extends State<S>> {
   ScriptStyle? get scriptStyle;
 
   /// The colour of the text, or null where the terminal's own is in force.
+  ///
+  /// {@template ansi_escape_codes.State.slotNamesTheColour}
+  /// The colour answers to [Color.id] under the name of the slot it is held
+  /// in — `fgRed` here, `bg256Gray5` in [backgroundColor] — whatever it was
+  /// set on before it was given. A colour standing on its own has no slot,
+  /// and says so with a `?`.
+  /// {@endtemplate}
   Color? get foregroundColor;
 
   /// The colour behind the text, or null where the terminal's own is in
   /// force.
+  ///
+  /// {@macro ansi_escape_codes.State.slotNamesTheColour}
   Color? get backgroundColor;
 
   /// The colour of the underline, or null where it takes the colour of the
   /// text.
+  ///
+  /// {@macro ansi_escape_codes.State.slotNamesTheColour}
   ExtendedColor? get underlineColorValue;
 
   /// This state with bold added.

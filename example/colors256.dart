@@ -19,16 +19,15 @@ void main() {
       ..writeln('Standard colors:')
       ..writeln();
 
-    final values = List<(Color256, Color256)>.generate(16, (i) {
+    final values = List<Style>.generate(16, (i) {
       final color = Color256(Colors.values[i]);
-      return (
-        color.on(ColorTarget.foreground),
-        color.on(ColorTarget.background),
-      );
+      return Style(foreground: color, background: color);
     });
 
-    int combine(int max, (Color256, Color256) value) =>
-        math.max(math.max(max, value.$1.id.length), value.$2.id.length);
+    int combine(int max, Style style) => math.max(
+          math.max(max, style.foregroundColor!.id.length),
+          style.backgroundColor!.id.length,
+        );
 
     final colWidths = [
       values.take(8).fold(0, combine) + 2,
@@ -38,8 +37,10 @@ void main() {
     for (var i = 0; i < 8; i++) {
       for (var j = 0; j < 2; j++) {
         final index = i + j * 8;
-        final (fg, bg) = values[index];
+        final style = values[index];
         if (j != 0) stdout.write('  ');
+        final fg = style.foregroundColor! as Color256;
+        final bg = style.backgroundColor! as Color256;
         stdout
           ..write(index.toString().padRight(2))
           ..write(fg256(fg.index))
@@ -66,14 +67,15 @@ void main() {
       for (var j = 0; j < columns; j++) {
         final index = 16 + i + j * 216 ~/ columns;
         final color = Color256(Colors.values[index]);
+        final style = Style(foreground: color, background: color);
         if (j != 0) stdout.write('  ');
         stdout
           ..write(index.toString().padRight(3))
           ..write(fg256(index))
-          ..write(_c(color.on(ColorTarget.foreground).id, fieldWidth))
+          ..write(_c(style.foregroundColor!.id, fieldWidth))
           ..write(reset)
           ..write(bg256(index))
-          ..write(_c(color.on(ColorTarget.background).id, fieldWidth))
+          ..write(_c(style.backgroundColor!.id, fieldWidth))
           ..write(reset);
       }
       stdout.writeln();
@@ -93,14 +95,15 @@ void main() {
       for (var j = 0; j < columns; j++) {
         final index = 232 + i + j * 24 ~/ columns;
         final color = Color256(Colors.values[index]);
+        final style = Style(foreground: color, background: color);
         if (j != 0) stdout.write('  ');
         stdout
           ..write(index.toString().padRight(3))
           ..write(fg256(index))
-          ..write(_c(color.on(ColorTarget.foreground).id, fieldWidth))
+          ..write(_c(style.foregroundColor!.id, fieldWidth))
           ..write(reset)
           ..write(bg256(index))
-          ..write(_c(color.on(ColorTarget.background).id, fieldWidth))
+          ..write(_c(style.backgroundColor!.id, fieldWidth))
           ..write(reset);
       }
       stdout.writeln();
