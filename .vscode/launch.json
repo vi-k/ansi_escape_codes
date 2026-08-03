@@ -52,5 +52,14 @@
             "type": "dart",
             "program": "example/progress_indicator.dart",
         },
+        {
+            // Without the debugger attached: it slows the VM down unevenly,
+            // and a benchmark run under it measures the debugger.
+            "name": "benchmark",
+            "request": "launch",
+            "type": "dart",
+            "program": "benchmark/parser_benchmark.dart",
+            "noDebug": true,
+        },
     ]
 }
