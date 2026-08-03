@@ -202,6 +202,11 @@ sealed class State<S extends State<S>> {
   /// states are the same, and where [other] is a [NoStyle], which is the
   /// state that writes nothing by definition.
   ///
+  /// Where the standard has no code for the difference, what it does have is
+  /// written instead: bold and dim are taken off together by `CSI 22`, so
+  /// going from both to bold alone is `CSI 22;1` — the pair off, then the
+  /// bold back on.
+  ///
   /// [skipReset] leaves out the codes that take properties off and
   /// [skipSet] the ones that put them on — each of use where the far end is
   /// known to need only the other half.
