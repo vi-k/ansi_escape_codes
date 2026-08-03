@@ -92,6 +92,23 @@ final class _ParserBase<S extends State<S>> {
   Matches<S>? _matches;
   String? _plainString;
 
+  /// Where [stateAt] stopped last time, so that the next question can carry
+  /// on from there.
+  ///
+  /// Asking about position after position — laying text out, measuring it —
+  /// would otherwise walk the string from the beginning every time, and cost
+  /// the questions times the length of it.
+  Iterator<Match<S>>? _cursor;
+
+  /// How much text the cursor has passed.
+  int _cursorEnd = 0;
+
+  /// Where the piece of text [_cursorState] belongs to begins.
+  int _cursorStart = 0;
+
+  /// The state of the piece of text the last question was answered from.
+  S? _cursorState;
+
   _ParserBase(this.input, this.initialState);
 
   String get _requirePlainString => _plainString ??= () {
@@ -133,9 +150,10 @@ final class _ParserBase<S extends State<S>> {
   /// grow question by question, and builds the plain text [length], [indexOf]
   /// and the other string methods work on.
   ///
-  /// It pays where the questions are going to cover the string anyway, and
-  /// costs where they are not: reading everything for questions about the
-  /// first line of a hundred is a hundred lines of reading thrown away.
+  /// It is for [length], [indexOf] and the other string methods, which need
+  /// the whole of the text before they can answer anything. [stateAt] and
+  /// [substring] do not gain by it — they keep their place as it is — and lose
+  /// by it where the questions are not going to reach the end of the string.
   /// `benchmark/parser_benchmark.dart` measures both.
   void prepare() {
     matches._requireParsingResult;
@@ -168,25 +186,47 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// [pos] is the position in the string without ANSI escape codes.
   ///
-  /// Reads the string up to [pos] and stops. What it read is kept, so the
-  /// next question carries on from there; see [prepare] for reading it all at
-  /// once instead.
+  /// Reads the string up to [pos] and stops, and keeps its place: a question
+  /// about a position at or after the last one carries on from there rather
+  /// than walking the string again. Asking about position after position — as
+  /// laying text out does — costs one walk in all, not one each.
+  ///
+  /// Going back is allowed and starts the walk over.
   ///
   /// See also [finalState].
   S stateAt(int pos) {
     RangeError.checkNotNegative(pos, 'pos');
 
-    var end = 0;
-    for (final m in matches) {
-      if (m.entity case Text(:final string)) {
-        end += string.length;
-        if (end > pos) {
-          return m.state;
+    // The piece of text the last question was answered from may hold this
+    // one as well.
+    if (_cursorState case final state?
+        when pos >= _cursorStart && pos < _cursorEnd) {
+      return state;
+    }
+
+    // Anything else already passed means going back, and the walk starts over.
+    if (_cursor == null || pos < _cursorEnd) {
+      _cursor = matches.iterator;
+      _cursorEnd = 0;
+      _cursorStart = 0;
+      _cursorState = null;
+    }
+
+    final cursor = _cursor!;
+    while (cursor.moveNext()) {
+      if (cursor.current.entity case Text(:final string)) {
+        final start = _cursorEnd;
+        _cursorEnd += string.length;
+
+        if (_cursorEnd > pos) {
+          _cursorStart = start;
+
+          return _cursorState = cursor.current.state;
         }
       }
     }
 
-    RangeError.checkValidIndex(pos, null, 'pos', end + 1);
+    RangeError.checkValidIndex(pos, null, 'pos', _cursorEnd + 1);
 
     return finalState;
   }

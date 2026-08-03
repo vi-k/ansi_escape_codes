@@ -884,18 +884,21 @@ parser.stateAt(2); // reads as far as the third character
 parser.finalState; // reads on from there, not from the beginning
 ```
 
-`prepare` reads the whole string in one go rather than letting it grow question
-by question, and builds the plain text that `length`, `indexOf`, `contains` and
-the rest of the string methods work on:
+It keeps its place as well as its reading, so asking about position after
+position — which is what laying text out does — costs one walk of the string
+in all rather than one walk each. Going back is allowed and starts the walk
+over.
+
+`prepare` reads the whole string in one go and builds the plain text that
+`length`, `indexOf`, `contains` and the rest of the string methods work on:
 
 ```dart
 final parser = Parser(text)..prepare();
 ```
 
-It pays where the questions are going to cover the string anyway, and costs
-where they are not — reading all of it to answer about the first line of a
-hundred is ninety-nine lines of reading thrown away. `benchmark/` measures
-both cases.
+Those methods are what it is for. `stateAt` and `substring` do not gain by it,
+and lose by it where the questions are not going to reach the end of the
+string. `benchmark/` measures both.
 
 In the above example, the text state was not set to default, i.e. the text was
 not closed:
