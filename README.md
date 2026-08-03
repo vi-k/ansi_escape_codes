@@ -338,8 +338,8 @@ print('\x1B[38;2;255;128;0m Orange text \x1B[0m');
 print('$ESC[38;2;255;128;0m Orange text $ESC[0m');
 print('${CSI}38;2;255;128;0$SGR Orange text ${CSI}0$SGR');
 print('$CSI$FOREGROUND;$COLOR_RGB;255;128;0$SGR Orange text $CSI$RESET$SGR');
-print('${fgRgbOpen}255;128;0$fgRgbClose Orange text $resetFg'); // Not constant!
-print('${fgRgb(255, 128, 0)} Orange text $resetFg'); // Not constant!
+print('${fgRgbOpen}255;128;0$fgRgbClose Orange text $reset');
+print('${fgRgb(255, 128, 0)} Orange text $reset'); // Not constant!
 ```
 
 Control codes are deliberately named in **SCREAMING_SNAKE_CASE** as opposed to
