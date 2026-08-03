@@ -1,8 +1,11 @@
 # Written for whoever works on the package, not for whoever installs it.
 #
-# doc/ is where the design notes and specs live: pub.dev renders only README,
-# CHANGELOG and LICENSE, so everything else would ride along in the archive
-# unread. What `dart doc` generates under doc/api/ is kept out of git instead.
-doc/
+# docs/ is where the design notes and specs live. doc/ is published: pub.dev
+# renders only README, CHANGELOG and LICENSE, but what rides in the archive is
+# there for whoever opens the package, and a link from the readme reaches it.
+# A .pubignore replaces .gitignore rather than adding to it, so what `dart doc`
+# generates has to be named here as well or a local run of it rides along.
+docs/
+doc/api/
 SPEC.md
 TODO.md

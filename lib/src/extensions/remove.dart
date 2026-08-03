@@ -8,10 +8,13 @@ extension StringRemoveEscapeCodesExtension on String {
   ///
   /// The same as `Parser(text).removeAll()` — they read by the same pattern —
   /// and quicker, since nothing is built for what is taken out. A broken
-  /// sequence goes with the rest: an `ESC` with nothing after it, a control
-  /// sequence with no final byte, an OSC string that was never terminated,
-  /// which runs to the next sequence or to the end as a terminal waiting for
-  /// its terminator would.
+  /// sequence goes with the rest: an `ESC` with nothing after it, or an OSC
+  /// string that was never terminated, which runs to the next sequence or to
+  /// the end as a terminal waiting for its terminator would.
+  ///
+  /// A control sequence with no final byte is not a sequence at all: `ESC [`
+  /// goes and what followed it stays, so `'a\x1B[31'` leaves `'a31'`. That is
+  /// what a terminal is left holding too, and `Parser` reads it the same way.
   ///
   /// What stays is everything that is not an escape code, control codes
   /// included: the tabs, the line feeds and the `DEL`. The eight-bit forms of

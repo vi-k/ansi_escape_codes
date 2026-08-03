@@ -145,10 +145,9 @@ final class _ParserBase<S extends State<S>> {
   /// Reads the whole string, ahead of the questions asked of it.
   ///
   /// [stateAt] and [substring] read only as far as they must, and what they
-  /// read is kept: the question after them picks up where they stopped rather
-  /// than starting over. This reads it all in one go instead of letting it
-  /// grow question by question, and builds the plain text [length], [indexOf]
-  /// and the other string methods work on.
+  /// read is kept, so nothing is parsed twice. This reads it all in one go
+  /// instead of letting it grow question by question, and builds the plain
+  /// text [length], [indexOf] and the other string methods work on.
   ///
   /// It is for [length], [indexOf] and the other string methods, which need
   /// the whole of the text before they can answer anything. [stateAt] and
@@ -284,8 +283,9 @@ final class _ParserBase<S extends State<S>> {
   /// [close] is whether to close the substring with the default style.
   ///
   /// Reads the string up to the end of the piece and stops. What it read is
-  /// kept, so taking another piece carries on from there; see [prepare] for
-  /// reading it all at once instead.
+  /// kept, so a second piece is not parsed again — though it is walked again,
+  /// from the start of the string every time. See [prepare] for reading it all
+  /// at once instead.
   String substring(
     int start, {
     int? maxLength,
@@ -376,6 +376,11 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// The exclamation mark is red: at position 5 stands the `reset`, and this
   /// goes in front of it. See [insertAfter] for the other side of it.
+  ///
+  /// Hyperlinks are the one thing that cannot be given back. They do not nest
+  /// — the sequence that closes one closes them all — so text that opens a
+  /// link of its own, inserted inside a link that was already open, ends that
+  /// one too, and the rest of it is no longer clickable.
   String insertBefore(int pos, String text) => _insert(pos, text, after: false);
 
   /// Inserts [text] at the plain text [pos], behind the escape codes standing

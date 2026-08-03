@@ -337,8 +337,10 @@ const String eraseInPageToEnd = '$eraseInPageOpen$eraseInPageClose';
 /// [erasePage].
 const String eraseInPageToBegin = '${eraseInPageOpen}1$eraseInPageClose';
 
-/// Erase In Page: erases entire page and moves cursor to
-/// upper left.
+/// Erase In Page: erases the entire page.
+///
+/// The cursor stays where it was; `'$erasePage$cursorPosToTopLeft'` is the
+/// pair that clears the screen and goes back to the corner.
 ///
 /// See [ED].
 ///

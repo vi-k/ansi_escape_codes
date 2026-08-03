@@ -18,9 +18,10 @@ part 'stack.dart';
 /// properties are maintained.
 ///
 /// A state is never changed: every getter and method below that returns an
-/// `S` gives back a new state with the change made, leaving this one as it
-/// was. `style.bold.italic` is three states, and the first two are still
-/// there to be used.
+/// `S` gives back the state with the change made, leaving this one as it was.
+/// `style.bold.italic` is three states, and the first two are still there to
+/// be used. Where there is nothing to change — a [Stack] asked to close an
+/// italic it never opened — the answer is this state itself.
 @immutable
 sealed class State<S extends State<S>> {
   const State();
@@ -200,6 +201,11 @@ sealed class State<S extends State<S>> {
   /// colour code, not a reset and two. The result is empty where the two
   /// states are the same, and where [other] is a [NoStyle], which is the
   /// state that writes nothing by definition.
+  ///
+  /// Where the standard has no code for the difference, what it does have is
+  /// written instead: bold and dim are taken off together by `CSI 22`, so
+  /// going from both to bold alone is `CSI 22;1` — the pair off, then the
+  /// bold back on.
   ///
   /// [skipReset] leaves out the codes that take properties off and
   /// [skipSet] the ones that put them on — each of use where the far end is

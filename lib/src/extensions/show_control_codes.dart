@@ -2,7 +2,7 @@ import '../parsing/control_functions/control_functions_c0.dart';
 
 /// How a control code is to be shown where it must be seen rather than obeyed.
 enum ControlCodeStyle {
-  /// The number of the byte: `0x0A`.
+  /// The number of the byte, the way Dart writes it in a string: `\x0A`.
   charCode,
 
   /// The name the standard gives it: `[LF]`.

@@ -67,6 +67,18 @@ Fixed:
   switched the underline on.
 - An OSC string ended at the wrong place, or nowhere; a URL carrying `;` was
   refused.
+- `SaveCursor`, `RestoreCursor` and `Link` carried a `reset` as their text, so
+  all three were equal to one another — an `Entity` compares by what it is
+  written with — and none of them equalled the same entity read back by the
+  parser.
+- `ansiHasForeground`, `ansiRemoveForeground` and their background pair only
+  saw a colour that was the whole parameter list. `CSI 1;31 SGR`, which is the
+  shape this package's own `optimize` writes, matched nothing, and neither did
+  the colon form `CSI 38:5:196 SGR` the parser has always read. Removal now
+  keeps the functions standing beside the colour: `CSI 1;31 SGR` becomes
+  `CSI 1 SGR` rather than going whole.
+- A colour held by a `Stack` named itself `?256Red`, where the same colour from
+  a `Parser` said `fg256Red`.
 - `NoStyle` passed for the colours of the terminal.
 - A private-use sequence was reported as an unknown one.
 - `Color256.rgb` and `Color256.gray` checked their arguments in an assert only,
@@ -112,6 +124,9 @@ Removed — every name deprecated in an earlier release is gone:
   where nothing at all should be written.
 - `Parser.stateAtPos` and `runZonedAnsiPrinter`. Use `stateAt` and
   `runZonedPrinter`.
+- `foregroundPattern` and `backgroundPattern`, the regular expressions that
+  encoded the assumption a colour is the whole parameter list. Nothing else
+  used them.
 - `MatchingState`, `MatchesResult` and `ParserIterator`, which the parser
   passes to and gets back from its own private methods and nothing else could
   reach. `Matches` and `Match` are unchanged.
