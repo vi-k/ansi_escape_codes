@@ -18,9 +18,10 @@ part 'stack.dart';
 /// properties are maintained.
 ///
 /// A state is never changed: every getter and method below that returns an
-/// `S` gives back a new state with the change made, leaving this one as it
-/// was. `style.bold.italic` is three states, and the first two are still
-/// there to be used.
+/// `S` gives back the state with the change made, leaving this one as it was.
+/// `style.bold.italic` is three states, and the first two are still there to
+/// be used. Where there is nothing to change — a [Stack] asked to close an
+/// italic it never opened — the answer is this state itself.
 @immutable
 sealed class State<S extends State<S>> {
   const State();
