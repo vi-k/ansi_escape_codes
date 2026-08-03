@@ -1324,7 +1324,7 @@ the escape codes. `StackedPrinter` helps solve this problem:
 ```dart
 final printer = StackedPrinter();
 printer.print(text);
-// [bold]Dear Sam, welcome to us![resetBoldAndDim] We are pleased to present to you …
+// [reset][bold]Dear Sam, welcome to us![reset] We are pleased to present to you …
 ```
 
 `StackedPrinter` accumulates state changes and sequentially disables them,
