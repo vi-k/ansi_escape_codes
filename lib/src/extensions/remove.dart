@@ -4,6 +4,18 @@ import '../parsing/patterns/patterns.dart';
 /// Taking escape codes back out of a string, all of them or by kind.
 extension StringRemoveEscapeCodesExtension on String {
   /// Removes any escape codes in the text.
+  ///
+  /// The same as `Parser(text).removeAll()` — they read by the same pattern —
+  /// and quicker, since nothing is built for what is taken out. A broken
+  /// sequence goes with the rest: an `ESC` with nothing after it, a control
+  /// sequence with no final byte, an OSC string that was never terminated,
+  /// which runs to the next sequence or to the end as a terminal waiting for
+  /// its terminator would.
+  ///
+  /// What stays is everything that is not an escape code, control codes
+  /// included: the tabs, the line feeds and the `DEL`. The eight-bit forms of
+  /// the C1 controls stay as well — `0x9B` is no `CSI` in a Dart string, where
+  /// it is a character of its own.
   String ansiRemoveEscapeCodes() => replaceAll(escapeCodesRe, '');
 
   /// Removes control sequences (CSI) in the text.
