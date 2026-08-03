@@ -124,14 +124,21 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     final buf = StringBuffer(reset);
 
     for (final m in parser.matches) {
-      final entity = m.entity;
-      if (entity is Text) {
-        final newState = m.state.changeDefaultsTo(defaultStyle);
-        buf
-          ..write(lastState.transitTo(newState))
-          ..write(entity.string);
-        lastState = newState;
+      // An SGR sequence says what the style is, and the style is written by
+      // the transition below instead of being passed on. Everything else —
+      // the text, and the codes that move the cursor, clear the screen or
+      // open a hyperlink — is the line's own and goes through as it came.
+      if (m.entity case Sgr()) {
+        continue;
       }
+
+      // The style is put on before the code that reads it: erasing and
+      // scrolling take the background colour of the moment.
+      final newState = m.state.changeDefaultsTo(defaultStyle);
+      buf
+        ..write(lastState.transitTo(newState))
+        ..write(m.entity.string);
+      lastState = newState;
     }
 
     buf.write(lastState.transitTo(stateDefaults));
