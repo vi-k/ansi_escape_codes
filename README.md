@@ -53,6 +53,7 @@ print(parser.showControlFunctions()); // [fgRed]ERROR[reset]: the roof is on fir
 - [Writing](#writing)
   - [Constants, and the strings built from them](#constants-and-the-strings-built-from-them)
   - [Ready-to-use functions and constants](#ready-to-use-functions-and-constants)
+  - [Styles](#styles)
   - [Printer](#printer)
   - [StackedPrinter](#stackedprinter)
   - [Printing to a sink](#printing-to-a-sink)
@@ -330,6 +331,68 @@ print('${CSI}4$CUU');
 print('${cursorUpOpen}4$cursorUpClose');
 print(cursorUpN(4)); // Not constant!
 ```
+
+### Styles
+
+The chain — `red.bold`, `style.rgb050.bgRgb010.italic` — reaches the colors
+that have a name. The ones that do not are passed as values:
+
+```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+import 'package:ansi_escape_codes/extensions.dart';
+
+final mine = style
+    .foreground(Color256.rgb(5, 2, 0)) // the 6x6x6 cube
+    .background(ColorRgb(0x33, 0x66, 0x99)) // 24-bit
+    .underlineColor(Color256.gray(12)) // one of the 24 grays
+    .underline;
+
+print(mine('text').ansiShowEscapeSequences());
+// [CSI 0 SGR][CSI 38;5;208 SGR][CSI 48;2;51;102;153 SGR][CSI 58;5;244 SGR]
+// [CSI 4 SGR]text[CSI 0 SGR]
+```
+
+Every entry of the table has a name of its own as well — `Color256.rgb520`,
+`Color256.gray12`, `Color256.red` — and `Color16` holds the sixteen the
+terminal names itself, which are the ones the short `CSI 31` form writes. The
+underline is the one that takes no `Color16`: the standard gives it no
+sixteen-color form, so `underlineColor` asks for an `ExtendedColor`.
+
+A style hands the colors back as it was given them, and each knows what it was
+set on:
+
+```dart
+print(mine.foregroundColor?.id); // fg256Rgb520
+print(mine.backgroundColor?.id); // bgRgb(51,102,153)
+print(mine.underlineColorValue?.id); // underline256Gray12
+```
+
+That is what `ColorTarget` is for. A color on its own has no target and says so
+with a `?`; `foreground`, `background` and `underlineColor` set it themselves,
+so `on` is only needed to name a color outside a style:
+
+```dart
+print(Color256.rgb(5, 2, 0).id); // ?256Rgb520
+print(Color256.rgb(5, 2, 0).on(ColorTarget.background).id); // bg256Rgb520
+```
+
+Calling a style wraps a string. Where the two halves are wanted apart — a
+buffer written to in pieces, a style that outlives one call — they are `open`
+and `close`:
+
+```dart
+final warning = red.bold;
+
+print(warning.open.ansiShowEscapeSequences()); // [CSI 38;5;1 SGR][CSI 1 SGR]
+print(warning.close.ansiShowEscapeSequences()); // [CSI 0 SGR]
+print(warning('text').ansiShowEscapeSequences());
+// [CSI 0 SGR][CSI 38;5;1 SGR][CSI 1 SGR]text[CSI 0 SGR]
+```
+
+`open` does not begin with a reset: it writes the difference from the
+terminal's own colors, and assumes the terminal is in them. The call form
+writes the reset first. `NoStyle` answers with an empty string to both, so code
+holding a style needs no test for it.
 
 ### Printer
 
@@ -1014,6 +1077,28 @@ A sequence carrying something other than what its type promises — two
 parameters where one is taken, or a part `ErasePart` has no name for, like the
 xterm `CSI 3 J` — keeps its parameters and stays a plain `CsiCommon` rather
 than being given made-up values.
+
+Every recognized sequence keeps its parameters as they were written, in
+`params`: a `CsiParamNumber` where the parameter is a number, a
+`CsiParamDefault` where it was left out, and a `CsiParamNumbers` where it
+carries sub-parameters after a colon. The colon form is read as the standard
+means it, so `CSI 4:3 m` is an underline and `CSI 38:2::51:102:153 m` is an RGB
+color, and what the sub-parameters say beyond that — a curly underline rather
+than a straight one — is in `params` rather than in the style:
+
+```dart
+const text = '\x1B[4:3m wavy \x1B[;5H\x1B[38:2::51:102:153m';
+
+for (final m in Parser(text).matches) {
+  if (m.entity case Sgr(:final params, :final id) ||
+      CsiCommon(:final params, :final id)) {
+    print('$id  $params');
+  }
+}
+// underline  [4:3]
+// CSI ;5 CUP  [, 5]
+// fgRgb(51,102,153)  [38:2:0:51:102:153]
+```
 
 ### Unknown sequences
 
