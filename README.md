@@ -884,15 +884,21 @@ parser.stateAt(2); // reads as far as the third character
 parser.finalState; // reads on from there, not from the beginning
 ```
 
-`prepare` reads the whole string in one go rather than letting it grow question
-by question, and builds the plain text that `length`, `indexOf`, `contains` and
-the rest of the string methods work on:
+It keeps its place as well as its reading, so asking about position after
+position — which is what laying text out does — costs one walk of the string
+in all rather than one walk each. Going back is allowed and starts the walk
+over.
+
+`prepare` reads the whole string in one go and builds the plain text that
+`length`, `indexOf`, `contains` and the rest of the string methods work on:
 
 ```dart
 final parser = Parser(text)..prepare();
 ```
 
-It is worth calling when many questions are coming and pointless before one.
+Those methods are what it is for. `stateAt` and `substring` do not gain by it,
+and lose by it where the questions are not going to reach the end of the
+string. `benchmark/` measures both.
 
 In the above example, the text state was not set to default, i.e. the text was
 not closed:
@@ -981,6 +987,10 @@ For a string parsed only once there are the `ansiInsertBefore` and
 ### Quick analysis
 
 You can quickly analyze a string without using `Parser` by using extensions.
+They are also the quicker way when one answer is all that is wanted: they work
+by regular expression, where `Parser` builds an entity for every code it meets
+— on a page of colored log, `ansiRemoveEscapeCodes` takes about two thirds of
+what `Parser.removeAll` does.
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
@@ -1054,8 +1064,11 @@ print(withoutAllEscapeCodes.ansiShowEscapeSequences());
 
 The rest of the extensions, in one breath: `ansiHasUnderlineColor` and
 `ansiRemoveUnderlineColor` do for the color of the underline what the pairs
-above do for the foreground and the background; `ansiHasControlCodes` asks
-about the C0 bytes rather than the escape codes; `lengthWithoutEscapeCodes` is
+above do for the foreground and the background; `ansiHasControlCodes` and
+`ansiRemoveControlCodes` ask about and take out the C0 bytes and `DEL` rather
+than the escape codes — `ESC` is one of those bytes, so take the escape codes
+out first or their bodies are left behind as text, and name the ones to keep
+with `exclude: {ControlFunctionsC0.LF}`; `lengthWithoutEscapeCodes` is
 `Parser.length` for a string read once; `ansiShowControlFunctions` and
 `ansiOptimizeControlFunctions` are `Parser.showControlFunctions` and
 `Parser.optimize` for a string read once.

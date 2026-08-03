@@ -52,6 +52,12 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
       _current = match;
       _pos = match.end;
 
+      // Taking a match from the cache moves the position, and what this
+      // iterator had found ahead of the old one belongs to where it was.
+      // Reading on starts the search again from here.
+      _next = null;
+      _regExpIterator = null;
+
       return true;
     }
 
