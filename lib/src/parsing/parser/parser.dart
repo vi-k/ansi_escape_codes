@@ -133,7 +133,10 @@ final class _ParserBase<S extends State<S>> {
   /// grow question by question, and builds the plain text [length], [indexOf]
   /// and the other string methods work on.
   ///
-  /// Worth calling when many questions are coming, pointless before one.
+  /// It pays where the questions are going to cover the string anyway, and
+  /// costs where they are not: reading everything for questions about the
+  /// first line of a hundred is a hundred lines of reading thrown away.
+  /// `benchmark/parser_benchmark.dart` measures both.
   void prepare() {
     matches._requireParsingResult;
     _requirePlainString;

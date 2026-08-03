@@ -892,7 +892,10 @@ the rest of the string methods work on:
 final parser = Parser(text)..prepare();
 ```
 
-It is worth calling when many questions are coming and pointless before one.
+It pays where the questions are going to cover the string anyway, and costs
+where they are not — reading all of it to answer about the first line of a
+hundred is ninety-nine lines of reading thrown away. `benchmark/` measures
+both cases.
 
 In the above example, the text state was not set to default, i.e. the text was
 not closed:
@@ -981,6 +984,10 @@ For a string parsed only once there are the `ansiInsertBefore` and
 ### Quick analysis
 
 You can quickly analyze a string without using `Parser` by using extensions.
+They are also the quicker way when one answer is all that is wanted: they work
+by regular expression, where `Parser` builds an entity for every code it meets
+— on a page of colored log, `ansiRemoveEscapeCodes` takes about two thirds of
+what `Parser.removeAll` does.
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
