@@ -85,7 +85,8 @@ Future<(int, int)> currentCursorPos(
   return (row, col);
 }
 
-/// Asks for the report and waits for it, ignoring anything else that arrives.
+/// Asks for the report and waits for it, passing over anything else that
+/// arrives — typed characters, and the sequences a pressed key sends.
 Future<List<int>> _readReport(
   Stream<List<int>> input,
   void Function() request,
@@ -135,13 +136,29 @@ List<int>? _extractReport(List<int> buf) {
       continue;
     }
 
+    // Between the CSI and the R a report carries nothing but digits and the
+    // semicolon between them. Anything else and this was some other sequence
+    // — an arrow key is a CSI as well — so the search goes on past it.
+    var isReport = true;
+
     for (var end = start + 2; end < buf.length; end++) {
-      if (buf[end] == 0x52) {
+      final char = buf[end];
+
+      if (char == 0x52) {
         return buf.sublist(start, end + 1);
+      }
+
+      if (char != 0x3B && (char < 0x30 || char > 0x39)) {
+        isReport = false;
+        break;
       }
     }
 
-    return null;
+    // The bytes so far are a report that has not arrived whole; the rest of
+    // it is still to come.
+    if (isReport) {
+      return null;
+    }
   }
 
   return null;

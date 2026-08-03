@@ -62,6 +62,26 @@ void main() {
       expect(await ask('\x1B[3;4R'), (3, 4));
     });
 
+    test('looks past a sequence the user typed before the answer', () async {
+      final stdin = _FakeStdin(
+        Stream.value('${CSI}A$CSI' '12;34R'.codeUnits),
+      );
+
+      expect(
+        await currentCursorPos(_FakeStdout(), stdin),
+        (12, 34),
+        reason: 'an arrow key is a CSI too, and it is not the report',
+      );
+    });
+
+    test('and past several of them', () async {
+      final stdin = _FakeStdin(
+        Stream.value('${CSI}A${CSI}B q$CSI' '1;2R'.codeUnits),
+      );
+
+      expect(await currentCursorPos(_FakeStdout(), stdin), (1, 2));
+    });
+
     test('refuses an answer too short to be a report', () async {
       final stdin = _FakeStdin(Stream.value('${CSI}12R'.codeUnits));
 
