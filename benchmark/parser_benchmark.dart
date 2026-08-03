@@ -72,6 +72,37 @@ void main() {
     }
   });
 
+  // Walking a string position by position — asking about every tenth
+  // character of it, in order — which is what laying text out looks like.
+  final walk = Parser(_text).length ~/ 10;
+
+  _bench('stateAt × $walk in a progression', () {
+    final parser = Parser(_text);
+    for (var i = 0; i < walk; i++) {
+      parser.stateAt(i * 10);
+    }
+  });
+
+  _bench('  the same, after prepare', () {
+    final parser = Parser(_text)..prepare();
+    for (var i = 0; i < walk; i++) {
+      parser.stateAt(i * 10);
+    }
+  });
+
+  _bench('  the same, walking the matches instead', () {
+    final parser = Parser(_text);
+    var pos = 0;
+    for (final m in parser.matches) {
+      if (m.entity case Text(:final string)) {
+        pos += string.length;
+      }
+    }
+    if (pos == 0) {
+      throw StateError('nothing was read');
+    }
+  });
+
   _bench('Printer.prepare, one line', () {
     Printer().prepare(_line);
   });
