@@ -7,5 +7,4 @@
 # generates has to be named here as well or a local run of it rides along.
 docs/
 doc/api/
-SPEC.md
 TODO.md
