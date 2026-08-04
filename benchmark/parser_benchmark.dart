@@ -191,6 +191,7 @@ void main(List<String> args) {
   });
 
   _memory();
+  _memoryPartialWalk();
 
   _growth();
 
@@ -432,6 +433,101 @@ void _memory() {
   );
   print('  matches: $count, rss: +${deltaMb.toStringAsFixed(1)} MB');
 }
+
+/// What a walk that never reads a piece's [Text.string] keeps, next to the
+/// same walk reading every one — the comparison [_memory] cannot make,
+/// since `prepare()` reads every piece by construction and so exercises
+/// only the side of `Text` a walk that skips text gets to skip.
+///
+/// RSS delta measures the churn a walk leaves behind, not the settled size
+/// of what it keeps — a `--old_gen_heap_size` bisect done by hand found
+/// both walks below fit the same heap ceiling to within a couple of MB,
+/// while this metric told them apart by several. So read the two numbers
+/// here as comparative, not absolute: taken back to back in the same
+/// process, with the same JIT warm-up and allocator state behind both, a
+/// walk that never asks a [Text] for its `string` should cost noticeably
+/// less than one that asks every time — that gap, not either number on its
+/// own, is the evidence this scenario exists to carry.
+void _memoryPartialWalk() {
+  final big = _pageOf(_line, 5000);
+
+  final beforeSkip = ProcessInfo.currentRss;
+  final skipped = Parser(big);
+  var skippedLength = 0;
+  for (final m in skipped.matches) {
+    // Exactly what stateAt and substring's walk read after the M5 fix: the
+    // match bounds, never entity.string. Counted for Text only, so this
+    // lines up with readLength below rather than also counting the escape
+    // codes' own bytes.
+    if (m.entity is Text) {
+      skippedLength += m.end - m.start;
+    }
+  }
+  final afterSkip = ProcessInfo.currentRss;
+  final deltaSkipMb = (afterSkip - beforeSkip) / (1024 * 1024);
+
+  final beforeRead = ProcessInfo.currentRss;
+  final read = Parser(big);
+  var readLength = 0;
+  for (final m in read.matches) {
+    if (m.entity case Text(:final string)) {
+      readLength += string.length;
+    }
+  }
+  final afterRead = ProcessInfo.currentRss;
+  final deltaReadMb = (afterRead - beforeRead) / (1024 * 1024);
+
+  // Kept reachable past both measurements: an early collection of one walk's
+  // matches but not the other would tilt the comparison for a reason that
+  // has nothing to do with what either walk read.
+  _sink = (skipped, skippedLength, read, readLength);
+
+  if (_asJson) {
+    print(
+      jsonEncode({
+        'scenario': 'Memory / partial walk, no .string read, rss delta, mb',
+        'us': deltaSkipMb,
+      }),
+    );
+    print(
+      jsonEncode({
+        'scenario': 'Memory / partial walk, '
+            '.string read for every piece, rss delta, mb',
+        'us': deltaReadMb,
+      }),
+    );
+
+    return;
+  }
+
+  print('');
+  print(
+    _paint(
+      'Memory: a walk of ${big.length} characters, read two ways',
+      '$bold$fgCyan',
+    ),
+  );
+  print(
+    _paint(
+      '  comparative, not absolute — see the doc comment on '
+      '_memoryPartialWalk',
+      fg256Gray12,
+    ),
+  );
+  print(
+    '  no .string read:  rss: ${_signedMb(deltaSkipMb)} '
+    '($skippedLength chars counted by length alone)',
+  );
+  print(
+    '  .string read all: rss: ${_signedMb(deltaReadMb)} '
+    '($readLength chars actually read)',
+  );
+}
+
+/// [mb] as `+1.2 MB` or `-1.2 MB`, so a negative delta — RSS does shrink
+/// sometimes, mid-run GC being what it is — does not print as `+-1.2 MB`.
+String _signedMb(double mb) =>
+    '${mb >= 0 ? '+' : ''}${mb.toStringAsFixed(1)} MB';
 
 void _grow(String what, void Function(String text) body) {
   final times = [

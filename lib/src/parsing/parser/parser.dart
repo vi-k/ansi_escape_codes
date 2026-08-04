@@ -69,6 +69,10 @@ part 'matches/matches_result.dart';
 /// it keeps. `prepare`, `length` and the string methods read the whole
 /// string and keep every piece, which on megabytes of input is megabytes
 /// of parse tree.
+///
+/// Keeping a [Text] from that walk after the loop is not free either, until
+/// its [Text.string] has been read: see [Text.string] for what it holds
+/// onto until then.
 final class Parser extends _ParserBase<Style> {
   /// Creates a [Parser] for the given [input] string.
   Parser(String input) : super(input, Style.terminalColors);
@@ -330,7 +334,10 @@ final class _ParserBase<S extends State<S>> {
       if (entity is Text) {
         walk
           ..pieceStart = pos
-          ..passed = pos + entity.string.length
+          // Same as entity.string.length, without reading the text: a Text
+          // piece is cut from exactly [m.start, m.end), so the length is
+          // there in the match already.
+          ..passed = pos + (m.end - m.start)
           ..current = m;
       } else {
         walk.lastCode = m;
@@ -626,7 +633,9 @@ final class _Walk<S extends State<S>> {
       final entity = m.entity;
       if (entity is Text) {
         pieceStart = passed;
-        passed += entity.string.length;
+        // Same as entity.string.length, without reading the text — see the
+        // matching comment in substring.
+        passed += m.end - m.start;
         current = m;
 
         return true;

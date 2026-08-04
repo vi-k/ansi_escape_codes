@@ -33,6 +33,11 @@ final class Text extends Entity {
 
   /// The piece of the string this stands for, cut out on first use: a piece
   /// nobody reads keeps no copy of itself.
+  ///
+  /// Until it is read, though, this keeps the *whole* input the parse began
+  /// from reachable, not just its own bytes — a [Text] kept alive past the
+  /// [Parser] that made it holds that entire string in memory, however large
+  /// it was, for as long as [string] itself stays unread.
   @override
   late final String string = _input.substring(_start, _end);
 
