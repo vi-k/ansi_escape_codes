@@ -55,22 +55,26 @@ sealed class EscapeCode extends Entity {
   String get id;
 
   static EscapeCode _parse<S extends State<S>>(_MatchingState<S> state) {
-    final csi = state['csi'];
-    if (csi != null) {
-      return Csi._parse(state);
+    final string = state.string;
+
+    // Every match begins with ESC; the byte after it says which of the
+    // three kinds this is, without asking the regex for its groups — save
+    // for one case the byte alone cannot settle: `ESC[` with nothing after
+    // it that could complete a CSI (cut short, or followed by a byte a CSI
+    // could never end on) is not a [csiPattern] match but an [escPattern]
+    // one, the `[` swept up as its optional final byte. The `csi` group
+    // tells the two apart; asking it costs nothing where the byte already
+    // rules CSI out.
+    if (string.length > 1) {
+      switch (string.codeUnitAt(1)) {
+        case 0x5B when state['csi'] != null: // [
+          return Csi._parse(state);
+        case 0x5D: // ]
+          return Osc._parse(state);
+      }
     }
 
-    final osc = state['osc'];
-    if (osc != null) {
-      return Osc._parse(state);
-    }
-
-    final esc = state['esc'];
-    if (esc != null) {
-      return Esc._parse(state);
-    }
-
-    return UnknownEscapeCode._(state.string);
+    return Esc._parse(state);
   }
 
   /// The sequence with its control codes spelt out by their abbreviations:
