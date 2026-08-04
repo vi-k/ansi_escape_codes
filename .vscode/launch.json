@@ -65,5 +65,25 @@
             "args": ["--color"],
             "noDebug": true,
         },
+        {
+            // noDebug and --color for the same reasons as the benchmark:
+            // both sides run the benchmark, and this terminal shows the
+            // colours it denies having. The base ref is asked for on
+            // launch; the head side is the working tree as it stands.
+            "name": "benchmark compare",
+            "request": "launch",
+            "type": "dart",
+            "program": "benchmark/compare.dart",
+            "args": ["${input:compareBaseRef}", "--color"],
+            "noDebug": true,
+        },
+    ],
+    "inputs": [
+        {
+            "id": "compareBaseRef",
+            "type": "promptString",
+            "description": "Base ref: main, a release tag, or perf-baseline-4.0.0 (the state before the 4.0.0 performance work)",
+            "default": "main",
+        },
     ]
 }
