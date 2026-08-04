@@ -711,7 +711,7 @@ help are the two places where escape codes bite.
 The first is width. `String.length` counts the escape codes, so padding a
 colored level name pads it by the wrong amount. `Parser` counts the same
 UTF-16 code units without the codes — `𝄞` is still two, as everywhere in
-Dart, and positions never land inside a surrogate pair:
+Dart, and an insertion never lands inside a surrogate pair:
 
 ```dart
 const level = '${fgRed}SEVERE$reset';
@@ -745,8 +745,8 @@ closed at its end, and the next line starts in the style it should.
 ## Reading
 
 A string that already carries escape codes is what `Parser` is for: what it
-says with the codes taken out, how wide it is on the screen, what style is in
-force at any point of it, and what every sequence in it means.
+says with the codes taken out, how long it is without the codes, what style is
+in force at any point of it, and what every sequence in it means.
 
 ### Parser
 

@@ -295,7 +295,9 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// See [prepare] for reading the whole string at once instead.
   ///
-  /// [start] and [maxLength] count UTF-16 code units, as [length] does.
+  /// [start] and [maxLength] count UTF-16 code units, as [length] does. A
+  /// cut can land inside a surrogate pair and split it, as [String.substring]
+  /// can.
   String substring(
     int start, {
     int? maxLength,
