@@ -16,12 +16,15 @@ final class Sgr extends Csi {
   /// What the sequence does, in the order it was written in.
   final List<SgrFunction> functions;
 
+  // Wrapped, not copied: the one caller, `_parse` below, builds [params]
+  // and [functions] for this constructor alone and touches neither list
+  // again once it hands them over.
   Sgr._(
     super.string,
     List<CsiParam> params,
     List<SgrFunction> functions,
-  )   : params = List.unmodifiable(params),
-        functions = List.unmodifiable(functions),
+  )   : params = UnmodifiableListView(params),
+        functions = UnmodifiableListView(functions),
         super._();
 
   static Sgr _parse<S extends State<S>>(
@@ -204,7 +207,7 @@ final class Sgr extends Csi {
         BG_HIGH_WHITE => state.background(Color16.highWhite),
         _ => state,
       }
-      ..commitFunction(SgrSimpleFunction(code));
+      ..commitFunction(SgrSimpleFunction._of(code));
 
     return true;
   }
@@ -420,6 +423,14 @@ final class SgrDefaultFunction extends SgrFunctionWithCode {
 final class SgrSimpleFunction extends SgrFunctionWithCode {
   /// The function [code] stands for.
   const SgrSimpleFunction(super.code);
+
+  /// The cached instance for [code]: one function per code, not one per
+  /// time the code is read.
+  static SgrSimpleFunction _of(ControlFunctionsSGR code) => _cache[code.index];
+
+  static final List<SgrSimpleFunction> _cache = List.unmodifiable([
+    for (final code in ControlFunctionsSGR.values) SgrSimpleFunction(code),
+  ]);
 
   @override
   String toString() => code.id;

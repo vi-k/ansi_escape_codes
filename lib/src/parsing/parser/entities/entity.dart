@@ -7,9 +7,9 @@ part of '../parser.dart';
 @immutable
 sealed class Entity {
   /// The piece of the string this stands for, as it was written.
-  final String string;
+  String get string;
 
-  const Entity._(this.string);
+  const Entity._();
 
   @override
   int get hashCode => string.hashCode;
@@ -27,7 +27,25 @@ sealed class Entity {
 /// is one [Text] and every byte counts towards the length, however many
 /// columns the terminal then puts them in.
 final class Text extends Entity {
-  const Text._(super.string) : super._();
+  final String _input;
+  final int _start;
+  final int _end;
+
+  /// The piece of the string this stands for, cut out on first use: a piece
+  /// nobody reads keeps no copy of itself.
+  ///
+  /// What laziness buys is only that — no copy where none is asked for. It
+  /// does not shrink what a [Text] pins in the meantime: for as long as the
+  /// [Text] itself is alive, it holds the *whole* input the parse began
+  /// from reachable, not just its own few bytes, and reading [string] does
+  /// nothing to release that — the field behind it is set once, at
+  /// construction, and kept for the object's own lifetime. A [Text] kept
+  /// alive past the [Parser] that made it keeps that entire original string
+  /// in memory for as long as it is kept, however large it was.
+  @override
+  late final String string = _input.substring(_start, _end);
+
+  Text._(this._input, this._start, this._end) : super._();
 
   @override
   String toString() {
@@ -45,7 +63,10 @@ final class Text extends Entity {
 /// An escape code: a [Csi] control sequence, an [Osc] string, an [Esc]
 /// sequence, or something none of those could be made of.
 sealed class EscapeCode extends Entity {
-  const EscapeCode._(super.string) : super._();
+  @override
+  final String string;
+
+  const EscapeCode._(this.string) : super._();
 
   /// What this code is called, as [Parser.showControlFunctions] writes it.
   ///
@@ -55,22 +76,26 @@ sealed class EscapeCode extends Entity {
   String get id;
 
   static EscapeCode _parse<S extends State<S>>(_MatchingState<S> state) {
-    final csi = state['csi'];
-    if (csi != null) {
-      return Csi._parse(state);
+    final string = state.string;
+
+    // Every match begins with ESC; the byte after it says which of the
+    // three kinds this is, without asking the regex for its groups — save
+    // for one case the byte alone cannot settle: `ESC[` with nothing after
+    // it that could complete a CSI (cut short, or followed by a byte a CSI
+    // could never end on) is not a [csiPattern] match but an [escPattern]
+    // one, the `[` swept up as its optional final byte. The `csi` group
+    // tells the two apart; asking it costs nothing where the byte already
+    // rules CSI out.
+    if (string.length > 1) {
+      switch (string.codeUnitAt(1)) {
+        case 0x5B when state['csi'] != null: // [
+          return Csi._parse(state);
+        case 0x5D: // ]
+          return Osc._parse(state);
+      }
     }
 
-    final osc = state['osc'];
-    if (osc != null) {
-      return Osc._parse(state);
-    }
-
-    final esc = state['esc'];
-    if (esc != null) {
-      return Esc._parse(state);
-    }
-
-    return UnknownEscapeCode._(state.string);
+    return Esc._parse(state);
   }
 
   /// The sequence with its control codes spelt out by their abbreviations:

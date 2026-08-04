@@ -1,3 +1,4 @@
+import '../ansi/c0.dart';
 import '../internal/sgr_functions.dart';
 import '../parsing/control_functions/control_functions_c0.dart';
 import '../parsing/patterns/patterns.dart';
@@ -20,7 +21,8 @@ extension StringRemoveEscapeCodesExtension on String {
   /// included: the tabs, the line feeds and the `DEL`. The eight-bit forms of
   /// the C1 controls stay as well — `0x9B` is no `CSI` in a Dart string, where
   /// it is a character of its own.
-  String ansiRemoveEscapeCodes() => replaceAll(escapeCodesRe, '');
+  String ansiRemoveEscapeCodes() =>
+      contains(ESC) ? replaceAll(escapeCodesRe, '') : this;
 
   /// Removes the control codes in the text: the C0 set and `DEL`.
   ///
@@ -61,31 +63,31 @@ extension StringRemoveEscapeCodesExtension on String {
   }
 
   /// Removes control sequences (CSI) in the text.
-  String ansiRemoveCsi() => replaceAll(csiRe, '');
+  String ansiRemoveCsi() => contains(ESC) ? replaceAll(csiRe, '') : this;
 
   /// Removes SGR (Select Graphic Rendition) codes in the text.
-  String ansiRemoveSgr() => replaceAll(sgrRe, '');
+  String ansiRemoveSgr() => contains(ESC) ? replaceAll(sgrRe, '') : this;
 
   /// Removes foreground colors in the text.
   ///
   /// The other functions of a sequence are kept: `CSI 1;31 SGR` becomes
   /// `CSI 1 SGR`.
   String ansiRemoveForeground() =>
-      removeSgrFunction(this, isForegroundFunction);
+      contains(ESC) ? removeSgrFunction(this, isForegroundFunction) : this;
 
   /// Removes background colors in the text.
   ///
   /// The other functions of a sequence are kept: `CSI 1;41 SGR` becomes
   /// `CSI 1 SGR`.
   String ansiRemoveBackground() =>
-      removeSgrFunction(this, isBackgroundFunction);
+      contains(ESC) ? removeSgrFunction(this, isBackgroundFunction) : this;
 
   /// Removes the colors of the underline in the text.
   ///
   /// The other functions of a sequence are kept: `CSI 4;58;5;1 SGR` becomes
   /// `CSI 4 SGR`, leaving the underline itself.
   String ansiRemoveUnderlineColor() =>
-      removeSgrFunction(this, isUnderlineColorFunction);
+      contains(ESC) ? removeSgrFunction(this, isUnderlineColorFunction) : this;
 
   /// Returns the length of the string without escape codes.
   int get lengthWithoutEscapeCodes => ansiRemoveEscapeCodes().length;

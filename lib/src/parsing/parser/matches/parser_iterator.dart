@@ -4,10 +4,6 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
   final Matches<S> _parent;
   final S _initialState;
 
-  /// Created once this iterator has to read past what was read before, and
-  /// started from there rather than from the beginning of the string.
-  Iterator<RegExpMatch>? _regExpIterator;
-
   RegExpMatch? _next;
 
   /// How many matches this iterator has handed out.
@@ -54,15 +50,14 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
 
       // Taking a match from the cache moves the position, and what this
       // iterator had found ahead of the old one belongs to where it was.
-      // Reading on starts the search again from here.
       _next = null;
-      _regExpIterator = null;
 
       return true;
     }
 
     final match = _read();
     if (match == null) {
+      // Wrap at end-of-input; the list is complete and will not grow.
       _parent._parsingResult ??= _MatchesResult<S>._(
         matches: parsed,
         finalState: currentState,
@@ -100,24 +95,38 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
       return _escapeCode(next);
     }
 
-    final regExpIterator =
-        _regExpIterator ??= escapeCodesRe.allMatches(string, pos).iterator;
+    // Between escape codes the string is scanned by indexOf, which walks
+    // bytes two orders of magnitude faster than the regex engine would:
+    // every alternative of [escapeCodesRe] begins with ESC, so ESC is the
+    // only place a match can start.
+    var searchFrom = pos;
+    while (true) {
+      final escIndex = string.indexOf('\x1B', searchFrom);
 
-    // There is nothing further to move, so we return the rest of the string.
-    if (!regExpIterator.moveNext()) {
-      return _text(pos, string.length);
+      // No escape at all: the rest of the string is plain text.
+      if (escIndex < 0) {
+        return _text(pos, string.length);
+      }
+
+      final m = escapeCodesRe.matchAsPrefix(string, escIndex) as RegExpMatch?;
+
+      // The patterns as they stand match any ESC, so this is for a pattern
+      // grown narrower than its scanner: an ESC none of them took stays in
+      // the text, exactly as allMatches would have left it.
+      if (m == null) {
+        searchFrom = escIndex + 1;
+        continue;
+      }
+
+      // There is plain text before the escape code.
+      if (pos != m.start) {
+        _next = m;
+
+        return _text(pos, m.start);
+      }
+
+      return _escapeCode(m);
     }
-
-    final m = regExpIterator.current;
-
-    // There is plain text before the escape code.
-    if (pos != m.start) {
-      _next = m;
-
-      return _text(pos, m.start);
-    }
-
-    return _escapeCode(m);
   }
 
   Match<S> _text(int start, int end) {
@@ -125,7 +134,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
 
     return Match<S>._(
       state: currentState,
-      entity: Text._(_parent._input.substring(start, end)),
+      entity: Text._(_parent._input, start, end),
       start: start,
       end: end,
     );

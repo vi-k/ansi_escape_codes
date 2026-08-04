@@ -18,6 +18,7 @@
 // three sizes of input — a linear one doubles when the input doubles, and
 // anything that does more than that is worth looking at.
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
@@ -89,6 +90,25 @@ void main(List<String> args) {
     'one long line, no newlines',
     () => Parser(_coloured.replaceAll('\n', ' ')).removeAll(),
   );
+
+  _group('A page with no codes at all');
+  _bench('matches, to the end', () {
+    for (final _ in Parser(_plain).matches) {}
+  });
+  _bench('removeAll', () => Parser(_plain).removeAll());
+  _bench('ansiRemoveEscapeCodes', () {
+    _sink = _plain.ansiRemoveEscapeCodes();
+  });
+  _bench('ansiHasEscapeCodes', () => _sink = _plain.ansiHasEscapeCodes);
+
+  _group('Slicing a document line by line');
+  final lineWidth = _plainLine.length;
+  _bench('substring, all 200 lines, one parser', () {
+    final parser = Parser(_coloured)..prepare();
+    for (var i = 0; i < 200; i++) {
+      _sink = parser.substring(i * (lineWidth + 1), maxLength: lineWidth);
+    }
+  });
 
   _group('Writing: dressing a string that is not known until it runs');
   final subject = DateTime.now().toString();
@@ -170,6 +190,9 @@ void main(List<String> args) {
     _sink = parser.insertBefore(parser.length, 'x');
   });
 
+  _memory();
+  _memoryPartialWalk();
+
   _growth();
 
   if (_sink == null) {
@@ -190,6 +213,12 @@ void _removeColoured() => _sink = _coloured.ansiRemoveEscapeCodes();
 /// Whether the output is dressed, which [_readArguments] settles.
 bool _inColour = false;
 
+/// Whether the numbers go out as JSON lines instead of the pages.
+bool _asJson = false;
+
+/// The group the current [_bench] belongs to, for the JSON scenario name.
+String _currentGroup = '';
+
 /// Reads the command line, and says whether there is anything to run.
 bool _readArguments(List<String> args) {
   const usage = 'Usage: dart run benchmark/parser_benchmark.dart '
@@ -199,6 +228,7 @@ bool _readArguments(List<String> args) {
       '              The terminals built into editors say they can do\n'
       '              nothing, and show them all the same.\n'
       '  --no-color  leave the colours out.\n'
+      '  --json      write every number as a JSON line, for tooling.\n'
       '\n'
       'With neither, stdout is asked and answers for itself.';
 
@@ -210,6 +240,8 @@ bool _readArguments(List<String> args) {
         _inColour = true;
       case '--no-color' || '--no-colour':
         _inColour = false;
+      case '--json':
+        _asJson = true;
       case '--help' || '-h':
         print(usage);
 
@@ -229,6 +261,10 @@ String _paint(String text, String open, [String close = reset]) =>
     _inColour ? '$open$text$close' : text;
 
 void _title() {
+  if (_asJson) {
+    return;
+  }
+
   final plainLength = Parser(_coloured).length;
 
   print(_paint('ansi_escape_codes — benchmark', '$bold$fgCyan'));
@@ -246,7 +282,11 @@ void _title() {
 double? _baseline;
 
 void _group(String title) {
+  _currentGroup = title;
   _baseline = null;
+  if (_asJson) {
+    return;
+  }
   print('');
   print(_paint(title, '$bold$fgCyan'));
 }
@@ -255,6 +295,11 @@ void _group(String title) {
 /// one least disturbed by whatever else the machine was doing.
 void _bench(String what, void Function() body) {
   final best = _measure(body);
+  if (_asJson) {
+    print(jsonEncode({'scenario': '$_currentGroup / $what', 'us': best}));
+
+    return;
+  }
   _baseline ??= best;
 
   final relative = best / _baseline!;
@@ -325,6 +370,10 @@ String _time(double micros) => switch (micros) {
 /// per something rather than once in all, which is what a walk that starts
 /// over every time looks like.
 void _growth() {
+  if (_asJson) {
+    return;
+  }
+
   print('');
   print(
     _paint(
@@ -353,6 +402,132 @@ void _growth() {
     _sink = parser.insertBefore(parser.length, 'x');
   });
 }
+
+/// What a full parse keeps: the matches and the bytes retained around them.
+///
+/// RSS is noisy and JIT keeps its own counsel, so the figure is a landmark
+/// rather than a measurement — compare it between two runs, not to zero.
+void _memory() {
+  final big = _pageOf(_line, 5000);
+  final before = ProcessInfo.currentRss;
+  final parser = Parser(big)..prepare();
+  final after = ProcessInfo.currentRss;
+  final count = parser.matches.length;
+  final deltaMb = (after - before) / (1024 * 1024);
+
+  if (_asJson) {
+    print(jsonEncode({'scenario': 'Memory / rss delta, mb', 'us': deltaMb}));
+    print(
+      jsonEncode({'scenario': 'Memory / matches', 'us': count.toDouble()}),
+    );
+
+    return;
+  }
+
+  print('');
+  print(
+    _paint(
+      'Memory: a full parse of ${big.length} characters',
+      '$bold$fgCyan',
+    ),
+  );
+  print('  matches: $count, rss: +${deltaMb.toStringAsFixed(1)} MB');
+}
+
+/// What a walk that never reads a piece's [Text.string] keeps, next to the
+/// same walk reading every one — the comparison [_memory] cannot make,
+/// since `prepare()` reads every piece by construction and so exercises
+/// only the side of `Text` a walk that skips text gets to skip.
+///
+/// RSS delta measures the churn a walk leaves behind, not the settled size
+/// of what it keeps — a `--old_gen_heap_size` bisect done by hand found
+/// both walks below fit the same heap ceiling to within a couple of MB,
+/// while this metric told them apart by several. So read the two numbers
+/// here as comparative, not absolute: taken back to back in the same
+/// process, with the same JIT warm-up and allocator state behind both, a
+/// walk that never asks a [Text] for its `string` should cost noticeably
+/// less than one that asks every time — that gap, not either number on its
+/// own, is the evidence this scenario exists to carry.
+void _memoryPartialWalk() {
+  final big = _pageOf(_line, 5000);
+
+  final beforeSkip = ProcessInfo.currentRss;
+  final skipped = Parser(big);
+  var skippedLength = 0;
+  for (final m in skipped.matches) {
+    // Exactly what stateAt and substring's walk read after the M5 fix: the
+    // match bounds, never entity.string. Counted for Text only, so this
+    // lines up with readLength below rather than also counting the escape
+    // codes' own bytes.
+    if (m.entity is Text) {
+      skippedLength += m.end - m.start;
+    }
+  }
+  final afterSkip = ProcessInfo.currentRss;
+  final deltaSkipMb = (afterSkip - beforeSkip) / (1024 * 1024);
+
+  final beforeRead = ProcessInfo.currentRss;
+  final read = Parser(big);
+  var readLength = 0;
+  for (final m in read.matches) {
+    if (m.entity case Text(:final string)) {
+      readLength += string.length;
+    }
+  }
+  final afterRead = ProcessInfo.currentRss;
+  final deltaReadMb = (afterRead - beforeRead) / (1024 * 1024);
+
+  // Kept reachable past both measurements: an early collection of one walk's
+  // matches but not the other would tilt the comparison for a reason that
+  // has nothing to do with what either walk read.
+  _sink = (skipped, skippedLength, read, readLength);
+
+  if (_asJson) {
+    print(
+      jsonEncode({
+        'scenario': 'Memory / partial walk, no .string read, rss delta, mb',
+        'us': deltaSkipMb,
+      }),
+    );
+    print(
+      jsonEncode({
+        'scenario': 'Memory / partial walk, '
+            '.string read for every piece, rss delta, mb',
+        'us': deltaReadMb,
+      }),
+    );
+
+    return;
+  }
+
+  print('');
+  print(
+    _paint(
+      'Memory: a walk of ${big.length} characters, read two ways',
+      '$bold$fgCyan',
+    ),
+  );
+  print(
+    _paint(
+      '  comparative, not absolute — see the doc comment on '
+      '_memoryPartialWalk',
+      fg256Gray12,
+    ),
+  );
+  print(
+    '  no .string read:  rss: ${_signedMb(deltaSkipMb)} '
+    '($skippedLength chars counted by length alone)',
+  );
+  print(
+    '  .string read all: rss: ${_signedMb(deltaReadMb)} '
+    '($readLength chars actually read)',
+  );
+}
+
+/// [mb] as `+1.2 MB` or `-1.2 MB`, so a negative delta — RSS does shrink
+/// sometimes, mid-run GC being what it is — does not print as `+-1.2 MB`.
+String _signedMb(double mb) =>
+    '${mb >= 0 ? '+' : ''}${mb.toStringAsFixed(1)} MB';
 
 void _grow(String what, void Function(String text) body) {
   final times = [
