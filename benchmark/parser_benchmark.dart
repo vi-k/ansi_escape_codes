@@ -18,6 +18,7 @@
 // three sizes of input — a linear one doubles when the input doubles, and
 // anything that does more than that is worth looking at.
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
@@ -89,6 +90,25 @@ void main(List<String> args) {
     'one long line, no newlines',
     () => Parser(_coloured.replaceAll('\n', ' ')).removeAll(),
   );
+
+  _group('A page with no codes at all');
+  _bench('matches, to the end', () {
+    for (final _ in Parser(_plain).matches) {}
+  });
+  _bench('removeAll', () => Parser(_plain).removeAll());
+  _bench('ansiRemoveEscapeCodes', () {
+    _sink = _plain.ansiRemoveEscapeCodes();
+  });
+  _bench('ansiHasEscapeCodes', () => _sink = _plain.ansiHasEscapeCodes);
+
+  _group('Slicing a document line by line');
+  final lineWidth = _plainLine.length;
+  _bench('substring, all 200 lines, one parser', () {
+    final parser = Parser(_coloured)..prepare();
+    for (var i = 0; i < 200; i++) {
+      _sink = parser.substring(i * (lineWidth + 1), maxLength: lineWidth);
+    }
+  });
 
   _group('Writing: dressing a string that is not known until it runs');
   final subject = DateTime.now().toString();
@@ -170,6 +190,8 @@ void main(List<String> args) {
     _sink = parser.insertBefore(parser.length, 'x');
   });
 
+  _memory();
+
   _growth();
 
   if (_sink == null) {
@@ -190,6 +212,12 @@ void _removeColoured() => _sink = _coloured.ansiRemoveEscapeCodes();
 /// Whether the output is dressed, which [_readArguments] settles.
 bool _inColour = false;
 
+/// Whether the numbers go out as JSON lines instead of the pages.
+bool _asJson = false;
+
+/// The group the current [_bench] belongs to, for the JSON scenario name.
+String _currentGroup = '';
+
 /// Reads the command line, and says whether there is anything to run.
 bool _readArguments(List<String> args) {
   const usage = 'Usage: dart run benchmark/parser_benchmark.dart '
@@ -199,6 +227,7 @@ bool _readArguments(List<String> args) {
       '              The terminals built into editors say they can do\n'
       '              nothing, and show them all the same.\n'
       '  --no-color  leave the colours out.\n'
+      '  --json      write every number as a JSON line, for tooling.\n'
       '\n'
       'With neither, stdout is asked and answers for itself.';
 
@@ -210,6 +239,8 @@ bool _readArguments(List<String> args) {
         _inColour = true;
       case '--no-color' || '--no-colour':
         _inColour = false;
+      case '--json':
+        _asJson = true;
       case '--help' || '-h':
         print(usage);
 
@@ -229,6 +260,10 @@ String _paint(String text, String open, [String close = reset]) =>
     _inColour ? '$open$text$close' : text;
 
 void _title() {
+  if (_asJson) {
+    return;
+  }
+
   final plainLength = Parser(_coloured).length;
 
   print(_paint('ansi_escape_codes — benchmark', '$bold$fgCyan'));
@@ -246,7 +281,11 @@ void _title() {
 double? _baseline;
 
 void _group(String title) {
+  _currentGroup = title;
   _baseline = null;
+  if (_asJson) {
+    return;
+  }
   print('');
   print(_paint(title, '$bold$fgCyan'));
 }
@@ -255,6 +294,11 @@ void _group(String title) {
 /// one least disturbed by whatever else the machine was doing.
 void _bench(String what, void Function() body) {
   final best = _measure(body);
+  if (_asJson) {
+    print(jsonEncode({'scenario': '$_currentGroup / $what', 'us': best}));
+
+    return;
+  }
   _baseline ??= best;
 
   final relative = best / _baseline!;
@@ -325,6 +369,10 @@ String _time(double micros) => switch (micros) {
 /// per something rather than once in all, which is what a walk that starts
 /// over every time looks like.
 void _growth() {
+  if (_asJson) {
+    return;
+  }
+
   print('');
   print(
     _paint(
@@ -352,6 +400,37 @@ void _growth() {
     final parser = Parser(text);
     _sink = parser.insertBefore(parser.length, 'x');
   });
+}
+
+/// What a full parse keeps: the matches and the bytes retained around them.
+///
+/// RSS is noisy and JIT keeps its own counsel, so the figure is a landmark
+/// rather than a measurement — compare it between two runs, not to zero.
+void _memory() {
+  final big = _pageOf(_line, 5000);
+  final before = ProcessInfo.currentRss;
+  final parser = Parser(big)..prepare();
+  final after = ProcessInfo.currentRss;
+  final count = parser.matches.length;
+  final deltaMb = (after - before) / (1024 * 1024);
+
+  if (_asJson) {
+    print(jsonEncode({'scenario': 'Memory / rss delta, mb', 'us': deltaMb}));
+    print(
+      jsonEncode({'scenario': 'Memory / matches', 'us': count.toDouble()}),
+    );
+
+    return;
+  }
+
+  print('');
+  print(
+    _paint(
+      'Memory: a full parse of ${big.length} characters',
+      '$bold$fgCyan',
+    ),
+  );
+  print('  matches: $count, rss: +${deltaMb.toStringAsFixed(1)} MB');
 }
 
 void _grow(String what, void Function(String text) body) {
