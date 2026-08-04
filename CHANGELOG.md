@@ -136,6 +136,10 @@ Fixed:
   refuses — echo first, line mode still off — so `currentCursorPos` threw
   and left the terminal raw. Line mode now comes back first, and each mode
   is restored even when the other throws.
+- `substring` left a hyperlink open: a slice that ended inside one kept
+  everything printed after it clickable on the slice's URL. With
+  `close: true` the slice now closes the link it opened, the way an
+  insertion does.
 
 Renamed:
 

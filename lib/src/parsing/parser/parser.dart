@@ -272,7 +272,12 @@ final class _ParserBase<S extends State<S>> {
   /// text style.
   ///
   /// [maxLength] is the maximum length of the substring.
-  /// [close] is whether to close the substring with the default style.
+  /// [close] is whether to close the substring with the default style. A
+  /// hyperlink the slice opened and did not close is closed along with it,
+  /// the way an insertion closes one: what is printed after the slice must
+  /// not stay clickable. With `close: false` the link stays open, as the
+  /// style does. A slice that began inside a link does not repeat the
+  /// opening, and is not the one to close it.
   ///
   /// Reads the string up to the end of the piece and stops, and keeps its
   /// place the way [stateAt] does: a slice beginning past the start of the
@@ -302,6 +307,7 @@ final class _ParserBase<S extends State<S>> {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
     Match<S>? lastMatch;
+    var linkIsOpen = false;
 
     var walk = _walk;
     int pos;
@@ -369,6 +375,9 @@ final class _ParserBase<S extends State<S>> {
               ..write(currentState.transitTo(m.state))
               ..write(entity.string);
             currentState = m.state.toStyle();
+            if (entity is Link) {
+              linkIsOpen = entity.url.isNotEmpty;
+            }
           }
           lastMatch = m;
       }
@@ -383,6 +392,13 @@ final class _ParserBase<S extends State<S>> {
     }
 
     if (lastMatch != null) {
+      if (close && linkIsOpen) {
+        // A slice that opened a link closes it, the way an insertion does:
+        // what is printed after the slice must not stay clickable on the
+        // slice's URL. A slice that began inside a link never wrote the
+        // opening, and has nothing to close.
+        buf.write(linkClose);
+      }
       buf.write(
         currentState.transitTo(
           close ? initialState : lastMatch.state,
