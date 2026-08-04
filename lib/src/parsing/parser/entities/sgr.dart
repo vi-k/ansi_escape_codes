@@ -207,7 +207,7 @@ final class Sgr extends Csi {
         BG_HIGH_WHITE => state.background(Color16.highWhite),
         _ => state,
       }
-      ..commitFunction(SgrSimpleFunction.of(code));
+      ..commitFunction(SgrSimpleFunction._of(code));
 
     return true;
   }
@@ -426,7 +426,7 @@ final class SgrSimpleFunction extends SgrFunctionWithCode {
 
   /// The cached instance for [code]: one function per code, not one per
   /// time the code is read.
-  static SgrSimpleFunction of(ControlFunctionsSGR code) => _cache[code.index];
+  static SgrSimpleFunction _of(ControlFunctionsSGR code) => _cache[code.index];
 
   static final List<SgrSimpleFunction> _cache = List.unmodifiable([
     for (final code in ControlFunctionsSGR.values) SgrSimpleFunction(code),

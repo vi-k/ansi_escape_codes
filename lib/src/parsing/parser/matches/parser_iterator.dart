@@ -57,6 +57,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
 
     final match = _read();
     if (match == null) {
+      // Wrap at end-of-input; the list is complete and will not grow.
       _parent._parsingResult ??= _MatchesResult<S>._(
         matches: parsed,
         finalState: currentState,
