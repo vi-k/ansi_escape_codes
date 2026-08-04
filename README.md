@@ -40,8 +40,8 @@ print(parser.showControlFunctions()); // [fgRed]ERROR[reset]: the roof is on fir
   [maximize performance](#maximum-performance), or choose the power of
   [styles](#the-power-of-styles).
 - cursor and terminal control
-- [reading](#reading) strings that carry escape codes: what they say, how wide
-  they are, what style is in force at any point
+- [reading](#reading) strings that carry escape codes: what they say, how long
+  they are without the codes, what style is in force at any point
 - [a default style](#printer) for everything the application prints
 
 
@@ -709,7 +709,9 @@ constants are strings, so coloring a level name needs no help. What does need
 help are the two places where escape codes bite.
 
 The first is width. `String.length` counts the escape codes, so padding a
-colored level name pads it by the wrong amount. `Parser` counts what is seen:
+colored level name pads it by the wrong amount. `Parser` counts the same
+UTF-16 code units without the codes — `𝄞` is still two, as everywhere in
+Dart, and positions never land inside a surrogate pair:
 
 ```dart
 const level = '${fgRed}SEVERE$reset';

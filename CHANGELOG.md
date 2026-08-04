@@ -140,6 +140,12 @@ Fixed:
   everything printed after it clickable on the slice's URL. With
   `close: true` the slice now closes the link it opened, the way an
   insertion does.
+- `insertBefore` and `insertAfter` could put text between the halves of a
+  surrogate pair and hand back a string that is no longer valid UTF-16. A
+  position inside a pair now shifts to its edge — `insertBefore` to the
+  front, `insertAfter` past it. Positions, `length` and the paddings are
+  UTF-16 code units, as `String` counts them, and the docs now say so
+  instead of promising what is seen.
 
 Renamed:
 
