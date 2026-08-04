@@ -60,20 +60,22 @@ Performance:
   rather than copied twice: a simpler, more correct hot path, though its
   own saving lands inside the numbers above rather than as one of its own
   — isolated, it measures at noise level once the scanner and slicing
-  fixes are in. One visible side effect: two `SgrSimpleFunction`s for the
-  same code are now the same cached instance rather than two separate ones
-  — identical, not merely equal, since the class overrides neither `==`
-  nor `hashCode`.
+  fixes are in. One visible side effect: two `SgrSimpleFunction`s built for
+  the same code used to be two separate objects, and were never `==` to
+  each other either, since the class defines neither `==` nor `hashCode`;
+  now they are the same cached instance, so both `identical()` and `==`
+  see them as one and the same.
 - A full parse retains the match list once, not twice, and a `Text` piece
   cuts its own substring out of the input only the first time something
-  reads it, so a piece nobody reads keeps no copy of its own: a walk that
-  never reads a piece's string leaves tens of megabytes on the table
-  against one that reads every piece, on the benchmark's 5000-line page. A
-  scenario that forces everything to materialize up front, the way
+  reads it, so a piece nobody reads keeps no copy of its own — `stateAt`,
+  which never asks a piece for its `string`, is the concrete beneficiary:
+  a walk that never reads a piece's string leaves tens of megabytes on the
+  table against one that reads every piece, on the benchmark's 5000-line
+  page. A scenario that forces everything to materialize up front, the way
   `prepare` does, is unaffected — full materialization was never what this
-  bought. The saving has a condition on it: a `Text` kept alive after its
-  `Parser` pins the whole original input for as long as its `string` stays
-  unread; reading it once does not release the rest.
+  bought. The saving is not free of a cost, though: a `Text` kept alive
+  past its `Parser` pins the whole original input in memory for as long as
+  the `Text` itself lives, whether or not its `string` is ever read.
 - What has been read of a string is kept, instead of being read again by
   every question asked of it. Call `prepare` when there are many.
 - A control sequence is looked up in a map rather than by walking the list.
