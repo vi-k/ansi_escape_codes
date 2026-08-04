@@ -70,9 +70,9 @@ part 'matches/matches_result.dart';
 /// string and keep every piece, which on megabytes of input is megabytes
 /// of parse tree.
 ///
-/// Keeping a [Text] from that walk after the loop is not free either, until
-/// its [Text.string] has been read: see [Text.string] for what it holds
-/// onto until then.
+/// Keeping a [Text] from that walk after the loop is not free either, and
+/// reading its [Text.string] does not make it so: see [Text.string] for
+/// what a kept piece holds onto for as long as it is kept.
 final class Parser extends _ParserBase<Style> {
   /// Creates a [Parser] for the given [input] string.
   Parser(String input) : super(input, Style.terminalColors);

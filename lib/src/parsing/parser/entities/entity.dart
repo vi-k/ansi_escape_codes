@@ -34,10 +34,14 @@ final class Text extends Entity {
   /// The piece of the string this stands for, cut out on first use: a piece
   /// nobody reads keeps no copy of itself.
   ///
-  /// Until it is read, though, this keeps the *whole* input the parse began
-  /// from reachable, not just its own bytes — a [Text] kept alive past the
-  /// [Parser] that made it holds that entire string in memory, however large
-  /// it was, for as long as [string] itself stays unread.
+  /// What laziness buys is only that — no copy where none is asked for. It
+  /// does not shrink what a [Text] pins in the meantime: for as long as the
+  /// [Text] itself is alive, it holds the *whole* input the parse began
+  /// from reachable, not just its own few bytes, and reading [string] does
+  /// nothing to release that — the field behind it is set once, at
+  /// construction, and kept for the object's own lifetime. A [Text] kept
+  /// alive past the [Parser] that made it keeps that entire original string
+  /// in memory for as long as it is kept, however large it was.
   @override
   late final String string = _input.substring(_start, _end);
 
