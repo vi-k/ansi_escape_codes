@@ -38,6 +38,46 @@ Added:
   smaller imports are for a smaller namespace, not for reaching something the
   main one lacks.
 
+Performance:
+
+- The scanner finds the next escape code by `indexOf` rather than by the
+  regex engine: text with no escape codes at all is parsed and stripped well
+  over a hundred times faster (about 1 ms down to under 9 µs), a coloured
+  page parses roughly 45-50 % faster across `matches`, `removeAll`,
+  `optimize` and `showControlFunctions`, and a page that is mostly escape
+  codes is not worse — about a fifth faster rather than a wash.
+  `ansiHasEscapeCodes` and friends answer a clean string with
+  `contains(ESC)` outright, without touching a pattern.
+- `substring` and the insert seams keep their place the way `stateAt`
+  always did, instead of walking from the start each time: slicing a
+  200-line document through one parser is about three times faster (3.95 ms
+  down to 1.33 ms), and the shape of the cost is linear now, not quadratic
+  — a doubling guard that used to grow ×2.73 for a ×2 input now grows
+  ×0.65.
+- An escape code is told apart by its second byte instead of four named
+  regex groups, a simple SGR function comes from a cached table instead of
+  being rebuilt, and the SGR lists handed back to callers are wrapped once
+  rather than copied twice: a simpler, more correct hot path, though its
+  own saving lands inside the numbers above rather than as one of its own
+  — isolated, it measures at noise level once the scanner and slicing
+  fixes are in. One visible side effect: two `SgrSimpleFunction`s for the
+  same code are now the same cached instance rather than two separate ones
+  — identical, not merely equal, since the class overrides neither `==`
+  nor `hashCode`.
+- A full parse retains the match list once, not twice, and a `Text` piece
+  cuts its own substring out of the input only the first time something
+  reads it, so a piece nobody reads keeps no copy of its own: a walk that
+  never reads a piece's string leaves tens of megabytes on the table
+  against one that reads every piece, on the benchmark's 5000-line page. A
+  scenario that forces everything to materialize up front, the way
+  `prepare` does, is unaffected — full materialization was never what this
+  bought. The saving has a condition on it: a `Text` kept alive after its
+  `Parser` pins the whole original input for as long as its `string` stays
+  unread; reading it once does not release the rest.
+- What has been read of a string is kept, instead of being read again by
+  every question asked of it. Call `prepare` when there are many.
+- A control sequence is looked up in a map rather than by walking the list.
+
 Fixed:
 
 - `ESC 7` and `ESC 8` carried no style. A terminal saves the rendition along
@@ -90,12 +130,6 @@ Fixed:
   every other pair.
 - `DEL` counted as a control code but was never shown as one.
 - Entities and functions described themselves wrongly in `toString`.
-
-Performance:
-
-- What has been read of a string is kept, instead of being read again by every
-  question asked of it. Call `prepare` when there are many.
-- A control sequence is looked up in a map rather than by walking the list.
 
 Renamed:
 
