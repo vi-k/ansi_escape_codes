@@ -44,5 +44,36 @@ void main() {
             '${tLarge.toStringAsFixed(0)} µs)',
       );
     });
+
+    test('slicing a document line by line stays linear', () {
+      const line = '\x1B[1m\x1B[31mtag\x1B[22m\x1B[39m '
+          'a sentence of ordinary words to slice';
+      String page(int lines) => List.filled(lines, line).join('\n');
+      final width = Parser(line).length;
+
+      double sliceAll(String text, int lines) {
+        final parser = Parser(text)..prepare();
+
+        return bestOf(() {
+          for (var i = 0; i < lines; i++) {
+            parser.substring(i * (width + 1), maxLength: width);
+          }
+        });
+      }
+
+      // Warm-up.
+      sliceAll(page(50), 50);
+
+      final tSmall = sliceAll(page(400), 400);
+      final tLarge = sliceAll(page(800), 800);
+
+      expect(
+        tLarge / tSmall,
+        lessThan(2.5),
+        reason: 'twice the lines must not cost near four times the walk '
+            '(${tSmall.toStringAsFixed(0)} µs → '
+            '${tLarge.toStringAsFixed(0)} µs)',
+      );
+    });
   });
 }

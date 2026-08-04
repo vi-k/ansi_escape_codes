@@ -92,22 +92,13 @@ final class _ParserBase<S extends State<S>> {
   Matches<S>? _matches;
   String? _plainString;
 
-  /// Where [stateAt] stopped last time, so that the next question can carry
-  /// on from there.
+  /// Where the last positional question stopped, so that the next can carry
+  /// on from there rather than walk the string from the beginning.
   ///
-  /// Asking about position after position — laying text out, measuring it —
-  /// would otherwise walk the string from the beginning every time, and cost
-  /// the questions times the length of it.
-  Iterator<Match<S>>? _cursor;
-
-  /// How much text the cursor has passed.
-  int _cursorEnd = 0;
-
-  /// Where the piece of text [_cursorState] belongs to begins.
-  int _cursorStart = 0;
-
-  /// The state of the piece of text the last question was answered from.
-  S? _cursorState;
+  /// Asking about position after position — laying text out, measuring it,
+  /// cutting it into lines — would otherwise walk the string from the
+  /// beginning every time, and cost the questions times the length of it.
+  _Walk<S>? _walk;
 
   _ParserBase(this.input, this.initialState);
 
@@ -196,36 +187,26 @@ final class _ParserBase<S extends State<S>> {
   S stateAt(int pos) {
     RangeError.checkNotNegative(pos, 'pos');
 
-    // The piece of text the last question was answered from may hold this
-    // one as well.
-    if (_cursorState case final state?
-        when pos >= _cursorStart && pos < _cursorEnd) {
-      return state;
+    // The piece the last question was answered from may hold this one too.
+    var walk = _walk;
+    if (walk?.current case final match?
+        when pos >= walk!.pieceStart && pos < walk.passed) {
+      return match.state;
     }
 
-    // Anything else already passed means going back, and the walk starts over.
-    if (_cursor == null || pos < _cursorEnd) {
-      _cursor = matches.iterator;
-      _cursorEnd = 0;
-      _cursorStart = 0;
-      _cursorState = null;
+    // Anything else already passed means going back, and the walk starts
+    // over.
+    if (walk == null || pos < walk.passed) {
+      walk = _walk = _Walk(matches.iterator);
     }
 
-    final cursor = _cursor!;
-    while (cursor.moveNext()) {
-      if (cursor.current.entity case Text(:final string)) {
-        final start = _cursorEnd;
-        _cursorEnd += string.length;
-
-        if (_cursorEnd > pos) {
-          _cursorStart = start;
-
-          return _cursorState = cursor.current.state;
-        }
+    while (walk.nextPiece()) {
+      if (pos < walk.passed) {
+        return walk.current!.state;
       }
     }
 
-    RangeError.checkValidIndex(pos, null, 'pos', _cursorEnd + 1);
+    RangeError.checkValidIndex(pos, null, 'pos', walk.passed + 1);
 
     return finalState;
   }
@@ -282,10 +263,17 @@ final class _ParserBase<S extends State<S>> {
   /// [maxLength] is the maximum length of the substring.
   /// [close] is whether to close the substring with the default style.
   ///
-  /// Reads the string up to the end of the piece and stops. What it read is
-  /// kept, so a second piece is not parsed again — though it is walked again,
-  /// from the start of the string every time. See [prepare] for reading it all
-  /// at once instead.
+  /// Reads the string up to the end of the piece and stops, and keeps its
+  /// place the way [stateAt] does: a slice beginning past the start of the
+  /// piece the last question stopped in carries on from there rather than
+  /// walking the string again. Cutting a document into lines costs one walk
+  /// in all, not one a line.
+  ///
+  /// A slice beginning exactly where a piece begins walks afresh: the escape
+  /// codes standing in front of that piece belong to the slice, and the walk
+  /// is already past them. Going back walks afresh as well.
+  ///
+  /// See [prepare] for reading the whole string at once instead.
   String substring(
     int start, {
     int? maxLength,
@@ -301,12 +289,45 @@ final class _ParserBase<S extends State<S>> {
     }
 
     final buf = StringBuffer();
-    var pos = 0;
     var currentState = initialState.toStyle();
     Match<S>? lastMatch;
 
-    for (final m in matches) {
+    var walk = _walk;
+    int pos;
+    Match<S>? piece;
+    if (walk != null && !walk.isSpent && walk.resumesAt(start)) {
+      // The walk already stands in a piece the slice begins in or after:
+      // pick that piece up and read on, one pass for a run of slices.
+      pos = walk.pieceStart;
+      piece = walk.current;
+      lastMatch = walk.lastCode;
+    } else {
+      walk = _walk = _Walk(matches.iterator);
+      pos = 0;
+    }
+
+    while (true) {
+      final Match<S> m;
+      if (piece != null) {
+        m = piece;
+        piece = null;
+      } else if (walk.iterator.moveNext()) {
+        m = walk.iterator.current;
+      } else {
+        walk.isSpent = true;
+        break;
+      }
+
       final entity = m.entity;
+
+      if (entity is Text) {
+        walk
+          ..pieceStart = pos
+          ..passed = pos + entity.string.length
+          ..current = m;
+      } else {
+        walk.lastCode = m;
+      }
 
       switch (entity) {
         case Text():
@@ -442,24 +463,33 @@ final class _ParserBase<S extends State<S>> {
       return (0, initialState);
     }
 
-    var plainPos = 0;
+    // A seam is looked for in the pieces of text and nowhere else, so a walk
+    // that has run out of matches is picked up as readily as one standing in
+    // the middle of the string.
+    final _Walk<S> walk;
+    var standing = false;
+    if (_walk case final resumable? when resumable.resumesAt(pos)) {
+      walk = resumable;
+      standing = true;
+    } else {
+      walk = _walk = _Walk(matches.iterator);
+    }
 
-    for (final m in matches) {
-      if (m.entity case Text(:final string)) {
-        final end = plainPos + string.length;
+    while (standing || walk.nextPiece()) {
+      standing = false;
+      final m = walk.current!;
+      final plainPos = walk.pieceStart;
+      final end = walk.passed;
 
-        // Both ends of the seam sit inside a piece of text when the position
-        // falls within one, and there the two insertions are the same.
-        if (after ? pos < end : pos > plainPos && pos <= end) {
-          return (m.start + (pos - plainPos), m.state);
-        }
-
-        plainPos = end;
+      // Both ends of the seam sit inside a piece of text when the position
+      // falls within one, and there the two insertions are the same.
+      if (after ? pos < end : pos > plainPos && pos <= end) {
+        return (m.start + (pos - plainPos), m.state);
       }
     }
 
-    if (pos > plainPos) {
-      throw RangeError.range(pos, 0, plainPos, 'pos');
+    if (pos > walk.passed) {
+      throw RangeError.range(pos, 0, walk.passed, 'pos');
     }
 
     return (input.length, finalState);
@@ -536,5 +566,70 @@ final class _ParserBase<S extends State<S>> {
     }
 
     return buf.toString();
+  }
+}
+
+/// A resumable walk over the matches: the iterator, how much plain text it
+/// has passed, and the piece of text it stopped in.
+///
+/// [_ParserBase.stateAt], `substring` and the insert seams all walk the same
+/// matches forward; sharing the walk makes a run of forward questions cost one
+/// pass in all. A question about an earlier position starts a fresh walk.
+final class _Walk<S extends State<S>> {
+  final Iterator<Match<S>> iterator;
+
+  /// Plain-text position where the piece [current] stands for begins.
+  int pieceStart = 0;
+
+  /// Plain text passed so far, the current piece included.
+  int passed = 0;
+
+  /// The last [Text] match handed out, or null before the first.
+  Match<S>? current;
+
+  /// The last escape code standing in front of [current], where one does.
+  ///
+  /// A walk picked up at [current] never sees what came before it, and
+  /// `substring` closes the slice on the last match it went past. That match
+  /// is this one, kept so that resuming answers as walking from the start
+  /// would.
+  Match<S>? lastCode;
+
+  /// Whether the iterator has run out.
+  ///
+  /// Everything past [current] has then been taken from it, escape codes and
+  /// all, and a walk that must write those out — `substring` does — starts
+  /// over rather than resume and lose them.
+  bool isSpent = false;
+
+  _Walk(this.iterator);
+
+  /// Whether a question about the plain text position [pos] can be answered
+  /// by reading on from [current] instead of from the start of the string.
+  ///
+  /// Strictly past [pieceStart]: a question about the very place a piece
+  /// begins belongs to the escape codes standing in front of it, and the walk
+  /// is already past those.
+  bool resumesAt(int pos) => current != null && pos > pieceStart;
+
+  /// Moves to the next [Text] piece; false at the end of the string.
+  bool nextPiece() {
+    while (iterator.moveNext()) {
+      final m = iterator.current;
+      final entity = m.entity;
+      if (entity is Text) {
+        pieceStart = passed;
+        passed += entity.string.length;
+        current = m;
+
+        return true;
+      }
+
+      lastCode = m;
+    }
+
+    isSpent = true;
+
+    return false;
   }
 }
