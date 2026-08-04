@@ -132,6 +132,10 @@ Fixed:
   every other pair.
 - `DEL` counted as a control code but was never shown as one.
 - Entities and functions described themselves wrongly in `toString`.
+- On Windows the terminal modes were put back in an order the console
+  refuses — echo first, line mode still off — so `currentCursorPos` threw
+  and left the terminal raw. Line mode now comes back first, and each mode
+  is restored even when the other throws.
 
 Renamed:
 
