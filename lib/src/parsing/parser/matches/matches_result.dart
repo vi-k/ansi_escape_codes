@@ -7,7 +7,7 @@ final class _MatchesResult<S extends State<S>> {
   _MatchesResult._({
     required List<Match<S>> matches,
     required this.finalState,
-  }) : matches = List.unmodifiable(matches);
+  }) : matches = UnmodifiableListView(matches);
 
   @override
   String toString() =>

@@ -76,4 +76,23 @@ void main() {
       );
     });
   });
+
+  group('memory pins', () {
+    test('a Text piece materializes its string once', () {
+      final parser = Parser('\x1B[31mred\x1B[0m and plain');
+      final texts = [
+        for (final m in parser.matches)
+          if (m.entity case final Text text) text,
+      ];
+
+      expect(texts, isNotEmpty);
+      for (final text in texts) {
+        expect(
+          identical(text.string, text.string),
+          isTrue,
+          reason: 'string must be built once and kept, not rebuilt per read',
+        );
+      }
+    });
+  });
 }

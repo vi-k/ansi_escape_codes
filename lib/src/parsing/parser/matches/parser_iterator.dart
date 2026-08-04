@@ -133,7 +133,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
 
     return Match<S>._(
       state: currentState,
-      entity: Text._(_parent._input.substring(start, end)),
+      entity: Text._(_parent._input, start, end),
       start: start,
       end: end,
     );

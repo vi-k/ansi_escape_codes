@@ -7,9 +7,9 @@ part of '../parser.dart';
 @immutable
 sealed class Entity {
   /// The piece of the string this stands for, as it was written.
-  final String string;
+  String get string;
 
-  const Entity._(this.string);
+  const Entity._();
 
   @override
   int get hashCode => string.hashCode;
@@ -27,7 +27,16 @@ sealed class Entity {
 /// is one [Text] and every byte counts towards the length, however many
 /// columns the terminal then puts them in.
 final class Text extends Entity {
-  const Text._(super.string) : super._();
+  final String _input;
+  final int _start;
+  final int _end;
+
+  /// The piece of the string this stands for, cut out on first use: a piece
+  /// nobody reads keeps no copy of itself.
+  @override
+  late final String string = _input.substring(_start, _end);
+
+  Text._(this._input, this._start, this._end) : super._();
 
   @override
   String toString() {
@@ -45,7 +54,10 @@ final class Text extends Entity {
 /// An escape code: a [Csi] control sequence, an [Osc] string, an [Esc]
 /// sequence, or something none of those could be made of.
 sealed class EscapeCode extends Entity {
-  const EscapeCode._(super.string) : super._();
+  @override
+  final String string;
+
+  const EscapeCode._(this.string) : super._();
 
   /// What this code is called, as [Parser.showControlFunctions] writes it.
   ///

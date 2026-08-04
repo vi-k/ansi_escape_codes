@@ -63,6 +63,12 @@ part 'matches/matches_result.dart';
 ///   without ANSI escape codes.
 /// * [endsWith] - whether the string ends with a pattern in the string without
 ///   ANSI escape codes.
+///
+/// On a large input, prefer walking `matches` with a `for` and taking what
+/// the loop needs as it goes: the walk parses lazily, and what it has read
+/// it keeps. `prepare`, `length` and the string methods read the whole
+/// string and keep every piece, which on megabytes of input is megabytes
+/// of parse tree.
 final class Parser extends _ParserBase<Style> {
   /// Creates a [Parser] for the given [input] string.
   Parser(String input) : super(input, Style.terminalColors);
