@@ -438,6 +438,20 @@ final class Style extends State<Style> {
 /// Passing it to a [Printer] stops the printer from imposing a style of its
 /// own; the codes already in the text still go through, and taking those out
 /// is what `ansiCodesEnabled: false` is for.
+///
+/// Nothing leads back into it. Setting anything — [bold], [foreground], any
+/// of them — answers with an ordinary [Style] that writes, and no operation
+/// on that one comes back here, so `const NoStyle()` is the only way to have
+/// this style. The narrower resets leave it where it is: they have nothing
+/// to take off and answer with this style itself, the way any state answers
+/// itself when it has nothing to change.
+///
+/// [reset] is the one operation that leaves this style behind without
+/// changing anything it shows. It answers with [Style.terminalColors] — the
+/// same properties and the same colours, but a style that says "the
+/// terminal's own" out loud where this one says nothing at all. The two are
+/// not equal all the same: being a [NoStyle] is part of what equality
+/// compares.
 final class NoStyle extends Style {
   /// The style that writes nothing.
   const NoStyle();

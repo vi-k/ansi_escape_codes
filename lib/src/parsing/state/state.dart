@@ -380,6 +380,10 @@ sealed class State<S extends State<S>> {
 
   /// This state as a plain [Style], without whatever a [Stack] remembers of
   /// how it got here.
+  ///
+  /// Plain is said of the history, not of what the style writes: a [NoStyle]
+  /// is a [Style] already and answers with itself, so a state that writes
+  /// nothing gives back one that writes nothing.
   Style toStyle();
 
   int _colorIndex(int offset, int highOffset, Color16? color) =>

@@ -429,6 +429,11 @@ final class _ParserBase<S extends State<S>> {
   /// shifts to the front of the pair, so the pair is never split;
   /// [insertAfter] shifts past it instead.
   ///
+  /// Input that is not valid UTF-16 to begin with — a lone half of a pair, or
+  /// halves an escape code stands between — is neither mended nor refused:
+  /// the halves are left as they lie, and an insertion aimed between two of
+  /// them lands there.
+  ///
   /// The inserted text takes the style of the place it lands in, and gives it
   /// back: the style it opens of its own is closed after it, and so is a
   /// hyperlink, so the string that follows keeps the look it had and stays
@@ -454,7 +459,9 @@ final class _ParserBase<S extends State<S>> {
   /// [pos] is the position in the string without ANSI escape codes.
   ///
   /// A position between the halves of a surrogate pair shifts past the
-  /// pair; see [insertBefore] for the other direction.
+  /// pair; see [insertBefore] for the other direction, and for what becomes
+  /// of input that is not valid UTF-16 to begin with — nothing, here as
+  /// there.
   ///
   /// The same as [insertBefore] in every other way, and the same as it when no
   /// escape code stands at [pos].
