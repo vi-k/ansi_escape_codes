@@ -284,6 +284,11 @@ final class _ParserBase<S extends State<S>> {
   /// style does. A slice that began inside a link does not repeat the
   /// opening, and is not the one to close it.
   ///
+  /// The close written is [linkClose], `OSC 8;; ST`, whatever form the
+  /// opening took: a link opened `BEL`-terminated, the way [linkBel] opens
+  /// one, is closed with `ST` all the same, and the slice comes out carrying
+  /// both terminators. Terminals take either.
+  ///
   /// Reads the string up to the end of the piece and stops, and keeps its
   /// place the way [stateAt] does: a slice beginning past the start of the
   /// piece the last question stopped in carries on from there rather than
@@ -607,7 +612,11 @@ final class _ParserBase<S extends State<S>> {
 
   /// Optimizes the string by removing consecutive escape codes.
   ///
-  /// [close] is whether to close the string with the default style.
+  /// [close] is whether to close the string with the default style. The style
+  /// is all it closes: a string that opens a hyperlink and never closes it
+  /// comes back with the link open, and what is printed after it stays
+  /// clickable. [substring] writes that close for a slice; this does not
+  /// write it for a string.
   String optimize({bool close = true}) {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();

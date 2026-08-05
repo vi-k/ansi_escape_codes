@@ -142,8 +142,10 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   ///
   /// A [Printer] and a [StackedPrinter] are handed a whole line here, and a
   /// line that opens a hyperlink and does not close it gets the close
-  /// written at its end, the way a slice does. A link, unlike the style, is
-  /// not reopened on the next line.
+  /// written at its end, the way a slice does — and, as there, the close is
+  /// the `ST`-terminated one whatever form the opening took: see
+  /// [Parser.substring]. A link, unlike the style, is not reopened on the
+  /// next line.
   ///
   /// A [SinkPrinter] and a [StackedSinkPrinter] are handed a piece rather
   /// than a line, and this only prepares it: nothing is written, and the

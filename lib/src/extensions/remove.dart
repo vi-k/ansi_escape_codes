@@ -66,12 +66,26 @@ extension StringRemoveEscapeCodesExtension on String {
   String ansiRemoveCsi() => contains(ESC) ? replaceAll(csiRe, '') : this;
 
   /// Removes SGR (Select Graphic Rendition) codes in the text.
+  ///
+  /// A sequence is read here by its pattern and not by what its parameters
+  /// mean, and where the pattern and `Parser` part ways the pattern decides.
+  /// A parameter too large to be an integer — anything past
+  /// `9223372036854775807` — is one such place: `Parser` cannot read the
+  /// sequence at all, hands it back as an unknown control sequence carrying
+  /// no style, and passes it on as it was written wherever it passes codes
+  /// on. This takes it out regardless, and the colour removals below rewrite
+  /// it: the `31` of `CSI 31;9223372036854775808 SGR` goes to
+  /// [ansiRemoveForeground] as any other red would. An accepted limit, and
+  /// the one the `ansiHas` family answers by as well.
   String ansiRemoveSgr() => contains(ESC) ? replaceAll(sgrRe, '') : this;
 
   /// Removes foreground colors in the text.
   ///
   /// The other functions of a sequence are kept: `CSI 1;31 SGR` becomes
   /// `CSI 1 SGR`.
+  ///
+  /// Read by the pattern, not by what `Parser` makes of the sequence: see
+  /// [ansiRemoveSgr] for the parameter too large to be an integer.
   String ansiRemoveForeground() =>
       contains(ESC) ? removeSgrFunction(this, isForegroundFunction) : this;
 
@@ -79,6 +93,9 @@ extension StringRemoveEscapeCodesExtension on String {
   ///
   /// The other functions of a sequence are kept: `CSI 1;41 SGR` becomes
   /// `CSI 1 SGR`.
+  ///
+  /// Read by the pattern here too — see [ansiRemoveSgr] for the parameter no
+  /// integer can hold.
   String ansiRemoveBackground() =>
       contains(ESC) ? removeSgrFunction(this, isBackgroundFunction) : this;
 
@@ -86,6 +103,8 @@ extension StringRemoveEscapeCodesExtension on String {
   ///
   /// The other functions of a sequence are kept: `CSI 4;58;5;1 SGR` becomes
   /// `CSI 4 SGR`, leaving the underline itself.
+  ///
+  /// Read by the pattern as the others are: see [ansiRemoveSgr].
   String ansiRemoveUnderlineColor() =>
       contains(ESC) ? removeSgrFunction(this, isUnderlineColorFunction) : this;
 
