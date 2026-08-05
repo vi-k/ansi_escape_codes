@@ -11,6 +11,9 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,7 +27,7 @@ jobs:
         sdk: [ 3.6.0, stable ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
       - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
         with:
@@ -41,6 +44,35 @@ jobs:
 
       - name: Run tests
         run: dart test
+
+      - name: Check the docs build
+        run: dart doc --dry-run
+
+      - name: Run the examples
+        # utils.dart is left out: currentCursorPos needs a terminal to
+        # answer, and CI has none.
+        run: |
+          for f in example/ansi_escape_codes_example.dart \
+                   example/check_compatibility.dart \
+                   example/colors256.dart \
+                   example/control.dart \
+                   example/links.dart \
+                   example/progress_indicator.dart \
+                   example/rgb.dart \
+                   example/styles.dart; do
+            timeout 60 dart run "$f" > /dev/null
+          done
+
+      - name: Collect coverage
+        if: matrix.sdk == 'stable'
+        run: dart test --coverage=coverage
+
+      - name: Upload coverage
+        if: matrix.sdk == 'stable'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: coverage
+          path: coverage/
 
       - name: Check the package is publishable
         if: matrix.sdk == 'stable'
