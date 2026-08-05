@@ -12,6 +12,12 @@
 # the package to weigh them against each other, so it needs the repository
 # too, while the benchmark it runs on each side stands on its own.
 #
+# benchmark/memory_guard.dart is left out for a nearer reason: it fails when a
+# reading falls outside a band calibrated on the machine that wrote it down,
+# so away from this repository's CI it would be an opinion rather than a
+# measurement. The benchmark beside it is the one that says something
+# anywhere.
+#
 # coverage/ is what `dart test --coverage` writes — the CI collects it there
 # and a local run puts it in the same place. It is a report about the tests,
 # not a part of the package, and the replacement rule above is why naming it
@@ -19,6 +25,7 @@
 docs/
 doc/api/
 benchmark/compare.dart
+benchmark/memory_guard.dart
 tool/
 coverage/
 TODO.md

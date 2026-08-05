@@ -48,6 +48,27 @@ void main() {
       expect('${fgRed}SEVERE$reset'.lengthWithoutEscapeCodes, 6);
       expect('plain'.lengthWithoutEscapeCodes, 5);
     });
+
+    test('the count agrees with the string it never builds', () {
+      const inputs = [
+        '',
+        'plain',
+        '\x1B[31mred\x1B[0m',
+        '\x1B[38;5;196mx',
+        'a\x1B]8;;http://u/\x1B\\link\x1B]8;;\x1B\\b',
+        '\x1B',
+        'a\x1B[',
+        '𝄞\x1B[31m𝄞',
+      ];
+
+      for (final text in inputs) {
+        expect(
+          text.lengthWithoutEscapeCodes,
+          text.ansiRemoveEscapeCodes().length,
+          reason: 'on ${text.codeUnits}',
+        );
+      }
+    });
   });
 
   group('showing what would otherwise be obeyed:', () {

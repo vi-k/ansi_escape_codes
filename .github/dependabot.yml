@@ -1,0 +1,9 @@
+# SHA-pinned actions do not update themselves: setup-dart sat on v1.0.0
+# from 2021 until a review noticed. Dependabot moves the pin and the
+# version comment together.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

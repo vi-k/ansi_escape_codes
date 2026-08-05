@@ -142,13 +142,18 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   ///
   /// A [Printer] and a [StackedPrinter] are handed a whole line here, and a
   /// line that opens a hyperlink and does not close it gets the close
-  /// written at its end, the way a slice does. A link, unlike the style, is
-  /// not reopened on the next line.
+  /// written at its end, the way a slice does — and, as there, the close is
+  /// the `ST`-terminated one whatever form the opening took: see
+  /// [Parser.substring]. A link, unlike the style, is not reopened on the
+  /// next line.
   ///
-  /// A [SinkPrinter] and a [StackedSinkPrinter] are handed one write, and a
-  /// line may be composed of several: there an open link is carried to the
-  /// write that follows, and the close waits for the line to really end —
-  /// for a [writeln], or for a `'\n'` in what is written.
+  /// A [SinkPrinter] and a [StackedSinkPrinter] are handed a piece rather
+  /// than a line, and this only prepares it: nothing is written, and the
+  /// link state is left as it was. The carry belongs to their [write] and
+  /// [writeln] instead — a line there may be composed of several writes, an
+  /// open link is carried into the write that follows, and the close waits
+  /// for the line to really end, for a [writeln] or for a `'\n'` in what is
+  /// written.
   String prepare(String line) => _prepare(line, closeLink: _closesLinkAtEnd);
 
   /// Prepares [line], closing a hyperlink it leaves open where [closeLink]
@@ -303,9 +308,12 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   });
 
   /// A write goes to the sink as it comes, and one line may be composed of
-  /// several: [prepare] is handed a piece, not a line, so a link it leaves
-  /// open is carried to the next write instead of being closed here. The
-  /// close is written where the line really ends — see [_writeBuf].
+  /// several, so a piece on its own is never known to end one and no close
+  /// is owed at its end. Where the line really ends the write path says for
+  /// itself, and it is there that a link left open is carried into the write
+  /// that follows — see [_writeBuf] and [_writeLine]. [prepare], which reads
+  /// this, hands the piece back without a close and without touching the
+  /// carry.
   @override
   bool get _closesLinkAtEnd => false;
 

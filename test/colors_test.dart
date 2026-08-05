@@ -140,6 +140,27 @@ void main() {
       expect(Colors.byIndex(-1), isNull);
       expect(Colors.values, hasLength(256));
     });
+
+    test('every name spells its own cube coordinates', () {
+      for (var r = 0; r < 6; r++) {
+        for (var g = 0; g < 6; g++) {
+          for (var b = 0; b < 6; b++) {
+            expect(
+              Colors.values.byName('rgb$r$g$b'),
+              Colors.values[16 + 36 * r + 6 * g + b],
+              reason: 'rgb$r$g$b must sit where the cube formula points',
+            );
+          }
+        }
+      }
+      for (var level = 0; level < 24; level++) {
+        expect(
+          Colors.values.byName('gray$level'),
+          Colors.values[232 + level],
+          reason: 'gray$level must sit where the gray ramp points',
+        );
+      }
+    });
   });
 
   group('Color256:', () {

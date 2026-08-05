@@ -66,12 +66,29 @@ extension StringRemoveEscapeCodesExtension on String {
   String ansiRemoveCsi() => contains(ESC) ? replaceAll(csiRe, '') : this;
 
   /// Removes SGR (Select Graphic Rendition) codes in the text.
+  ///
+  /// A sequence is read here by its pattern and not by what its parameters
+  /// mean, and where the pattern and `Parser` part ways the pattern decides.
+  /// A parameter too large for the parser to read as a number is one such
+  /// place: `Parser` cannot read the sequence at all, hands it back as an
+  /// unknown control sequence carrying no style, and passes it on as it was
+  /// written wherever it passes codes on. This takes it out regardless, and
+  /// the colour removals rewrite it: the `31` of
+  /// `CSI 31;9223372036854775808 SGR` goes to [ansiRemoveForeground] as any
+  /// other red would. How large is too large is the platform's to say — on
+  /// the VM, where an `int` is 64 bits, that number is already past it; on
+  /// the web, where an `int` is a double, it parses and the sequence is read
+  /// like any other. An accepted limit either way, and the one the `ansiHas`
+  /// family answers by as well.
   String ansiRemoveSgr() => contains(ESC) ? replaceAll(sgrRe, '') : this;
 
   /// Removes foreground colors in the text.
   ///
   /// The other functions of a sequence are kept: `CSI 1;31 SGR` becomes
   /// `CSI 1 SGR`.
+  ///
+  /// Read by the pattern, not by what `Parser` makes of the sequence: see
+  /// [ansiRemoveSgr] for the parameter too large for the parser to read.
   String ansiRemoveForeground() =>
       contains(ESC) ? removeSgrFunction(this, isForegroundFunction) : this;
 
@@ -79,6 +96,9 @@ extension StringRemoveEscapeCodesExtension on String {
   ///
   /// The other functions of a sequence are kept: `CSI 1;41 SGR` becomes
   /// `CSI 1 SGR`.
+  ///
+  /// Read by the pattern here too — see [ansiRemoveSgr] for the number that
+  /// outgrows the parser's `int`.
   String ansiRemoveBackground() =>
       contains(ESC) ? removeSgrFunction(this, isBackgroundFunction) : this;
 
@@ -86,9 +106,29 @@ extension StringRemoveEscapeCodesExtension on String {
   ///
   /// The other functions of a sequence are kept: `CSI 4;58;5;1 SGR` becomes
   /// `CSI 4 SGR`, leaving the underline itself.
+  ///
+  /// Read by the pattern as the others are: see [ansiRemoveSgr].
   String ansiRemoveUnderlineColor() =>
       contains(ESC) ? removeSgrFunction(this, isUnderlineColorFunction) : this;
 
   /// Returns the length of the string without escape codes.
-  int get lengthWithoutEscapeCodes => ansiRemoveEscapeCodes().length;
+  ///
+  /// The cleaned string is never built: the codes are found by the pattern
+  /// [ansiRemoveEscapeCodes] takes them out by, and what they take up is
+  /// counted off the length — the answer [ansiRemoveEscapeCodes] would have
+  /// given, arrived at without a second copy of the string being made. The
+  /// walk over the matches is the same one either way, so what a page of
+  /// megabytes saves here is the copy and not the time.
+  int get lengthWithoutEscapeCodes {
+    if (!contains(ESC)) {
+      return length;
+    }
+
+    var removed = 0;
+    for (final m in escapeCodesRe.allMatches(this)) {
+      removed += m.end - m.start;
+    }
+
+    return length - removed;
+  }
 }
