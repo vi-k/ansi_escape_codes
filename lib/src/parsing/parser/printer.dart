@@ -45,6 +45,11 @@ final class StackedPrinter extends _PrintPrinterBase<Stack> {
 /// Unlike [Printer], which delegates to a print function, [SinkPrinter] writes
 /// directly to the provided `sink`. It continuous tracks the current [Style]
 /// across multiple write operations.
+///
+/// A hyperlink is tracked the same way: one opened by a write stays open
+/// across the writes that follow, so a link may be composed of several of
+/// them. It is closed where the line ends — at a [writeln] or a `'\n'` in
+/// what is written — and, unlike the style, is not reopened on the next line.
 final class SinkPrinter extends _SinkPrinterBase<Style> {
   /// Creates a printer that processes ANSI escape codes and writes the output
   /// to a [StringSink].
@@ -62,6 +67,9 @@ final class SinkPrinter extends _SinkPrinterBase<Style> {
 /// Similar to [SinkPrinter], but it tracks the full history of applied styles
 /// using a [Stack], which allows for nested style applications and reversions
 /// across multiple write operations.
+///
+/// A hyperlink is carried across writes and closed at the end of the line,
+/// the way [SinkPrinter] does it.
 final class StackedSinkPrinter extends _SinkPrinterBase<Stack> {
   /// Creates a printer that processes ANSI escape codes, writes the output to
   /// a [StringSink], and tracks the [Stack] of styles.
@@ -117,12 +125,35 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// Prints the given object to the output.
   void print(Object? object) => writeln(object);
 
-  /// Prepares the given line for printing.
-  String prepare(String line) {
-    if (line.isEmpty) {
-      return '';
-    }
+  /// Whether a string handed to [prepare] is a whole line, so that a
+  /// hyperlink it left open is closed at its end.
+  ///
+  /// A printer that takes a line at a time closes as it goes; one that takes
+  /// a write at a time cannot, and waits for the line to end.
+  bool get _closesLinkAtEnd;
 
+  /// Whether what has been prepared so far left a hyperlink open.
+  ///
+  /// It is false again by the time a whole line has been prepared, and only
+  /// carries anything between the writes that make up one line.
+  bool _linkIsOpen = false;
+
+  /// Prepares the given line for printing.
+  ///
+  /// A [Printer] and a [StackedPrinter] are handed a whole line here, and a
+  /// line that opens a hyperlink and does not close it gets the close
+  /// written at its end, the way a slice does. A link, unlike the style, is
+  /// not reopened on the next line.
+  ///
+  /// A [SinkPrinter] and a [StackedSinkPrinter] are handed one write, and a
+  /// line may be composed of several: there an open link is carried to the
+  /// write that follows, and the close waits for the line to really end —
+  /// for a [writeln], or for a `'\n'` in what is written.
+  String prepare(String line) => _prepare(line, closeLink: _closesLinkAtEnd);
+
+  /// Prepares [line], closing a hyperlink it leaves open where [closeLink]
+  /// says the line ends here.
+  String _prepare(String line, {required bool closeLink}) {
     if (!ansiCodesEnabled) {
       return line.ansiRemoveEscapeCodes();
     }
@@ -134,18 +165,41 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       return line;
     }
 
+    if (line.isEmpty) {
+      // Nothing of its own to prepare — but a line that ends here still owes
+      // the close for a link an earlier write of the same line left open.
+      if (closeLink && _linkIsOpen) {
+        _linkIsOpen = false;
+
+        return linkClose;
+      }
+
+      return '';
+    }
+
     var lastState = stateDefaults.toStyle();
 
     final parser = _ParserBase<S>(line, this.lastState ?? stateDefaults);
     final buf = StringBuffer(reset);
 
+    var linkIsOpen = _linkIsOpen;
+
     for (final m in parser.matches) {
       // An SGR sequence says what the style is, and the style is written by
       // the transition below instead of being passed on. Everything else —
-      // the text, and the codes that move the cursor, clear the screen or
-      // open a hyperlink — is the line's own and goes through as it came.
+      // the text, and the codes that move the cursor or clear the screen —
+      // is the line's own and goes through as it came.
       if (m.entity case Sgr()) {
         continue;
+      }
+
+      // A hyperlink passes through as it came, but not unnoticed: a line
+      // that opens one and does not close it would make everything printed
+      // after it part of the link, so the close is written where the line
+      // ends — the way a slice closes the link it opened. Unlike the style,
+      // a link is not reopened afterwards.
+      if (m.entity case Link(:final url)) {
+        linkIsOpen = url.isNotEmpty;
       }
 
       // The style is put on before the code that reads it: erasing and
@@ -156,6 +210,12 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
         ..write(m.entity.string);
       lastState = newState;
     }
+
+    if (linkIsOpen && closeLink) {
+      buf.write(linkClose);
+      linkIsOpen = false;
+    }
+    _linkIsOpen = linkIsOpen;
 
     buf.write(lastState.transitTo(stateDefaults));
     this.lastState = parser.finalState;
@@ -175,6 +235,11 @@ final class _PrintPrinterBase<S extends State<S>> extends _PrinterBase<S> {
     required super.ansiCodesEnabled,
     super.debugForTest,
   }) : _output = output ?? Zone.current.print;
+
+  /// A line is buffered whole and handed to [prepare] whole, so a link it
+  /// leaves open is closed at its end.
+  @override
+  bool get _closesLinkAtEnd => true;
 
   /// Writes the given object to the buffer.
   @override
@@ -237,6 +302,13 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
     super.debugForTest,
   });
 
+  /// A write goes to the sink as it comes, and one line may be composed of
+  /// several: [prepare] is handed a piece, not a line, so a link it leaves
+  /// open is carried to the next write instead of being closed here. The
+  /// close is written where the line really ends — see [_writeBuf].
+  @override
+  bool get _closesLinkAtEnd => false;
+
   /// Writes the given object to the buffer.
   @override
   void write(Object? object) {
@@ -270,17 +342,22 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   /// Writes the given object to the buffer and flush buffer.
   @override
   void writeln([Object? object = '']) {
-    _writeBuf(object.toString());
+    _writeBuf(object.toString(), endsLine: true);
     sink.writeln();
   }
 
   /// Flushes the buffer.
-  void _writeBuf(String buf) {
+  ///
+  /// Everything before a `'\n'` is a line the sink has seen the end of, and
+  /// [endsLine] says the same of what is left after the last one — which is
+  /// true of a [writeln] and false of a [write], where the line goes on into
+  /// the write that follows.
+  void _writeBuf(String buf, {bool endsLine = false}) {
     var pos = 0;
     var endIndex = buf.indexOf('\n');
     while (endIndex != -1) {
       final line = buf.substring(pos, endIndex);
-      _writeLine(line);
+      _writeLine(line, endsLine: true);
       sink.write('\n');
 
       pos = endIndex + 1;
@@ -288,12 +365,12 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
     }
 
     final line = buf.substring(pos);
-    _writeLine(line);
+    _writeLine(line, endsLine: endsLine);
   }
 
   /// Writes the given line to the sink.
-  void _writeLine(String line) {
-    final output = prepare(line);
+  void _writeLine(String line, {required bool endsLine}) {
+    final output = _prepare(line, closeLink: endsLine);
     sink.write(output);
     if (debugForTest) {
       sink.write(Parser(output).showControlFunctions());

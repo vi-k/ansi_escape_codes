@@ -140,6 +140,13 @@ Fixed:
   everything printed after it clickable on the slice's URL. With
   `close: true` the slice now closes the link it opened, the way an
   insertion does.
+- The printers had the gap the slice had: a printed line that opened a
+  hyperlink left it open, and everything printed after was part of it. A
+  line now closes the link it opened; unlike the style, a link is not
+  reopened on the next line. `SinkPrinter` and `StackedSinkPrinter` take a
+  write at a time and one line may be composed of several, so there an open
+  link is carried across the writes and closed where the line really ends —
+  at a `writeln`, or at a `'\n'` in what is written.
 - `insertBefore` and `insertAfter` could put text between the halves of a
   surrogate pair and hand back a string that is no longer valid UTF-16. A
   position inside a pair now shifts to its edge — `insertBefore` to the
