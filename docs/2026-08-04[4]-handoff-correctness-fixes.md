@@ -17,11 +17,11 @@ ansi_escape_codes, 2026-08-04. Передача контекста для про
 
 ## Сделано (хронология)
 
-1. **Независимое ревью** → `docs/2026-08-04-project-review.md`
+1. **Независимое ревью** → `docs/2026-08-04[1]-project-review.md`
    (полный отчёт: находки, план действий — таблица приоритетов в конце).
 2. **Перф-заход** (H3, M4, M7, M5) — завершён, PR #10 влит в main.
-   Спека: `docs/2026-08-04-perf-fixes-design.md`, план:
-   `docs/2026-08-04-perf-fixes-plan.md`. Итоги: чистый текст ~113×,
+   Спека: `docs/2026-08-04[2]-perf-fixes-design.md`, план:
+   `docs/2026-08-04[3]-perf-fixes-plan.md`. Итоги: чистый текст ~113×,
    нарезка квадрат→линейность, плотные входы, ленивый Text +
    partial-walk-сценарии памяти; CHANGELOG 4.0.0 дополнен честным
    Performance-блоком.
@@ -106,9 +106,10 @@ guard нарезки поднять до 800/1600 строк (запас к по
 
 ## Ключевые ссылки
 
-- Отчёт ревью: `docs/2026-08-04-project-review.md`
-- Перф: `docs/2026-08-04-perf-fixes-design.md`, `…-perf-fixes-plan.md`
-- Архив: `docs/2026-07-29-fix-spec-v3.1.2.md`,
-  `docs/2026-08-02-insert-before-after-design.md`
+- Отчёт ревью: `docs/2026-08-04[1]-project-review.md`
+- Перф: `docs/2026-08-04[2]-perf-fixes-design.md`,
+  `docs/2026-08-04[3]-perf-fixes-plan.md`
+- Архив: `docs/2026-07-29[1]-fix-spec-v3.1.2.md`,
+  `docs/2026-08-02[1]-insert-before-after-design.md`
 - Сравнение версий: `dart run benchmark/compare.dart perf-baseline-4.0.0`
   (или VS Code → `benchmark compare`)

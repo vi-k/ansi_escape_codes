@@ -10,6 +10,9 @@ part of 'state.dart';
 /// A reset of a property that was never applied does nothing: text may come
 /// from anywhere and close an attribute it has not opened, so such resets are
 /// ignored rather than treated as an error.
+///
+/// Equality compares the visible surface only — see [State.==]: the
+/// history is what a stack does, not what it equals.
 final class Stack extends State<Stack> {
   final List<IntensityStyle> _intensityStack;
   final int _boldCounter;
@@ -28,7 +31,7 @@ final class Stack extends State<Stack> {
   final List<ExtendedColor> _underlineColorStack;
 
   const Stack._({
-    required List<IntensityStyle> intencityStack,
+    required List<IntensityStyle> intensityStack,
     required int boldCounter,
     required int dimCounter,
     required int italicCounter,
@@ -43,7 +46,7 @@ final class Stack extends State<Stack> {
     required List<Color> foregroundStack,
     required List<Color> backgroundStack,
     required List<ExtendedColor> underlineColorStack,
-  })  : _intensityStack = intencityStack,
+  })  : _intensityStack = intensityStack,
         _boldCounter = boldCounter,
         _dimCounter = dimCounter,
         _italicCounter = italicCounter,
@@ -62,7 +65,7 @@ final class Stack extends State<Stack> {
   /// The state a terminal is in before anything is written to it: its own
   /// colours, and nothing switched on.
   static const Stack terminalColors = Stack._(
-    intencityStack: [],
+    intensityStack: [],
     boldCounter: 0,
     dimCounter: 0,
     italicCounter: 0,
@@ -176,13 +179,13 @@ final class Stack extends State<Stack> {
 
   @override
   Stack get bold => _copyWith(
-        intencityStack: List.of(_intensityStack)..add(IntensityStyle.bold),
+        intensityStack: List.of(_intensityStack)..add(IntensityStyle.bold),
         boldCounter: _boldCounter + 1,
       );
 
   @override
   Stack get dim => _copyWith(
-        intencityStack: List.of(_intensityStack)..add(IntensityStyle.dim),
+        intensityStack: List.of(_intensityStack)..add(IntensityStyle.dim),
         dimCounter: _dimCounter + 1,
       );
 
@@ -234,12 +237,12 @@ final class Stack extends State<Stack> {
 
   @override
   Stack get superscript => _copyWith(
-        scripStack: List.of(_scriptStack)..add(ScriptStyle.superscript),
+        scriptStack: List.of(_scriptStack)..add(ScriptStyle.superscript),
       );
 
   @override
   Stack get subscript => _copyWith(
-        scripStack: List.of(_scriptStack)..add(ScriptStyle.subscript),
+        scriptStack: List.of(_scriptStack)..add(ScriptStyle.subscript),
       );
 
   @override
@@ -273,7 +276,7 @@ final class Stack extends State<Stack> {
     final last = list.removeLast();
 
     return _copyWith(
-      intencityStack: list,
+      intensityStack: list,
       boldCounter:
           last == IntensityStyle.bold ? _boldCounter - 1 : _boldCounter,
       dimCounter: last == IntensityStyle.dim ? _dimCounter - 1 : _dimCounter,
@@ -361,7 +364,7 @@ final class Stack extends State<Stack> {
     }
 
     return _copyWith(
-      scripStack: List.of(_scriptStack)..removeLast(),
+      scriptStack: List.of(_scriptStack)..removeLast(),
     );
   }
 
@@ -399,7 +402,7 @@ final class Stack extends State<Stack> {
   }
 
   Stack _copyWith({
-    List<IntensityStyle>? intencityStack,
+    List<IntensityStyle>? intensityStack,
     int? boldCounter,
     int? dimCounter,
     int? italicCounter,
@@ -410,15 +413,15 @@ final class Stack extends State<Stack> {
     int? strikethroughCounter,
     List<FrameStyle>? frameStack,
     int? overlineCounter,
-    List<ScriptStyle>? scripStack,
+    List<ScriptStyle>? scriptStack,
     List<Color>? foregroundStack,
     List<Color>? backgroundStack,
     List<ExtendedColor>? underlineColorStack,
   }) =>
       Stack._(
-        intencityStack: intencityStack == null
+        intensityStack: intensityStack == null
             ? _intensityStack
-            : List.unmodifiable(intencityStack),
+            : List.unmodifiable(intensityStack),
         boldCounter: boldCounter ?? _boldCounter,
         dimCounter: dimCounter ?? _dimCounter,
         italicCounter: italicCounter ?? _italicCounter,
@@ -434,7 +437,7 @@ final class Stack extends State<Stack> {
             frameStack == null ? _frameStack : List.unmodifiable(frameStack),
         overlineCounter: overlineCounter ?? _overlineCounter,
         scriptStack:
-            scripStack == null ? _scriptStack : List.unmodifiable(scripStack),
+            scriptStack == null ? _scriptStack : List.unmodifiable(scriptStack),
         foregroundStack: foregroundStack == null
             ? _foregroundStack
             : List.unmodifiable(foregroundStack),

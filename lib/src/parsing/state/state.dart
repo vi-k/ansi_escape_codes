@@ -232,7 +232,12 @@ sealed class State<S extends State<S>> {
     }
 
     if (other == Style.terminalColors) {
-      return skipReset || (this as State<void>) == Style.terminalColors
+      // A NoStyle never wrote anything, so there is nothing to take
+      // off: its surface is the terminal's own, however the == terms
+      // differ.
+      return skipReset ||
+              this is NoStyle ||
+              (this as State<void>) == Style.terminalColors
           ? ''
           : sgr.reset;
     }
@@ -415,6 +420,15 @@ sealed class State<S extends State<S>> {
         underlineColorValue,
       );
 
+  /// Equality is the visible surface: the properties and colours this
+  /// state answers with, and whether it is a [NoStyle] — nothing else.
+  ///
+  /// What a [Stack] remembers of how it got here is not compared: two
+  /// equal stacks may answer one and the same reset differently when
+  /// their histories differ. `underline.doublyUnderline` equals
+  /// `doublyUnderline`, and after one `resetUnderline` each, the first
+  /// keeps an underline the second never had. Equal is how it looks,
+  /// not how it unwinds.
   @override
   bool operator ==(Object other) =>
       other is State<void> &&

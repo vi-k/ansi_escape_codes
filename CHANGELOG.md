@@ -163,6 +163,22 @@ Fixed:
 - Leading zeroes hid a colour from the same functions: removing the
   colour from `\x1B[38;05;196m` removed everything but it. Parameters
   are now read as numbers, as ECMA-48 allows them to be written.
+- A style operation with nothing to change built a new object anyway,
+  and a `NoStyle` asked for a pointless reset came back a `Style` that
+  writes: `NoStyle().resetItalic('x')` opened with a reset. Nothing to
+  change now answers itself, as `State` promised all along.
+- `NoStyle().transitTo(Style.terminalColors)` wrote a reset between two
+  surfaces that are both the terminal's own. A transition between equal
+  surfaces is empty.
+- A `Printer` given `defaultStyle: NoStyle()` still opened every line
+  with a reset and unwound it at the end. It now imposes nothing: the
+  line goes out as it came, its own codes included —
+  `ansiCodesEnabled: false` remains the way to take those out.
+- The `style` entry point returned types it could not name:
+  `ControlFunctionsSGR` and its four control-function siblings were
+  reachable from the entities but undefined to the importer. The five
+  exports are now part of the point, and every entry point carries a
+  closure test.
 
 Renamed:
 
@@ -172,7 +188,7 @@ Renamed:
   a letter.
 - The `standart_colors` directory is spelt `standard_colors`.
 
-Removed — every name deprecated in an earlier release is gone:
+Removed — every name deprecated in an earlier release, and some that never were:
 
 - The style constants renamed in 2.0.0: `faint`, `resetBoldAndFaint`,
   `italicized`, `resetItalicized`, `singlyUnderlined`, `doublyUnderlined`,
@@ -200,6 +216,10 @@ Removed — every name deprecated in an earlier release is gone:
 - `MatchingState`, `MatchesResult` and `ParserIterator`, which the parser
   passes to and gets back from its own private methods and nothing else could
   reach. `Matches` and `Match` are unchanged.
+- `IntensityStyle` left the public API. It is the element a `Stack`'s
+  intensity history holds; nothing public takes or returns it, and bold
+  and dim — unlike the other pairs — can be on at once, so no getter
+  could honestly answer with one of them.
 
 Breaking changes:
 

@@ -4,7 +4,7 @@
 
 **Goal:** Устранить четыре перформанс-находки ревью (H3, M4, M7, M5) без изменения публичного API и семантики, с доказательствами в виде бенчмарк-чисел и гардов.
 
-**Architecture:** Префильтр `indexOf(ESC)` в итераторе парсера и extensions; общий резюмируемый курсор для `stateAt`/`substring`/`_seamAt`; диспетчеризация сущностей по байту и кэш `SgrSimpleFunction`; ленивые `Text.string` и `UnmodifiableListView` вместо копий. Спека: `docs/2026-08-04-perf-fixes-design.md`.
+**Architecture:** Префильтр `indexOf(ESC)` в итераторе парсера и extensions; общий резюмируемый курсор для `stateAt`/`substring`/`_seamAt`; диспетчеризация сущностей по байту и кэш `SgrSimpleFunction`; ленивые `Text.string` и `UnmodifiableListView` вместо копий. Спека: `docs/2026-08-04[2]-perf-fixes-design.md`.
 
 **Tech Stack:** Dart ≥ 3.6.0 (нижняя граница SDK — новее языковые фичи нельзя), `package:test`, `dart:collection` (`UnmodifiableListView`), git worktree для утилиты сравнения.
 
@@ -1506,7 +1506,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 git push -u origin perf/review-findings
 gh pr create --title "perf: the four findings of the 4.0.0 review" \
   --body "$(cat <<'EOF'
-Implements docs/2026-08-04-perf-fixes-design.md: the indexOf prefilter,
+Implements docs/2026-08-04[2]-perf-fixes-design.md: the indexOf prefilter,
 the resumable walk for substring and the seams, byte dispatch with the
 SGR function table, and the memory work. Each commit carries its own
 compare-against-baseline numbers; complexity classes are pinned by

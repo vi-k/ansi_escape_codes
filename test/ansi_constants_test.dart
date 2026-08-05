@@ -57,7 +57,6 @@ void main() {
       }
       buf.write(SGR);
 
-      print('');
       final parser = Parser(buf.toString());
 
       expect(
