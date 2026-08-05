@@ -146,7 +146,10 @@ Fixed:
   reopened on the next line. `SinkPrinter` and `StackedSinkPrinter` take a
   write at a time and one line may be composed of several, so there an open
   link is carried across the writes and closed where the line really ends —
-  at a `writeln`, or at a `'\n'` in what is written.
+  at a `writeln`, or at a `'\n'` in what is written. A styled call goes
+  through a printer and changed with them: `Styles.red('…')` now closes a
+  link its text left open, and in a multi-line string the link ends with
+  the line it was opened on instead of running on into the next.
 - `insertBefore` and `insertAfter` could put text between the halves of a
   surrogate pair and hand back a string that is no longer valid UTF-16. A
   position inside a pair now shifts to its edge — `insertBefore` to the

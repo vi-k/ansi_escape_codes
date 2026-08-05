@@ -182,7 +182,9 @@ final class Style extends State<Style> {
   ///
   /// Each line is opened and closed on its own, so the style survives being
   /// cut, and a style already in the text is unwound back to this one rather
-  /// than left as it was.
+  /// than left as it was. A hyperlink is not so lucky: a line closes the one
+  /// it opened, the way a printed line does, so a link is cut where the
+  /// style is carried over.
   String call(String text) {
     if (text.isEmpty) {
       return '';
