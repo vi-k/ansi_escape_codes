@@ -52,8 +52,9 @@ Performance:
   `contains(ESC)` outright, without touching a pattern, and
   `lengthWithoutEscapeCodes` counts without building the cleaned string —
   the same walk over the same matches, so what is saved is the copy and not
-  the time: a 5 MB page is measured with some 20 MB less at the peak, and in
-  about the same microseconds.
+  the time: a 5 MB page is measured with megabytes less at the peak — some
+  8 to some 20, depending on the runtime — and takes about as long as it
+  did.
 - `substring` and the insert seams keep their place the way `stateAt`
   always did, instead of walking from the start each time: slicing a
   200-line document through one parser is about three times faster (3.95 ms
