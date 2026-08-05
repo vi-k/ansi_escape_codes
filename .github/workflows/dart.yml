@@ -50,6 +50,15 @@ jobs:
       - name: Run tests
         run: dart test
 
+      - name: Check a parse keeps no more memory than it did
+        if: matrix.sdk == 'stable'
+        # A cold process, a fixed corpus, and a band around what a parsed
+        # match retains — benchmark/memory_guard.dart carries the figures and
+        # says how to move them. The stable SDK only: the band was calibrated
+        # on one Dart, and an older one reading the same corpus differently
+        # would be a way to go red without anything being wrong.
+        run: dart run benchmark/memory_guard.dart
+
       - name: Check the docs build
         run: dart doc --dry-run
 
