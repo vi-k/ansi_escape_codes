@@ -2,6 +2,7 @@ import '../ansi/c1.dart';
 import '../ansi/csi.dart';
 import '../ansi/sgr.dart';
 import '../parsing/patterns/patterns.dart';
+import 'sgr_rules.dart';
 
 /// Splits the parameters of an SGR sequence into separate functions.
 ///
@@ -19,15 +20,24 @@ List<String> splitSgrFunctions(String params) {
   for (var i = 0; i < parts.length;) {
     var length = 1;
 
-    if (_isExtendedColor(parts[i]) && i + 1 < parts.length) {
-      length = switch (parts[i + 1]) {
-        '5' => 3,
-        '2' => 5,
-        _ => 1,
-      };
+    // A parameter that is a whole number can open an extended colour;
+    // the colon form carries its arguments inside one parameter and
+    // stays whole on its own. Numbers are read as numbers: ECMA-48
+    // allows leading zeroes, and `038` is `38`.
+    final head = int.tryParse(parts[i]);
 
-      if (i + length > parts.length) {
-        length = parts.length - i;
+    if (head != null &&
+        isExtendedColorIntroducer(head) &&
+        i + 1 < parts.length) {
+      // The introducer and the kind go together, the kind's arguments
+      // only when all of them are there — the rule lives in sgr_rules.
+      length = 2;
+      final kind = int.tryParse(parts[i + 1]);
+      if (kind != null) {
+        final args = extendedColorArgCount(kind);
+        if (i + 2 + args <= parts.length) {
+          length = 2 + args;
+        }
       }
     }
 
@@ -83,11 +93,6 @@ String removeSgrFunction(String text, bool Function(String function) test) =>
 
       return kept.isEmpty ? '' : '$CSI${kept.join(';')}$SGR';
     });
-
-bool _isExtendedColor(String part) =>
-    part == '$FOREGROUND' ||
-    part == '$BACKGROUND' ||
-    part == '$UNDERLINE_COLOR';
 
 bool _isColorFunction(String function, int base, int high, int extended) {
   final value = int.tryParse(_head(function));
