@@ -42,6 +42,11 @@ jobs:
       - name: Analyze project source
         run: dart analyze --fatal-infos
 
+      - name: Check the generated tables are in step with the generator
+        run: |
+          dart run tool/generate.dart
+          git diff --exit-code -- lib/
+
       - name: Run tests
         run: dart test
 

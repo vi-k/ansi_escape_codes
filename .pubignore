@@ -5,7 +5,11 @@
 # there for whoever opens the package, and a link from the readme reaches it.
 # A .pubignore replaces .gitignore rather than adding to it, so what `dart doc`
 # generates has to be named here as well or a local run of it rides along.
+#
+# tool/ is where the generator of the color tables lives: it needs the
+# repository to rewrite lib/, and the package needs only what it wrote.
 docs/
 doc/api/
 benchmark/compare.dart
+tool/
 TODO.md
