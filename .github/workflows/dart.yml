@@ -109,7 +109,12 @@ jobs:
           ' coverage/lcov.info
 
       - name: Upload coverage
-        if: matrix.sdk == 'stable'
+        if: always() && matrix.sdk == 'stable'
+        # The step above it is the one that can fail, and a floor that has
+        # just been fallen through is exactly when the report is worth
+        # reading. `always()` keeps the artifact for that run; with nothing
+        # collected — a failure earlier than this — the upload finds no files
+        # and says so without going red.
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: coverage
