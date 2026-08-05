@@ -138,7 +138,11 @@ final class _ParserBase<S extends State<S>> {
   /// See also [stateAt].
   S get finalState => matches._requireParsingResult.finalState;
 
-  /// String length without ANSI escape codes.
+  /// String length without ANSI escape codes, in UTF-16 code units.
+  ///
+  /// The count is [String.length] minus the codes — `𝄞` is two, and a
+  /// grapheme a terminal draws as one glyph may be several. Graphemes are
+  /// not counted.
   int get length => _requirePlainString.length;
 
   /// Whether the string ends in the state it began in.
@@ -272,7 +276,12 @@ final class _ParserBase<S extends State<S>> {
   /// text style.
   ///
   /// [maxLength] is the maximum length of the substring.
-  /// [close] is whether to close the substring with the default style.
+  /// [close] is whether to close the substring with the default style. A
+  /// hyperlink the slice opened and did not close is closed along with it,
+  /// the way an insertion closes one: what is printed after the slice must
+  /// not stay clickable. With `close: false` the link stays open, as the
+  /// style does. A slice that began inside a link does not repeat the
+  /// opening, and is not the one to close it.
   ///
   /// Reads the string up to the end of the piece and stops, and keeps its
   /// place the way [stateAt] does: a slice beginning past the start of the
@@ -285,6 +294,10 @@ final class _ParserBase<S extends State<S>> {
   /// is already past them. Going back walks afresh as well.
   ///
   /// See [prepare] for reading the whole string at once instead.
+  ///
+  /// [start] and [maxLength] count UTF-16 code units, as [length] does. A
+  /// cut can land inside a surrogate pair and split it, as [String.substring]
+  /// can.
   String substring(
     int start, {
     int? maxLength,
@@ -302,6 +315,7 @@ final class _ParserBase<S extends State<S>> {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
     Match<S>? lastMatch;
+    var linkIsOpen = false;
 
     var walk = _walk;
     int pos;
@@ -369,6 +383,9 @@ final class _ParserBase<S extends State<S>> {
               ..write(currentState.transitTo(m.state))
               ..write(entity.string);
             currentState = m.state.toStyle();
+            if (entity is Link) {
+              linkIsOpen = entity.url.isNotEmpty;
+            }
           }
           lastMatch = m;
       }
@@ -383,6 +400,13 @@ final class _ParserBase<S extends State<S>> {
     }
 
     if (lastMatch != null) {
+      if (close && linkIsOpen) {
+        // A slice that opened a link closes it, the way an insertion does:
+        // what is printed after the slice must not stay clickable on the
+        // slice's URL. A slice that began inside a link never wrote the
+        // opening, and has nothing to close.
+        buf.write(linkClose);
+      }
       buf.write(
         currentState.transitTo(
           close ? initialState : lastMatch.state,
@@ -398,6 +422,11 @@ final class _ParserBase<S extends State<S>> {
   /// standing there.
   ///
   /// [pos] is the position in the string without ANSI escape codes.
+  ///
+  /// [pos] counts UTF-16 code units, the units [String.length] counts. A
+  /// position between the halves of a surrogate pair — inside a `𝄞` —
+  /// shifts to the front of the pair, so the pair is never split;
+  /// [insertAfter] shifts past it instead.
   ///
   /// The inserted text takes the style of the place it lands in, and gives it
   /// back: the style it opens of its own is closed after it, and so is a
@@ -422,6 +451,9 @@ final class _ParserBase<S extends State<S>> {
   /// there.
   ///
   /// [pos] is the position in the string without ANSI escape codes.
+  ///
+  /// A position between the halves of a surrogate pair shifts past the
+  /// pair; see [insertBefore] for the other direction.
   ///
   /// The same as [insertBefore] in every other way, and the same as it when no
   /// escape code stands at [pos].
@@ -498,7 +530,23 @@ final class _ParserBase<S extends State<S>> {
       // Both ends of the seam sit inside a piece of text when the position
       // falls within one, and there the two insertions are the same.
       if (after ? pos < end : pos > plainPos && pos <= end) {
-        return (m.start + (pos - plainPos), m.state);
+        final cut = m.start + (pos - plainPos);
+
+        // A cut between the halves of a surrogate pair would land the
+        // insertion inside a character. It shifts along the direction of
+        // the insertion — insertBefore to the front of the pair,
+        // insertAfter past it — and one step is always enough: the unit
+        // next to a pair is never the missing half of another one. Halves
+        // an escape code keeps apart are lone surrogates of the input
+        // itself, sit in different pieces, and are left as they lie.
+        if (cut > m.start &&
+            cut < m.end &&
+            _isHighSurrogate(input.codeUnitAt(cut - 1)) &&
+            _isLowSurrogate(input.codeUnitAt(cut))) {
+          return _seamAt(after ? pos + 1 : pos - 1, after: after);
+        }
+
+        return (cut, m.state);
       }
     }
 
@@ -520,6 +568,9 @@ final class _ParserBase<S extends State<S>> {
   /// A [padding] longer than one character overshoots the width, the way
   /// [String.padRight] overshoots it: it is written once for every character
   /// still wanted, not once for every place it fills.
+  ///
+  /// The width is counted in UTF-16 code units, as [length] counts them —
+  /// not in glyphs a terminal draws.
   String padRight(int width, [String padding = ' ']) {
     final needToAdd = width - length;
     if (needToAdd <= 0) {
@@ -534,6 +585,9 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// See [padRight]: [width] is counted without the escape codes, and a
   /// [padding] longer than one character overshoots it.
+  ///
+  /// The width is counted in UTF-16 code units, as [length] counts them —
+  /// not in glyphs a terminal draws.
   String padLeft(int width, [String padding = ' ']) {
     final needToAdd = width - length;
     if (needToAdd <= 0) {
@@ -649,3 +703,9 @@ final class _Walk<S extends State<S>> {
     return false;
   }
 }
+
+/// Whether [codeUnit] is the leading half of a surrogate pair.
+bool _isHighSurrogate(int codeUnit) => (codeUnit & 0xFC00) == 0xD800;
+
+/// Whether [codeUnit] is the trailing half of a surrogate pair.
+bool _isLowSurrogate(int codeUnit) => (codeUnit & 0xFC00) == 0xDC00;

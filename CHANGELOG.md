@@ -132,6 +132,20 @@ Fixed:
   every other pair.
 - `DEL` counted as a control code but was never shown as one.
 - Entities and functions described themselves wrongly in `toString`.
+- On Windows the terminal modes were put back in an order the console
+  refuses — echo first, line mode still off — so `currentCursorPos` threw
+  and left the terminal raw. Line mode now comes back first, and each mode
+  is restored even when the other throws.
+- `substring` left a hyperlink open: a slice that ended inside one kept
+  everything printed after it clickable on the slice's URL. With
+  `close: true` the slice now closes the link it opened, the way an
+  insertion does.
+- `insertBefore` and `insertAfter` could put text between the halves of a
+  surrogate pair and hand back a string that is no longer valid UTF-16. A
+  position inside a pair now shifts to its edge — `insertBefore` to the
+  front, `insertAfter` past it. Positions, `length` and the paddings are
+  UTF-16 code units, as `String` counts them, and the docs now say so
+  instead of promising what is seen.
 
 Renamed:
 

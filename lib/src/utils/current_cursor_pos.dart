@@ -41,9 +41,14 @@ Future<(int, int)> currentCursorPos(
         timeout,
       );
     } finally {
-      stdin
-        ..echoMode = keepEchoMode
-        ..lineMode = keepLineMode;
+      // Line mode first, mirroring the way they were turned off: Windows
+      // lets echo come back only once line mode is on. Nested, so a throw
+      // restoring one does not keep the other from being restored.
+      try {
+        stdin.lineMode = keepLineMode;
+      } finally {
+        stdin.echoMode = keepEchoMode;
+      }
     }
   } on Object catch (_, stacktrace) {
     Error.throwWithStackTrace(
