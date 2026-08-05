@@ -107,7 +107,8 @@ guard нарезки поднять до 800/1600 строк (запас к по
 ## Ключевые ссылки
 
 - Отчёт ревью: `docs/2026-08-04[1]-project-review.md`
-- Перф: `docs/2026-08-04[2]-perf-fixes-design.md`, `…-perf-fixes-plan.md`
+- Перф: `docs/2026-08-04[2]-perf-fixes-design.md`,
+  `docs/2026-08-04[3]-perf-fixes-plan.md`
 - Архив: `docs/2026-07-29[1]-fix-spec-v3.1.2.md`,
   `docs/2026-08-02[1]-insert-before-after-design.md`
 - Сравнение версий: `dart run benchmark/compare.dart perf-baseline-4.0.0`

@@ -187,14 +187,17 @@ Each entry point brings a different part of the package:
 |:---|---:|:---|
 | `ansi_escape_codes.dart` | ~1000 | all of it: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state, the control function tables, the `String` extensions and the two terminal utilities |
 | `ansi.dart` | ~500 | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F`. The only one that is not part of the first — the ready-to-use strings are built from these, and neither brings the other |
-| `style.dart` | 77 | the styles and the parser, without the tables of ready-to-use strings |
-| `parsing.dart` | 82 | the parser, the state and the control function tables |
+| `style.dart` | 81 | the styles, the state and the parser with its control function tables, without the tables of ready-to-use strings |
+| `parsing.dart` | 81 | the same names — the styles and the parser come together, whichever of the two is imported |
 | `extensions.dart` | 6 | the `String` extensions alone |
 | `utils.dart` | 2 | `tabs` and `currentCursorPos` alone |
 
 The bottom four are parts of the first, and are there for the times a smaller
 namespace is worth an import of its own — a program that only reads escape
-codes has no use for the 900 constants that write them.
+codes has no use for the 900 constants that write them. `style.dart` and
+`parsing.dart` are one surface under two names: the styles and the parser live
+in the same library, so either import brings both, and the name only says
+which of them was wanted.
 
 One import is usually enough:
 

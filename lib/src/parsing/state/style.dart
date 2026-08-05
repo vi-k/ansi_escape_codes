@@ -320,6 +320,9 @@ final class Style extends State<Style> {
   @override
   Style get subscript => _setFlags(_flags & ~_superscript | _subscript);
 
+  // The slot is put on the colour on the way out (see foregroundColor) and
+  // Color.== ignores it, so comparing what is held against what is asked for
+  // is enough — here and in the two below.
   @override
   Style foreground(Color color) => _foreground == color
       ? this
