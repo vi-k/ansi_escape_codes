@@ -68,8 +68,8 @@ void main() {
       expect(Parser('a${RIS}b').length, 2);
     });
 
-    test('resetTerminal is the ready-to-use name of RIS', () {
-      expect(resetTerminal, RIS);
+    test('resetTerminal is the ready-to-use name of the RIS bytes', () {
+      expect(resetTerminal, '\x1Bc');
     });
   });
 

@@ -1,24 +1,23 @@
-import 'package:ansi_escape_codes/ansi.dart';
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('ready-to-use CSI:', () {
-    test('every Close constant matches its control function', () {
+    test('every Close constant is the final byte of its control function', () {
       const closes = {
-        'cursorUpClose': (cursorUpClose, CUU),
-        'cursorDownClose': (cursorDownClose, CUD),
-        'cursorRightClose': (cursorRightClose, CUF),
-        'cursorLeftClose': (cursorLeftClose, CUB),
-        'cursorNextLineClose': (cursorNextLineClose, CNL),
-        'cursorPrevLineClose': (cursorPrevLineClose, CPL),
-        'cursorHPosClose': (cursorHPosClose, CHA),
-        'cursorPosClose': (cursorPosClose, CUP),
-        'cursorHVPosClose': (cursorHVPosClose, HVP),
-        'eraseInPageClose': (eraseInPageClose, ED),
-        'eraseInLineClose': (eraseInLineClose, EL),
-        'scrollUpClose': (scrollUpClose, SU),
-        'scrollDownClose': (scrollDownClose, SD),
+        'cursorUpClose': (cursorUpClose, 'A'),
+        'cursorDownClose': (cursorDownClose, 'B'),
+        'cursorRightClose': (cursorRightClose, 'C'),
+        'cursorLeftClose': (cursorLeftClose, 'D'),
+        'cursorNextLineClose': (cursorNextLineClose, 'E'),
+        'cursorPrevLineClose': (cursorPrevLineClose, 'F'),
+        'cursorHPosClose': (cursorHPosClose, 'G'),
+        'cursorPosClose': (cursorPosClose, 'H'),
+        'cursorHVPosClose': (cursorHVPosClose, 'f'),
+        'eraseInPageClose': (eraseInPageClose, 'J'),
+        'eraseInLineClose': (eraseInLineClose, 'K'),
+        'scrollUpClose': (scrollUpClose, 'S'),
+        'scrollDownClose': (scrollDownClose, 'T'),
       };
 
       for (final MapEntry(key: name, value: (actual, expected))
@@ -27,7 +26,7 @@ void main() {
       }
     });
 
-    test('every Open constant is CSI', () {
+    test('every Open constant is the CSI bytes', () {
       const opens = {
         'cursorUpOpen': cursorUpOpen,
         'cursorDownOpen': cursorDownOpen,
@@ -45,7 +44,7 @@ void main() {
       };
 
       for (final MapEntry(key: name, value: value) in opens.entries) {
-        expect(value, CSI, reason: name);
+        expect(value, '\x1B[', reason: name);
       }
     });
 
