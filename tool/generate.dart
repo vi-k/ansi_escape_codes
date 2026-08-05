@@ -10,10 +10,11 @@
 /// The CI keeps the zones and the generator in step.
 ///
 /// One thing to know before raising the SDK floor: `_pageWidth` and every
-/// wrapping shape below model the formatter of a pre-3.7 `dart_style`,
-/// which is what a `^3.6.0` constraint still asks for. From 3.7 on `dart
-/// format` writes the tall style instead, and the shapes have to be
-/// derived again — the format gate says so loudly rather than quietly.
+/// wrapping shape below model the short style `dart format` writes below
+/// language version 3.7, which is what a `^3.6.0` constraint still asks
+/// for. At language version 3.7 and up it writes the tall style instead,
+/// and the shapes have to be derived again — the format gate says so
+/// loudly rather than quietly.
 library;
 
 import 'dart:io';

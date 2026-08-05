@@ -94,6 +94,8 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// The state the last prepared line ended in, carried into the next one —
   /// and null where no line has been read, as it stays for a printer whose
   /// [defaultStyle] is a [NoStyle]: imposing nothing, it carries nothing.
+  /// It stays null with [ansiCodesEnabled] off as well — the line is
+  /// stripped and handed back before there is a state to keep.
   ///
   /// Setting it from outside puts the printer out of step with what the
   /// terminal has already been sent.
