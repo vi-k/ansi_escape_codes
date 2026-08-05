@@ -1,8 +1,8 @@
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:test/test.dart';
 
-/// Входы, на которых парсер ломался бы, если бы округлял углы: обрывки,
-/// суррогатные пары, восьмибитный C1, управляющие байты.
+/// Inputs the parser would break on if it cut any corners: truncated
+/// sequences, surrogate pairs, eight-bit C1, control bytes.
 const adversarialInputs = <String>[
   '',
   'plain text, no codes at all',

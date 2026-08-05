@@ -42,8 +42,9 @@ void main() {
         parser.substring(0, maxLength: 3),
         '$linkOpen$url$linkTextOpen' 'cli' '$linkClose',
       );
-      // maxLength: 1, чтобы конец среза не дотянулся до входного linkClose,
-      // стоящего на границе: коды на границе среза включаются по дизайну.
+      // maxLength: 1 so that the end of the slice does not reach the
+      // input's own linkClose, which stands on the boundary: codes on the
+      // boundary of a slice are taken in by design.
       expect(parser.substring(3, maxLength: 1), 'c');
     });
   });
