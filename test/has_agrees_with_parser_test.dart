@@ -43,6 +43,12 @@ const _fragments = <String>[
   '\x1B',
 ];
 
+/// The fragments a removal's neighbour can be absorbed into: a sequence
+/// with no final byte yet. Removing a complete sequence next to one
+/// changes how it reads on, so the text-preservation assertions skip
+/// compositions carrying them.
+const _truncated = <String>{'\x1B', '\x1B[31', '\x1B[38;5;'};
+
 /// What the parser read as touching one colour slot: a colour function on
 /// it, or a simple code from its rows of the SGR table.
 bool _parserHas(
@@ -116,6 +122,7 @@ void main() {
         ];
         final text = parts.join();
         final reason = 'on ${text.codeUnits}';
+        final hasTruncated = parts.any(_truncated.contains);
 
         expect(
           text.ansiRemoveForeground().ansiHasForeground,
@@ -144,6 +151,28 @@ void main() {
           Parser(stripped).removeAll(),
           reason: reason,
         );
+        if (!hasTruncated) {
+          expect(
+            stripped.ansiRemoveEscapeCodes(),
+            Parser(text).removeAll(),
+            reason: reason,
+          );
+          expect(
+            stripped.ansiHasBackground,
+            text.ansiHasBackground,
+            reason: reason,
+          );
+          expect(
+            text.ansiRemoveBackground().ansiHasForeground,
+            text.ansiHasForeground,
+            reason: reason,
+          );
+          expect(
+            text.ansiRemoveUnderlineColor().ansiHasBackground,
+            text.ansiHasBackground,
+            reason: reason,
+          );
+        }
       }
     });
   });
