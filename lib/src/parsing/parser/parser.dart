@@ -10,6 +10,7 @@ import '../../ansi/sgr.dart';
 import '../../extensions/remove.dart';
 import '../../extensions/show_control_codes.dart';
 import '../../extensions/show_escape_codes.dart';
+import '../../internal/sgr_rules.dart';
 import '../../ready_to_use/csi.dart';
 import '../../ready_to_use/esc.dart';
 import '../../ready_to_use/osc.dart';

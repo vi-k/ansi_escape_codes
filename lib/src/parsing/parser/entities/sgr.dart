@@ -227,7 +227,12 @@ final class Sgr extends Csi {
       final kind = parsingState.nextParam;
 
       if (kind is CsiParamNumber) {
-        if (kind.value == COLOR_256 && parsingState.availableParamsCount >= 1) {
+        // How many arguments the kind takes is sgr_rules' knowledge,
+        // shared with splitSgrFunctions.
+        final args = extendedColorArgCount(kind.value);
+
+        if (kind.value == COLOR_256 &&
+            parsingState.availableParamsCount >= args) {
           final index = parsingState.nextParam;
 
           if (index is CsiParamNumber) {
@@ -237,7 +242,7 @@ final class Sgr extends Csi {
             }
           }
         } else if (kind.value == COLOR_RGB &&
-            parsingState.availableParamsCount >= 3) {
+            parsingState.availableParamsCount >= args) {
           final r = parsingState.nextParam;
           final g = parsingState.nextParam;
           final b = parsingState.nextParam;
