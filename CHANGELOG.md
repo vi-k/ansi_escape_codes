@@ -146,6 +146,10 @@ Fixed:
   front, `insertAfter` past it. Positions, `length` and the paddings are
   UTF-16 code units, as `String` counts them, and the docs now say so
   instead of promising what is seen.
+- `ansiHasSgr` and `ansiRemoveSgr` counted private control sequences
+  ending in `m` — xterm's modifyOtherKeys, SGR mouse reports — as SGR,
+  and removing styles removed them too. The pattern now takes digits,
+  `;` and `:` only, the way the parser classifies them.
 
 Renamed:
 
