@@ -3,6 +3,8 @@ description: A toolkit for working with ANSI escape codes and analyzing strings
   containing them.
 version: 4.0.0
 homepage: https://github.com/vi-k/ansi_escape_codes
+repository: https://github.com/vi-k/ansi_escape_codes
+issue_tracker: https://github.com/vi-k/ansi_escape_codes/issues
 
 topics:
   - ansi
