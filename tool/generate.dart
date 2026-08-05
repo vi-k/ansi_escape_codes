@@ -1,4 +1,4 @@
-/// Regenerates the seven hand-written surfaces of the 256-colour table.
+/// Regenerates the hand-written surfaces of the 256-colour table.
 ///
 /// The list of names below is the one source of truth; every surface —
 /// the index constants, the ready-to-use strings, the enum, the statics,
@@ -8,6 +8,12 @@
 ///     dart run tool/generate.dart
 ///
 /// The CI keeps the zones and the generator in step.
+///
+/// One thing to know before raising the SDK floor: `_pageWidth` and every
+/// wrapping shape below model the formatter of a pre-3.7 `dart_style`,
+/// which is what a `^3.6.0` constraint still asks for. From 3.7 on `dart
+/// format` writes the tall style instead, and the shapes have to be
+/// derived again — the format gate says so loudly rather than quietly.
 library;
 
 import 'dart:io';
@@ -95,27 +101,37 @@ class _Name {
   bool get isGray => index >= 232;
 
   /// `black` for `highBlack` — the standard colour a high one repeats.
-  String get plain => id[4].toLowerCase() + id.substring(5);
+  /// Carried by the high family alone, empty for the other three: the
+  /// list states it, nothing here cuts it out of [id].
+  final String plain;
 
   /// `113` for `rgb113`, `5` for `gray5` — the digits a table name ends
-  /// with; asked only of those two families.
+  /// with. Meaningful for the RGB and grayscale families alone, and asked
+  /// only of them.
   String get digits => isGray ? id.substring(4) : id.substring(3);
 
-  _Name(this.index, this.id, this.constant);
+  _Name(this.index, this.id, this.constant, {this.plain = ''});
 }
 
 List<_Name> _names() {
+  // The eight standard colours, then the eight high ones, each of those
+  // carrying the standard colour it repeats. The pair is written down
+  // rather than cut out of the spelling: renaming the `high` prefix is an
+  // edit of this list and of nothing else.
   const named = [
-    'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', //
-    'highBlack', 'highRed', 'highGreen', 'highYellow', 'highBlue',
-    'highMagenta', 'highCyan', 'highWhite',
+    ('black', ''), ('red', ''), ('green', ''), ('yellow', ''), //
+    ('blue', ''), ('magenta', ''), ('cyan', ''), ('white', ''),
+    ('highBlack', 'black'), ('highRed', 'red'), ('highGreen', 'green'),
+    ('highYellow', 'yellow'), ('highBlue', 'blue'),
+    ('highMagenta', 'magenta'), ('highCyan', 'cyan'), ('highWhite', 'white'),
   ];
 
   String screaming(String id) =>
       id.replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]}').toUpperCase();
 
   return [
-    for (final (i, id) in named.indexed) _Name(i, id, screaming(id)),
+    for (final (i, (id, plain)) in named.indexed)
+      _Name(i, id, screaming(id), plain: plain),
     for (var r = 0; r < 6; r++)
       for (var g = 0; g < 6; g++)
         for (var b = 0; b < 6; b++)
@@ -292,6 +308,8 @@ List<String> _getters(List<_Name> names) => [
 void _replace(String path, List<String> zone) {
   final file = File(path);
   final lines = file.readAsLinesSync();
+
+  // The first BEGIN and the first END: one pair per file is what is meant.
   final begin = lines.indexWhere((l) => l.trim() == _begin);
   final end = lines.indexWhere((l) => l.trim() == _end);
 
