@@ -188,7 +188,7 @@ Each entry point brings a different part of the package:
 | `ansi_escape_codes.dart` | ~1000 | all of it: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state, the control function tables, the `String` extensions and the two terminal utilities |
 | `ansi.dart` | ~500 | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F`. The only one that is not part of the first — the ready-to-use strings are built from these, and neither brings the other |
 | `style.dart` | 81 | the styles, the state and the parser with its control function tables, without the tables of ready-to-use strings |
-| `extensions.dart` | 6 | the `String` extensions alone |
+| `extensions.dart` | 7 | the `String` extensions, with the two enums their signatures name |
 | `utils.dart` | 2 | `tabs` and `currentCursorPos` alone |
 
 The bottom three are parts of the first, and are there for the times a smaller
@@ -223,7 +223,8 @@ import 'package:ansi_escape_codes/ansi_escape_codes.dart'
 The same hiding is wanted for `style.dart`: the parser is what defines those
 six names, and both of these imports bring it. Only `ansi.dart`,
 `extensions.dart` and `utils.dart` are free of them — the first brings
-constants, the last two nothing but functions.
+constants, the last two functions and, with them, the two enums their
+signatures name: `ControlCodeStyle` and `ControlFunctionsC0`.
 
 The parser is still `Parser`, and `Matches` — its own name — is untouched by
 this.
@@ -348,7 +349,6 @@ does not name are passed as values:
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
-import 'package:ansi_escape_codes/extensions.dart';
 
 final mine = Styles.underline
     .foreground(Color256.rgb(5, 2, 0)) // the 6x6x6 cube
@@ -761,7 +761,6 @@ terminal's own. The difference is the one between
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
-import 'package:ansi_escape_codes/extensions.dart';
 
 const text = '$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ';
 final parser = Parser(text);
@@ -960,14 +959,17 @@ For a string parsed only once there are the `ansiInsertBefore` and
 ### Quick analysis
 
 You can quickly analyze a string without using `Parser` by using extensions.
-They are also the quicker way when one answer is all that is wanted: they work
-by regular expression, where `Parser` builds an entity for every code it meets
-— on a page of colored log, `ansiRemoveEscapeCodes` takes about two thirds of
-what `Parser.removeAll` does.
+They work by regular expression, where `Parser` builds an entity for every code
+it meets, and that pays where one answer is all that is wanted: an `ansiHas`
+question stops at the first code that answers it, and a string carrying no
+codes at all is turned away by a `contains(ESC)` before any pattern is touched.
+Where the whole string is to be walked anyway, the parser is not the dearer of
+the two — on a page of colored log `ansiRemoveEscapeCodes` costs a little more
+than `Parser.removeAll` does, and the parse, once made, answers everything else
+asked of it.
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
-import 'package:ansi_escape_codes/extensions.dart';
 
 …
 
