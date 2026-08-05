@@ -321,28 +321,34 @@ final class Style extends State<Style> {
   Style get subscript => _setFlags(_flags & ~_superscript | _subscript);
 
   @override
-  Style foreground(Color color) => Style._(
-        _flags,
-        color.on(ColorTarget.foreground),
-        _background,
-        _underlineColor,
-      );
+  Style foreground(Color color) => _foreground == color
+      ? this
+      : Style._(
+          _flags,
+          color.on(ColorTarget.foreground),
+          _background,
+          _underlineColor,
+        );
 
   @override
-  Style background(Color color) => Style._(
-        _flags,
-        _foreground,
-        color.on(ColorTarget.background),
-        _underlineColor,
-      );
+  Style background(Color color) => _background == color
+      ? this
+      : Style._(
+          _flags,
+          _foreground,
+          color.on(ColorTarget.background),
+          _underlineColor,
+        );
 
   @override
-  Style underlineColor(ExtendedColor color) => Style._(
-        _flags,
-        _foreground,
-        _background,
-        color.on(ColorTarget.underline),
-      );
+  Style underlineColor(ExtendedColor color) => _underlineColor == color
+      ? this
+      : Style._(
+          _flags,
+          _foreground,
+          _background,
+          color.on(ColorTarget.underline),
+        );
 
   @override
   Style get reset => terminalColors;
@@ -380,16 +386,19 @@ final class Style extends State<Style> {
         _flags & ~(_superscript | _subscript),
       );
   @override
-  Style get resetForeground =>
-      Style._(_flags, null, _background, _underlineColor);
+  Style get resetForeground => _foreground == null
+      ? this
+      : Style._(_flags, null, _background, _underlineColor);
 
   @override
-  Style get resetBackground =>
-      Style._(_flags, _foreground, null, _underlineColor);
+  Style get resetBackground => _background == null
+      ? this
+      : Style._(_flags, _foreground, null, _underlineColor);
 
   @override
-  Style get resetUnderlineColor =>
-      Style._(_flags, _foreground, _background, null);
+  Style get resetUnderlineColor => _underlineColor == null
+      ? this
+      : Style._(_flags, _foreground, _background, null);
 
   /// The codes that take a terminal from its own colours to this style.
   ///
@@ -399,12 +408,11 @@ final class Style extends State<Style> {
   /// The code that takes everything off again, which is the reset.
   String get close => sgr.reset;
 
-  Style _setFlags(int flags) => Style._(
-        flags,
-        _foreground,
-        _background,
-        _underlineColor,
-      );
+  // Nothing to change answers itself — the promise State makes — and a
+  // NoStyle asked for nothing stays a NoStyle.
+  Style _setFlags(int flags) => flags == _flags
+      ? this
+      : Style._(flags, _foreground, _background, _underlineColor);
 
   @override
   Style toStyle() => this;

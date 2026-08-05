@@ -163,6 +163,13 @@ Fixed:
 - Leading zeroes hid a colour from the same functions: removing the
   colour from `\x1B[38;05;196m` removed everything but it. Parameters
   are now read as numbers, as ECMA-48 allows them to be written.
+- A style operation with nothing to change built a new object anyway,
+  and a `NoStyle` asked for a pointless reset came back a `Style` that
+  writes: `NoStyle().resetItalic('x')` opened with a reset. Nothing to
+  change now answers itself, as `State` promised all along.
+- `NoStyle().transitTo(Style.terminalColors)` wrote a reset between two
+  surfaces that are both the terminal's own. A transition between equal
+  surfaces is empty.
 
 Renamed:
 

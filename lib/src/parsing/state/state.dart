@@ -232,7 +232,12 @@ sealed class State<S extends State<S>> {
     }
 
     if (other == Style.terminalColors) {
-      return skipReset || (this as State<void>) == Style.terminalColors
+      // A NoStyle never wrote anything, so there is nothing to take
+      // off: its surface is the terminal's own, however the == terms
+      // differ.
+      return skipReset ||
+              this is NoStyle ||
+              (this as State<void>) == Style.terminalColors
           ? ''
           : sgr.reset;
     }
