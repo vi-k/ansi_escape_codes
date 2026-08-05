@@ -309,6 +309,21 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   @override
   bool get _closesLinkAtEnd => false;
 
+  /// Prepares the given piece and hands it back without sending it anywhere.
+  ///
+  /// The carry of an open hyperlink belongs to the writes that reach the
+  /// sink, so a piece prepared here and not written leaves it as it was: a
+  /// link opened in what was only asked about is not one the sink would ever
+  /// be owed a close for.
+  @override
+  String prepare(String line) {
+    final keepLinkIsOpen = _linkIsOpen;
+    final prepared = super.prepare(line);
+    _linkIsOpen = keepLinkIsOpen;
+
+    return prepared;
+  }
+
   /// Writes the given object to the buffer.
   @override
   void write(Object? object) {

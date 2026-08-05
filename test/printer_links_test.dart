@@ -147,6 +147,18 @@ void main() {
       );
     });
 
+    test('a direct prepare leaves the writes that follow alone', () {
+      final sink = StringBuffer();
+      SinkPrinter(sink)
+        // Asked, not written: the piece is prepared and thrown away, so the
+        // link it opened is not one the sink has been sent and the writeln
+        // below has nothing to close.
+        ..prepare('\x1B]8;;http://u/\x1B\\click')
+        ..writeln('plain');
+
+      expect(sink.toString(), '\x1B[0mplain\n');
+    });
+
     test('a NoStyle sink printer still passes the writes through', () {
       final sink = StringBuffer();
       SinkPrinter(sink, defaultStyle: const NoStyle())
