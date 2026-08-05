@@ -222,9 +222,10 @@ import 'package:ansi_escape_codes/ansi_escape_codes.dart'
 
 The same hiding is wanted for `style.dart`: the parser is what defines those
 six names, and both of these imports bring it. Only `ansi.dart`,
-`extensions.dart` and `utils.dart` are free of them — the first brings
-constants, the last two functions and, with them, the two enums their
-signatures name: `ControlCodeStyle` and `ControlFunctionsC0`.
+`extensions.dart` and `utils.dart` are free of them: `ansi.dart` brings
+constants, `utils.dart` its two functions, and `extensions.dart` the extensions
+with the two enums their signatures name — `ControlCodeStyle` and
+`ControlFunctionsC0`.
 
 The parser is still `Parser`, and `Matches` — its own name — is untouched by
 this.
@@ -960,13 +961,14 @@ For a string parsed only once there are the `ansiInsertBefore` and
 
 You can quickly analyze a string without using `Parser` by using extensions.
 They work by regular expression, where `Parser` builds an entity for every code
-it meets, and that pays where one answer is all that is wanted: an `ansiHas`
-question stops at the first code that answers it, and a string carrying no
-codes at all is turned away by a `contains(ESC)` before any pattern is touched.
-Where the whole string is to be walked anyway, the parser is not the dearer of
-the two — on a page of colored log `ansiRemoveEscapeCodes` costs a little more
-than `Parser.removeAll` does, and the parse, once made, answers everything else
-asked of it.
+it meets, and the difference between the two tells where one answer is all that
+is wanted: an `ansiHas` question stops at the first code that answers it, and a
+string carrying no codes at all is turned away by a `contains(ESC)` — the
+parser scans it just as fast, but has a list of matches to build where the
+extension has nothing. Where the whole string is to be walked anyway, the
+parser is not the dearer of the two — on a page of colored log
+`ansiRemoveEscapeCodes` costs a little more than `Parser.removeAll` does, and
+the parse, once made, answers everything else asked of it.
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';

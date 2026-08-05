@@ -35,10 +35,10 @@ Added:
   utilities as well, so it is now what its name says: one import for all of it
   but the raw byte tables of `ansi.dart`, which stand apart as they always
   did — the ready-to-use strings are built from them, and neither import
-  brings the other. `extensions.dart` and `utils.dart` still bring those
-  alone, as `style.dart` brings the parser without the tables of constants —
-  the smaller imports are for a smaller namespace, not for reaching something
-  the main one lacks.
+  brings the other. `extensions.dart` and `utils.dart` still bring the
+  extensions and the utilities alone, as `style.dart` brings the parser
+  without the tables of constants — the smaller imports are for a smaller
+  namespace, not for reaching something the main one lacks.
 
 Performance:
 
@@ -105,9 +105,9 @@ Fixed:
 - `faint` stood for `bold` instead of `dim`.
 - An ESC sequence was cut after two characters, and one carrying intermediate
   bytes was shown without them: `ESC ( B` and `ESC ) B` came out alike. A
-  string ending in a bare `ESC` was swallowed as text — shown as nothing and
-  counted in the length — and is a code of its own now: it shows as `[ESC]`,
-  and `Parser('abc\x1B').length` says 3 where it said 4.
+  bare `ESC` at the end of a string was swallowed as text — shown as nothing
+  and counted in the length — and is a code of its own now: it shows as
+  `[ESC]`, and `Parser('abc\x1B').length` says 3 where it said 4.
 - `optimize` and `substring` dropped every code that was not SGR, and they,
   with `isClosed`, ignored the state the parser started from.
 - The printers dropped them as well: `prepare('${cursorUp}x')` gave back
@@ -152,16 +152,16 @@ Fixed:
   everything printed after it clickable on the slice's URL. With
   `close: true` the slice now closes the link it opened, the way an
   insertion does.
-- The printers had the gap the slice had: a printed line that opened a
-  hyperlink left it open, and everything printed after was part of it. A
-  line now closes the link it opened; unlike the style, a link is not
-  reopened on the next line. `SinkPrinter` and `StackedSinkPrinter` take a
-  write at a time and one line may be composed of several, so there an open
-  link is carried across the writes and closed where the line really ends —
-  at a `writeln`, or at a `'\n'` in what is written. A styled call goes
-  through a printer and changed with them: `Styles.red('…')` now closes a
-  link its text left open, and in a multi-line string the link ends with
-  the line it was opened on instead of running on into the next.
+- Once a link passed through them at all, the printers had the gap the slice
+  had: a printed line that opened a hyperlink left it open, and everything
+  printed after was part of it. A line now closes the link it opened; unlike
+  the style, a link is not reopened on the next line. `SinkPrinter` and
+  `StackedSinkPrinter` take a write at a time and one line may be composed of
+  several, so there an open link is carried across the writes and closed where
+  the line really ends — at a `writeln`, or at a `'\n'` in what is written. A
+  styled call goes through a printer and changed with them: `Styles.red('…')`
+  now closes a link its text left open, and in a multi-line string the link
+  ends with the line it was opened on instead of running on into the next.
 - `insertBefore` and `insertAfter` could put text between the halves of a
   surrogate pair and hand back a string that is no longer valid UTF-16. A
   position inside a pair now shifts to its edge — `insertBefore` to the
