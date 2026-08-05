@@ -109,5 +109,23 @@ extension StringRemoveEscapeCodesExtension on String {
       contains(ESC) ? removeSgrFunction(this, isUnderlineColorFunction) : this;
 
   /// Returns the length of the string without escape codes.
-  int get lengthWithoutEscapeCodes => ansiRemoveEscapeCodes().length;
+  ///
+  /// The cleaned string is never built: the codes are found by the pattern
+  /// [ansiRemoveEscapeCodes] takes them out by, and what they take up is
+  /// counted off the length — the answer [ansiRemoveEscapeCodes] would have
+  /// given, arrived at without a second copy of the string being made. The
+  /// walk over the matches is the same one either way, so what a page of
+  /// megabytes saves here is the copy and not the time.
+  int get lengthWithoutEscapeCodes {
+    if (!contains(ESC)) {
+      return length;
+    }
+
+    var removed = 0;
+    for (final m in escapeCodesRe.allMatches(this)) {
+      removed += m.end - m.start;
+    }
+
+    return length - removed;
+  }
 }
