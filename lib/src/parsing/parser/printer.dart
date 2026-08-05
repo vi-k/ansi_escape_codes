@@ -78,6 +78,11 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   final S stateDefaults;
 
   /// The style the text is given where it asks for none of its own.
+  ///
+  /// A [NoStyle] here keeps the printer's hands off entirely: the line
+  /// goes out as it came, its own codes included. That is the other
+  /// half of [ansiCodesEnabled] — a [NoStyle] leaves the text's codes
+  /// alone, `ansiCodesEnabled: false` takes them out.
   final Style defaultStyle;
 
   /// Whether escape codes are written at all.
@@ -116,6 +121,13 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
 
     if (!ansiCodesEnabled) {
       return line.ansiRemoveEscapeCodes();
+    }
+
+    // A NoStyle imposes nothing: no reset, no default, no unwinding —
+    // the line goes out exactly as it came, its own codes included.
+    // Taking those out is what `ansiCodesEnabled: false` is for.
+    if (defaultStyle is NoStyle) {
+      return line;
     }
 
     var lastState = stateDefaults.toStyle();

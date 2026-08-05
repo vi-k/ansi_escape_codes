@@ -170,6 +170,10 @@ Fixed:
 - `NoStyle().transitTo(Style.terminalColors)` wrote a reset between two
   surfaces that are both the terminal's own. A transition between equal
   surfaces is empty.
+- A `Printer` given `defaultStyle: NoStyle()` still opened every line
+  with a reset and unwound it at the end. It now imposes nothing: the
+  line goes out as it came, its own codes included —
+  `ansiCodesEnabled: false` remains the way to take those out.
 
 Renamed:
 
