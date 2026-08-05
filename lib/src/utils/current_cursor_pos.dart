@@ -30,11 +30,15 @@ Future<(int, int)> currentCursorPos(
   try {
     final keepEchoMode = stdin.echoMode;
     final keepLineMode = stdin.lineMode;
-    stdin
-      ..echoMode = false
-      ..lineMode = false;
+    var echoModeOff = false;
+    var lineModeOff = false;
 
     try {
+      stdin.echoMode = false;
+      echoModeOff = true;
+      stdin.lineMode = false;
+      lineModeOff = true;
+
       report = await _readReport(
         input ?? stdin,
         () => stdout.write('${CSI}6$DSR'),
@@ -43,11 +47,17 @@ Future<(int, int)> currentCursorPos(
     } finally {
       // Line mode first, mirroring the way they were turned off: Windows
       // lets echo come back only once line mode is on. Nested, so a throw
-      // restoring one does not keep the other from being restored.
+      // restoring one does not keep the other from being restored, and
+      // only what actually changed is put back — a stdin that refused a
+      // change is not asked to undo it.
       try {
-        stdin.lineMode = keepLineMode;
+        if (lineModeOff) {
+          stdin.lineMode = keepLineMode;
+        }
       } finally {
-        stdin.echoMode = keepEchoMode;
+        if (echoModeOff) {
+          stdin.echoMode = keepEchoMode;
+        }
       }
     }
   } on Object catch (_, stacktrace) {

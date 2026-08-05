@@ -55,15 +55,14 @@ Performance:
   ×0.65.
 - An escape code is told apart by its second byte instead of four named
   regex groups, a simple SGR function comes from a cached table instead of
-  being rebuilt, and the SGR lists handed back to callers are wrapped once
-  rather than copied twice: a simpler, more correct hot path, though its
-  own saving lands inside the numbers above rather than as one of its own
-  — isolated, it measures at noise level once the scanner and slicing
-  fixes are in. One visible side effect: two `SgrSimpleFunction`s built for
-  the same code used to be two separate objects, and were never `==` to
-  each other either, since the class defines neither `==` nor `hashCode`;
-  now they are the same cached instance, so both `identical()` and `==`
-  see them as one and the same.
+  being rebuilt, and the matched text is read out of the match once: a
+  simpler, more correct hot path, though its own saving lands inside the
+  numbers above rather than as one of its own — isolated, it measures at
+  noise level once the scanner and slicing fixes are in. One visible side
+  effect: two `SgrSimpleFunction`s built for the same code used to be two
+  separate objects, and were never `==` to each other either, since the
+  class defines neither `==` nor `hashCode`; now they are the same cached
+  instance, so both `identical()` and `==` see them as one and the same.
 - A full parse retains the match list once, not twice, and a `Text` piece
   cuts its own substring out of the input only the first time something
   reads it, so a piece nobody reads keeps no copy of its own — `stateAt`,
@@ -134,11 +133,23 @@ Fixed:
 - On Windows the terminal modes were put back in an order the console
   refuses — echo first, line mode still off — so `currentCursorPos` threw
   and left the terminal raw. Line mode now comes back first, and each mode
-  is restored even when the other throws.
+  is restored even when the other throws. Turning them off is guarded the
+  same way now: when a stdin refuses one change, the one already made is
+  undone instead of being left behind.
 - `substring` left a hyperlink open: a slice that ended inside one kept
   everything printed after it clickable on the slice's URL. With
   `close: true` the slice now closes the link it opened, the way an
   insertion does.
+- The printers had the gap the slice had: a printed line that opened a
+  hyperlink left it open, and everything printed after was part of it. A
+  line now closes the link it opened; unlike the style, a link is not
+  reopened on the next line. `SinkPrinter` and `StackedSinkPrinter` take a
+  write at a time and one line may be composed of several, so there an open
+  link is carried across the writes and closed where the line really ends —
+  at a `writeln`, or at a `'\n'` in what is written. A styled call goes
+  through a printer and changed with them: `Styles.red('…')` now closes a
+  link its text left open, and in a multi-line string the link ends with
+  the line it was opened on instead of running on into the next.
 - `insertBefore` and `insertAfter` could put text between the halves of a
   surrogate pair and hand back a string that is no longer valid UTF-16. A
   position inside a pair now shifts to its edge — `insertBefore` to the
@@ -176,8 +187,10 @@ Fixed:
 - The `style` entry point returned types it could not name:
   `ControlFunctionsSGR` and its four control-function siblings were
   reachable from the entities but undefined to the importer. The five
-  exports are now part of the point, and every entry point carries a
-  closure test.
+  exports are now part of the point, and every entry point carries an
+  exports test. The `extensions` point had the same gap:
+  `ansiRemoveControlCodes` takes a `Set<ControlFunctionsC0>` its own
+  importer could not name, so the enum is now part of the point.
 
 Renamed:
 

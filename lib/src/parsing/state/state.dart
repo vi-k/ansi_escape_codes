@@ -429,6 +429,10 @@ sealed class State<S extends State<S>> {
   /// `doublyUnderline`, and after one `resetUnderline` each, the first
   /// keeps an underline the second never had. Equal is how it looks,
   /// not how it unwinds.
+  ///
+  /// The surface is all of it: a [Stack] and a plain [Style] that look the
+  /// same are equal, and as keys of a `Set` or `Map` equal states collapse
+  /// into one, however they were built.
   @override
   bool operator ==(Object other) =>
       other is State<void> &&

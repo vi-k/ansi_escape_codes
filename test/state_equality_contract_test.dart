@@ -27,5 +27,29 @@ void main() {
         reason: 'there was nothing underneath to come back to',
       );
     });
+
+    test('equal surfaces collapse as keys, history and all', () {
+      final grown = Stack.terminalColors.underline.doublyUnderline;
+      final direct = Stack.terminalColors.doublyUnderline;
+
+      expect(
+        {grown, direct},
+        hasLength(1),
+        reason: 'a Set keeps the surface, not the way it was reached',
+      );
+      expect(
+        ({grown: 'a'}..[direct] = 'b').length,
+        1,
+        reason: 'and a Map overwrites rather than adds',
+      );
+    });
+
+    test('a Stack equals a plain Style with the same surface', () {
+      const Object stack = Stack.terminalColors;
+      const Object style = Style.terminalColors;
+
+      expect(stack == style, isTrue);
+      expect(stack.hashCode, style.hashCode);
+    });
   });
 }
