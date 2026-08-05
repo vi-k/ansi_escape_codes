@@ -10,3 +10,9 @@ pubspec.lock
 doc/api/
 
 .idea
+
+# What Claude Code keeps in the working tree.
+.claude/
+
+# What `dart test --coverage` writes.
+coverage/

@@ -7,8 +7,7 @@
 
 **Goal:** закрыть весь остаток ревью, кроме генератора (#12): M6, L1–L3,
 L7/L8, L9/L10, гигиена #15 — по спеке
-`docs/2026-08-05-review-tail-design.md` (после Task 8 —
-`docs/2026-08-05[3]-review-tail-design.md`).
+`docs/2026-08-05[3]-review-tail-design.md`.
 
 **Architecture:** восемь коммитов в ветке `fix/review-tail`, от семантики
 к механике: док-контракт равенства (M6) → честный no-op у Style/NoStyle

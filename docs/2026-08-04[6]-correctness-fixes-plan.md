@@ -8,7 +8,7 @@
 **Goal:** четыре корректность-фикса ревью 4.0.0 — свип таблиц цветов (M8),
 порядок восстановления режимов терминала на Windows (H1), закрытие
 гиперссылки в `substring` (M1), сдвиг вставки с середины суррогатной пары
-(H2) — по спеке `docs/2026-08-04-correctness-fixes-design.md`.
+(H2) — по спеке `docs/2026-08-04[5]-correctness-fixes-design.md`.
 
 **Architecture:** каждый фикс — один коммит в ветке `fix/review-correctness`
 (red-тест + фикс + CHANGELOG в том же коммите), порядок M8 → H1 → M1 → H2.
@@ -1031,7 +1031,7 @@ Expected: всё чистое; dry-run — 0 предупреждений.
 
 `git diff main...fix/review-correctness` — финальное ревью всей ветки по
 процессу subagent-driven-development (ревьюер сверяет диффы со спекой
-`docs/2026-08-04-correctness-fixes-design.md`). Находки чинятся
+`docs/2026-08-04[5]-correctness-fixes-design.md`). Находки чинятся
 отдельными fixup-коммитами до пуша.
 
 - [ ] **Step 3: Пуш и PR**
@@ -1047,8 +1047,8 @@ gh pr create --title "fix: correctness fixes from the 4.0.0 review (M8, H1, M1, 
 - fix: a substring slice closes the hyperlink it opened (M1)
 - fix: an insertion never splits a surrogate pair (H2)
 
-Per docs/2026-08-04-correctness-fixes-design.md; review findings from
-docs/2026-08-04-project-review.md. One fix per commit, red-green
+Per docs/2026-08-04[5]-correctness-fixes-design.md; review findings from
+docs/2026-08-04[1]-project-review.md. One fix per commit, red-green
 throughout (sabotage-verified for M8).
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)

@@ -6,7 +6,7 @@
 > checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** одна семантика SGR для парсера и regex-пути — фиксы M2, M3, L4 и
-unknown-kind-расхождения по спеке `docs/2026-08-05-sgr-classifier-design.md`.
+unknown-kind-расхождения по спеке `docs/2026-08-05[1]-sgr-classifier-design.md`.
 
 **Architecture:** три коммита в ветке `fix/sgr-classifier`: (1) сужение
 `sgrRe` — приватные CSI на `m` перестают считаться SGR; (2) лист-модуль
@@ -703,7 +703,7 @@ Expected: всё чистое; dry-run — 0 предупреждений.
 - [ ] **Step 2: Whole-branch ревью**
 
 Финальное ревью всей ветки по процессу subagent-driven-development,
-сверка со спекой `docs/2026-08-05-sgr-classifier-design.md`. Находки —
+сверка со спекой `docs/2026-08-05[1]-sgr-classifier-design.md`. Находки —
 отдельными fixup-коммитами до пуша.
 
 - [ ] **Step 3: Пуш и PR**
@@ -725,8 +725,8 @@ gh pr create --title "fix: one SGR classifier for the parser and the regex path 
   parser; a fuzzed agreement test (has*/remove* vs parser, fixed seed)
   holds the paths to one answer
 
-Per docs/2026-08-05-sgr-classifier-design.md; findings from
-docs/2026-08-04-project-review.md (#3 in the action plan). One fix per
+Per docs/2026-08-05[1]-sgr-classifier-design.md; findings from
+docs/2026-08-04[1]-project-review.md (#3 in the action plan). One fix per
 commit, red-green throughout; the parser's behaviour is byte-for-byte
 unchanged.
 
