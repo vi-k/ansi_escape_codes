@@ -54,23 +54,44 @@ jobs:
         run: dart doc --dry-run
 
       - name: Run the examples
+        # Every example there is, so that a new one cannot be forgotten here.
         # utils.dart is left out: it is the titles the other examples
         # import, a library with no main of its own to run.
         run: |
-          for f in example/ansi_escape_codes_example.dart \
-                   example/check_compatibility.dart \
-                   example/colors256.dart \
-                   example/control.dart \
-                   example/links.dart \
-                   example/progress_indicator.dart \
-                   example/rgb.dart \
-                   example/styles.dart; do
+          for f in example/*.dart; do
+            if [ "$f" = "example/utils.dart" ]; then continue; fi
             timeout 60 dart run "$f" > /dev/null < /dev/null
           done
 
       - name: Collect coverage
         if: matrix.sdk == 'stable'
         run: dart test --coverage=coverage
+
+      - name: Check the coverage holds its floor
+        if: matrix.sdk == 'stable'
+        # The floor sits under the current figure rather than at it: the
+        # generated style_colors.dart is covered at 0.4% by design and pulls
+        # lib/ as a whole down from 97.5% to 76.0%.
+        run: |
+          dart run coverage:format_coverage \
+            --lcov --in=coverage --out=coverage/lcov.info --report-on=lib
+          awk -F: -v floor=75.0 '
+            /^LF:/ { found += $2 }
+            /^LH:/ { hit += $2 }
+            END {
+              if (found == 0) {
+                print "the report counted no lines at all"
+                exit 1
+              }
+              pct = 100 * hit / found
+              printf "coverage of lib/: %.1f%% (%d of %d lines), floor %.1f%%\n",
+                  pct, hit, found, floor
+              if (pct < floor) {
+                print "the coverage has fallen through the floor"
+                exit 1
+              }
+            }
+          ' coverage/lcov.info
 
       - name: Upload coverage
         if: matrix.sdk == 'stable'
