@@ -12,6 +12,7 @@ part of 'state.dart';
 /// The colour of the underline has no getters here: it is set with
 /// [State.underlineColor], which takes any [ExtendedColor].
 extension StyleColors on Style {
+  // BEGIN GENERATED — by tool/generate.dart; edit the generator, not this.
   Style get black => foreground(Color256.black);
   Style get red => foreground(Color256.red);
   Style get green => foreground(Color256.green);
@@ -525,4 +526,5 @@ extension StyleColors on Style {
   Style get bgGray21 => background(Color256.gray21);
   Style get bgGray22 => background(Color256.gray22);
   Style get bgGray23 => background(Color256.gray23);
+  // END GENERATED
 }

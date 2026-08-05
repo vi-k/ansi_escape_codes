@@ -5,6 +5,7 @@
 ///
 library;
 
+// BEGIN GENERATED — by tool/generate.dart; edit the generator, not this.
 //
 // Standard color indexes.
 //
@@ -792,3 +793,4 @@ const int GRAY22 = 254;
 
 /// Gray 23 index from 256-color table.
 const int GRAY23 = 255;
+// END GENERATED

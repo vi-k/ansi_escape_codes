@@ -44,6 +44,7 @@ String bg256(int colorIndex) {
   return '$bg256Open$colorIndex$bg256Close';
 }
 
+// BEGIN GENERATED — by tool/generate.dart; edit the generator, not this.
 /// Background black from 256-color table.
 const String bg256Black = '$bg256Open$BLACK$bg256Close';
 
@@ -827,3 +828,4 @@ const String bg256Gray22 = '$bg256Open$GRAY22$bg256Close';
 
 /// Background gray color 23 from 256-color table.
 const String bg256Gray23 = '$bg256Open$GRAY23$bg256Close';
+// END GENERATED

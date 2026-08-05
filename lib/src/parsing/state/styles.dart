@@ -51,6 +51,7 @@ abstract final class Styles {
   static const Style superscript = Style(superscript: true);
   static const Style subscript = Style(subscript: true);
 
+  // BEGIN GENERATED — by tool/generate.dart; edit the generator, not this.
   static const Style black =
       Style(foreground: Color256.on(Colors.black, ColorTarget.foreground));
   static const Style red =
@@ -1598,4 +1599,5 @@ abstract final class Styles {
       Style(underlineColor: Color256.on(Colors.gray22, ColorTarget.underline));
   static const Style underlineGray23 =
       Style(underlineColor: Color256.on(Colors.gray23, ColorTarget.underline));
+  // END GENERATED
 }

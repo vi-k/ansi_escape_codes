@@ -4,6 +4,7 @@
 part of 'color.dart';
 
 enum Colors implements Comparable<Colors> {
+  // BEGIN GENERATED — by tool/generate.dart; edit the generator, not this.
   black,
   red,
   green,
@@ -260,6 +261,7 @@ enum Colors implements Comparable<Colors> {
   gray21,
   gray22,
   gray23;
+  // END GENERATED
 
   const Colors();
 
