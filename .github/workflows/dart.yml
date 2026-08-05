@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
-      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
+      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603  # v1.0.0
         with:
           sdk: ${{ matrix.sdk }}
 
@@ -49,8 +49,8 @@ jobs:
         run: dart doc --dry-run
 
       - name: Run the examples
-        # utils.dart is left out: currentCursorPos needs a terminal to
-        # answer, and CI has none.
+        # utils.dart is left out: it is the titles the other examples
+        # import, a library with no main of its own to run.
         run: |
           for f in example/ansi_escape_codes_example.dart \
                    example/check_compatibility.dart \
