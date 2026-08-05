@@ -6,8 +6,9 @@
 /// a kind with no arguments left to take, an RGB cut off mid-colour —
 /// leaves the introducer and the kind consumed alone, and the rest
 /// belongs to the sequence as usual. This is the parser's rule;
-/// `splitSgrFunctions` reads it from here, so the two readings cannot
-/// drift apart again.
+/// `splitSgrFunctions` reads it from here, the parser reads its
+/// argument counts from here, and the fuzzed agreement test holds the
+/// rest of the two readings to one answer.
 library;
 
 import '../ansi/sgr.dart';

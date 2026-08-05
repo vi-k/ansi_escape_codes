@@ -154,7 +154,12 @@ Fixed:
   the parameters after a colour cut short: `\x1B[38;2;1;2m` lost its
   bold and dim along with the broken colour. A colour missing arguments
   now gives up only its introducer and kind, the way the parser reads
-  it — and the same goes for a kind the package does not know.
+  it — and the same goes for a kind the package does not know. It reads
+  the other direction too: the parameter after a bare `38`, `48` or
+  `58` is that colour's kind and goes with it, so `\x1B[38;41m` loses
+  its `41` and `\x1B[38;4:3m` its curly underline where both used to be
+  left standing. The `ansiHas*` answers moved together with the split —
+  `\x1B[38;41m` no longer has a background.
 - Leading zeroes hid a colour from the same functions: removing the
   colour from `\x1B[38;05;196m` removed everything but it. Parameters
   are now read as numbers, as ECMA-48 allows them to be written.
