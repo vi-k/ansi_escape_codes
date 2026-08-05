@@ -15,7 +15,10 @@ final RegExp csiRe = RegExp(csiPattern);
 
 /// Pattern for SGR.
 const String sgrPattern = '(?<csi>$ESC\\[)'
-    '(?<params>[0-9:;<=>?]*)'
+    // Digits, `;` and `:` only: a params field with a private byte —
+    // `?5`, `>4;1`, the SGR-mouse `<35;10;2` — is a private sequence,
+    // not SGR, exactly as the parser classifies it.
+    '(?<params>[0-9;:]*)'
     '(?<sgr>m)';
 
 /// Pattern for SGR.
