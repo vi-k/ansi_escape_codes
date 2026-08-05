@@ -54,16 +54,15 @@ Performance:
   — a doubling guard that used to grow ×2.73 for a ×2 input now grows
   ×0.65.
 - An escape code is told apart by its second byte instead of four named
-  regex groups, a simple SGR function comes from a cached table instead of
-  being rebuilt, and the SGR lists handed back to callers are wrapped once
-  rather than copied twice: a simpler, more correct hot path, though its
-  own saving lands inside the numbers above rather than as one of its own
-  — isolated, it measures at noise level once the scanner and slicing
-  fixes are in. One visible side effect: two `SgrSimpleFunction`s built for
-  the same code used to be two separate objects, and were never `==` to
-  each other either, since the class defines neither `==` nor `hashCode`;
-  now they are the same cached instance, so both `identical()` and `==`
-  see them as one and the same.
+  regex groups, and a simple SGR function comes from a cached table instead
+  of being rebuilt: a simpler, more correct hot path, though its own saving
+  lands inside the numbers above rather than as one of its own — isolated,
+  it measures at noise level once the scanner and slicing fixes are in. One
+  visible side effect: two `SgrSimpleFunction`s built for the same code
+  used to be two separate objects, and were never `==` to each other
+  either, since the class defines neither `==` nor `hashCode`; now they are
+  the same cached instance, so both `identical()` and `==` see them as one
+  and the same.
 - A full parse retains the match list once, not twice, and a `Text` piece
   cuts its own substring out of the input only the first time something
   reads it, so a piece nobody reads keeps no copy of its own — `stateAt`,

@@ -16,15 +16,15 @@ final class Sgr extends Csi {
   /// What the sequence does, in the order it was written in.
   final List<SgrFunction> functions;
 
-  // Wrapped, not copied: the one caller, `_parse` below, builds [params]
-  // and [functions] for this constructor alone and touches neither list
-  // again once it hands them over.
+  // Compact copies, not views: a view would keep the growable builder
+  // lists alive — with the slack capacity of their backing arrays — for
+  // as long as the Sgr lives, and parsed entities live long.
   Sgr._(
     super.string,
     List<CsiParam> params,
     List<SgrFunction> functions,
-  )   : params = UnmodifiableListView(params),
-        functions = UnmodifiableListView(functions),
+  )   : params = List.unmodifiable(params),
+        functions = List.unmodifiable(functions),
         super._();
 
   static Sgr _parse<S extends State<S>>(
