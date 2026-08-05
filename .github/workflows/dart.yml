@@ -42,6 +42,12 @@ jobs:
       - name: Analyze project source
         run: dart analyze --fatal-infos
 
+      - name: Check every entry point exports the names its signatures use
+        # A hand-written list of exports cannot notice what is missing
+        # from it; this walks the export namespace of each lib/*.dart and
+        # answers every declaration its public signatures reach.
+        run: dart run tool/check_entry_points.dart
+
       - name: Check the generated tables are in step with the generator
         run: |
           dart run tool/generate.dart

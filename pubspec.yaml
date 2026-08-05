@@ -19,6 +19,13 @@ dependencies:
   meta: ^1.16.0
 
 dev_dependencies:
+  # Never imported: tool/check_entry_points.dart reads the export
+  # namespace of every entry point through it. Held at 7 because 8 asks
+  # for an SDK above the ^3.6.0 floor above, and a dev dependency that
+  # cannot resolve at the floor takes that whole leg of the CI down. The
+  # price is test 1.26 instead of the latest — test_core past 0.6.12
+  # wants analyzer 8 — so the two move together when the floor rises.
+  analyzer: ^7.7.1
   # Never imported: its format_coverage turns a test run into the lcov
   # report the workflow measures its coverage floor against.
   coverage: ^1.11.1
