@@ -174,6 +174,11 @@ Fixed:
   with a reset and unwound it at the end. It now imposes nothing: the
   line goes out as it came, its own codes included —
   `ansiCodesEnabled: false` remains the way to take those out.
+- The `style` entry point returned types it could not name:
+  `ControlFunctionsSGR` and its four control-function siblings were
+  reachable from the entities but undefined to the importer. The five
+  exports are now part of the point, and every entry point carries a
+  closure test.
 
 Renamed:
 
