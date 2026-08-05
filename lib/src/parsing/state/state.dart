@@ -415,6 +415,15 @@ sealed class State<S extends State<S>> {
         underlineColorValue,
       );
 
+  /// Equality is the visible surface: the properties and colours this
+  /// state answers with, and whether it is a [NoStyle] — nothing else.
+  ///
+  /// What a [Stack] remembers of how it got here is not compared: two
+  /// equal stacks may answer one and the same reset differently when
+  /// their histories differ. `underline.doublyUnderline` equals
+  /// `doublyUnderline`, and after one `resetUnderline` each, the first
+  /// keeps an underline the second never had. Equal is how it looks,
+  /// not how it unwinds.
   @override
   bool operator ==(Object other) =>
       other is State<void> &&

@@ -10,6 +10,9 @@ part of 'state.dart';
 /// A reset of a property that was never applied does nothing: text may come
 /// from anywhere and close an attribute it has not opened, so such resets are
 /// ignored rather than treated as an error.
+///
+/// Equality compares the visible surface only — see [State.==]: the
+/// history is what a stack does, not what it equals.
 final class Stack extends State<Stack> {
   final List<IntensityStyle> _intensityStack;
   final int _boldCounter;
