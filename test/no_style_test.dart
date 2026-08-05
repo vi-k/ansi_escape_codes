@@ -38,6 +38,22 @@ void main() {
         reason: 'a NoStyle that sets something is no NoStyle',
       );
     });
+
+    test('the reset is the one change a NoStyle does make', () {
+      const noStyle = NoStyle();
+
+      expect(
+        noStyle.reset,
+        Style.terminalColors,
+        reason: 'reset means the terminal own colours, which a NoStyle — '
+            'the style that writes nothing — is not',
+      );
+      expect(
+        identical(noStyle.reset, noStyle),
+        isFalse,
+        reason: 'the one operation that genuinely changes a NoStyle',
+      );
+    });
   });
 
   group('a transition between equal surfaces is empty:', () {
