@@ -1,0 +1,109 @@
+# Handoff — независимая проверка закрытия отчёта ревью
+
+ansi_escape_codes, 2026-08-05. Передача контекста для новой сессии.
+Задача следующей сессии: **независимо проверить**, что отчёт
+`docs/2026-08-04[1]-project-review.md` закрыт — каждый пункт плана
+действий действительно исправлен, фиксы держатся и не внесли нового.
+Проверка должна быть свежими глазами: не доверять итогам рабочих сессий
+(включая этот документ) — сверяться с кодом, тестами и git.
+
+## Состояние репозитория
+
+- `main` @ `5810f25`, запушен, чист. Версия 4.0.0 подготовлена и
+  **не опубликована** (pub.dev — 3.1.2); публикация + тег —
+  несостоявшееся пока решение пользователя.
+- Все проверки на HEAD зелёные: 366 тестов, `analyze --fatal-infos`,
+  `dart format` идемпотентен, `dart pub publish --dry-run` 0
+  предупреждений, `dart run tool/generate.dart && git diff --exit-code
+  -- lib/` чист.
+
+## Хронология заходов (всё влито в main)
+
+1. **Перф** (H3, M4, M7, M5) — PR #10.
+2. **Корректность** (H1, H2, M1, M8) — PR #11 (merge 7373f69).
+3. **SGR-классификатор** (#3: M2+M3+L4+unknown-kind) — PR #12
+   (merge 812836b).
+4. **Хвост ревью** (M6, L1–L3, L7/L8, L9/L10, #15) — merge `5af798b`
+   (без PR — новый режим).
+5. **Генератор таблиц** (#12) — merge `fecaaf9`.
+6. **Мелкие хвосты** (parsing.dart, homepage, CI-гигиена, док-точность)
+   — merge `6acae3a`.
+
+Спеки и планы всех заходов — в `docs/` по схеме
+`YYYY-MM-DD[N]-<тема>.md`.
+
+## Карта закрытия: 15 пунктов плана действий → где искать фикс
+
+| # | Пункт | Где закрыт |
+|---|---|---|
+| 1 | H1 порядок lineMode/echoMode | вложенный try/finally в `current_cursor_pos.dart`; `test/current_cursor_pos_windows_test.dart` |
+| 2 | H2 суррогатные пары | сдвиг в `_seamAt` (parser.dart); `test/parser_insert_surrogates_test.dart`; code-unit-семантика в dartdoc/README |
+| 3 | M2+M3+L4 расхождения SGR | `lib/src/internal/sgr_rules.dart` + переписанный `splitSgrFunctions` + суженный `sgrRe`; `test/sgr_functions_test.dart`, `test/sgr_private_csi_test.dart`, `test/has_agrees_with_parser_test.dart` |
+| 4 | M1 substring и ссылка | `linkIsOpen` в `substring`; `test/parser_substring_links_test.dart` |
+| 5 | M8 таблицы без тестов | `test/color_tables_test.dart` (mirrors + source) |
+| 6 | H3 префильтр indexOf | итератор парсера + fast-path extensions (PR #10) |
+| 7 | M4 квадратичный substring | резюмируемый `_Walk` (PR #10) |
+| 8 | M6 равенство Stack | док-контракт на `State.==` + `test/state_equality_contract_test.dart` (поведение НЕ менялось — решение) |
+| 9 | M5 память ~30× | ленивый Text, без дублей списков (PR #10) |
+| 10 | L1–L3 NoStyle | no-op → `this`; transitTo между равными поверхностями `''`; Printer+NoStyle passthrough; `test/no_style_test.dart`, `test/printer_no_style_test.dart` |
+| 11 | L7/L8 entry points | 5 экспортов в style.dart + closure-тесты `test/entry_point_*`; `IntensityStyle` скрыт; позже `parsing.dart` удалён |
+| 12 | Генератор таблиц | `tool/generate.dart` + зоны BEGIN/END GENERATED + CI-шаг generate+diff |
+| 13 | L9/L10 CI/pubspec | permissions, SHA-пины (setup-dart v1.8.0), doc dry-run, examples, coverage; `repository:`/`issue_tracker:`, homepage удалён |
+| 14 | M7 плотные входы | байтовая диспетчеризация, кэш SgrSimpleFunction (PR #10) |
+| 15 | Гигиена | TODO.md с назначением, `.gitignore`(+`.claude/`, `coverage/`), `print('')` убран, опечатки stack.dart, перенумерация доков `[N]` |
+
+## Реестр решений пользователя — НЕ переоткрывать как баги
+
+- **H2**: позиция в паре — направленный сдвиг (insertBefore → к началу,
+  insertAfter → к концу), НЕ RangeError. Позиции/length — UTF-16 code
+  units, не графемы (задокументировано).
+- **M6**: равенство — по видимой поверхности, история Stack не
+  сравнивается; поведение `==` сознательно не менялось, контракт
+  задокументирован и запиннен.
+- **L3**: `Printer(defaultStyle: NoStyle())` — passthrough байт-в-байт;
+  `ansiCodesEnabled: false` — ортогональная ручка (вычистить чужие
+  коды), обе остаются.
+- **L8**: `IntensityStyle` скрыт из экспортов; геттер пары невозможен
+  (bold и dim сосуществуют — `CSI 1;2`). Четыре геттера пар
+  (`underlineStyle` и т.д.) — осознанно оставлены.
+- **parsing.dart удалён** (был байт-идентичен style.dart), **homepage
+  удалён** из pubspec — решения 2026-08-05.
+- **SGR, принятое ограничение** (в спеке `2026-08-05[1]`): параметр,
+  не читающийся как число (переполнение), для парсера — `CsiUnknown`,
+  для regex-пути — по-прежнему SGR/цвет. Известно и принято.
+- **Removal семантика распределения**: удаление целой
+  последовательности рядом с усечённой меняет разбор соседа
+  (`\x1B[31` + `t`) — довоенное поведение regex-удаления на
+  malformed-входе, не дефект классификатора (см. историю оракула в
+  `has_agrees_with_parser_test.dart`).
+- **Таблицы**: правка политики нейминга — только через
+  `tool/generate.dart`; руками в зонах не править (CI красный).
+- Имена доков: `YYYY-MM-DD[N]-<kebab>.md`; отчёты и спеки — плоско в
+  `docs/`.
+
+## Процессные конвенции (зафиксированы пользователем)
+
+- Заходы: brainstorming → спека в `docs/` → writing-plans →
+  subagent-driven-development; **все субагенты на Opus**.
+- Слияние: фича-ветка + финальное whole-branch-ревью → локальный
+  `git merge --no-ff` в main, **без PR**.
+- Один фикс — один коммит (red-тест + фикс + CHANGELOG вместе);
+  conventional-префиксы; версию не бампать.
+
+## Методика независимой проверки (предложение, не предписание)
+
+Свежая сессия может: (а) прогнать `/project-review`-класс аудита
+заново и сверить находки с картой выше; (б) пройти по 15 пунктам
+таблицы с направленными пробами (воспроизвести исходный сценарий
+каждой находки из отчёта и убедиться, что он теперь ведёт себя
+правильно); (в) отдельно проверить, что фиксы не внесли регрессий —
+дифференциальные фаззеры и M8-свип уже в наборе. Реестр решений выше —
+фильтр от ложных «находок»; всё вне реестра — честная добыча.
+
+## Ключевые ссылки
+
+- Отчёт ревью: `docs/2026-08-04[1]-project-review.md` (план действий —
+  таблица в конце)
+- Спеки/планы заходов: `docs/2026-08-04[2..6]-*`, `docs/2026-08-05[1..7]-*`
+- Бэклог: `TODO.md` (dependabot для action-пинов)
+- Бенчмарк-сравнение: `dart run benchmark/compare.dart perf-baseline-4.0.0`
