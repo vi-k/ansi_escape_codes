@@ -188,7 +188,7 @@ Renamed:
   a letter.
 - The `standart_colors` directory is spelt `standard_colors`.
 
-Removed — every name deprecated in an earlier release is gone:
+Removed — every name deprecated in an earlier release, and some that never were:
 
 - The style constants renamed in 2.0.0: `faint`, `resetBoldAndFaint`,
   `italicized`, `resetItalicized`, `singlyUnderlined`, `doublyUnderlined`,
@@ -216,6 +216,10 @@ Removed — every name deprecated in an earlier release is gone:
 - `MatchingState`, `MatchesResult` and `ParserIterator`, which the parser
   passes to and gets back from its own private methods and nothing else could
   reach. `Matches` and `Match` are unchanged.
+- `IntensityStyle` left the public API. It is the element a `Stack`'s
+  intensity history holds; nothing public takes or returns it, and bold
+  and dim — unlike the other pairs — can be on at once, so no getter
+  could honestly answer with one of them.
 
 Breaking changes:
 
