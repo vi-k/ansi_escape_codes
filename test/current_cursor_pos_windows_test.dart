@@ -32,6 +32,17 @@ void main() {
       expect(stdin.echoMode, isTrue);
       expect(stdin.lineMode, isTrue);
     });
+
+    test('puts echo back when line mode refuses to turn off', () async {
+      final stdin = _NoRawModeStdin();
+
+      await expectLater(
+        currentCursorPos(_FakeStdout(), stdin),
+        throwsA(isA<UnsupportedError>()),
+      );
+
+      expect(stdin.echoMode, isTrue);
+    });
   });
 }
 
@@ -85,6 +96,32 @@ final class _FakeWindowsStdin implements Stdin {
         onDone: onDone,
         cancelOnError: cancelOnError,
       );
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// A stdin whose line mode cannot be turned off — the shape of an input
+/// that is not a console. Echo goes off first, so if the refusal is not
+/// guarded, echo stays off for good.
+final class _NoRawModeStdin implements Stdin {
+  bool _echoMode = true;
+
+  @override
+  bool get echoMode => _echoMode;
+
+  @override
+  set echoMode(bool value) => _echoMode = value;
+
+  @override
+  bool get lineMode => true;
+
+  @override
+  set lineMode(bool value) {
+    if (!value) {
+      throw const StdinException('line mode cannot be disabled');
+    }
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

@@ -133,7 +133,9 @@ Fixed:
 - On Windows the terminal modes were put back in an order the console
   refuses — echo first, line mode still off — so `currentCursorPos` threw
   and left the terminal raw. Line mode now comes back first, and each mode
-  is restored even when the other throws.
+  is restored even when the other throws. Turning them off is guarded the
+  same way now: when a stdin refuses one change, the one already made is
+  undone instead of being left behind.
 - `substring` left a hyperlink open: a slice that ended inside one kept
   everything printed after it clickable on the slice's URL. With
   `close: true` the slice now closes the link it opened, the way an
