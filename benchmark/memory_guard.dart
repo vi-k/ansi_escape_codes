@@ -81,9 +81,10 @@
 // low is one the regression above would fit under this ceiling. The CI runs
 // it the way it is calibrated here.
 //
-// They are of one machine as well, and the table is short a column: what the
-// ubuntu runner reads goes in beside it once the CI has read it, and `TODO.md`
-// holds the reminder and the figure to compare it against.
+// They are of one machine, but no longer of one machine only: the first CI
+// run on the ubuntu x64 runner (2026-08-05, run 31053415705, Dart stable)
+// read 372727 matches, +81.5 MB, 229.3 bytes per match — inside the spread
+// of the seven runs above, so the band holds on both machines as written.
 //
 // To recalibrate — a deliberate change in what a match keeps, a new corpus, a
 // machine the band no longer fits — run it five times cold, take the worst,
