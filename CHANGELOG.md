@@ -34,9 +34,8 @@ Added:
 - `ansi_escape_codes.dart` brings the `String` extensions and the two terminal
   utilities as well, so it is now what its name says: one import for all of it.
   `extensions.dart` and `utils.dart` still bring those alone, as `style.dart`
-  and `parsing.dart` bring the parser without the tables of constants — the
-  smaller imports are for a smaller namespace, not for reaching something the
-  main one lacks.
+  brings the parser without the tables of constants — the smaller imports are
+  for a smaller namespace, not for reaching something the main one lacks.
 
 Performance:
 
@@ -220,6 +219,10 @@ Removed — every name deprecated in an earlier release, and some that never wer
   intensity history holds; nothing public takes or returns it, and bold
   and dim — unlike the other pairs — can be on at once, so no getter
   could honestly answer with one of them.
+- The `parsing` entry point. After 4.0.0 made it byte-identical to
+  `style`, one of the two names had to go: import
+  `package:ansi_escape_codes/style.dart` — the same 81 names — or the
+  umbrella `ansi_escape_codes.dart`.
 
 Breaking changes:
 
