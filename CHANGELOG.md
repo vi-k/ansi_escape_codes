@@ -175,8 +175,10 @@ Fixed:
 - The `style` entry point returned types it could not name:
   `ControlFunctionsSGR` and its four control-function siblings were
   reachable from the entities but undefined to the importer. The five
-  exports are now part of the point, and every entry point carries a
-  closure test.
+  exports are now part of the point, and every entry point carries an
+  exports test. The `extensions` point had the same gap:
+  `ansiRemoveControlCodes` takes a `Set<ControlFunctionsC0>` its own
+  importer could not name, so the enum is now part of the point.
 
 Renamed:
 
