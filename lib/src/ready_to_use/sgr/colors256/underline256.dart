@@ -52,6 +52,7 @@ String underline256(int colorIndex) {
   return '$underline256Open$colorIndex$underline256Close';
 }
 
+// BEGIN GENERATED — by tool/generate.dart; edit the generator, not this.
 /// Underline black from 256-color table.
 const String underline256Black = '$underline256Open$BLACK$underline256Close';
 
@@ -844,3 +845,4 @@ const String underline256Gray22 = '$underline256Open$GRAY22$underline256Close';
 
 /// Underline gray color 23 from 256-color table.
 const String underline256Gray23 = '$underline256Open$GRAY23$underline256Close';
+// END GENERATED

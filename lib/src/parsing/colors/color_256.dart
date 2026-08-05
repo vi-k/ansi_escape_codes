@@ -50,6 +50,7 @@ final class Color256 extends ExtendedColor {
   Color256 on(ColorTarget target) =>
       _target == target ? this : Color256.on(color, target);
 
+  // BEGIN GENERATED — by tool/generate.dart; edit the generator, not this.
   static const Color256 black = Color256(Colors.black);
   static const Color256 red = Color256(Colors.red);
   static const Color256 green = Color256(Colors.green);
@@ -306,6 +307,7 @@ final class Color256 extends ExtendedColor {
   static const Color256 gray21 = Color256(Colors.gray21);
   static const Color256 gray22 = Color256(Colors.gray22);
   static const Color256 gray23 = Color256(Colors.gray23);
+  // END GENERATED
 
   int get index => color.index;
 

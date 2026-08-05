@@ -40,6 +40,7 @@ String fg256(int colorIndex) {
   return '$fg256Open$colorIndex$fg256Close';
 }
 
+// BEGIN GENERATED — by tool/generate.dart; edit the generator, not this.
 /// Foreground black from 256-color table.
 const String fg256Black = '$fg256Open$BLACK$fg256Close';
 
@@ -823,3 +824,4 @@ const String fg256Gray22 = '$fg256Open$GRAY22$fg256Close';
 
 /// Foreground gray color 23 from 256-color table.
 const String fg256Gray23 = '$fg256Open$GRAY23$fg256Close';
+// END GENERATED
