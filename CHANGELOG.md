@@ -32,10 +32,13 @@ Added:
   `ControlSequencesFunctions` and the rest — are exported from the main entry
   point.
 - `ansi_escape_codes.dart` brings the `String` extensions and the two terminal
-  utilities as well, so it is now what its name says: one import for all of it.
-  `extensions.dart` and `utils.dart` still bring those alone, as `style.dart`
-  brings the parser without the tables of constants — the smaller imports are
-  for a smaller namespace, not for reaching something the main one lacks.
+  utilities as well, so it is now what its name says: one import for all of it
+  but the raw byte tables of `ansi.dart`, which stand apart as they always
+  did — the ready-to-use strings are built from them, and neither import
+  brings the other. `extensions.dart` and `utils.dart` still bring the
+  extensions and the utilities alone, as `style.dart` brings the parser
+  without the tables of constants — the smaller imports are for a smaller
+  namespace, not for reaching something the main one lacks.
 
 Performance:
 
@@ -51,8 +54,8 @@ Performance:
   always did, instead of walking from the start each time: slicing a
   200-line document through one parser is about three times faster (3.95 ms
   down to 1.33 ms), and the shape of the cost is linear now, not quadratic
-  — a doubling guard that used to grow ×2.73 for a ×2 input now grows
-  ×0.65.
+  — the guard that doubles the input and watches the time saw a cost of ×3.73
+  where it now sees ×1.65, a linear cost being ×2.
 - An escape code is told apart by its second byte instead of four named
   regex groups, a simple SGR function comes from a cached table instead of
   being rebuilt, and the matched text is read out of the match once: a
@@ -90,18 +93,27 @@ Fixed:
 - `cursorDown` moved the cursor left, and the cursor functions built sequences
   out of any number, `-1` included.
 - `runZonedStackedPrinter` printed only the first line.
-- `currentCursorPos` left the terminal in raw mode, and read the answer as one
-  chunk it does not always arrive in.
+- `currentCursorPos` left the terminal in raw mode, read the answer as one
+  chunk it does not always arrive in, and took the first CSI that came for the
+  report — an arrow key is a CSI as well, so a key pressed while the terminal
+  answered threw away a report that had in fact arrived. The report is looked
+  for in what comes now, rather than assumed to be at the front of it.
 - `tabs` looped forever on a tab width that never advances, and wrote over the
   line it was called on.
 - `Stack` threw where a reset had no style to pop, and took a colour it cannot
   hold in `underlineColor`.
 - `faint` stood for `bold` instead of `dim`.
 - An ESC sequence was cut after two characters, and one carrying intermediate
-  bytes was shown without them: `ESC ( B` and `ESC ) B` came out alike, and a
-  string ending in a bare `ESC` threw.
+  bytes was shown without them: `ESC ( B` and `ESC ) B` came out alike. A
+  bare `ESC` at the end of a string was swallowed as text — shown as nothing
+  and counted in the length — and is a code of its own now: it shows as
+  `[ESC]`, and `Parser('abc\x1B').length` says 3 where it said 4.
 - `optimize` and `substring` dropped every code that was not SGR, and they,
   with `isClosed`, ignored the state the parser started from.
+- The printers dropped them as well: `prepare('${cursorUp}x')` gave back
+  `[CSI 0 SGR]x`, the cursor movement gone, and a hyperlink came out as the
+  bare text it was written over. What is not a style passes through them
+  untouched now.
 - An empty sub-parameter threw the whole sequence away, an RGB colour cancelled
   the rest of it, a broken colour took the rest with it, and `CSI 4:0 m`
   switched the underline on.
@@ -140,16 +152,16 @@ Fixed:
   everything printed after it clickable on the slice's URL. With
   `close: true` the slice now closes the link it opened, the way an
   insertion does.
-- The printers had the gap the slice had: a printed line that opened a
-  hyperlink left it open, and everything printed after was part of it. A
-  line now closes the link it opened; unlike the style, a link is not
-  reopened on the next line. `SinkPrinter` and `StackedSinkPrinter` take a
-  write at a time and one line may be composed of several, so there an open
-  link is carried across the writes and closed where the line really ends —
-  at a `writeln`, or at a `'\n'` in what is written. A styled call goes
-  through a printer and changed with them: `Styles.red('…')` now closes a
-  link its text left open, and in a multi-line string the link ends with
-  the line it was opened on instead of running on into the next.
+- Once a link passed through them at all, the printers had the gap the slice
+  had: a printed line that opened a hyperlink left it open, and everything
+  printed after was part of it. A line now closes the link it opened; unlike
+  the style, a link is not reopened on the next line. `SinkPrinter` and
+  `StackedSinkPrinter` take a write at a time and one line may be composed of
+  several, so there an open link is carried across the writes and closed where
+  the line really ends — at a `writeln`, or at a `'\n'` in what is written. A
+  styled call goes through a printer and changed with them: `Styles.red('…')`
+  now closes a link its text left open, and in a multi-line string the link
+  ends with the line it was opened on instead of running on into the next.
 - `insertBefore` and `insertAfter` could put text between the halves of a
   surrogate pair and hand back a string that is no longer valid UTF-16. A
   position inside a pair now shifts to its edge — `insertBefore` to the
@@ -265,9 +277,9 @@ Breaking changes:
   colour of the underline, which had a name in neither the 530 nor the getters.
   Being constants, a style can be held in one: `const error = Styles.red`.
 
-  The 530 top-level names are gone, and with them `style`, `foreground`,
-  `background` and `underlineColor`. A chain that starts at nothing at all
-  starts at `Style.terminalColors`; the three functions are the constructor,
+  The 530 top-level names are gone, among them `foreground`, `background` and
+  `underlineColor`. A chain that starts at nothing at all starts at
+  `Style.terminalColors`; the three functions are the constructor,
   `Style(foreground: c)`, or the methods of the same name on a style.
 
   The colours are still getters as well — the `StyleColors` extension — so
