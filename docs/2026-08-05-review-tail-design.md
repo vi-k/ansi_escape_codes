@@ -2,7 +2,7 @@
 
 ansi_escape_codes, 2026-08-05. Написано до кода, по итогам
 `2026-08-04-project-review.md` (после этого захода —
-`docs/review/2026-08-04-1-project-review.md`): пункты #8 (M6), #10
+`docs/2026-08-04[1]-project-review.md`): пункты #8 (M6), #10
 (L1–L3), #11 (L7/L8), #13 (L9/L10), #15 (гигиена) плана действий.
 Закрывает весь остаток ревью, кроме генератора таблиц (#12). Целевой
 релиз — та же неопубликованная 4.0.0; публикация — отдельное решение
@@ -110,21 +110,22 @@ dartdoc уже случался — 05bbe03); сбор покрытия; исп�
 - опечатки приватных имён в `stack.dart`: `intencityStack` →
   `intensityStack`, `scripStack` → `scriptStack` (и производные);
 - **новая схема имён доков** (решение пользователя): порядковый номер
-  дня после даты — `YYYY-MM-DD-N-<topic>.md`, единообразно для всех,
-  включая единственный док дня. Переименование по фактической
-  хронологии первого коммита:
-  `2026-07-29-1-fix-spec-v3.1.2`, `2026-08-02-1-insert-before-after-design`,
-  `2026-08-04`: `-1-project-review` (уезжает в `docs/review/`),
-  `-2-perf-fixes-design`, `-3-perf-fixes-plan`,
-  `-4-handoff-correctness-fixes`, `-5-correctness-fixes-design`,
-  `-6-correctness-fixes-plan`; `2026-08-05`: `-1-sgr-classifier-design`,
-  `-2-sgr-classifier-plan`, `-3-review-tail-design` (этот документ;
-  план захода родится сразу как `-4-review-tail-plan`). Переименование
-  через `git mv`, перекрёстные ссылки в доках обновить
-  (`grep -rn "docs/2026" docs/ README.md CHANGELOG.md` — свериться, что
-  битых не осталось);
-- отчёт ревью — в `docs/review/2026-08-04-1-project-review.md`; ссылки
-  на него в живых доках обновить.
+  дня в квадратных скобках сразу после даты —
+  `YYYY-MM-DD[N]-<topic>.md`, единообразно для всех, включая
+  единственный док дня; отдельной папки для ревью нет, отчёт остаётся
+  в `docs/`. Переименование по фактической хронологии первого коммита:
+  `2026-07-29[1]-fix-spec-v3.1.2`,
+  `2026-08-02[1]-insert-before-after-design`; `2026-08-04`:
+  `[1]-project-review`, `[2]-perf-fixes-design`, `[3]-perf-fixes-plan`,
+  `[4]-handoff-correctness-fixes`, `[5]-correctness-fixes-design`,
+  `[6]-correctness-fixes-plan`; `2026-08-05`:
+  `[1]-sgr-classifier-design`, `[2]-sgr-classifier-plan`,
+  `[3]-review-tail-design` (этот документ; план захода родится сразу
+  как `[4]-review-tail-plan`). Переименование через `git mv` (пути со
+  скобками в shell брать в кавычки — для glob `[1]` — символьный
+  класс), перекрёстные ссылки в доках обновить
+  (`grep -rn "docs/2026" docs/ README.md CHANGELOG.md` — свериться,
+  что битых не осталось).
 
 ## Раздел 2 — тесты и порядок
 
