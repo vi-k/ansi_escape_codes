@@ -179,6 +179,9 @@ final class _ParserBase<S extends State<S>> {
   int get length => _requirePlainString.length;
 
   /// Whether the string ends in the state it began in.
+  ///
+  /// A question about the style alone: a string that leaves a hyperlink open
+  /// answers `true` all the same, and [finalLink] is the one to ask beside it.
   bool get isClosed => finalState == initialState;
 
   /// Reads the whole string, ahead of the questions asked of it.
