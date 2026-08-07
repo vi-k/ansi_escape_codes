@@ -760,11 +760,11 @@ final class _ParserBase<S extends State<S>> {
 
   /// Optimizes the string by removing consecutive escape codes.
   ///
-  /// [close] is whether to close the string with the default style. The style
-  /// is all it closes: a string that opens a hyperlink and never closes it
-  /// comes back with the link open, and what is printed after it stays
-  /// clickable. [substring] writes that close for a slice; this does not
-  /// write it for a string.
+  /// [close] is whether to close the string with the default style and outside
+  /// every hyperlink: a string that opens a link and never closes it comes
+  /// back closed, so that what is printed after it is not clickable. With
+  /// `close: false` both are left as the string leaves them, the link no less
+  /// than the style. [substring] closes a slice the same way.
   String optimize({bool close = true}) {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
@@ -793,6 +793,15 @@ final class _ParserBase<S extends State<S>> {
     final lastMatch = matches.lastOrNull;
 
     if (close) {
+      // The link is closed the way the style is, and before it: whatever the
+      // string left open — an opening of its own, or the link it was seeded
+      // inside — must not go on catching what is printed after. The codes
+      // are copied as they were written, so the close stands after an
+      // opening the input never terminated; that opening ends at the next
+      // ESC, and the close begins with one, so nothing is swallowed.
+      if (finalLink != null) {
+        buf.write(linkClose);
+      }
       buf.write(currentState.transitTo(initialState));
     } else if (lastMatch != null) {
       buf.write(currentState.transitTo(lastMatch.state));
