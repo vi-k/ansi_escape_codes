@@ -183,15 +183,16 @@ final class _ParserBase<S extends State<S>> {
 
   /// Reads the whole string, ahead of the questions asked of it.
   ///
-  /// [stateAt] and [substring] read only as far as they must, and what they
-  /// read is kept, so nothing is parsed twice. This reads it all in one go
-  /// instead of letting it grow question by question, and builds the plain
-  /// text [length], [indexOf] and the other string methods work on.
+  /// [stateAt], [linkAt] and [substring] read only as far as they must, and
+  /// what they read is kept, so nothing is parsed twice. This reads it all in
+  /// one go instead of letting it grow question by question, and builds the
+  /// plain text [length], [indexOf] and the other string methods work on.
   ///
   /// It is for [length], [indexOf] and the other string methods, which need
-  /// the whole of the text before they can answer anything. [stateAt] and
-  /// [substring] do not gain by it — they keep their place as it is — and lose
-  /// by it where the questions are not going to reach the end of the string.
+  /// the whole of the text before they can answer anything. [stateAt],
+  /// [linkAt] and [substring] do not gain by it — they keep their place as it
+  /// is — and lose by it where the questions are not going to reach the end of
+  /// the string.
   /// `benchmark/parser_benchmark.dart` measures both.
   void prepare() {
     matches._requireParsingResult;
@@ -374,7 +375,21 @@ final class _ParserBase<S extends State<S>> {
   /// A link code that would change nothing in what the slice has open is not
   /// written at all: a close where the slice has nothing open, an opening of
   /// the link it has open already, and either of them where no text follows
-  /// for them to be shown around. An empty slice comes out empty.
+  /// for them to be shown around. With `close: true` that holds to the end,
+  /// and an empty slice comes out empty. With `close: false` the codes held
+  /// back are written after all, so that the slice ends inside the link the
+  /// string stands in there: an empty slice cut at the very place a link code
+  /// stands comes out carrying that code, and one cut anywhere else is empty
+  /// as before.
+  ///
+  /// A slice holding an `ESC 8` is where a link can still come out other than
+  /// it was, and this is accepted rather than mended: the restore gives back
+  /// what was saved inside the slice, and a save the cut left outside is not
+  /// there to be given. The state has the same hole and always had — the
+  /// codes are copied as they stand, and neither a save nor a restore is
+  /// rewritten. The link is the more easily lost of the two: an opening is
+  /// held back until there is text to show inside it, so an `ESC 7` standing
+  /// in front of that text saves no link where the string saved one.
   ///
   /// Reads the string up to the end of the piece and stops, and keeps its
   /// place the way [stateAt] does: a slice beginning past the start of the
@@ -855,9 +870,11 @@ final class _ParserBase<S extends State<S>> {
 /// A resumable walk over the matches: the iterator, how much plain text it
 /// has passed, and the piece of text it stopped in.
 ///
-/// [_ParserBase.stateAt], `substring` and the insert seams all walk the same
-/// matches forward; sharing the walk makes a run of forward questions cost one
-/// pass in all. A question about an earlier position starts a fresh walk.
+/// [_ParserBase.stateAt] and [_ParserBase.linkAt] — which read their answers
+/// off one piece, through [_ParserBase._pieceAt] — `substring` and the insert
+/// seams all walk the same matches forward; sharing the walk makes a run of
+/// forward questions cost one pass in all, whichever of them is asked and in
+/// whatever order. A question about an earlier position starts a fresh walk.
 final class _Walk<S extends State<S>> {
   final Iterator<Match<S>> iterator;
 

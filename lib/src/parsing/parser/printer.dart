@@ -179,6 +179,24 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// further, and a line with nothing to show inside the link writes no
   /// opening at all and hands it on.
   ///
+  /// What the line carries goes through as it stands, its link codes
+  /// included: a close for a link nothing has open, or a second opening of
+  /// the link that is open already, is passed on rather than dropped, where
+  /// [Parser.substring] writes neither. The difference is in the bytes and
+  /// not in what they say — after the line the terminal stands in the same
+  /// link either way — and a printer is for text that is to reach the screen
+  /// as its author wrote it.
+  ///
+  /// A line holding an `ESC 8` loses a link, and by the same mechanism a
+  /// slice does: the opening is held back until there is text to show inside
+  /// it, so a save standing in front of that text saves no link and the
+  /// restore behind it gives none back. In
+  /// `OSC 8;;url ST one \n ESC 7 two ESC 8 three` the second line writes the
+  /// `two` inside the link and the `three` outside it, where the string has
+  /// both inside. The bytes are copied as they stand and neither a save nor a
+  /// restore is rewritten; [Parser.substring] says the whole of what is
+  /// accepted here.
+  ///
   /// A [SinkPrinter] and a [StackedSinkPrinter] are handed a piece rather
   /// than a line, and this only prepares it: nothing is written, and the
   /// link is left as it was — both what is open in the output and what is

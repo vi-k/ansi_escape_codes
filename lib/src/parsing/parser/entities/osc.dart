@@ -64,8 +64,22 @@ String _terminatedIfTextFollows(String codes, String following) =>
 /// terminal makes clickable.
 ///
 /// A [url] that is empty closes the link opened before it.
+///
+/// [url] is where the link points and nothing else. `OSC 8` carries
+/// parameters of its own between the introducer and the address — `id=`
+/// above all, which is what tells a terminal that two pieces a line break cut
+/// apart are one link — and those stay in [string], the bytes the sequence
+/// was written with, along with the terminator it was written with. Reading
+/// them is reading [string].
+///
+/// A link opened again elsewhere — by [Parser.substring], by an insertion, by
+/// a printer starting a new line — is written from [string] and not built
+/// afresh from [url], so the parameters and the form of the terminator travel
+/// with it.
 final class Link extends Osc {
   /// The address the link points at, empty where the link is being closed.
+  ///
+  /// The parameters the sequence carried are not here; see the class doc.
   final String url;
 
   /// The sequence that opens a link on [url], or closes one where [url] is
