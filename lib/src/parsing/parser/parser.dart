@@ -825,26 +825,53 @@ final class _ParserBase<S extends State<S>> {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
 
+    // An opening the string never terminated, held back until what comes
+    // after it is known. In the string it was ended by the `ESC` of whatever
+    // stood behind it, and that may have been an `SGR` — which this loop does
+    // not copy but writes again as a transition, and a transition that
+    // changes nothing writes nothing. See [_terminatedIfTextFollows].
+    var heldOpening = '';
+
     for (final m in matches) {
       final entity = m.entity;
-      if (entity is Text) {
-        final string = entity.string;
-        if (string.isNotEmpty) {
-          buf
-            ..write(currentState.transitTo(m.state))
-            ..write(string);
-        }
-        currentState = m.state.toStyle();
-      } else if (entity is! Sgr) {
-        // Carries no style of its own, so it is kept as it was written. The
-        // styles collected so far are flushed first: erasing and scrolling
-        // read the current background color.
-        buf
-          ..write(currentState.transitTo(m.state))
-          ..write(entity.string);
-        currentState = m.state.toStyle();
+      if (entity is Sgr) {
+        continue;
       }
+
+      final string = entity.string;
+
+      // A piece of text with nothing in it shows nothing: no transition is
+      // written in front of it, and an opening held back goes on waiting for
+      // something to be shown inside it.
+      if (entity is! Text || string.isNotEmpty) {
+        // The styles collected so far are flushed first: erasing and
+        // scrolling read the current background color.
+        final transit = currentState.transitTo(m.state);
+
+        if (heldOpening.isNotEmpty) {
+          buf.write(_terminatedIfTextFollows(heldOpening, '$transit$string'));
+          heldOpening = '';
+        }
+
+        buf.write(transit);
+
+        // A code that carries no style of its own is kept as it was written —
+        // save for an opening with no terminator, which waits to see what it
+        // is written in front of.
+        if (entity is Link && !_oscTerminated(string)) {
+          heldOpening = string;
+        } else {
+          buf.write(string);
+        }
+      }
+
+      currentState = m.state.toStyle();
     }
+
+    // The string is over: an `ESC` follows the opening held back — the close
+    // below, or the unwinding of the style — or nothing does, and either way
+    // it goes out as it came.
+    buf.write(heldOpening);
 
     final lastMatch = matches.lastOrNull;
 

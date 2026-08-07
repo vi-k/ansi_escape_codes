@@ -67,4 +67,56 @@ void main() {
       );
     });
   });
+
+  group("optimize's own opening that never terminated:", () {
+    const opening = '${OSC}8;;$url';
+
+    test('does not swallow the text behind a reset already in force', () {
+      // What ended the opening in the input was the ESC of that reset — an
+      // SGR the optimizer does not copy but writes again as a transition,
+      // and from the default style to the default style the transition
+      // writes nothing. Left as it came, the opening would read the text
+      // behind it as the rest of the url.
+      final optimized = Parser('$opening${reset}word').optimize();
+
+      expect(optimized, '$opening${ST}word$linkClose');
+      expect(Parser(optimized).removeAll(), 'word', reason: 'nothing eaten');
+    });
+
+    test('does not swallow the text behind a cancelling pair', () {
+      final optimized =
+          Parser('$opening$bold${resetBoldAndDim}word').optimize();
+
+      expect(optimized, '$opening${ST}word$linkClose');
+      expect(Parser(optimized).removeAll(), 'word', reason: 'nothing eaten');
+    });
+
+    test('does not swallow the text behind a colour said twice', () {
+      final optimized = Parser('$fgRed$opening${fgRed}word').optimize();
+
+      expect(optimized, '$fgRed$opening${ST}word$linkClose$reset');
+      expect(Parser(optimized).removeAll(), 'word', reason: 'nothing eaten');
+    });
+
+    test('keeps its bytes where an ESC follows anyway', () {
+      // The counterpart: this SGR does change the style, the transition
+      // writes it out, and its ESC ends the opening the way it did in the
+      // input — so nothing is added.
+      final optimized = Parser('$opening${fgRed}word').optimize();
+
+      expect(optimized, '$opening${fgRed}word$linkClose$reset');
+      expect(Parser(optimized).removeAll(), 'word');
+    });
+
+    test('is left as it came where close: false and nothing follows', () {
+      expect(Parser(opening).optimize(close: false), opening);
+    });
+
+    test('is terminated on the extension path too', () {
+      final optimized = '$opening${reset}word'.ansiOptimizeControlFunctions();
+
+      expect(optimized, '$opening${ST}word$linkClose');
+      expect(Parser(optimized).removeAll(), 'word', reason: 'nothing eaten');
+    });
+  });
 }
