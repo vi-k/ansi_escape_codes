@@ -252,9 +252,13 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       // reopened the same way, by the transition below. A line with nothing
       // to show inside the link writes no opening at all and hands the link
       // on to the line after.
+      //
+      // An opening the line before never terminated is terminated here: the
+      // text of this line follows it now, and would otherwise be read as part
+      // of the url — see [Link._reopening].
       if (m.entity is Text && writtenLink == null) {
         if (m.link case final link?) {
-          buf.write(link.string);
+          buf.write(link._reopening);
           writtenLink = link;
         }
       }

@@ -487,10 +487,12 @@ final class _ParserBase<S extends State<S>> {
 
               // A slice that began inside a link opens it again itself, in
               // the bytes it was opened with: the text is shown inside that
-              // link, and nothing the slice has read opened it.
+              // link, and nothing the slice has read opened it. An opening
+              // the input never terminated is terminated here, or it would
+              // swallow the text of the slice — see [Link._reopening].
               final link = m.link;
               if (writtenLink == null && link != null) {
-                buf.write(link.string);
+                buf.write(link._reopening);
                 writtenLink = heldLink = link;
               }
 
@@ -576,9 +578,16 @@ final class _ParserBase<S extends State<S>> {
   /// them lands there.
   ///
   /// The inserted text takes the style of the place it lands in, and gives it
-  /// back: the style it opens of its own is closed after it, and so is a
-  /// hyperlink, so the string that follows keeps the look it had and stays
-  /// outside whatever the insertion pointed at.
+  /// back: the style it opens of its own is closed after it, so the string
+  /// that follows keeps the look it had.
+  ///
+  /// A hyperlink is given back the same way. Links do not nest — the sequence
+  /// that closes one closes them all — so text with a link of its own,
+  /// inserted inside a link that was already open, is followed by that outer
+  /// link opened again, in the bytes it was opened with: what comes after the
+  /// insertion goes on pointing where it pointed before. An insertion that
+  /// lands outside every link is followed by a close instead, so the string
+  /// after it stays outside whatever the insertion pointed at.
   ///
   /// ```dart
   /// const text = '${fgRed}Hello$reset world';
@@ -587,11 +596,6 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// The exclamation mark is red: at position 5 stands the `reset`, and this
   /// goes in front of it. See [insertAfter] for the other side of it.
-  ///
-  /// Hyperlinks are the one thing that cannot be given back. They do not nest
-  /// — the sequence that closes one closes them all — so text that opens a
-  /// link of its own, inserted inside a link that was already open, ends that
-  /// one too, and the rest of it is no longer clickable.
   String insertBefore(int pos, String text) => _insert(pos, text, after: false);
 
   /// Inserts [text] at the plain text [pos], behind the escape codes standing
@@ -617,45 +621,53 @@ final class _ParserBase<S extends State<S>> {
   String insertAfter(int pos, String text) => _insert(pos, text, after: true);
 
   String _insert(int pos, String text, {required bool after}) {
-    final (cut, ambient) = _seamAt(pos, after: after);
-    final read = Matches<S>._(text, ambient)._requireParsingResult;
+    final (cut, ambient, ambientLink) = _seamAt(pos, after: after);
+
+    // Read from the seam on both channels: the inserted text lands inside the
+    // state and inside the link that stand there, and what it leaves behind
+    // is what has to be put right for the tail.
+    final read = Matches<S>._(text, ambient, initialLink: ambientLink)
+        ._requireParsingResult;
 
     return '${input.substring(0, cut)}'
         '$text'
-        '${_closeLink(read.matches)}'
+        '${_linkBack(seam: ambientLink, left: read.finalLink)}'
         '${read.finalState.toStyle().transitTo(ambient)}'
         '${input.substring(cut)}';
   }
 
-  /// The sequence that closes a hyperlink the inserted text left open, or
-  /// nothing where it left none.
+  /// The link code that gives the seam its hyperlink back after the inserted
+  /// text, or nothing where the insertion left the seam's link as it found it.
   ///
-  /// A [Link] carries no style, so the state says nothing about it, and text
-  /// that follows an unclosed one is inside it — clickable, and pointing
-  /// somewhere it has nothing to do with.
-  String _closeLink(List<Match<S>> matches) {
-    var isOpen = false;
+  /// A [Link] carries no style, so the state says nothing about it and it has
+  /// to be put right on its own. Links do not nest — an opening supersedes
+  /// whatever was open — so the seam's own opening is enough to take the tail
+  /// back inside it, whether the insertion closed the link or left one of its
+  /// own open; only a seam that stood outside every link is given a close.
+  ///
+  /// The opening is written in the bytes it was written in the first place —
+  /// [Link._reopening], so that the `id=` of it and the form of its
+  /// terminator are kept. Those same bytes are what tells the two links
+  /// apart, the way `substring` tells them apart: an insertion ending inside
+  /// the very link it landed in has nothing to give back.
+  ///
+  /// [seam] is the link the insertion landed in, [left] the one it left open;
+  /// named, because two [Link]s in a row are told apart by nothing but their
+  /// order.
+  String _linkBack({required Link? seam, required Link? left}) =>
+      left == seam ? '' : seam?._reopening ?? linkClose;
 
-    for (final m in matches) {
-      if (m.entity case Link(:final url)) {
-        isOpen = url.isNotEmpty;
-      }
-    }
-
-    return isOpen ? linkClose : '';
-  }
-
-  /// The place in [input] an insertion at the plain text [pos] goes to, and
-  /// the state it lands in.
+  /// The place in [input] an insertion at the plain text [pos] goes to, the
+  /// state it lands in, and the hyperlink it lands inside.
   ///
   /// A seam is what lies between two neighbouring characters of the plain
   /// text: nothing at all, or the escape codes written between them. [after]
   /// chooses which end of it the insertion takes.
-  (int, S) _seamAt(int pos, {required bool after}) {
+  (int, S, Link?) _seamAt(int pos, {required bool after}) {
     RangeError.checkNotNegative(pos, 'pos');
 
     if (!after && pos == 0) {
-      return (0, initialState);
+      return (0, initialState, initialLink);
     }
 
     // A seam is looked for in the pieces of text and nowhere else, so a walk
@@ -695,7 +707,7 @@ final class _ParserBase<S extends State<S>> {
           return _seamAt(after ? pos + 1 : pos - 1, after: after);
         }
 
-        return (cut, m.state);
+        return (cut, m.state, m.link);
       }
     }
 
@@ -703,7 +715,7 @@ final class _ParserBase<S extends State<S>> {
       throw RangeError.range(pos, 0, walk.passed, 'pos');
     }
 
-    return (input.length, finalState);
+    return (input.length, finalState, finalLink);
   }
 
   /// The string with [padding] written after it until the text is [width]

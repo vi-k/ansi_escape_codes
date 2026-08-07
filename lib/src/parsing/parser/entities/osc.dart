@@ -44,6 +44,24 @@ final class Link extends Osc {
 
   const Link._(super.string, this.url) : super._();
 
+  /// The bytes that open this link again somewhere else.
+  ///
+  /// [string] as it was written, save for an opening whose terminator never
+  /// came. `OSC 8 ; ; url` with nothing to end it runs to the next `ESC` or
+  /// to the end of the text — the parser reads it that way on purpose, see
+  /// `oscPattern` — and in the string it was read from one of those two
+  /// always followed it. Written again in front of text that did not follow
+  /// it there, it would swallow that text into the url, so the terminator it
+  /// lacks is supplied.
+  ///
+  /// [string] itself is left as it stands: a parsed string gives itself back
+  /// piece by piece, and mending it here would be mending it everywhere.
+  ///
+  /// This is what [Parser.substring], the insertions and the printers write
+  /// where they open a link the text they are copying was already inside.
+  String get _reopening =>
+      string.endsWith(ST) || string.endsWith(BEL) ? string : '$string$ST';
+
   @override
   String get id => url.isEmpty ? 'linkClose' : 'link($url)';
 

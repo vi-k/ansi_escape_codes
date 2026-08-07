@@ -110,6 +110,18 @@ void main() {
       expect(printer.prepare('third'), '\x1B[0mthird');
     });
 
+    test('an opening the line never terminated is terminated when reopened',
+        () {
+      // `OSC 8 ; ; url` with nothing to end it is read to the end of the
+      // line. Reopened in front of the next line's text, it would read that
+      // text as the rest of the url.
+      final printer = Printer()..prepare('\x1B]8;;http://u/');
+      final line = printer.prepare('second');
+
+      expect(line, '\x1B[0m\x1B]8;;http://u/\x1B\\second\x1B]8;;\x1B\\');
+      expect(Parser(line).removeAll(), 'second', reason: 'nothing was eaten');
+    });
+
     test('a multi-line print carries the link to the line after', () {
       final lines = <String>[];
       Printer(output: lines.add).print('\x1B]8;;http://u/\x1B\\one\ntwo');

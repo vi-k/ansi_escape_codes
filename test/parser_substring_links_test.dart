@@ -87,6 +87,17 @@ void main() {
       );
     });
 
+    test('an opening whose terminator never came is given one', () {
+      // The opening runs to the next ESC — the one of the cursorUp — and the
+      // slice writes it again in front of its own text, where no ESC follows
+      // it. Without a terminator of its own it would swallow that text.
+      const opening = '${OSC}8;;http://u/';
+      final sliced = Parser('$opening${cursorUp}abcd$linkClose').substring(2);
+
+      expect(sliced, '$opening${ST}cd$linkClose');
+      expect(Parser(sliced).removeAll(), 'cd', reason: 'nothing was eaten');
+    });
+
     test('a close that closes nothing is not written', () {
       final parser = Parser('ab${opens('http://u/')}cd${linkClose}ef');
 
