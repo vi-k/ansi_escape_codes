@@ -79,6 +79,78 @@ void main() {
     });
   });
 
+  group('a printed line takes the link the line before left open:', () {
+    test('the line after reopens it', () {
+      final printer = Printer();
+
+      expect(
+        printer.prepare('\x1B]8;;http://u/\x1B\\first'),
+        '\x1B[0m\x1B]8;;http://u/\x1B\\first\x1B]8;;\x1B\\',
+      );
+      expect(
+        printer.prepare('second'),
+        '\x1B[0m\x1B]8;;http://u/\x1B\\second\x1B]8;;\x1B\\',
+      );
+    });
+
+    test('a closed link is not carried on', () {
+      final printer = Printer()
+        ..prepare('\x1B]8;;http://u/\x1B\\first\x1B]8;;\x1B\\');
+
+      expect(printer.prepare('second'), '\x1B[0msecond');
+    });
+
+    test('a line that closes it ends the carry', () {
+      final printer = Printer()..prepare('\x1B]8;;http://u/\x1B\\first');
+
+      expect(
+        printer.prepare('second\x1B]8;;\x1B\\'),
+        '\x1B[0m\x1B]8;;http://u/\x1B\\second\x1B]8;;\x1B\\',
+      );
+      expect(printer.prepare('third'), '\x1B[0mthird');
+    });
+
+    test('a multi-line print carries the link to the line after', () {
+      final lines = <String>[];
+      Printer(output: lines.add).print('\x1B]8;;http://u/\x1B\\one\ntwo');
+
+      expect(lines, [
+        '\x1B[0m\x1B]8;;http://u/\x1B\\one\x1B]8;;\x1B\\',
+        '\x1B[0m\x1B]8;;http://u/\x1B\\two\x1B]8;;\x1B\\',
+      ]);
+    });
+
+    test('runZonedPrinter carries it from one print to the next', () {
+      final lines = <String>[];
+      runZonedPrinter(
+        () {
+          print('\x1B]8;;http://u/\x1B\\one');
+          print('two');
+        },
+        output: lines.add,
+      );
+
+      expect(lines, [
+        '\x1B[0m\x1B]8;;http://u/\x1B\\one\x1B]8;;\x1B\\',
+        '\x1B[0m\x1B]8;;http://u/\x1B\\two\x1B]8;;\x1B\\',
+      ]);
+    });
+
+    test('a multi-line styled call keeps its link', () {
+      final lines = Styles.red(
+        '\x1B]8;;http://u/\x1B\\one\ntwo\x1B]8;;\x1B\\',
+      ).split('\n');
+
+      expect(
+        lines,
+        [
+          '\x1B[0m\x1B[38;5;1m\x1B]8;;http://u/\x1B\\one\x1B]8;;\x1B\\\x1B[0m',
+          '\x1B[0m\x1B]8;;http://u/\x1B\\\x1B[38;5;1mtwo\x1B]8;;\x1B\\\x1B[0m',
+        ],
+      );
+    });
+  });
+
   group('a sink printer carries the hyperlink across writes:', () {
     test('a link composed of three writes stays intact', () {
       final sink = StringBuffer();
@@ -107,7 +179,7 @@ void main() {
       );
     });
 
-    test('a newline inside a write ends the line there', () {
+    test('a newline inside a write ends the line and the next reopens', () {
       final sink = StringBuffer();
       SinkPrinter(sink)
         ..write('\x1B]8;;http://u/\x1B\\')
@@ -116,11 +188,11 @@ void main() {
       expect(
         sink.toString(),
         '\x1B[0m\x1B]8;;http://u/\x1B\\\x1B[0mclick\x1B]8;;\x1B\\\n'
-        '\x1B[0mtail',
+        '\x1B[0m\x1B]8;;http://u/\x1B\\tail',
       );
     });
 
-    test('a link is not carried into the next line', () {
+    test('a link is carried into the next line', () {
       final sink = StringBuffer();
       SinkPrinter(sink)
         ..write('\x1B]8;;http://u/\x1B\\')
@@ -130,7 +202,7 @@ void main() {
       expect(
         sink.toString(),
         '\x1B[0m\x1B]8;;http://u/\x1B\\\x1B[0mclick\x1B]8;;\x1B\\\n'
-        '\x1B[0mplain\n',
+        '\x1B[0m\x1B]8;;http://u/\x1B\\plain\x1B]8;;\x1B\\\n',
       );
     });
 
@@ -157,6 +229,24 @@ void main() {
         ..writeln('plain');
 
       expect(sink.toString(), '\x1B[0mplain\n');
+    });
+
+    test('a direct prepare leaves the carry between lines alone', () {
+      final sink = StringBuffer();
+      SinkPrinter(sink)
+        ..write('\x1B]8;;http://u/\x1B\\')
+        ..writeln('click')
+        // The line has ended, so the link is closed in the output and still
+        // open logically. Asking about a piece that opens another one must
+        // leave that carry as it was: the next line reopens the first link.
+        ..prepare('\x1B]8;;http://v/\x1B\\')
+        ..writeln('plain');
+
+      expect(
+        sink.toString(),
+        '\x1B[0m\x1B]8;;http://u/\x1B\\\x1B[0mclick\x1B]8;;\x1B\\\n'
+        '\x1B[0m\x1B]8;;http://u/\x1B\\plain\x1B]8;;\x1B\\\n',
+      );
     });
 
     test('a NoStyle sink printer still passes the writes through', () {

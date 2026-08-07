@@ -7,6 +7,11 @@ part of 'parser.dart';
 /// provided `output` function, or `Zone.current.print` by default. It uses
 /// [Parser] to track the current [Style] across multiple prints.
 ///
+/// A hyperlink is carried the same way. A line closes the one it leaves open
+/// — what is printed after it must not stay clickable on that URL — and the
+/// line after opens it again, so a link a line break falls inside of goes on
+/// being one link.
+///
 /// See also [runZonedPrinter] for usage within a zone.
 final class Printer extends _PrintPrinterBase<Style> {
   /// Creates a printer that processes ANSI escape codes and replaces the
@@ -26,6 +31,9 @@ final class Printer extends _PrintPrinterBase<Style> {
 /// [Style], [StackedPrinter] tracks the full history of applied styles using a
 /// [Stack]. This is useful for complex formatting where styles might be
 /// applied and reverted hierarchically across multiple print statements.
+///
+/// A hyperlink is carried from one line to the next the way [Printer] carries
+/// it: links do not nest, so there is no stack of them to keep.
 ///
 /// See also [runZonedStackedPrinter] for usage within a zone.
 final class StackedPrinter extends _PrintPrinterBase<Stack> {
@@ -49,7 +57,8 @@ final class StackedPrinter extends _PrintPrinterBase<Stack> {
 /// A hyperlink is tracked the same way: one opened by a write stays open
 /// across the writes that follow, so a link may be composed of several of
 /// them. It is closed where the line ends — at a [writeln] or a `'\n'` in
-/// what is written — and, unlike the style, is not reopened on the next line.
+/// what is written — and, the text being inside it still, opened again on the
+/// line after, the way the style is.
 final class SinkPrinter extends _SinkPrinterBase<Style> {
   /// Creates a printer that processes ANSI escape codes and writes the output
   /// to a [StringSink].
@@ -68,8 +77,8 @@ final class SinkPrinter extends _SinkPrinterBase<Style> {
 /// using a [Stack], which allows for nested style applications and reversions
 /// across multiple write operations.
 ///
-/// A hyperlink is carried across writes and closed at the end of the line,
-/// the way [SinkPrinter] does it.
+/// A hyperlink is carried across writes, closed at the end of the line and
+/// opened again on the next, the way [SinkPrinter] does it.
 final class StackedSinkPrinter extends _SinkPrinterBase<Stack> {
   /// Creates a printer that processes ANSI escape codes, writes the output to
   /// a [StringSink], and tracks the [Stack] of styles.
@@ -132,11 +141,27 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// a write at a time cannot, and waits for the line to end.
   bool get _closesLinkAtEnd;
 
-  /// Whether what has been prepared so far left a hyperlink open.
+  /// The hyperlink open in what has been written of the current line, or null
+  /// where none is.
   ///
-  /// It is false again by the time a whole line has been prepared, and only
-  /// carries anything between the writes that make up one line.
-  bool _linkIsOpen = false;
+  /// This is what the close at the end of the line is owed to, and what says
+  /// whether the opening has to be written again. It is null again by the time
+  /// a whole line has been prepared, and only carries anything between the
+  /// writes that make up one line.
+  Link? _writtenLink;
+
+  /// The hyperlink open in the text, whether or not it is open in the output,
+  /// or null where none is.
+  ///
+  /// The link channel's half of [lastState]: the line before closed the link
+  /// in what it sent to the terminal, and left this behind to say the text
+  /// goes on inside it. The next line is read as beginning inside it and
+  /// opens it again, the way the style is reopened, so that a link a line
+  /// break cuts in two goes on being one link.
+  ///
+  /// It survives the close at the end of the line and dies where the text
+  /// itself closes the link.
+  Link? _ambientLink;
 
   /// Prepares the given line for printing.
   ///
@@ -144,16 +169,24 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// line that opens a hyperlink and does not close it gets the close
   /// written at its end, the way a slice does — and, as there, the close is
   /// the `ST`-terminated one whatever form the opening took: see
-  /// [Parser.substring]. A link, unlike the style, is not reopened on the
-  /// next line.
+  /// [Parser.substring].
+  ///
+  /// That close is written for the terminal, which must not make what comes
+  /// after clickable on a URL it has nothing to do with; the text goes on
+  /// inside the link, and the line after opens it again in front of the first
+  /// text it shows, in the bytes the link was opened with. The style is
+  /// carried over the same way. A link the text itself closes is carried no
+  /// further, and a line with nothing to show inside the link writes no
+  /// opening at all and hands it on.
   ///
   /// A [SinkPrinter] and a [StackedSinkPrinter] are handed a piece rather
   /// than a line, and this only prepares it: nothing is written, and the
-  /// link state is left as it was. The carry belongs to their [write] and
-  /// [writeln] instead — a line there may be composed of several writes, an
-  /// open link is carried into the write that follows, and the close waits
-  /// for the line to really end, for a [writeln] or for a `'\n'` in what is
-  /// written.
+  /// link is left as it was — both what is open in the output and what is
+  /// open in the text. The carry belongs to their [write] and [writeln]
+  /// instead — a line there may be composed of several writes, an open link
+  /// is carried into the write that follows, and the close waits for the line
+  /// to really end, for a [writeln] or for a `'\n'` in what is written. The
+  /// line after that one opens the link again.
   String prepare(String line) => _prepare(line, closeLink: _closesLinkAtEnd);
 
   /// Prepares [line], closing a hyperlink it leaves open where [closeLink]
@@ -172,9 +205,10 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
 
     if (line.isEmpty) {
       // Nothing of its own to prepare — but a line that ends here still owes
-      // the close for a link an earlier write of the same line left open.
-      if (closeLink && _linkIsOpen) {
-        _linkIsOpen = false;
+      // the close for a link an earlier write of the same line left open. The
+      // link stays open in the text, and the line after reopens it.
+      if (closeLink && _writtenLink != null) {
+        _writtenLink = null;
 
         return linkClose;
       }
@@ -184,10 +218,16 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
 
     var lastState = stateDefaults.toStyle();
 
-    final parser = _ParserBase<S>(line, this.lastState ?? stateDefaults);
+    // Read from where the line before ended, in the style as in the link: a
+    // line that touches neither goes out as it came and hands both on.
+    final parser = _ParserBase<S>(
+      line,
+      this.lastState ?? stateDefaults,
+      initialLink: _ambientLink,
+    );
     final buf = StringBuffer(reset);
 
-    var linkIsOpen = _linkIsOpen;
+    var writtenLink = _writtenLink;
 
     for (final m in parser.matches) {
       // An SGR sequence says what the style is, and the style is written by
@@ -201,10 +241,22 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       // A hyperlink passes through as it came, but not unnoticed: a line
       // that opens one and does not close it would make everything printed
       // after it part of the link, so the close is written where the line
-      // ends — the way a slice closes the link it opened. Unlike the style,
-      // a link is not reopened afterwards.
-      if (m.entity case Link(:final url)) {
-        linkIsOpen = url.isNotEmpty;
+      // ends — the way a slice closes the link it opened.
+      if (m.entity case Link()) {
+        writtenLink = m.link;
+      }
+
+      // A line that begins inside a link — one the line before left open and
+      // closed at its end — opens it again itself, in front of the first text
+      // it shows and in the bytes the link was opened with. The style is
+      // reopened the same way, by the transition below. A line with nothing
+      // to show inside the link writes no opening at all and hands the link
+      // on to the line after.
+      if (m.entity is Text && writtenLink == null) {
+        if (m.link case final link?) {
+          buf.write(link.string);
+          writtenLink = link;
+        }
       }
 
       // The style is put on before the code that reads it: erasing and
@@ -216,11 +268,16 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       lastState = newState;
     }
 
-    if (linkIsOpen && closeLink) {
+    if (closeLink && writtenLink != null) {
       buf.write(linkClose);
-      linkIsOpen = false;
+      writtenLink = null;
     }
-    _linkIsOpen = linkIsOpen;
+    _writtenLink = writtenLink;
+
+    // What the text leaves open outlives the close written above: the close
+    // is for the terminal, which must not make the next line clickable by
+    // accident, and this is for the next line, which opens the link again.
+    _ambientLink = parser.finalLink;
 
     buf.write(lastState.transitTo(stateDefaults));
     this.lastState = parser.finalState;
@@ -242,7 +299,8 @@ final class _PrintPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   }) : _output = output ?? Zone.current.print;
 
   /// A line is buffered whole and handed to [prepare] whole, so a link it
-  /// leaves open is closed at its end.
+  /// leaves open is closed at its end — and opened again on the line after,
+  /// which is handed the link the same way it is handed the style.
   @override
   bool get _closesLinkAtEnd => true;
 
@@ -312,22 +370,25 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   /// is owed at its end. Where the line really ends the write path says for
   /// itself, and it is there that a link left open is carried into the write
   /// that follows — see [_writeBuf] and [_writeLine]. [prepare], which reads
-  /// this, hands the piece back without a close and without touching the
-  /// carry.
+  /// this, hands the piece back without a close and without touching either
+  /// carry: the one inside the line or the one across it.
   @override
   bool get _closesLinkAtEnd => false;
 
   /// Prepares the given piece and hands it back without sending it anywhere.
   ///
   /// The carry of an open hyperlink belongs to the writes that reach the
-  /// sink, so a piece prepared here and not written leaves it as it was: a
-  /// link opened in what was only asked about is not one the sink would ever
-  /// be owed a close for.
+  /// sink, so a piece prepared here and not written leaves it as it was — in
+  /// the output and in the text alike: a link opened in what was only asked
+  /// about is not one the sink would ever be owed a close for, nor one a
+  /// later line should open again.
   @override
   String prepare(String line) {
-    final keepLinkIsOpen = _linkIsOpen;
+    final keepWrittenLink = _writtenLink;
+    final keepAmbientLink = _ambientLink;
     final prepared = super.prepare(line);
-    _linkIsOpen = keepLinkIsOpen;
+    _writtenLink = keepWrittenLink;
+    _ambientLink = keepAmbientLink;
 
     return prepared;
   }
