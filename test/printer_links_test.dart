@@ -148,6 +148,25 @@ void main() {
       expect(Parser(line).removeAll(), 'second', reason: 'nothing was eaten');
     });
 
+    test('a restore of a save that held no link does not raise one', () {
+      // The second line is read as beginning inside the link the first one
+      // left open. Its close ends that, the save puts away the nothing that
+      // is left, and the restore has to hand back the same nothing: the line
+      // is not inside the link any more, and an opening written in front of
+      // the C would make clickable what the string never made clickable.
+      const source = '\x1B]8;;http://u/\x1B\\A\n'
+          '\x1B]8;;\x1B\\\x1B7B\x1B8C';
+      final lines = <String>[];
+      Printer(output: lines.add).print(source);
+
+      expect(Parser(source).linkAt(3), isNull, reason: 'C is on no link');
+      expect(
+        Parser(lines.join('\n')).linkAt(3),
+        isNull,
+        reason: 'and the printed lines must not put it on one',
+      );
+    });
+
     test('a multi-line print carries the link to the line after', () {
       final lines = <String>[];
       Printer(output: lines.add).print('\x1B]8;;http://u/\x1B\\one\ntwo');

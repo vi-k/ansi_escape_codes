@@ -177,9 +177,22 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
       case RestoreCursor():
         // With nothing saved the terminal goes back to its defaults, which
         // for a parser is the state and the link it was started in.
+        //
+        // Told apart by the record and not by what is in it. A save made
+        // where no link was open put a link of `null` away, and that is not
+        // the same `null` as having saved nothing at all — reaching for the
+        // seed there would raise the seeded link from the dead behind a
+        // close, which is the very pair [currentLink] is written to keep
+        // apart. The state escapes the question only because `S` is not
+        // nullable and cannot say the second `null`.
         final saved = _saved;
-        matchingState.state = saved?.state ?? _initialState;
-        link = saved?.link ?? _initialLink;
+        if (saved == null) {
+          matchingState.state = _initialState;
+          link = _initialLink;
+        } else {
+          matchingState.state = saved.state;
+          link = saved.link;
+        }
       default:
     }
 

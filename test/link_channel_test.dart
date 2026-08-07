@@ -114,6 +114,23 @@ void main() {
       expect(parser.linkAt(1)?.url, 'http://outer/');
     });
 
+    test('but a save that put no link away gives no link back', () {
+      final parser = Parser.debugInsideLink(
+        '$linkClose${saveCursor}a${restoreCursor}b',
+        const Link('http://outer/'),
+      );
+
+      expect(parser.linkAt(0), isNull, reason: 'the close ended the seed');
+      expect(
+        parser.linkAt(1),
+        isNull,
+        reason: 'and the save put away what was left, which is no link. The '
+            'seed is where a restore goes when nothing was saved, and '
+            'something was saved here: a saved nothing and no save at all '
+            'are two different nulls, the same two the walk keeps apart',
+      );
+    });
+
     test('a string read in two goes remembers the link across the pause', () {
       final parser = Parser(
         '${opens('http://u/')}$saveCursor'
