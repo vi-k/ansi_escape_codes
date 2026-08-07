@@ -148,6 +148,30 @@ void main() {
       expect(Parser(line).removeAll(), 'second', reason: 'nothing was eaten');
     });
 
+    test('a BEL-opened link is reopened with its BEL', () {
+      // The reopening is written from the bytes the link was opened with, so
+      // the form of the terminator travels with it: a terminal that was told
+      // BEL on the first line is told BEL on the second.
+      final printer = Printer()..prepare('\x1B]8;;http://u/\x07first');
+
+      expect(
+        printer.prepare('second'),
+        '\x1B[0m\x1B]8;;http://u/\x07second\x1B]8;;\x1B\\',
+      );
+    });
+
+    test('the id= of the opening survives the reopening', () {
+      // `id=` is what tells a terminal that two pieces a line break cut apart
+      // are one link. It lives in the bytes and not in the url, and it is the
+      // bytes that are written again.
+      final printer = Printer()..prepare('\x1B]8;id=7;http://u/\x1B\\first');
+
+      expect(
+        printer.prepare('second'),
+        '\x1B[0m\x1B]8;id=7;http://u/\x1B\\second\x1B]8;;\x1B\\',
+      );
+    });
+
     test('a restore of a save that held no link does not raise one', () {
       // The second line is read as beginning inside the link the first one
       // left open. Its close ends that, the save puts away the nothing that
@@ -260,6 +284,34 @@ void main() {
         sink.toString(),
         '\x1B[0m\x1B]8;;http://u/\x1B\\\x1B[0mclick\x1B]8;;\x1B\\\n'
         '\x1B[0m\x1B]8;;http://u/\x1B\\plain\x1B]8;;\x1B\\\n',
+      );
+    });
+
+    test('a BEL-opened link is carried on with its BEL', () {
+      final sink = StringBuffer();
+      SinkPrinter(sink)
+        ..write('\x1B]8;;http://u/\x07')
+        ..writeln('click')
+        ..writeln('plain');
+
+      expect(
+        sink.toString(),
+        '\x1B[0m\x1B]8;;http://u/\x07\x1B[0mclick\x1B]8;;\x1B\\\n'
+        '\x1B[0m\x1B]8;;http://u/\x07plain\x1B]8;;\x1B\\\n',
+      );
+    });
+
+    test('the id= is carried into the next line', () {
+      final sink = StringBuffer();
+      SinkPrinter(sink)
+        ..write('\x1B]8;id=7;http://u/\x1B\\')
+        ..writeln('click')
+        ..writeln('plain');
+
+      expect(
+        sink.toString(),
+        '\x1B[0m\x1B]8;id=7;http://u/\x1B\\\x1B[0mclick\x1B]8;;\x1B\\\n'
+        '\x1B[0m\x1B]8;id=7;http://u/\x1B\\plain\x1B]8;;\x1B\\\n',
       );
     });
 
