@@ -42,6 +42,8 @@ print(parser.showControlFunctions()); // [fgRed]ERROR[reset]: the roof is on fir
 - cursor and terminal control
 - [reading](#reading) strings that carry escape codes: what they say, how long
   they are without the codes, what style is in force at any point
+- [hyperlinks](#hyperlinks) that survive the cut: a link a slice or a line
+  break falls inside of is opened again and goes on being one link
 - [a default style](#printer) for everything the application prints
 
 
@@ -64,6 +66,7 @@ print(parser.showControlFunctions()); // [fgRed]ERROR[reset]: the roof is on fir
   - [Quick analysis](#quick-analysis)
   - [Sequence types](#sequence-types)
   - [Unknown sequences](#unknown-sequences)
+- [Hyperlinks](#hyperlinks)
 - [Utilities](#utilities)
 - [The bytes and what they mean](doc/reference.md) — the tables of the standard
 
@@ -847,6 +850,10 @@ print(parser.stateAt(23) == parser.finalState); // true
 print(parser.finalState); // Style(foreground: Color16.cyan)
 ```
 
+A hyperlink is state but not style, so it is not in what `stateAt` answers:
+`linkAt` and `finalLink` are its pair of the same two questions, on a channel
+of their own. See [Hyperlinks](#hyperlinks).
+
 Reading happens as late as it can. `stateAt` reads the string up to the
 position asked about and stops there, and what it read is kept, so the next
 question picks up where the last one left off instead of starting over:
@@ -869,9 +876,9 @@ over.
 final parser = Parser(text)..prepare();
 ```
 
-Those methods are what it is for. `stateAt` and `substring` do not gain by it,
-and lose by it where the questions are not going to reach the end of the
-string. `benchmark/` measures both.
+Those methods are what it is for. `stateAt`, `linkAt` and `substring` do not
+gain by it, and lose by it where the questions are not going to reach the end
+of the string. `benchmark/` measures both.
 
 In the above example, the text state was not set to default, i.e. the text was
 not closed:
@@ -1149,6 +1156,98 @@ writes back whatever is returned:
 print(Parser(text).replaceAll((e) => e is UnrecognizedEscapeCode ? '?' : e.string));
 // a?b?c
 ```
+
+
+## Hyperlinks
+
+`OSC 8` is what makes text clickable, and `link` writes the whole of it — the
+opening, the text shown, and the close:
+
+```dart
+print(link('https://dart.dev').ansiShowControlFunctions());
+// [link(https://dart.dev)]https://dart.dev[linkClose]
+print(link('https://dart.dev', text: 'the site').ansiShowControlFunctions());
+// [link(https://dart.dev)]the site[linkClose]
+```
+
+The pieces have names of their own for a link built as a constant —
+`${linkOpen}$url$linkTextOpen$text$linkClose` — and `linkBel` writes the older
+form, ended by a `BEL` where the other ends by an `ST`. Terminals take either.
+
+A link is state, the way a style is: what is written after an opening is inside
+it until a close. Links do not nest — an opening supersedes the one before it,
+and one close ends whatever was open — so the parser keeps them on a channel
+beside the style rather than in it, and answers for them on their own:
+
+```dart
+final parser = Parser('see ${link('https://dart.dev', text: 'the site')} now');
+print(parser.linkAt(4)?.url); // https://dart.dev
+print(parser.linkAt(0)); // null
+print(parser.finalLink); // null
+```
+
+`linkAt` takes a position of the text without escape codes, as `stateAt` does,
+and answers with the link the character there sits inside. Both read from the
+same walk, so asking each of them about a run of positions costs one pass over
+the string in all. `finalLink` is what the string leaves open — `null` here,
+the text having closed what it opened. Walking the matches yourself, every
+`Match` carries its `link` beside its `state`.
+
+`isClosed` is a question about the style alone: a string that ends in the state
+it began in but leaves a hyperlink open answers `true`, so `finalLink` is the
+one to ask beside it.
+
+A slice keeps the text clickable. One that begins inside a link opens that link
+again in front of its first piece of text, and closes it at the end, so a line
+cut out of a document stands on its own:
+
+```dart
+final parser = Parser('see ${link('https://dart.dev', text: 'the site')} now');
+print(Parser(parser.substring(4, maxLength: 3)).showControlFunctions());
+// [link(https://dart.dev)]the[linkClose]
+```
+
+The opening is written again in the bytes it was written in the first place: a
+link opened `BEL`-terminated is opened `BEL`-terminated again, and an `id=` —
+which is what `OSC 8` gives for a link a line break cuts in two — travels with
+it. The close is always the `ST`-terminated one, and terminals take it after
+either opening:
+
+```dart
+final parser = Parser('see ${linkBel('https://dart.dev', text: 'the site')} now');
+print(parser.substring(4, maxLength: 3).ansiShowEscapeSequences());
+// [OSC 8;;https://dart.dev BEL]the[OSC 8;; ST]
+```
+
+`substring(close: false)` leaves the link open, as it leaves the style open,
+and `optimize` closes one the string left open the same way `substring` does.
+
+The printers carry a link from line to line. A line closes the one it leaves
+open — what is printed after it must not stay clickable on that URL — and the
+line after opens it again, so a link a newline falls inside of goes on being
+one link:
+
+```dart
+final lines = <String>[];
+Printer(output: lines.add)
+    .print('${linkOpen}https://dart.dev${linkTextOpen}first\nsecond$linkClose');
+for (final line in lines) {
+  print(Parser(line).showControlFunctions());
+}
+// [reset][link(https://dart.dev)]first[linkClose]
+// [reset][link(https://dart.dev)]second[linkClose]
+```
+
+`SinkPrinter` and `StackedSinkPrinter` take a write at a time, and a line there
+may be composed of several: a link opened by one write stays open across the
+writes that follow, and the close falls where the line really ends — at a
+`writeln`, or at a `'\n'` in what is written. An insertion gives a link back
+the same way: what follows `insertBefore` or `insertAfter` goes on pointing
+where it pointed before, whatever the inserted text opened of its own.
+
+`example/links.dart` puts a link broken across three lines in front of a real
+terminal, printed and sliced, so the clicking can be tried rather than read
+about.
 
 
 ## Utilities

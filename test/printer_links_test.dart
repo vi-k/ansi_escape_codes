@@ -77,6 +77,159 @@ void main() {
         '\x1B[0m\x1B]8;;http://u/\x07click\x1B]8;;\x1B\\',
       );
     });
+
+    test("a line's own opening that never terminated does not eat the text",
+        () {
+      // What ended the opening in the input was the ESC of the reset — an
+      // SGR the line does not copy, because the style is written by the
+      // transition instead, and from the defaults to the defaults the
+      // transition writes nothing. Passed through as it came, the opening
+      // would read the text that follows as the rest of the url.
+      final line = Printer().prepare('\x1B]8;;http://u/\x1B[0mabcd');
+
+      expect(line, '\x1B[0m\x1B]8;;http://u/\x1B\\abcd\x1B]8;;\x1B\\');
+      expect(Parser(line).removeAll(), 'abcd', reason: 'nothing was eaten');
+    });
+
+    test('an unterminated opening keeps its bytes where an ESC follows', () {
+      // The counterpart: this SGR does change the style, the transition
+      // writes it out, and its ESC ends the opening the way it did in the
+      // input — so the line passes through with nothing added.
+      final line = Printer().prepare('\x1B]8;;http://u/\x1B[31mabcd');
+
+      expect(
+        line,
+        '\x1B[0m\x1B]8;;http://u/\x1B[31mabcd\x1B]8;;\x1B\\\x1B[0m',
+      );
+      expect(Parser(line).removeAll(), 'abcd');
+    });
+  });
+
+  group('a printed line takes the link the line before left open:', () {
+    test('the line after reopens it', () {
+      final printer = Printer();
+
+      expect(
+        printer.prepare('\x1B]8;;http://u/\x1B\\first'),
+        '\x1B[0m\x1B]8;;http://u/\x1B\\first\x1B]8;;\x1B\\',
+      );
+      expect(
+        printer.prepare('second'),
+        '\x1B[0m\x1B]8;;http://u/\x1B\\second\x1B]8;;\x1B\\',
+      );
+    });
+
+    test('a closed link is not carried on', () {
+      final printer = Printer()
+        ..prepare('\x1B]8;;http://u/\x1B\\first\x1B]8;;\x1B\\');
+
+      expect(printer.prepare('second'), '\x1B[0msecond');
+    });
+
+    test('a line that closes it ends the carry', () {
+      final printer = Printer()..prepare('\x1B]8;;http://u/\x1B\\first');
+
+      expect(
+        printer.prepare('second\x1B]8;;\x1B\\'),
+        '\x1B[0m\x1B]8;;http://u/\x1B\\second\x1B]8;;\x1B\\',
+      );
+      expect(printer.prepare('third'), '\x1B[0mthird');
+    });
+
+    test('an opening the line never terminated is terminated when reopened',
+        () {
+      // `OSC 8 ; ; url` with nothing to end it is read to the end of the
+      // line. Reopened in front of the next line's text, it would read that
+      // text as the rest of the url.
+      final printer = Printer()..prepare('\x1B]8;;http://u/');
+      final line = printer.prepare('second');
+
+      expect(line, '\x1B[0m\x1B]8;;http://u/\x1B\\second\x1B]8;;\x1B\\');
+      expect(Parser(line).removeAll(), 'second', reason: 'nothing was eaten');
+    });
+
+    test('a BEL-opened link is reopened with its BEL', () {
+      // The reopening is written from the bytes the link was opened with, so
+      // the form of the terminator travels with it: a terminal that was told
+      // BEL on the first line is told BEL on the second.
+      final printer = Printer()..prepare('\x1B]8;;http://u/\x07first');
+
+      expect(
+        printer.prepare('second'),
+        '\x1B[0m\x1B]8;;http://u/\x07second\x1B]8;;\x1B\\',
+      );
+    });
+
+    test('the id= of the opening survives the reopening', () {
+      // `id=` is what tells a terminal that two pieces a line break cut apart
+      // are one link. It lives in the bytes and not in the url, and it is the
+      // bytes that are written again.
+      final printer = Printer()..prepare('\x1B]8;id=7;http://u/\x1B\\first');
+
+      expect(
+        printer.prepare('second'),
+        '\x1B[0m\x1B]8;id=7;http://u/\x1B\\second\x1B]8;;\x1B\\',
+      );
+    });
+
+    test('a restore of a save that held no link does not raise one', () {
+      // The second line is read as beginning inside the link the first one
+      // left open. Its close ends that, the save puts away the nothing that
+      // is left, and the restore has to hand back the same nothing: the line
+      // is not inside the link any more, and an opening written in front of
+      // the C would make clickable what the string never made clickable.
+      const source = '\x1B]8;;http://u/\x1B\\A\n'
+          '\x1B]8;;\x1B\\\x1B7B\x1B8C';
+      final lines = <String>[];
+      Printer(output: lines.add).print(source);
+
+      expect(Parser(source).linkAt(3), isNull, reason: 'C is on no link');
+      expect(
+        Parser(lines.join('\n')).linkAt(3),
+        isNull,
+        reason: 'and the printed lines must not put it on one',
+      );
+    });
+
+    test('a multi-line print carries the link to the line after', () {
+      final lines = <String>[];
+      Printer(output: lines.add).print('\x1B]8;;http://u/\x1B\\one\ntwo');
+
+      expect(lines, [
+        '\x1B[0m\x1B]8;;http://u/\x1B\\one\x1B]8;;\x1B\\',
+        '\x1B[0m\x1B]8;;http://u/\x1B\\two\x1B]8;;\x1B\\',
+      ]);
+    });
+
+    test('runZonedPrinter carries it from one print to the next', () {
+      final lines = <String>[];
+      runZonedPrinter(
+        () {
+          print('\x1B]8;;http://u/\x1B\\one');
+          print('two');
+        },
+        output: lines.add,
+      );
+
+      expect(lines, [
+        '\x1B[0m\x1B]8;;http://u/\x1B\\one\x1B]8;;\x1B\\',
+        '\x1B[0m\x1B]8;;http://u/\x1B\\two\x1B]8;;\x1B\\',
+      ]);
+    });
+
+    test('a multi-line styled call keeps its link', () {
+      final lines = Styles.red(
+        '\x1B]8;;http://u/\x1B\\one\ntwo\x1B]8;;\x1B\\',
+      ).split('\n');
+
+      expect(
+        lines,
+        [
+          '\x1B[0m\x1B[38;5;1m\x1B]8;;http://u/\x1B\\one\x1B]8;;\x1B\\\x1B[0m',
+          '\x1B[0m\x1B]8;;http://u/\x1B\\\x1B[38;5;1mtwo\x1B]8;;\x1B\\\x1B[0m',
+        ],
+      );
+    });
   });
 
   group('a sink printer carries the hyperlink across writes:', () {
@@ -107,7 +260,7 @@ void main() {
       );
     });
 
-    test('a newline inside a write ends the line there', () {
+    test('a newline inside a write ends the line and the next reopens', () {
       final sink = StringBuffer();
       SinkPrinter(sink)
         ..write('\x1B]8;;http://u/\x1B\\')
@@ -116,11 +269,11 @@ void main() {
       expect(
         sink.toString(),
         '\x1B[0m\x1B]8;;http://u/\x1B\\\x1B[0mclick\x1B]8;;\x1B\\\n'
-        '\x1B[0mtail',
+        '\x1B[0m\x1B]8;;http://u/\x1B\\tail',
       );
     });
 
-    test('a link is not carried into the next line', () {
+    test('a link is carried into the next line', () {
       final sink = StringBuffer();
       SinkPrinter(sink)
         ..write('\x1B]8;;http://u/\x1B\\')
@@ -130,7 +283,35 @@ void main() {
       expect(
         sink.toString(),
         '\x1B[0m\x1B]8;;http://u/\x1B\\\x1B[0mclick\x1B]8;;\x1B\\\n'
-        '\x1B[0mplain\n',
+        '\x1B[0m\x1B]8;;http://u/\x1B\\plain\x1B]8;;\x1B\\\n',
+      );
+    });
+
+    test('a BEL-opened link is carried on with its BEL', () {
+      final sink = StringBuffer();
+      SinkPrinter(sink)
+        ..write('\x1B]8;;http://u/\x07')
+        ..writeln('click')
+        ..writeln('plain');
+
+      expect(
+        sink.toString(),
+        '\x1B[0m\x1B]8;;http://u/\x07\x1B[0mclick\x1B]8;;\x1B\\\n'
+        '\x1B[0m\x1B]8;;http://u/\x07plain\x1B]8;;\x1B\\\n',
+      );
+    });
+
+    test('the id= is carried into the next line', () {
+      final sink = StringBuffer();
+      SinkPrinter(sink)
+        ..write('\x1B]8;id=7;http://u/\x1B\\')
+        ..writeln('click')
+        ..writeln('plain');
+
+      expect(
+        sink.toString(),
+        '\x1B[0m\x1B]8;id=7;http://u/\x1B\\\x1B[0mclick\x1B]8;;\x1B\\\n'
+        '\x1B[0m\x1B]8;id=7;http://u/\x1B\\plain\x1B]8;;\x1B\\\n',
       );
     });
 
@@ -157,6 +338,24 @@ void main() {
         ..writeln('plain');
 
       expect(sink.toString(), '\x1B[0mplain\n');
+    });
+
+    test('a direct prepare leaves the carry between lines alone', () {
+      final sink = StringBuffer();
+      SinkPrinter(sink)
+        ..write('\x1B]8;;http://u/\x1B\\')
+        ..writeln('click')
+        // The line has ended, so the link is closed in the output and still
+        // open logically. Asking about a piece that opens another one must
+        // leave that carry as it was: the next line reopens the first link.
+        ..prepare('\x1B]8;;http://v/\x1B\\')
+        ..writeln('plain');
+
+      expect(
+        sink.toString(),
+        '\x1B[0m\x1B]8;;http://u/\x1B\\\x1B[0mclick\x1B]8;;\x1B\\\n'
+        '\x1B[0m\x1B]8;;http://u/\x1B\\plain\x1B]8;;\x1B\\\n',
+      );
     });
 
     test('a NoStyle sink printer still passes the writes through', () {

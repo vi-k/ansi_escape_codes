@@ -49,7 +49,9 @@ extension StringParsingExtension on String {
 
   /// Returns the string with the escape codes folded together.
   ///
-  /// [close] is whether to end the string in the state it began in.
+  /// [close] is whether to end the string in the state it began in and
+  /// outside every hyperlink: a string that opens a link and never closes it
+  /// comes back closed, so that what is printed after it is not clickable.
   ///
   /// See [Parser.optimize].
   String ansiOptimizeControlFunctions({bool close = true}) =>

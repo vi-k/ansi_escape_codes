@@ -49,6 +49,8 @@ part 'matches/matches_result.dart';
 ///   the rest of the string as it was using [insertBefore] and [insertAfter].
 /// * Retrieving the computed [Style] at a specific text position using
 ///   [stateAt] and [finalState].
+/// * Retrieving the hyperlink in force at a text position using [linkAt] and
+///   [finalLink].
 /// * Analyzing a string using [matches].
 ///
 /// [Parser] allows you to work with a string containing ANSI escape codes as
@@ -77,6 +79,16 @@ part 'matches/matches_result.dart';
 final class Parser extends _ParserBase<Style> {
   /// Creates a [Parser] for the given [input] string.
   Parser(String input) : super(input, Style.terminalColors);
+
+  /// A [Parser] over a string that begins inside [initialLink].
+  ///
+  /// The seeding is internal — a string read on its own begins outside every
+  /// link, and only a reader taking a document apart line by line has a link
+  /// to hand on — but it has to be reachable to be pinned, and from outside
+  /// the package nothing else reaches it.
+  @visibleForTesting
+  Parser.debugInsideLink(String input, Link initialLink)
+      : super(input, Style.terminalColors, initialLink: initialLink);
 }
 
 /// A parser that processes strings containing ANSI escape codes and tracks
@@ -101,6 +113,14 @@ final class _ParserBase<S extends State<S>> {
   /// [Printer] reads each line from where the last one ended.
   final S initialState;
 
+  /// The link the string is read as starting inside, where there is one.
+  ///
+  /// The mirror of [initialState] on the link channel: a [Printer] reads each
+  /// line from the link the line before it left open, so that a link cut by a
+  /// newline goes on being one link. A [Parser] over a whole string starts
+  /// outside every link.
+  final Link? initialLink;
+
   Matches<S>? _matches;
   String? _plainString;
 
@@ -112,7 +132,7 @@ final class _ParserBase<S extends State<S>> {
   /// beginning every time, and cost the questions times the length of it.
   _Walk<S>? _walk;
 
-  _ParserBase(this.input, this.initialState);
+  _ParserBase(this.input, this.initialState, {this.initialLink});
 
   String get _requirePlainString => _plainString ??= () {
         final buf = StringBuffer();
@@ -132,12 +152,24 @@ final class _ParserBase<S extends State<S>> {
   bool get isParsed => _matches?.isParsed ?? false;
 
   /// The [Matches] of the string.
-  Matches<S> get matches => _matches ??= Matches._(input, initialState);
+  Matches<S> get matches =>
+      _matches ??= Matches._(input, initialState, initialLink: initialLink);
 
   /// The final [S] after processing the entire string.
   ///
   /// See also [stateAt].
   S get finalState => matches._requireParsingResult.finalState;
+
+  /// The hyperlink the string leaves open, or `null` where it leaves none.
+  ///
+  /// The mirror of [finalState] on the link channel. A string that closed the
+  /// link it opened — or the link it was seeded with — leaves none open; a
+  /// string that touched no link at all leaves the seed as it was.
+  ///
+  /// Reads the whole string, as [finalState] does.
+  ///
+  /// See also [linkAt].
+  Link? get finalLink => matches._requireParsingResult.finalLink;
 
   /// String length without ANSI escape codes, in UTF-16 code units.
   ///
@@ -147,19 +179,23 @@ final class _ParserBase<S extends State<S>> {
   int get length => _requirePlainString.length;
 
   /// Whether the string ends in the state it began in.
+  ///
+  /// A question about the style alone: a string that leaves a hyperlink open
+  /// answers `true` all the same, and [finalLink] is the one to ask beside it.
   bool get isClosed => finalState == initialState;
 
   /// Reads the whole string, ahead of the questions asked of it.
   ///
-  /// [stateAt] and [substring] read only as far as they must, and what they
-  /// read is kept, so nothing is parsed twice. This reads it all in one go
-  /// instead of letting it grow question by question, and builds the plain
-  /// text [length], [indexOf] and the other string methods work on.
+  /// [stateAt], [linkAt] and [substring] read only as far as they must, and
+  /// what they read is kept, so nothing is parsed twice. This reads it all in
+  /// one go instead of letting it grow question by question, and builds the
+  /// plain text [length], [indexOf] and the other string methods work on.
   ///
   /// It is for [length], [indexOf] and the other string methods, which need
-  /// the whole of the text before they can answer anything. [stateAt] and
-  /// [substring] do not gain by it — they keep their place as it is — and lose
-  /// by it where the questions are not going to reach the end of the string.
+  /// the whole of the text before they can answer anything. [stateAt],
+  /// [linkAt] and [substring] do not gain by it — they keep their place as it
+  /// is — and lose by it where the questions are not going to reach the end of
+  /// the string.
   /// `benchmark/parser_benchmark.dart` measures both.
   void prepare() {
     matches._requireParsingResult;
@@ -200,14 +236,55 @@ final class _ParserBase<S extends State<S>> {
   /// Going back is allowed and starts the walk over.
   ///
   /// See also [finalState].
-  S stateAt(int pos) {
+  S stateAt(int pos) => _pieceAt(pos)?.state ?? finalState;
+
+  /// The hyperlink open at the plain text [pos], or `null` where none is.
+  ///
+  /// [pos] is the position in the string without ANSI escape codes.
+  ///
+  /// The answer is the link the character at [pos] sits inside, not the one
+  /// the string moves on to: a link opened just in front of that character is
+  /// in force at it, and a close written just behind it is not. The position
+  /// stays with its character until the character is passed.
+  ///
+  /// Reads the string up to [pos] and stops, and keeps its place the way
+  /// [stateAt] does — the same walk serves both, so asking each of them about
+  /// a run of positions costs one pass in all, not one a question.
+  ///
+  /// Going back is allowed and starts the walk over.
+  ///
+  /// See also [finalLink].
+  Link? linkAt(int pos) {
+    final piece = _pieceAt(pos);
+
+    // Told apart by the piece, not by the link, the way the iterator's
+    // `currentLink` is: past the end of the text the answer is what the
+    // string left open, and a piece that stands in no link answers `null` of
+    // its own.
+    return piece == null ? finalLink : piece.link;
+  }
+
+  /// The piece of text the plain text [pos] falls in, or `null` where [pos] is
+  /// the position just behind the text and belongs to no piece.
+  ///
+  /// The one walk [stateAt] and [linkAt] both read their answers off, so that
+  /// a run of questions — of either kind, or the two interleaved — costs one
+  /// pass over the string in all.
+  ///
+  /// A position belongs to its piece until the piece is passed: strictly
+  /// `pos < passed`, so that an escape code written between two characters is
+  /// in force at the second and not at the first.
+  ///
+  /// Throws a [RangeError] for a negative [pos] and for one past the end of
+  /// the text.
+  Match<S>? _pieceAt(int pos) {
     RangeError.checkNotNegative(pos, 'pos');
 
     // The piece the last question was answered from may hold this one too.
     var walk = _walk;
     if (walk?.current case final match?
         when pos >= walk!.pieceStart && pos < walk.passed) {
-      return match.state;
+      return match;
     }
 
     // Anything else already passed means going back, and the walk starts
@@ -218,13 +295,13 @@ final class _ParserBase<S extends State<S>> {
 
     while (walk.nextPiece()) {
       if (pos < walk.passed) {
-        return walk.current!.state;
+        return walk.current;
       }
     }
 
     RangeError.checkValidIndex(pos, null, 'pos', walk.passed + 1);
 
-    return finalState;
+    return null;
   }
 
   /// Replaces all [EscapeCode]s in the string with the result of the [replace]
@@ -277,17 +354,45 @@ final class _ParserBase<S extends State<S>> {
   /// text style.
   ///
   /// [maxLength] is the maximum length of the substring.
-  /// [close] is whether to close the substring with the default style. A
-  /// hyperlink the slice opened and did not close is closed along with it,
-  /// the way an insertion closes one: what is printed after the slice must
-  /// not stay clickable. With `close: false` the link stays open, as the
-  /// style does. A slice that began inside a link does not repeat the
-  /// opening, and is not the one to close it.
+  ///
+  /// [close] is whether to close the substring with the default style, and
+  /// with it the hyperlink the slice has open.
+  ///
+  /// A slice is self-contained: one that began inside a link opens that link
+  /// again in front of its first piece of text, so that the text stays
+  /// clickable wherever the cut fell, and closes it at the end the way an
+  /// insertion does — what is printed after the slice must not stay
+  /// clickable on the slice's URL. With `close: false` the link is left
+  /// open, as the style is left open. Cutting a string into lines this way
+  /// gives lines that are each clickable on their own.
+  ///
+  /// The opening is written again in the bytes it came in, parameters and
+  /// all: a link opened `BEL`-terminated, the way [linkBel] opens one, is
+  /// opened `BEL`-terminated again, and an `id=` — which is what `OSC 8`
+  /// gives for a link a line break cuts in two — travels with it.
   ///
   /// The close written is [linkClose], `OSC 8;; ST`, whatever form the
-  /// opening took: a link opened `BEL`-terminated, the way [linkBel] opens
-  /// one, is closed with `ST` all the same, and the slice comes out carrying
-  /// both terminators. Terminals take either.
+  /// opening took, so a slice of a `BEL`-opened link comes out carrying both
+  /// terminators. Terminals take either.
+  ///
+  /// A link code that would change nothing in what the slice has open is not
+  /// written at all: a close where the slice has nothing open, an opening of
+  /// the link it has open already, and either of them where no text follows
+  /// for them to be shown around. With `close: true` that holds to the end,
+  /// and an empty slice comes out empty. With `close: false` the codes held
+  /// back are written after all, so that the slice ends inside the link the
+  /// string stands in there: an empty slice cut at the very place a link code
+  /// stands comes out carrying that code, and one cut anywhere else is empty
+  /// as before.
+  ///
+  /// A slice holding an `ESC 8` is where a link can still come out other than
+  /// it was, and this is accepted rather than mended: the restore gives back
+  /// what was saved inside the slice, and a save the cut left outside is not
+  /// there to be given. The state has the same hole and always had — the
+  /// codes are copied as they stand, and neither a save nor a restore is
+  /// rewritten. The link is the more easily lost of the two: an opening is
+  /// held back until there is text to show inside it, so an `ESC 7` standing
+  /// in front of that text saves no link where the string saved one.
   ///
   /// Reads the string up to the end of the piece and stops, and keeps its
   /// place the way [stateAt] does: a slice beginning past the start of the
@@ -321,7 +426,28 @@ final class _ParserBase<S extends State<S>> {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
     Match<S>? lastMatch;
-    var linkIsOpen = false;
+
+    // The link the slice has open in what it has written; the link it would
+    // have open once the codes read since the last piece are written; and
+    // those codes themselves.
+    //
+    // A link code is held back until there is a piece to write it in front
+    // of, because until then it changes nothing in what the slice shows: an
+    // opening with nothing inside it, and a close for an opening the slice
+    // never wrote, are never written at all.
+    Link? writtenLink;
+    Link? heldLink;
+    var heldLinkCodes = '';
+
+    // The link codes held back, and the slice's link brought up to date with
+    // them: called where there is a piece to write them in front of.
+    String takeHeldLinkCodes() {
+      final codes = heldLinkCodes;
+      heldLinkCodes = '';
+      writtenLink = heldLink;
+
+      return codes;
+    }
 
     var walk = _walk;
     int pos;
@@ -375,8 +501,38 @@ final class _ParserBase<S extends State<S>> {
                   : math.min(string.length - (pos - end), string.length),
             );
             if (substring.isNotEmpty) {
+              final held = takeHeldLinkCodes();
+
+              // A slice that began inside a link opens it again itself, in
+              // the bytes it was opened with: the text is shown inside that
+              // link, and nothing the slice has read opened it. An opening
+              // the input never terminated is terminated here, or it would
+              // swallow the text of the slice — see [Link._reopening].
+              final link = m.link;
+              var reopening = '';
+              if (writtenLink == null && link != null) {
+                reopening = link._reopening;
+                writtenLink = heldLink = link;
+              }
+
+              final transit = currentState.transitTo(m.state);
+
+              // The codes held back are the input's own, ending as they ended
+              // there — and what ended an unterminated opening there was the
+              // `ESC` behind it, which the slice need not be writing here.
+              // See [_terminatedIfTextFollows].
+              if (held.isNotEmpty) {
+                buf.write(
+                  _terminatedIfTextFollows(
+                    held,
+                    _firstNotEmpty(reopening, transit, substring),
+                  ),
+                );
+              }
+
               buf
-                ..write(currentState.transitTo(m.state))
+                ..write(reopening)
+                ..write(transit)
                 ..write(substring);
               currentState = m.state.toStyle();
               lastMatch = m;
@@ -385,12 +541,47 @@ final class _ParserBase<S extends State<S>> {
 
         case EscapeCode():
           if (entity is! Sgr && pos >= start && (end == null || pos <= end)) {
-            buf
-              ..write(currentState.transitTo(m.state))
-              ..write(entity.string);
-            currentState = m.state.toStyle();
             if (entity is Link) {
-              linkIsOpen = entity.url.isNotEmpty;
+              // Held, and only where it changes what the slice has open: the
+              // link the code leaves behind is what the slice is to be left
+              // with, and a code saying what is said already — a close with
+              // nothing open, an opening of what that same sequence opened —
+              // is nothing to write.
+              if (m.link != heldLink) {
+                heldLinkCodes += entity.string;
+                heldLink = m.link;
+              }
+            } else {
+              final held = takeHeldLinkCodes();
+              final transit = currentState.transitTo(m.state);
+
+              // Nothing is ever added here — an escape code begins with an
+              // `ESC`, and that is what an unterminated opening needs — but
+              // the held codes go out through the same door as everywhere
+              // else, so that the guarantee is checked and not assumed.
+              if (held.isNotEmpty) {
+                buf.write(
+                  _terminatedIfTextFollows(
+                    held,
+                    _firstNotEmpty(transit, entity.string),
+                  ),
+                );
+              }
+
+              buf
+                ..write(transit)
+                ..write(entity.string);
+              currentState = m.state.toStyle();
+
+              // `ESC 8` carries the link the way it carries the rendition, so
+              // a restore written out changes what the slice has open, and
+              // the account of it is brought up to date beside the state's.
+              // Left stale, it would call the opening behind the restore a
+              // repetition of what the slice already said and drop it, and
+              // the text after it would come out unclickable.
+              if (entity is RestoreCursor) {
+                writtenLink = heldLink = m.link;
+              }
             }
           }
           lastMatch = m;
@@ -406,19 +597,28 @@ final class _ParserBase<S extends State<S>> {
     }
 
     if (lastMatch != null) {
-      if (close && linkIsOpen) {
-        // A slice that opened a link closes it, the way an insertion does:
-        // what is printed after the slice must not stay clickable on the
-        // slice's URL. A slice that began inside a link never wrote the
-        // opening, and has nothing to close.
-        buf.write(linkClose);
-      }
-      buf.write(
-        currentState.transitTo(
-          close ? initialState : lastMatch.state,
-          skipSet: true,
-        ),
+      final tail = currentState.transitTo(
+        close ? initialState : lastMatch.state,
+        skipSet: true,
       );
+
+      if (close) {
+        // A slice closes the link it has open, the one it began inside as
+        // readily as the one it opened itself: what is printed after the
+        // slice must not stay clickable on the slice's URL. Whatever was
+        // held back is dropped — nothing follows it to be shown inside it.
+        if (writtenLink != null) {
+          buf.write(linkClose);
+        }
+      } else {
+        // Left open, the way the style is left: the codes held back are
+        // written out, and the slice ends inside whatever the string is
+        // inside at that point. Nothing but the unwinding of the style
+        // follows them, so an opening that never terminated is left as it
+        // came — see [_terminatedIfTextFollows].
+        buf.write(_terminatedIfTextFollows(heldLinkCodes, tail));
+      }
+      buf.write(tail);
     }
 
     return buf.toString();
@@ -440,9 +640,16 @@ final class _ParserBase<S extends State<S>> {
   /// them lands there.
   ///
   /// The inserted text takes the style of the place it lands in, and gives it
-  /// back: the style it opens of its own is closed after it, and so is a
-  /// hyperlink, so the string that follows keeps the look it had and stays
-  /// outside whatever the insertion pointed at.
+  /// back: the style it opens of its own is closed after it, so the string
+  /// that follows keeps the look it had.
+  ///
+  /// A hyperlink is given back the same way. Links do not nest — the sequence
+  /// that closes one closes them all — so text with a link of its own,
+  /// inserted inside a link that was already open, is followed by that outer
+  /// link opened again, in the bytes it was opened with: what comes after the
+  /// insertion goes on pointing where it pointed before. An insertion that
+  /// lands outside every link is followed by a close instead, so the string
+  /// after it stays outside whatever the insertion pointed at.
   ///
   /// ```dart
   /// const text = '${fgRed}Hello$reset world';
@@ -451,11 +658,6 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// The exclamation mark is red: at position 5 stands the `reset`, and this
   /// goes in front of it. See [insertAfter] for the other side of it.
-  ///
-  /// Hyperlinks are the one thing that cannot be given back. They do not nest
-  /// — the sequence that closes one closes them all — so text that opens a
-  /// link of its own, inserted inside a link that was already open, ends that
-  /// one too, and the rest of it is no longer clickable.
   String insertBefore(int pos, String text) => _insert(pos, text, after: false);
 
   /// Inserts [text] at the plain text [pos], behind the escape codes standing
@@ -481,45 +683,53 @@ final class _ParserBase<S extends State<S>> {
   String insertAfter(int pos, String text) => _insert(pos, text, after: true);
 
   String _insert(int pos, String text, {required bool after}) {
-    final (cut, ambient) = _seamAt(pos, after: after);
-    final read = Matches<S>._(text, ambient)._requireParsingResult;
+    final (cut, ambient, ambientLink) = _seamAt(pos, after: after);
+
+    // Read from the seam on both channels: the inserted text lands inside the
+    // state and inside the link that stand there, and what it leaves behind
+    // is what has to be put right for the tail.
+    final read = Matches<S>._(text, ambient, initialLink: ambientLink)
+        ._requireParsingResult;
 
     return '${input.substring(0, cut)}'
         '$text'
-        '${_closeLink(read.matches)}'
+        '${_linkBack(seam: ambientLink, left: read.finalLink)}'
         '${read.finalState.toStyle().transitTo(ambient)}'
         '${input.substring(cut)}';
   }
 
-  /// The sequence that closes a hyperlink the inserted text left open, or
-  /// nothing where it left none.
+  /// The link code that gives the seam its hyperlink back after the inserted
+  /// text, or nothing where the insertion left the seam's link as it found it.
   ///
-  /// A [Link] carries no style, so the state says nothing about it, and text
-  /// that follows an unclosed one is inside it — clickable, and pointing
-  /// somewhere it has nothing to do with.
-  String _closeLink(List<Match<S>> matches) {
-    var isOpen = false;
+  /// A [Link] carries no style, so the state says nothing about it and it has
+  /// to be put right on its own. Links do not nest — an opening supersedes
+  /// whatever was open — so the seam's own opening is enough to take the tail
+  /// back inside it, whether the insertion closed the link or left one of its
+  /// own open; only a seam that stood outside every link is given a close.
+  ///
+  /// The opening is written in the bytes it was written in the first place —
+  /// [Link._reopening], so that the `id=` of it and the form of its
+  /// terminator are kept. Those same bytes are what tells the two links
+  /// apart, the way `substring` tells them apart: an insertion ending inside
+  /// the very link it landed in has nothing to give back.
+  ///
+  /// [seam] is the link the insertion landed in, [left] the one it left open;
+  /// named, because two [Link]s in a row are told apart by nothing but their
+  /// order.
+  String _linkBack({required Link? seam, required Link? left}) =>
+      left == seam ? '' : seam?._reopening ?? linkClose;
 
-    for (final m in matches) {
-      if (m.entity case Link(:final url)) {
-        isOpen = url.isNotEmpty;
-      }
-    }
-
-    return isOpen ? linkClose : '';
-  }
-
-  /// The place in [input] an insertion at the plain text [pos] goes to, and
-  /// the state it lands in.
+  /// The place in [input] an insertion at the plain text [pos] goes to, the
+  /// state it lands in, and the hyperlink it lands inside.
   ///
   /// A seam is what lies between two neighbouring characters of the plain
   /// text: nothing at all, or the escape codes written between them. [after]
   /// chooses which end of it the insertion takes.
-  (int, S) _seamAt(int pos, {required bool after}) {
+  (int, S, Link?) _seamAt(int pos, {required bool after}) {
     RangeError.checkNotNegative(pos, 'pos');
 
     if (!after && pos == 0) {
-      return (0, initialState);
+      return (0, initialState, initialLink);
     }
 
     // A seam is looked for in the pieces of text and nowhere else, so a walk
@@ -559,7 +769,7 @@ final class _ParserBase<S extends State<S>> {
           return _seamAt(after ? pos + 1 : pos - 1, after: after);
         }
 
-        return (cut, m.state);
+        return (cut, m.state, m.link);
       }
     }
 
@@ -567,7 +777,7 @@ final class _ParserBase<S extends State<S>> {
       throw RangeError.range(pos, 0, walk.passed, 'pos');
     }
 
-    return (input.length, finalState);
+    return (input.length, finalState, finalLink);
   }
 
   /// The string with [padding] written after it until the text is [width]
@@ -612,39 +822,80 @@ final class _ParserBase<S extends State<S>> {
 
   /// Optimizes the string by removing consecutive escape codes.
   ///
-  /// [close] is whether to close the string with the default style. The style
-  /// is all it closes: a string that opens a hyperlink and never closes it
-  /// comes back with the link open, and what is printed after it stays
-  /// clickable. [substring] writes that close for a slice; this does not
-  /// write it for a string.
+  /// [close] is whether to close the string with the default style and outside
+  /// every hyperlink: a string that opens a link and never closes it comes
+  /// back closed, so that what is printed after it is not clickable. With
+  /// `close: false` both are left as the string leaves them, the link no less
+  /// than the style. [substring] closes a slice the same way.
   String optimize({bool close = true}) {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
 
+    // An opening the string never terminated, held back until what comes
+    // after it is known. In the string it was ended by the `ESC` of whatever
+    // stood behind it, and that may have been an `SGR` — which this loop does
+    // not copy but writes again as a transition, and a transition that
+    // changes nothing writes nothing. See [_terminatedIfTextFollows].
+    var heldOpening = '';
+
     for (final m in matches) {
       final entity = m.entity;
-      if (entity is Text) {
-        final string = entity.string;
-        if (string.isNotEmpty) {
-          buf
-            ..write(currentState.transitTo(m.state))
-            ..write(string);
-        }
-        currentState = m.state.toStyle();
-      } else if (entity is! Sgr) {
-        // Carries no style of its own, so it is kept as it was written. The
-        // styles collected so far are flushed first: erasing and scrolling
-        // read the current background color.
-        buf
-          ..write(currentState.transitTo(m.state))
-          ..write(entity.string);
-        currentState = m.state.toStyle();
+      if (entity is Sgr) {
+        continue;
       }
+
+      final string = entity.string;
+
+      // A piece of text with nothing in it shows nothing: no transition is
+      // written in front of it, and an opening held back goes on waiting for
+      // something to be shown inside it.
+      if (entity is! Text || string.isNotEmpty) {
+        // The styles collected so far are flushed first: erasing and
+        // scrolling read the current background color.
+        final transit = currentState.transitTo(m.state);
+
+        if (heldOpening.isNotEmpty) {
+          buf.write(
+            _terminatedIfTextFollows(
+              heldOpening,
+              _firstNotEmpty(transit, string),
+            ),
+          );
+          heldOpening = '';
+        }
+
+        buf.write(transit);
+
+        // A code that carries no style of its own is kept as it was written —
+        // save for an opening with no terminator, which waits to see what it
+        // is written in front of.
+        if (entity is Link && !_oscTerminated(string)) {
+          heldOpening = string;
+        } else {
+          buf.write(string);
+        }
+      }
+
+      currentState = m.state.toStyle();
     }
+
+    // The string is over: an `ESC` follows the opening held back — the close
+    // below, or the unwinding of the style — or nothing does, and either way
+    // it goes out as it came.
+    buf.write(heldOpening);
 
     final lastMatch = matches.lastOrNull;
 
     if (close) {
+      // The link is closed the way the style is, and before it: whatever the
+      // string left open — an opening of its own, or the link it was seeded
+      // inside — must not go on catching what is printed after. The codes
+      // are copied as they were written, so the close stands after an
+      // opening the input never terminated; that opening ends at the next
+      // ESC, and the close begins with one, so nothing is swallowed.
+      if (finalLink != null) {
+        buf.write(linkClose);
+      }
       buf.write(currentState.transitTo(initialState));
     } else if (lastMatch != null) {
       buf.write(currentState.transitTo(lastMatch.state));
@@ -657,9 +908,11 @@ final class _ParserBase<S extends State<S>> {
 /// A resumable walk over the matches: the iterator, how much plain text it
 /// has passed, and the piece of text it stopped in.
 ///
-/// [_ParserBase.stateAt], `substring` and the insert seams all walk the same
-/// matches forward; sharing the walk makes a run of forward questions cost one
-/// pass in all. A question about an earlier position starts a fresh walk.
+/// [_ParserBase.stateAt] and [_ParserBase.linkAt] — which read their answers
+/// off one piece, through [_ParserBase._pieceAt] — `substring` and the insert
+/// seams all walk the same matches forward; sharing the walk makes a run of
+/// forward questions cost one pass in all, whichever of them is asked and in
+/// whatever order. A question about an earlier position starts a fresh walk.
 final class _Walk<S extends State<S>> {
   final Iterator<Match<S>> iterator;
 

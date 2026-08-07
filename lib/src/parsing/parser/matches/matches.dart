@@ -7,6 +7,10 @@ part of '../parser.dart';
 /// individual matches found in the input string.
 final class Matches<S extends State<S>> extends Iterable<Match<S>> {
   final S _initialState;
+
+  /// The link the string is read as starting inside, where there is one.
+  final Link? _initialLink;
+
   final String _input;
 
   /// What has been read of the string so far, shared by every iterator over
@@ -16,7 +20,8 @@ final class Matches<S extends State<S>> extends Iterable<Match<S>> {
 
   _MatchesResult<S>? _parsingResult;
 
-  Matches._(this._input, this._initialState);
+  Matches._(this._input, this._initialState, {Link? initialLink})
+      : _initialLink = initialLink;
 
   _MatchesResult<S> get _requireParsingResult {
     final parsingResult = _parsingResult;
@@ -43,5 +48,5 @@ final class Matches<S extends State<S>> extends Iterable<Match<S>> {
   bool get isParsed => _parsingResult != null;
 
   _ParserIterator<S> _createIterator() =>
-      _ParserIterator<S>._(this, _initialState);
+      _ParserIterator<S>._(this, _initialState, _initialLink);
 }

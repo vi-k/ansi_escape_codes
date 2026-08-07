@@ -4,8 +4,18 @@ Added:
 
 - `insertBefore` and `insertAfter` on `Parser` and `StackedParser`, with the
   `ansiInsertBefore` and `ansiInsertAfter` string extensions. Text put into a
-  styled string takes the style of the place it lands in and closes whatever
-  it opens of its own, leaving the rest of the string as it was.
+  styled string takes the style of the place it lands in and gives it back, so
+  the rest of the string is left as it was: the style it opened of its own is
+  closed after it, and the hyperlink it landed inside — links do not nest, and
+  the inserted text may have superseded it with one of its own — is opened
+  again behind it. Text inserted outside every link is closed off instead, so
+  what follows it stays outside whatever the insertion pointed at.
+- The hyperlink a string has open, read back the way the style is: `linkAt` and
+  `finalLink` on `Parser` and `StackedParser`, and `link` on `Match`, beside
+  its `state`, for a walk over the matches. A link is state but not style — it
+  carries no rendition, and `SGR 0` does not close it — so it travels on a
+  channel of its own and is answered on its own: `linkAt(pos)` for the link the
+  character at `pos` sits inside, `finalLink` for what the string leaves open.
 - The independent control functions, ESC Fs: constants for all ten of them,
   `ControlFunctionsEscFs`, `EscCommon` — the entity a `switch` over them
   matches — and `resetTerminal` for RIS.
@@ -91,7 +101,11 @@ Fixed:
 - `ESC 7` and `ESC 8` carried no style. A terminal saves the rendition along
   with the cursor and restores both, so `${fgRed}ESC7${fgBlue}ESC8` shows red
   where the parser said blue — and every question asked after it was answered
-  from the wrong state.
+  from the wrong state. The hyperlink travels in that same bundle: a terminal
+  keeps it among the attributes it saves, so what a restore brings back is
+  clickable again exactly where the save was, and a save made where no link was
+  open puts that away as readily — the restore leaves no link behind it, rather
+  than the one the string was started inside.
 - An insertion left a hyperlink open. `Link` carries no style, and the closing
   was worked out from the style alone, so text inserted with an unclosed
   `OSC 8` swallowed everything after it.
@@ -153,20 +167,48 @@ Fixed:
   is restored even when the other throws. Turning them off is guarded the
   same way now: when a stdin refuses one change, the one already made is
   undone instead of being left behind.
-- `substring` left a hyperlink open: a slice that ended inside one kept
-  everything printed after it clickable on the slice's URL. With
-  `close: true` the slice now closes the link it opened, the way an
-  insertion does.
+- `substring` cut a hyperlink in two and kept neither half right: a slice that
+  began inside one came out unclickable, the opening having been left behind on
+  the other side of the cut, and a slice that ended inside one left it open, so
+  everything printed after the slice was clickable on the slice's URL. A slice
+  is self-contained now, the way it always was in the style: one that began
+  inside a link opens that link again in front of its first piece of text, and
+  `close: true` closes at the end what the slice has open. With `close: false`
+  the link is left open, as the style is. Cutting a document into lines this
+  way gives lines that are each clickable on their own.
+
+  The opening is written again in the bytes it came in, parameters and all: a
+  link opened `BEL`-terminated stays `BEL`-terminated, and an `id=` — which is
+  what `OSC 8` gives for a link a line break cuts in two — travels with it. The
+  close written is `OSC 8;; ST` whatever form the opening took; terminals take
+  either.
 - Once a link passed through them at all, the printers had the gap the slice
   had: a printed line that opened a hyperlink left it open, and everything
-  printed after was part of it. A line now closes the link it opened; unlike
-  the style, a link is not reopened on the next line. `SinkPrinter` and
+  printed after was part of it. A line now closes the link it leaves open, and
+  the line after opens it again — in the bytes it was opened with, as the slice
+  does it — so a link a line break falls inside of goes on being one link,
+  which is what the `id=` of `OSC 8` is for. `SinkPrinter` and
   `StackedSinkPrinter` take a write at a time and one line may be composed of
   several, so there an open link is carried across the writes and closed where
   the line really ends — at a `writeln`, or at a `'\n'` in what is written. A
   styled call goes through a printer and changed with them: `Styles.red('…')`
   now closes a link its text left open, and in a multi-line string the link
-  ends with the line it was opened on instead of running on into the next.
+  reaches the end of the text instead of ending with the first line of it.
+- `optimize` left a hyperlink open where `substring` closed one. With
+  `close: true` it now ends the string outside every link as well as in the
+  default style: a string that opened a link and never closed it comes back
+  closed, so that what is printed after it is not clickable. With
+  `close: false` both are left as the string leaves them.
+- Copying a hyperlink out of a string could swallow the text behind it. An
+  `OSC 8;;` opening that never got its terminator runs on to the next `ESC` or
+  to the end of the text — the parser reads it that way on purpose — and
+  written again in front of text that had not followed it there, by a slice or
+  by a printed line, it read that text as part of the URL and showed nothing.
+  The terminator it lacks is supplied where text follows it. That is of the
+  codes copied over as they stand: there an escape code following, or nothing
+  at all, leaves the bytes exactly as they came, the `ESC` of what stands
+  behind being terminator enough. An opening written again for a slice or a
+  line that began inside the link carries its terminator whatever follows it.
 - `insertBefore` and `insertAfter` could put text between the halves of a
   surrogate pair and hand back a string that is no longer valid UTF-16. A
   position inside a pair now shifts to its edge — `insertBefore` to the
