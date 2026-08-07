@@ -350,17 +350,31 @@ final class _ParserBase<S extends State<S>> {
   /// text style.
   ///
   /// [maxLength] is the maximum length of the substring.
-  /// [close] is whether to close the substring with the default style. A
-  /// hyperlink the slice opened and did not close is closed along with it,
-  /// the way an insertion closes one: what is printed after the slice must
-  /// not stay clickable. With `close: false` the link stays open, as the
-  /// style does. A slice that began inside a link does not repeat the
-  /// opening, and is not the one to close it.
+  ///
+  /// [close] is whether to close the substring with the default style, and
+  /// with it the hyperlink the slice has open.
+  ///
+  /// A slice is self-contained: one that began inside a link opens that link
+  /// again in front of its first piece of text, so that the text stays
+  /// clickable wherever the cut fell, and closes it at the end the way an
+  /// insertion does — what is printed after the slice must not stay
+  /// clickable on the slice's URL. With `close: false` the link is left
+  /// open, as the style is left open. Cutting a string into lines this way
+  /// gives lines that are each clickable on their own.
+  ///
+  /// The opening is written again in the bytes it came in, parameters and
+  /// all: a link opened `BEL`-terminated, the way [linkBel] opens one, is
+  /// opened `BEL`-terminated again, and an `id=` — which is what `OSC 8`
+  /// gives for a link a line break cuts in two — travels with it.
   ///
   /// The close written is [linkClose], `OSC 8;; ST`, whatever form the
-  /// opening took: a link opened `BEL`-terminated, the way [linkBel] opens
-  /// one, is closed with `ST` all the same, and the slice comes out carrying
-  /// both terminators. Terminals take either.
+  /// opening took, so a slice of a `BEL`-opened link comes out carrying both
+  /// terminators. Terminals take either.
+  ///
+  /// A link code that would change nothing in what the slice has open is not
+  /// written at all: a close where the slice has nothing open, an opening of
+  /// the link it has open already, and either of them where no text follows
+  /// for them to be shown around. An empty slice comes out empty.
   ///
   /// Reads the string up to the end of the piece and stops, and keeps its
   /// place the way [stateAt] does: a slice beginning past the start of the
@@ -394,7 +408,28 @@ final class _ParserBase<S extends State<S>> {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
     Match<S>? lastMatch;
-    var linkIsOpen = false;
+
+    // The link the slice has open in what it has written; the link it would
+    // have open once the codes read since the last piece are written; and
+    // those codes themselves.
+    //
+    // A link code is held back until there is a piece to write it in front
+    // of, because until then it changes nothing in what the slice shows: an
+    // opening with nothing inside it, and a close for an opening the slice
+    // never wrote, are never written at all.
+    Link? writtenLink;
+    Link? heldLink;
+    var heldLinkCodes = '';
+
+    // The link codes held back, and the slice's link brought up to date with
+    // them: called where there is a piece to write them in front of.
+    String takeHeldLinkCodes() {
+      final codes = heldLinkCodes;
+      heldLinkCodes = '';
+      writtenLink = heldLink;
+
+      return codes;
+    }
 
     var walk = _walk;
     int pos;
@@ -448,6 +483,17 @@ final class _ParserBase<S extends State<S>> {
                   : math.min(string.length - (pos - end), string.length),
             );
             if (substring.isNotEmpty) {
+              buf.write(takeHeldLinkCodes());
+
+              // A slice that began inside a link opens it again itself, in
+              // the bytes it was opened with: the text is shown inside that
+              // link, and nothing the slice has read opened it.
+              final link = m.link;
+              if (writtenLink == null && link != null) {
+                buf.write(link.string);
+                writtenLink = heldLink = link;
+              }
+
               buf
                 ..write(currentState.transitTo(m.state))
                 ..write(substring);
@@ -458,12 +504,22 @@ final class _ParserBase<S extends State<S>> {
 
         case EscapeCode():
           if (entity is! Sgr && pos >= start && (end == null || pos <= end)) {
-            buf
-              ..write(currentState.transitTo(m.state))
-              ..write(entity.string);
-            currentState = m.state.toStyle();
             if (entity is Link) {
-              linkIsOpen = entity.url.isNotEmpty;
+              // Held, and only where it changes what the slice has open: the
+              // link the code leaves behind is what the slice is to be left
+              // with, and a code saying what is said already — a close with
+              // nothing open, an opening of what that same sequence opened —
+              // is nothing to write.
+              if (m.link != heldLink) {
+                heldLinkCodes += entity.string;
+                heldLink = m.link;
+              }
+            } else {
+              buf
+                ..write(takeHeldLinkCodes())
+                ..write(currentState.transitTo(m.state))
+                ..write(entity.string);
+              currentState = m.state.toStyle();
             }
           }
           lastMatch = m;
@@ -479,12 +535,19 @@ final class _ParserBase<S extends State<S>> {
     }
 
     if (lastMatch != null) {
-      if (close && linkIsOpen) {
-        // A slice that opened a link closes it, the way an insertion does:
-        // what is printed after the slice must not stay clickable on the
-        // slice's URL. A slice that began inside a link never wrote the
-        // opening, and has nothing to close.
-        buf.write(linkClose);
+      if (close) {
+        // A slice closes the link it has open, the one it began inside as
+        // readily as the one it opened itself: what is printed after the
+        // slice must not stay clickable on the slice's URL. Whatever was
+        // held back is dropped — nothing follows it to be shown inside it.
+        if (writtenLink != null) {
+          buf.write(linkClose);
+        }
+      } else {
+        // Left open, the way the style is left: the codes held back are
+        // written out, and the slice ends inside whatever the string is
+        // inside at that point.
+        buf.write(heldLinkCodes);
       }
       buf.write(
         currentState.transitTo(
