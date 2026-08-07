@@ -522,6 +522,16 @@ final class _ParserBase<S extends State<S>> {
                 ..write(currentState.transitTo(m.state))
                 ..write(entity.string);
               currentState = m.state.toStyle();
+
+              // `ESC 8` carries the link the way it carries the rendition, so
+              // a restore written out changes what the slice has open, and
+              // the account of it is brought up to date beside the state's.
+              // Left stale, it would call the opening behind the restore a
+              // repetition of what the slice already said and drop it, and
+              // the text after it would come out unclickable.
+              if (entity is RestoreCursor) {
+                writtenLink = heldLink = m.link;
+              }
             }
           }
           lastMatch = m;

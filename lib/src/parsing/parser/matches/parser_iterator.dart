@@ -13,12 +13,15 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
   int _pos = 0;
   Match<S>? _current;
 
-  /// The state [SaveCursor] put away, for [RestoreCursor] to bring back.
+  /// The state and the link [SaveCursor] put away, for [RestoreCursor] to
+  /// bring back.
   ///
   /// `ESC 7` saves the rendition along with the cursor, and `ESC 8` restores
   /// both, so a reader that ignored them would report a style the terminal is
-  /// no longer showing.
-  S? _saved;
+  /// no longer showing. The link travels in the same bundle: a terminal keeps
+  /// the hyperlink among the attributes it saves, so what is restored is
+  /// clickable again exactly where it was.
+  ({S state, Link? link})? _saved;
 
   _ParserIterator._(this._parent, this._initialState, this._initialLink);
 
@@ -51,9 +54,10 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
       // Read before, and read again from the start by another iterator: the
       // state and the link of each match are settled and travel in the match
       // itself, but what was saved along the way has to be picked up again
-      // for the restore that may still be ahead.
+      // for the restore that may still be ahead — the whole bundle of it, or
+      // the second walk would answer where the first one did not.
       if (match.entity is SaveCursor) {
-        _saved = match.state;
+        _saved = (state: match.state, link: match.link);
       }
 
       _index++;
@@ -158,24 +162,26 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
     final matchingState = _MatchingState(m, currentState);
     final entity = EscapeCode._parse(matchingState);
 
-    switch (entity) {
-      case SaveCursor():
-        _saved = matchingState.state;
-      case RestoreCursor():
-        // With nothing saved the terminal goes back to its defaults, which
-        // for a parser is the state it was started in.
-        matchingState.state = _saved ?? _parent._initialState;
-      default:
-    }
-
     // A link does not nest and carries no style, so it rides beside the
     // state: an opening supersedes whatever was open, a close — an opening
     // on an empty url — leaves nothing open, and every other code leaves the
     // link as it found it.
-    final link = switch (entity) {
+    var link = switch (entity) {
       Link(:final url) => url.isEmpty ? null : entity,
       _ => currentLink,
     };
+
+    switch (entity) {
+      case SaveCursor():
+        _saved = (state: matchingState.state, link: link);
+      case RestoreCursor():
+        // With nothing saved the terminal goes back to its defaults, which
+        // for a parser is the state and the link it was started in.
+        final saved = _saved;
+        matchingState.state = saved?.state ?? _initialState;
+        link = saved?.link ?? _initialLink;
+      default:
+    }
 
     _pos = m.end;
 

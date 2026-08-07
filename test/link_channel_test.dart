@@ -67,4 +67,83 @@ void main() {
       expect(parser.matches.last.link?.url, 'http://u/');
     });
   });
+
+  group('the cursor pair carries the link along with the style:', () {
+    test('what was open at the save is open again after the restore', () {
+      final parser = Parser(
+        '${opens('http://u/')}a${saveCursor}b$linkClose'
+        'c${restoreCursor}d',
+      );
+
+      expect(parser.linkAt(2), isNull, reason: 'the close ends the link');
+      expect(parser.linkAt(parser.length - 1)?.url, 'http://u/');
+    });
+
+    test('and the style goes on coming back with it', () {
+      final parser = Parser(
+        '$fgRed${opens('http://u/')}$saveCursor'
+        '$fgBlue${linkClose}x$restoreCursor',
+      );
+
+      expect(parser.finalState.foregroundColor, Color16.red);
+      expect(parser.finalLink?.url, 'http://u/');
+    });
+
+    test('a save outside a link takes the outside back in', () {
+      final parser = Parser(
+        'a$saveCursor${opens('http://u/')}b${restoreCursor}c',
+      );
+
+      expect(parser.linkAt(1)?.url, 'http://u/');
+      expect(parser.linkAt(2), isNull, reason: 'nothing was open at the save');
+    });
+
+    test('a restore with nothing saved goes back to the beginning', () {
+      final parser = Parser('${opens('http://u/')}a${restoreCursor}b');
+
+      expect(parser.linkAt(0)?.url, 'http://u/');
+      expect(parser.linkAt(1), isNull);
+    });
+
+    test('and the beginning of a seeded string is the seed', () {
+      final parser = Parser.debugInsideLink(
+        '${opens('http://u/')}a${restoreCursor}b',
+        const Link('http://outer/'),
+      );
+
+      expect(parser.linkAt(1)?.url, 'http://outer/');
+    });
+
+    test('a string read in two goes remembers the link across the pause', () {
+      final parser = Parser(
+        '${opens('http://u/')}$saveCursor'
+        'text$linkClose$restoreCursor',
+      );
+
+      expect(parser.linkAt(1)?.url, 'http://u/');
+      expect(parser.isParsed, isFalse, reason: 'stopping short of the restore');
+      expect(
+        parser.finalLink?.url,
+        'http://u/',
+        reason: 'reading on still knows what was open before the pause',
+      );
+    });
+
+    test('the second walk over the cache answers as the first one did', () {
+      final input = '${opens('http://u/')}a${saveCursor}b$linkClose'
+          'c${restoreCursor}d';
+      final first = [for (final m in Parser(input).matches) m.link?.url];
+
+      final parser = Parser(input);
+      final stopped = parser.matches.iterator;
+      while (stopped.moveNext()) {
+        if (stopped.current.entity is SaveCursor) {
+          break;
+        }
+      }
+
+      expect(parser.isParsed, isFalse, reason: 'the walk stopped at the save');
+      expect([for (final m in parser.matches) m.link?.url], first);
+    });
+  });
 }

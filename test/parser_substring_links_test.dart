@@ -131,5 +131,73 @@ void main() {
             'what is stitched after it is not clickable',
       );
     });
+
+    // `ESC 8` goes into the slice verbatim, the way every code that is not an
+    // SGR does, and once there it changes what the slice has open. What the
+    // slice believes it has written has to follow, or the opening behind the
+    // restore says what the bookkeeping thinks is said already and is dropped
+    // — leaving the text after it unclickable.
+    group('a restore inside the slice moves what the slice has open:', () {
+      // Nothing is cut away here: the whole string comes back, and the second
+      // opening is what goes missing.
+      final source = '${opens('http://u/')}$restoreCursor'
+          'a${opens('http://u/')}b';
+      final whole = Parser(source);
+
+      test('the opening behind it is not deduplicated away', () {
+        final cut = Parser(whole.substring(0, maxLength: 2));
+
+        expect(
+          [cut.linkAt(0)?.url, cut.linkAt(1)?.url],
+          [whole.linkAt(0)?.url, whole.linkAt(1)?.url],
+          reason: 'every character is clickable on what it was clickable on',
+        );
+        expect(cut.linkAt(1)?.url, 'http://u/', reason: 'and b is one of them');
+      });
+
+      test('and with close: false the same', () {
+        final cut = Parser(
+          Parser(source).substring(0, maxLength: 2, close: false),
+        );
+
+        expect(cut.linkAt(1)?.url, 'http://u/');
+      });
+    });
+
+    // A characterisation of what the slice does, not of what it should do.
+    //
+    // The slice's own `ESC 8` does not give back what the input's gave back:
+    // here the `ESC 7` is inside the slice but saved nothing, because the
+    // opening was still held — no text had come to write it in front of yet
+    // — and the other subform is an `ESC 7` left outside the slice
+    // altogether. Either way the account is right about the input and the
+    // bytes are not, and the lazy reopening that used to paper over this by
+    // accident no longer fires.
+    //
+    // The loss is accepted, not wanted: closing it would mean writing an
+    // opening with nothing inside it, which the slice deliberately does not
+    // do. That machinery is what task 11 rewrites, and it can move this case
+    // either way — pinned so that it cannot move in silence.
+    test('an ESC 8 the slice cannot reproduce loses the link (accepted)', () {
+      final source = '${opens('http://v/')}dea$saveCursor$restoreCursor'
+          'b$restoreCursor'
+          'de';
+      final whole = Parser(source);
+      final sliced = Parser(source).substring(3, maxLength: 3);
+      final cut = Parser(sliced);
+
+      expect(
+        sliced,
+        '$saveCursor$restoreCursor' 'b$restoreCursor' 'de$linkClose',
+      );
+      expect(whole.linkAt(3)?.url, 'http://v/');
+      expect(cut.linkAt(0), isNull, reason: 'and the slice has lost it');
+      expect(
+        cut.stateAt(0),
+        whole.stateAt(3),
+        reason: 'the style does not go astray beside it: an ESC 8 taken into '
+            'the slice is the mark of this class, and the state is not',
+      );
+    });
   });
 }
