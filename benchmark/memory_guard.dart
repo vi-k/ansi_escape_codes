@@ -31,42 +31,51 @@
 // * the parser held live past the second reading, so that nothing measured
 //   can be collected before it is measured.
 //
-// What comes out is steady to a third of a percent, and the regression it
+// What comes out is steady to a fraction of a percent, and the regression it
 // exists for moves it by half. Between the two there is room for a band that
 // neither flickers nor lets that class of change past.
 //
 // ## The calibration
 //
-// Seven cold runs of `dart run`, Dart 3.12.2 on an Apple M-series, all of
-// them over the same 4194391 characters:
+// Five cold runs of `dart run`, 2026-08-08, Dart 3.12.2 on an Apple M-series,
+// all of them over the same 4194391 characters:
 //
 // | run | matches | rss delta          | bytes per match |
 // | --- | ------- | ------------------ | --------------- |
-// | 1   | 372727  | 85737472 (81.8 MB) | 230.0           |
-// | 2   | 372727  | 85622784 (81.7 MB) | 229.7           |
-// | 3   | 372727  | 85671936 (81.7 MB) | 229.9           |
-// | 4   | 372727  | 85671936 (81.7 MB) | 229.9           |
-// | 5   | 372727  | 85884928 (81.9 MB) | 230.4           |
-// | 6   | 372727  | 85819392 (81.8 MB) | 230.2           |
-// | 7   | 372727  | 85590016 (81.6 MB) | 229.6           |
+// | 1   | 372727  | 98910208 (94.3 MB) | 265.4           |
+// | 2   | 372727  | 98959360 (94.4 MB) | 265.5           |
+// | 3   | 372727  | 98975744 (94.4 MB) | 265.5           |
+// | 4   | 372727  | 98959360 (94.4 MB) | 265.5           |
+// | 5   | 372727  | 98893824 (94.3 MB) | 265.3           |
 //
-// 229.6 to 230.4: a spread of 0.35%. With the `UnmodifiableListView` put back
-// into `Sgr._` and nothing else changed, the same corpus reads 353.0 bytes
-// per match — ×1.53 of the worst clean run.
+// 265.3 to 265.5: a spread of 0.08%. With the `UnmodifiableListView` put back
+// into `Sgr._` and nothing else changed, the same corpus reads 398.7 bytes
+// per match — ×1.50 of the worst clean run.
 //
-// That separation is the corpus's doing and not the threshold's. Coloured
+// This is the second calibration. The first, taken on 2026-08-05 over the
+// same corpus on the same machine, read 229.6 to 230.4, and what moved it was
+// deliberate: every `Match` now carries a `Link?`, the field a slice and a
+// printed string reopen a hyperlink from, the way they already reopen a
+// style. That is some 35 bytes on each of 372727 matches, and it is the whole
+// of the rise — the parsing iterator's own held link costs nothing, the
+// object it points at being alive in the parse tree already. So the band
+// below was redrawn by the rule at the foot of this comment, from five fresh
+// runs, rather than stretched to fit the reading that broke it.
+//
+// The ×1.50 is the corpus's doing and not the threshold's. Coloured
 // word by word, the way `parser_benchmark.dart` colours, the same regression
-// moves the same reading by a third instead, and a threshold set a third
-// above a clean run can either sit still or catch it, not both. [_corpus]
-// says what was done about that.
+// moves the same reading by two fifths instead — 4 MiB of that shape reads
+// 249.6 bytes per match clean and 349.3 with the view put back — and a
+// threshold has to sit under whichever separation is smallest to catch it.
+// [_corpus] says what was done about that.
 //
 // [_ceiling] is the worst clean run plus a quarter, which leaves it about as
 // far above that reading as the regression stands above it: a machine, an
 // allocator or a Dart that reads a quarter high still passes, and the
-// regression, reading half again high, cannot. The spread being 0.35%, a
-// quarter is seventy times the noise this has to tolerate — and a quarter
-// rather than a third because the room above the ceiling is also the room a
-// machine reading lower than this one has to hide a regression in.
+// regression, reading half again high, cannot. The spread being 0.08%, a
+// quarter is some three hundred times the noise this has to tolerate — and a
+// quarter rather than a third because the room above the ceiling is also the
+// room a machine reading lower than this one has to hide a regression in.
 //
 // [_floor] is three fifths of the same figure, and a reading below it is not
 // good news to be waved through: it means the measurement has stopped
@@ -76,23 +85,36 @@
 // cheaper, that is worth writing down: recalibrate.
 //
 // The figures are of `dart run`, and belong to it. The same file built with
-// `dart compile exe` reads about a fifth lower, so a number from one cannot
-// be checked against a band calibrated on the other, and a reading a fifth
-// low is one the regression above would fit under this ceiling. The CI runs
-// it the way it is calibrated here.
+// `dart compile exe` reads over a quarter lower — 190.8 bytes per match
+// against the 265.5 above — so a number from one cannot be checked against a
+// band calibrated on the other. That gap was a fifth at the first
+// calibration and has widened, a `Link?` costing the AOT heap much less than
+// it costs the JIT one; and the warning has widened with it, because the
+// regression above, compiled the same way, reads 280.8 and passes this
+// ceiling without a word. The CI runs it the way it is calibrated here.
 //
-// They are of one machine, but no longer of one machine only: the first CI
-// run on the ubuntu x64 runner (2026-08-05, run 31053415705, Dart stable)
-// read 372727 matches, +81.5 MB, 229.3 bytes per match — inside the spread
-// of the seven runs above, so the band holds on both machines as written.
+// They are of one machine, and for the moment of one machine only. There was
+// a second reading and it has been struck out: the first CI run on the ubuntu
+// x64 runner (2026-08-05, run 31053415705, Dart stable) read 229.3 bytes per
+// match, which sat just under the spread of the calibration standing at the
+// time and says nothing about the one above it, a sixth higher. It is not
+// carried forward as though it did. What the ubuntu runner makes of *this*
+// band is unknown until it has run it once; the first green run is to be
+// written down here in place of that sentence, and TODO.md holds the
+// reminder.
 //
 // To recalibrate — a deliberate change in what a match keeps, a new corpus, a
 // machine the band no longer fits — run it five times cold, take the worst,
 // and rewrite the table above along with the two constants: the ceiling is
-// that worst run × 1.25, the floor × 0.6. The corpus is generated by the
-// linear congruential generator at the foot of this file rather than by
-// `dart:math`, so the same characters come out of every SDK and the figures
-// stay comparable.
+// that worst run × 1.25, the floor × 0.6. Three more figures go stale with
+// the table, and none of them falls out of that arithmetic: the separation
+// the regression opens on this corpus, the pair beside it on the word-by-word
+// corpus in [_corpus], and how far under `dart run` the AOT build reads.
+// Measure all three again — a fixed cost per match moves every one of them,
+// and a comment left asserting the old ratios is worse than one asserting
+// nothing. The corpus is generated by the linear congruential generator at
+// the foot of this file rather than by `dart:math`, so the same characters
+// come out of every SDK and the figures stay comparable.
 
 import 'dart:io';
 
@@ -100,14 +122,14 @@ import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
 /// What a parsed match may retain, in bytes of resident memory, before this
 /// fails: the worst of the calibration runs plus a quarter.
-const _ceiling = 288;
+const _ceiling = 332;
 
 /// What a parsed match is expected to retain at the least: three fifths of
 /// the calibration.
 ///
 /// Below this the reading is not a cheaper parse, it is a reading that has
 /// come loose from what it was measuring. See the file comment.
-const _floor = 138;
+const _floor = 159;
 
 /// How much text to parse.
 ///
@@ -243,8 +265,8 @@ void _fail(String why) {
 /// of it being a match of its own that such a change does not touch, so it
 /// comes in long stretches rather than word by word. Colouring word by word —
 /// the corpus `parser_benchmark.dart` reads — puts a text match between every
-/// pair of code matches, and costs a third of what the reading can see: the
-/// ×1.53 of separation measured above falls to ×1.35.
+/// pair of code matches, and costs a fifth of what the reading can see: the
+/// ×1.50 of separation measured above falls to ×1.40.
 String _corpus() {
   final random = _Lcg(_seed);
   final buffer = StringBuffer();
