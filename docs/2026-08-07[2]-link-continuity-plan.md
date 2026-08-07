@@ -110,11 +110,18 @@ Expected: FAIL при компиляции — `Match` не имеет `link`.
 
 - [ ] **Step 4: Канал в итераторе**
 
-В `_ParserIterator`: поле `final Link? _initialLink;` (через конструктор), геттер-зеркало `currentState`:
+В `_ParserIterator`: поле `final Link? _initialLink;` (через конструктор), геттер-зеркало `currentState`. **Не** `_current?.link ?? _initialLink` — эта запись склеивает «матча ещё нет» и «ссылка закрыта», и засеянная ссылка воскресает после каждого закрытия (у `currentState` так можно только потому, что `S` не-nullable):
 
 ```dart
   /// The link open at this point, the way [currentState] is the state.
-  Link? get currentLink => _current?.link ?? _initialLink;
+  ///
+  /// Told apart by the match, not by the link: a closed link is a `null` of
+  /// its own, and falling back to the seed would raise it from the dead.
+  Link? get currentLink {
+    final current = _current;
+
+    return current == null ? _initialLink : current.link;
+  }
 ```
 
 В `_escapeCode` вычислять ссылку сущности до создания `Match`:
@@ -699,6 +706,10 @@ git commit -m "ci: the band is redrawn for the match that carries a link"
 - [ ] **Step 4: dartdoc `Link`**
 
 Сказать, что `url` — цель, а параметры последовательности (например `id=`) живут в `string`, и что переоткрытие пишет именно `string`.
+
+- [ ] **Step 4b: `Match.link` в «Added» 4.0.0**
+
+Секция `Added:` перечисляет добавленное публичное API; `Match.link` — новое публичное поле и в ней должно стоять, рядом с `linkAt`/`finalLink`.
 
 - [ ] **Step 5: Ворота (включая `dart doc --dry-run` и прогон примеров) + commit**
 
