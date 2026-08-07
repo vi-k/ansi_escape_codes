@@ -49,6 +49,8 @@ part 'matches/matches_result.dart';
 ///   the rest of the string as it was using [insertBefore] and [insertAfter].
 /// * Retrieving the computed [Style] at a specific text position using
 ///   [stateAt] and [finalState].
+/// * Retrieving the hyperlink in force at a text position using [linkAt] and
+///   [finalLink].
 /// * Analyzing a string using [matches].
 ///
 /// [Parser] allows you to work with a string containing ANSI escape codes as
@@ -158,6 +160,17 @@ final class _ParserBase<S extends State<S>> {
   /// See also [stateAt].
   S get finalState => matches._requireParsingResult.finalState;
 
+  /// The hyperlink the string leaves open, or `null` where it leaves none.
+  ///
+  /// The mirror of [finalState] on the link channel. A string that closed the
+  /// link it opened — or the link it was seeded with — leaves none open; a
+  /// string that touched no link at all leaves the seed as it was.
+  ///
+  /// Reads the whole string, as [finalState] does.
+  ///
+  /// See also [linkAt].
+  Link? get finalLink => matches._requireParsingResult.finalLink;
+
   /// String length without ANSI escape codes, in UTF-16 code units.
   ///
   /// The count is [String.length] minus the codes — `𝄞` is two, and a
@@ -219,14 +232,55 @@ final class _ParserBase<S extends State<S>> {
   /// Going back is allowed and starts the walk over.
   ///
   /// See also [finalState].
-  S stateAt(int pos) {
+  S stateAt(int pos) => _pieceAt(pos)?.state ?? finalState;
+
+  /// The hyperlink open at the plain text [pos], or `null` where none is.
+  ///
+  /// [pos] is the position in the string without ANSI escape codes.
+  ///
+  /// The answer is the link the character at [pos] sits inside, not the one
+  /// the string moves on to: a link opened just in front of that character is
+  /// in force at it, and a close written just behind it is not. The position
+  /// stays with its character until the character is passed.
+  ///
+  /// Reads the string up to [pos] and stops, and keeps its place the way
+  /// [stateAt] does — the same walk serves both, so asking each of them about
+  /// a run of positions costs one pass in all, not one a question.
+  ///
+  /// Going back is allowed and starts the walk over.
+  ///
+  /// See also [finalLink].
+  Link? linkAt(int pos) {
+    final piece = _pieceAt(pos);
+
+    // Told apart by the piece, not by the link, the way the iterator's
+    // `currentLink` is: past the end of the text the answer is what the
+    // string left open, and a piece that stands in no link answers `null` of
+    // its own.
+    return piece == null ? finalLink : piece.link;
+  }
+
+  /// The piece of text the plain text [pos] falls in, or `null` where [pos] is
+  /// the position just behind the text and belongs to no piece.
+  ///
+  /// The one walk [stateAt] and [linkAt] both read their answers off, so that
+  /// a run of questions — of either kind, or the two interleaved — costs one
+  /// pass over the string in all.
+  ///
+  /// A position belongs to its piece until the piece is passed: strictly
+  /// `pos < passed`, so that an escape code written between two characters is
+  /// in force at the second and not at the first.
+  ///
+  /// Throws a [RangeError] for a negative [pos] and for one past the end of
+  /// the text.
+  Match<S>? _pieceAt(int pos) {
     RangeError.checkNotNegative(pos, 'pos');
 
     // The piece the last question was answered from may hold this one too.
     var walk = _walk;
     if (walk?.current case final match?
         when pos >= walk!.pieceStart && pos < walk.passed) {
-      return match.state;
+      return match;
     }
 
     // Anything else already passed means going back, and the walk starts
@@ -237,13 +291,13 @@ final class _ParserBase<S extends State<S>> {
 
     while (walk.nextPiece()) {
       if (pos < walk.passed) {
-        return walk.current!.state;
+        return walk.current;
       }
     }
 
     RangeError.checkValidIndex(pos, null, 'pos', walk.passed + 1);
 
-    return finalState;
+    return null;
   }
 
   /// Replaces all [EscapeCode]s in the string with the result of the [replace]

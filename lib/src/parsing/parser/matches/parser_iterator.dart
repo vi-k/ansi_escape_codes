@@ -73,6 +73,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
       _parent._parsingResult ??= _MatchesResult<S>._(
         matches: parsed,
         finalState: currentState,
+        finalLink: currentLink,
       );
 
       return false;

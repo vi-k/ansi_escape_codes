@@ -4,9 +4,17 @@ final class _MatchesResult<S extends State<S>> {
   final List<Match<S>> matches;
   final S finalState;
 
+  /// The link the string leaves open, or `null` where it leaves none.
+  ///
+  /// Read off the walk at the end of it, the way [finalState] is: a link
+  /// closed on the last line is closed, and a string that touched no link at
+  /// all ends in the one it was seeded with.
+  final Link? finalLink;
+
   _MatchesResult._({
     required List<Match<S>> matches,
     required this.finalState,
+    required this.finalLink,
   }) : matches =
             UnmodifiableListView(matches); // The list is complete once this
   // result exists: every iterator reaching the end sets `_parsingResult`, and
@@ -15,6 +23,9 @@ final class _MatchesResult<S extends State<S>> {
   // list per parse, and the parser holds the list behind it either way.
 
   @override
-  String toString() =>
-      '_MatchesResult(matches: $matches, finalState: $finalState)';
+  String toString() => '_MatchesResult('
+      'matches: $matches'
+      ', finalState: $finalState'
+      ', finalLink: $finalLink'
+      ')';
 }
