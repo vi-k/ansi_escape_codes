@@ -229,6 +229,13 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
 
     var writtenLink = _writtenLink;
 
+    // An opening of the line's own that never terminated, held back until
+    // what comes after it is known. In the line it was ended by the `ESC` of
+    // whatever stood behind it, and that may have been an `SGR` — which this
+    // loop does not copy but writes again as a transition, and a transition
+    // that changes nothing writes nothing. See [_terminatedIfTextFollows].
+    var heldOpening = '';
+
     for (final m in parser.matches) {
       // An SGR sequence says what the style is, and the style is written by
       // the transition below instead of being passed on. Everything else —
@@ -256,9 +263,10 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       // An opening the line before never terminated is terminated here: the
       // text of this line follows it now, and would otherwise be read as part
       // of the url — see [Link._reopening].
+      var reopening = '';
       if (m.entity is Text && writtenLink == null) {
         if (m.link case final link?) {
-          buf.write(link._reopening);
+          reopening = link._reopening;
           writtenLink = link;
         }
       }
@@ -266,11 +274,34 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       // The style is put on before the code that reads it: erasing and
       // scrolling take the background colour of the moment.
       final newState = m.state.changeDefaultsTo(defaultStyle);
+      final transit = lastState.transitTo(newState);
+      final string = m.entity.string;
+
+      if (heldOpening.isNotEmpty) {
+        buf.write(
+          _terminatedIfTextFollows(heldOpening, '$reopening$transit$string'),
+        );
+        heldOpening = '';
+      }
+
       buf
-        ..write(lastState.transitTo(newState))
-        ..write(m.entity.string);
+        ..write(reopening)
+        ..write(transit);
+
+      // An opening with no terminator waits to see what it is written in
+      // front of; everything else goes out where it stands.
+      if (m.entity is Link && !_oscTerminated(string)) {
+        heldOpening = string;
+      } else {
+        buf.write(string);
+      }
       lastState = newState;
     }
+
+    // The line is over: an `ESC` follows the opening held back — the close
+    // below, or the unwinding of the style — or nothing does, and either way
+    // it goes out as it came.
+    buf.write(heldOpening);
 
     if (closeLink && writtenLink != null) {
       buf.write(linkClose);

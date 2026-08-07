@@ -77,6 +77,32 @@ void main() {
         '\x1B[0m\x1B]8;;http://u/\x07click\x1B]8;;\x1B\\',
       );
     });
+
+    test("a line's own opening that never terminated does not eat the text",
+        () {
+      // What ended the opening in the input was the ESC of the reset — an
+      // SGR the line does not copy, because the style is written by the
+      // transition instead, and from the defaults to the defaults the
+      // transition writes nothing. Passed through as it came, the opening
+      // would read the text that follows as the rest of the url.
+      final line = Printer().prepare('\x1B]8;;http://u/\x1B[0mabcd');
+
+      expect(line, '\x1B[0m\x1B]8;;http://u/\x1B\\abcd\x1B]8;;\x1B\\');
+      expect(Parser(line).removeAll(), 'abcd', reason: 'nothing was eaten');
+    });
+
+    test('an unterminated opening keeps its bytes where an ESC follows', () {
+      // The counterpart: this SGR does change the style, the transition
+      // writes it out, and its ESC ends the opening the way it did in the
+      // input — so the line passes through with nothing added.
+      final line = Printer().prepare('\x1B]8;;http://u/\x1B[31mabcd');
+
+      expect(
+        line,
+        '\x1B[0m\x1B]8;;http://u/\x1B[31mabcd\x1B]8;;\x1B\\\x1B[0m',
+      );
+      expect(Parser(line).removeAll(), 'abcd');
+    });
   });
 
   group('a printed line takes the link the line before left open:', () {

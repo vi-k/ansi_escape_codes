@@ -483,7 +483,7 @@ final class _ParserBase<S extends State<S>> {
                   : math.min(string.length - (pos - end), string.length),
             );
             if (substring.isNotEmpty) {
-              buf.write(takeHeldLinkCodes());
+              final held = takeHeldLinkCodes();
 
               // A slice that began inside a link opens it again itself, in
               // the bytes it was opened with: the text is shown inside that
@@ -491,13 +491,30 @@ final class _ParserBase<S extends State<S>> {
               // the input never terminated is terminated here, or it would
               // swallow the text of the slice — see [Link._reopening].
               final link = m.link;
+              var reopening = '';
               if (writtenLink == null && link != null) {
-                buf.write(link._reopening);
+                reopening = link._reopening;
                 writtenLink = heldLink = link;
               }
 
+              final transit = currentState.transitTo(m.state);
+
+              // The codes held back are the input's own, ending as they ended
+              // there — and what ended an unterminated opening there was the
+              // `ESC` behind it, which the slice need not be writing here.
+              // See [_terminatedIfTextFollows].
+              if (held.isNotEmpty) {
+                buf.write(
+                  _terminatedIfTextFollows(
+                    held,
+                    '$reopening$transit$substring',
+                  ),
+                );
+              }
+
               buf
-                ..write(currentState.transitTo(m.state))
+                ..write(reopening)
+                ..write(transit)
                 ..write(substring);
               currentState = m.state.toStyle();
               lastMatch = m;
@@ -517,9 +534,21 @@ final class _ParserBase<S extends State<S>> {
                 heldLink = m.link;
               }
             } else {
+              final held = takeHeldLinkCodes();
+              final transit = currentState.transitTo(m.state);
+
+              // Nothing is ever added here — an escape code begins with an
+              // `ESC`, and that is what an unterminated opening needs — but
+              // the held codes go out through the same door as everywhere
+              // else, so that the guarantee is checked and not assumed.
+              if (held.isNotEmpty) {
+                buf.write(
+                  _terminatedIfTextFollows(held, '$transit${entity.string}'),
+                );
+              }
+
               buf
-                ..write(takeHeldLinkCodes())
-                ..write(currentState.transitTo(m.state))
+                ..write(transit)
                 ..write(entity.string);
               currentState = m.state.toStyle();
 
@@ -547,6 +576,11 @@ final class _ParserBase<S extends State<S>> {
     }
 
     if (lastMatch != null) {
+      final tail = currentState.transitTo(
+        close ? initialState : lastMatch.state,
+        skipSet: true,
+      );
+
       if (close) {
         // A slice closes the link it has open, the one it began inside as
         // readily as the one it opened itself: what is printed after the
@@ -558,15 +592,12 @@ final class _ParserBase<S extends State<S>> {
       } else {
         // Left open, the way the style is left: the codes held back are
         // written out, and the slice ends inside whatever the string is
-        // inside at that point.
-        buf.write(heldLinkCodes);
+        // inside at that point. Nothing but the unwinding of the style
+        // follows them, so an opening that never terminated is left as it
+        // came — see [_terminatedIfTextFollows].
+        buf.write(_terminatedIfTextFollows(heldLinkCodes, tail));
       }
-      buf.write(
-        currentState.transitTo(
-          close ? initialState : lastMatch.state,
-          skipSet: true,
-        ),
-      );
+      buf.write(tail);
     }
 
     return buf.toString();

@@ -30,6 +30,36 @@ final class OscUnknown extends Osc with UnrecognizedEscapeCode {
   String toString() => '$Osc("${toStringAsEscapeSequences()}")';
 }
 
+/// Whether [string] ends where an `OSC` sequence is allowed to end.
+///
+/// An `OSC` runs until a `ST` or a `BEL`; one that got neither runs on to the
+/// next `ESC` or to the end of the text — the parser reads it that way on
+/// purpose, see `oscPattern`. Ending that way is ending nowhere: whatever is
+/// written straight after is read as more of the sequence.
+bool _oscTerminated(String string) =>
+    string.endsWith(ST) || string.endsWith(BEL);
+
+/// [codes] with a terminator supplied where it ends in an `OSC` that never
+/// got one and [following] is what that `OSC` would otherwise swallow.
+///
+/// The codes copied out of a string carry the ending they had there, and what
+/// ended an unterminated one in the string was the `ESC` of whatever stood
+/// behind it. That `ESC` need not be copied with them: an `SGR` is not copied
+/// at all but written again as a transition, and a transition that changes
+/// nothing writes nothing. Where what follows is text, then, the terminator
+/// the sequence lacks is supplied here.
+///
+/// Where an `ESC` follows anyway, or where nothing follows, the bytes are
+/// given back exactly as they came: a string that is copied whole is copied
+/// byte for byte.
+String _terminatedIfTextFollows(String codes, String following) =>
+    codes.isEmpty ||
+            _oscTerminated(codes) ||
+            following.isEmpty ||
+            following.startsWith(ESC)
+        ? codes
+        : '$codes$ST';
+
 /// A hyperlink, `OSC 8`: the text between an open and a close is what the
 /// terminal makes clickable.
 ///
@@ -59,8 +89,7 @@ final class Link extends Osc {
   ///
   /// This is what [Parser.substring], the insertions and the printers write
   /// where they open a link the text they are copying was already inside.
-  String get _reopening =>
-      string.endsWith(ST) || string.endsWith(BEL) ? string : '$string$ST';
+  String get _reopening => _oscTerminated(string) ? string : '$string$ST';
 
   @override
   String get id => url.isEmpty ? 'linkClose' : 'link($url)';

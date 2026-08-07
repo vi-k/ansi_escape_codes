@@ -98,6 +98,31 @@ void main() {
       expect(Parser(sliced).removeAll(), 'cd', reason: 'nothing was eaten');
     });
 
+    test('a held opening that never terminated does not eat the text', () {
+      // The opening the slice holds back is the input's own bytes, and what
+      // terminated it there was the ESC of the reset — an SGR the slice does
+      // not copy, and one that changes nothing, so the transition writes no
+      // ESC in its place either. Written in front of the text with nothing
+      // between, the opening would take the text into the url.
+      const opening = '${OSC}8;;http://u/';
+      final sliced = Parser('$opening${reset}abcd').substring(0);
+
+      expect(sliced, '$opening${ST}abcd$linkClose');
+      expect(Parser(sliced).removeAll(), 'abcd', reason: 'nothing was eaten');
+    });
+
+    test('a held opening keeps its bytes where an ESC follows it anyway', () {
+      // The counterpart: the reset here does change the style, so the
+      // transition writes it out, its ESC terminates the opening as it did
+      // in the input, and the slice gives the string back byte for byte —
+      // nothing is added where nothing is needed.
+      const opening = '${OSC}8;;http://u/';
+      const source = '${fgRed}ab$opening${reset}cd$linkClose';
+
+      expect(Parser(source).substring(0), source);
+      expect(Parser(source).removeAll(), 'abcd');
+    });
+
     test('a close that closes nothing is not written', () {
       final parser = Parser('ab${opens('http://u/')}cd${linkClose}ef');
 
