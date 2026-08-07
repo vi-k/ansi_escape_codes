@@ -725,3 +725,62 @@ git commit -m "docs: the link gets the page it never had"
 2. Блокеры — отдельными коммитами; затем `git checkout main && git merge --no-ff feat/link-continuity`.
 3. Ворота на main: format, analyze, test, `dart pub publish --dry-run`, `dart run tool/generate.dart && git diff --exit-code -- lib/`, `dart run tool/check_entry_points.dart`, `dart run benchmark/memory_guard.dart`, `dart run benchmark/compare.dart perf-baseline-4.0.0` (деградаций быть не должно).
 4. `git push origin main`; ветку удалить. Публикация 4.0.0 — отдельное решение пользователя, этим заходом не трогается.
+
+---
+
+### Task 11: придержанное открытие не съедает текст (унаследованное)
+
+**Порядок:** выполняется ПОСЛЕ задачи 7 и ДО задачи 8, чтобы фазз накрыл и это.
+
+**Files:**
+- Modify: `lib/src/parsing/parser/parser.dart` (`substring` — запись `heldLinkCodes`)
+- Modify: `lib/src/parsing/parser/printer.dart` (копирующий цикл — тот же сиблинг)
+- Test: `test/parser_substring_links_test.dart`, `test/printer_links_test.dart`
+
+**Контекст.** Дефект унаследованный, а не внесённый волной: на `a98a3d3` вход
+`'${OSC}8;;http://u/${reset}abcd'` через `substring(0)` даёт побайтово то же самое, что на
+голове волны, и plain-текст пуст. Причина: срез (и копирующий цикл принтера) выбрасывает
+no-op SGR — тот самый `ESC`, который в исходной строке терминировал незавершённое открытие
+OSC, — а само открытие копирует дословно. Открытие затем съедает идущий следом текст.
+
+**Решение (замерено ревьюером):** терминировать придержанное открытие только если то, что
+пишется сразу за ним, непусто и не начинается с `ESC`. Лобовой вариант (всегда `_reopening`)
+тоже зелёный, но дописывает `ST` там, где за открытием и так шёл `ESC` или не шло ничего, и
+теряет байтовую тождественность `substring(0)` на трёх формах. Узкое условие меняет **8
+записей из 988** — ровно те, где текст теряется.
+
+- [ ] **Step 1: Красные тесты**
+
+По одному на поверхность:
+
+```dart
+    test('a held opening that never terminated does not eat the text', () {
+      final parser = Parser('${OSC}8;;http://u/${reset}abcd');
+
+      expect(Parser(parser.substring(0)).removeAll(), 'abcd');
+    });
+```
+
+и тот же вход через `Printer().prepare(...)` — plain-текст обязан остаться `abcd`.
+Имена/импорт `OSC`/`reset` сверить (OSC живёт в `package:ansi_escape_codes/ansi.dart`).
+
+- [ ] **Step 2: Убедиться, что красные** — оба дают пустой plain-текст.
+
+- [ ] **Step 3: Реализация**
+
+Хелпер вида `_terminatedIfTextFollows(codes, following)`: если `codes` оканчивается
+незавершённым OSC-открытием, а `following` непусто и не начинается с `ESC` — дописать `ST`.
+`following` для среза — то, что реально пойдёт следом (переоткрытие + `transitTo` + текст
+куска); для принтера — его аналог в копирующем цикле.
+
+- [ ] **Step 4: Зелёный + ворота**
+
+Run: `dart test && dart analyze --fatal-infos && dart format --output=none --set-exit-if-changed .`
+Expected: 443+ зелёных; формы `untermin-sgr`, `untermin-csi`, `untermin-end` обязаны остаться
+байт-в-байт (проверить пробой, что `substring(0)` на них не изменился).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git commit -m "fix: a held opening no longer swallows the text behind it"
+```
