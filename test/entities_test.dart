@@ -65,7 +65,8 @@ void main() {
     test('a match says where it was found and in what state', () {
       expect(
         Parser('a$fgRed').matches.first.toString(),
-        "Match<Style>(start: 0, end: 1, entity: Text('a'), state: Style())",
+        "Match<Style>(start: 0, end: 1, entity: Text('a'), state: Style(), "
+        'link: null)',
       );
     });
 

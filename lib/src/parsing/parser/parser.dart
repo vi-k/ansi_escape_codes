@@ -77,6 +77,16 @@ part 'matches/matches_result.dart';
 final class Parser extends _ParserBase<Style> {
   /// Creates a [Parser] for the given [input] string.
   Parser(String input) : super(input, Style.terminalColors);
+
+  /// A [Parser] over a string that begins inside [initialLink].
+  ///
+  /// The seeding is internal — a string read on its own begins outside every
+  /// link, and only a reader taking a document apart line by line has a link
+  /// to hand on — but it has to be reachable to be pinned, and from outside
+  /// the package nothing else reaches it.
+  @visibleForTesting
+  Parser.debugInsideLink(String input, Link initialLink)
+      : super(input, Style.terminalColors, initialLink: initialLink);
 }
 
 /// A parser that processes strings containing ANSI escape codes and tracks
@@ -101,6 +111,14 @@ final class _ParserBase<S extends State<S>> {
   /// [Printer] reads each line from where the last one ended.
   final S initialState;
 
+  /// The link the string is read as starting inside, where there is one.
+  ///
+  /// The mirror of [initialState] on the link channel: a [Printer] reads each
+  /// line from the link the line before it left open, so that a link cut by a
+  /// newline goes on being one link. A [Parser] over a whole string starts
+  /// outside every link.
+  final Link? initialLink;
+
   Matches<S>? _matches;
   String? _plainString;
 
@@ -112,7 +130,7 @@ final class _ParserBase<S extends State<S>> {
   /// beginning every time, and cost the questions times the length of it.
   _Walk<S>? _walk;
 
-  _ParserBase(this.input, this.initialState);
+  _ParserBase(this.input, this.initialState, {this.initialLink});
 
   String get _requirePlainString => _plainString ??= () {
         final buf = StringBuffer();
@@ -132,7 +150,8 @@ final class _ParserBase<S extends State<S>> {
   bool get isParsed => _matches?.isParsed ?? false;
 
   /// The [Matches] of the string.
-  Matches<S> get matches => _matches ??= Matches._(input, initialState);
+  Matches<S> get matches =>
+      _matches ??= Matches._(input, initialState, initialLink: initialLink);
 
   /// The final [S] after processing the entire string.
   ///

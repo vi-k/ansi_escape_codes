@@ -3,6 +3,7 @@ part of '../parser.dart';
 final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
   final Matches<S> _parent;
   final S _initialState;
+  final Link? _initialLink;
 
   RegExpMatch? _next;
 
@@ -19,7 +20,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
   /// no longer showing.
   S? _saved;
 
-  _ParserIterator._(this._parent, this._initialState);
+  _ParserIterator._(this._parent, this._initialState, this._initialLink);
 
   /// Current match.
   @override
@@ -27,6 +28,16 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
 
   /// Current state.
   S get currentState => _current?.state ?? _initialState;
+
+  /// The link open at this point, the way [currentState] is the state.
+  ///
+  /// Told apart by the match, not by the link: a closed link is a `null` of
+  /// its own, and falling back to the seed would raise it from the dead.
+  Link? get currentLink {
+    final current = _current;
+
+    return current == null ? _initialLink : current.link;
+  }
 
   @override
   bool moveNext() {
@@ -38,8 +49,9 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
       final match = parsed[_index];
 
       // Read before, and read again from the start by another iterator: the
-      // state of each match is settled, but what was saved along the way has
-      // to be picked up again for the restore that may still be ahead.
+      // state and the link of each match are settled and travel in the match
+      // itself, but what was saved along the way has to be picked up again
+      // for the restore that may still be ahead.
       if (match.entity is SaveCursor) {
         _saved = match.state;
       }
@@ -134,6 +146,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
 
     return Match<S>._(
       state: currentState,
+      link: currentLink,
       entity: Text._(_parent._input, start, end),
       start: start,
       end: end,
@@ -154,10 +167,20 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
       default:
     }
 
+    // A link does not nest and carries no style, so it rides beside the
+    // state: an opening supersedes whatever was open, a close — an opening
+    // on an empty url — leaves nothing open, and every other code leaves the
+    // link as it found it.
+    final link = switch (entity) {
+      Link(:final url) => url.isEmpty ? null : entity,
+      _ => currentLink,
+    };
+
     _pos = m.end;
 
     return Match<S>._(
       state: matchingState.state,
+      link: link,
       entity: entity,
       start: m.start,
       end: m.end,
