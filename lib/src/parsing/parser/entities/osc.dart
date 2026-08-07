@@ -52,6 +52,10 @@ bool _oscTerminated(String string) =>
 /// Where an `ESC` follows anyway, or where nothing follows, the bytes are
 /// given back exactly as they came: a string that is copied whole is copied
 /// byte for byte.
+///
+/// [following] is what would be written next, and the callers write it in
+/// pieces: a reopening, a transition, the text. They pass those pieces to
+/// [_firstNotEmpty] rather than joining them — see there.
 String _terminatedIfTextFollows(String codes, String following) =>
     codes.isEmpty ||
             _oscTerminated(codes) ||
@@ -59,6 +63,26 @@ String _terminatedIfTextFollows(String codes, String following) =>
             following.startsWith(ESC)
         ? codes
         : '$codes$ST';
+
+/// The first of [first], [second] and [third] with anything in it, or the
+/// empty string where none of them has.
+///
+/// [_terminatedIfTextFollows] asks two things of what follows: whether there
+/// is any of it, and whether it begins with an `ESC`. Both are answered by
+/// the first piece that is not empty — a joined string is empty only where
+/// every piece is, and begins where its first non-empty piece begins — so the
+/// pieces go over unjoined and the answer is the same to the byte.
+///
+/// This is on the path every piece of a slice and every piece of a printed
+/// line takes, and the string it does not build there is the whole of what is
+/// about to be written: joining it cost a link-heavy slicing run some tenth
+/// of its time to look at one character.
+String _firstNotEmpty(String first, String second, [String third = '']) =>
+    first.isNotEmpty
+        ? first
+        : second.isNotEmpty
+            ? second
+            : third;
 
 /// A hyperlink, `OSC 8`: the text between an open and a close is what the
 /// terminal makes clickable.

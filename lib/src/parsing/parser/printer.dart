@@ -297,7 +297,10 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
 
       if (heldOpening.isNotEmpty) {
         buf.write(
-          _terminatedIfTextFollows(heldOpening, '$reopening$transit$string'),
+          _terminatedIfTextFollows(
+            heldOpening,
+            _firstNotEmpty(reopening, transit, string),
+          ),
         );
         heldOpening = '';
       }

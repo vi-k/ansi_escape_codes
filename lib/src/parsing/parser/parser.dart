@@ -522,7 +522,7 @@ final class _ParserBase<S extends State<S>> {
                 buf.write(
                   _terminatedIfTextFollows(
                     held,
-                    '$reopening$transit$substring',
+                    _firstNotEmpty(reopening, transit, substring),
                   ),
                 );
               }
@@ -558,7 +558,10 @@ final class _ParserBase<S extends State<S>> {
               // else, so that the guarantee is checked and not assumed.
               if (held.isNotEmpty) {
                 buf.write(
-                  _terminatedIfTextFollows(held, '$transit${entity.string}'),
+                  _terminatedIfTextFollows(
+                    held,
+                    _firstNotEmpty(transit, entity.string),
+                  ),
                 );
               }
 
@@ -849,7 +852,12 @@ final class _ParserBase<S extends State<S>> {
         final transit = currentState.transitTo(m.state);
 
         if (heldOpening.isNotEmpty) {
-          buf.write(_terminatedIfTextFollows(heldOpening, '$transit$string'));
+          buf.write(
+            _terminatedIfTextFollows(
+              heldOpening,
+              _firstNotEmpty(transit, string),
+            ),
+          );
           heldOpening = '';
         }
 
