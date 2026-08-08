@@ -106,15 +106,18 @@
 // passes this ceiling without a word. The CI runs it the way it is
 // calibrated here.
 //
-// They are of one machine, and for the moment of one machine only. There was
-// a second reading and it has been struck out: the first CI run on the ubuntu
-// x64 runner (2026-08-05, run 31053415705, Dart stable) read 229.3 bytes per
-// match, which sat just under the spread of the calibration standing at the
-// time and says nothing about the one above it, a sixth higher. It is not
-// carried forward as though it did. What the ubuntu runner makes of *this*
-// band is unknown until it has run it once; the first green run is to be
-// written down here in place of that sentence, and TODO.md holds the
-// reminder.
+// They are of this machine, and the runner CI reads them on agrees. The
+// ubuntu x64 runner, Dart stable, read 264.0 bytes per match on the first
+// green run of this band (2026-08-07, run 31220359984) and 264.8 on the next
+// (2026-08-08, run 31251852744) — half a percent under the table above, over
+// the same 4194391 characters, which is what the generator at the foot of
+// this file is for. Two machines that close together is what makes a band
+// worth running anywhere but where it was drawn: they differ by a fiftieth of
+// the room between the calibration and the ceiling.
+//
+// A third reading, of the calibration before this one, is not carried forward
+// — 229.3 on the same runner, 2026-08-05, run 31053415705. It belonged to a
+// band a sixth lower and says nothing about this one.
 //
 // To recalibrate — a deliberate change in what a match keeps, a new corpus, a
 // machine the band no longer fits — run it five times cold, take the worst,
