@@ -435,19 +435,14 @@ final class _ParserBase<S extends State<S>> {
     // of, because until then it changes nothing in what the slice shows: an
     // opening with nothing inside it, and a close for an opening the slice
     // never wrote, are never written at all.
+    // Taking them — reading the codes out, clearing them, and bringing
+    // `writtenLink` up to `heldLink` — is written out where it happens rather
+    // than put in a local function. A function over these three would close
+    // over them, and closing over a variable that is written to boxes it: one
+    // heap cell per slice, links in the string or none.
     Link? writtenLink;
     Link? heldLink;
     var heldLinkCodes = '';
-
-    // The link codes held back, and the slice's link brought up to date with
-    // them: called where there is a piece to write them in front of.
-    String takeHeldLinkCodes() {
-      final codes = heldLinkCodes;
-      heldLinkCodes = '';
-      writtenLink = heldLink;
-
-      return codes;
-    }
 
     var walk = _walk;
     int pos;
@@ -501,7 +496,9 @@ final class _ParserBase<S extends State<S>> {
                   : math.min(string.length - (pos - end), string.length),
             );
             if (substring.isNotEmpty) {
-              final held = takeHeldLinkCodes();
+              final held = heldLinkCodes;
+              heldLinkCodes = '';
+              writtenLink = heldLink;
 
               // A slice that began inside a link opens it again itself, in
               // the bytes it was opened with: the text is shown inside that
@@ -530,8 +527,14 @@ final class _ParserBase<S extends State<S>> {
                 );
               }
 
+              // Written only where there is something to write: a slice
+              // reopens at most once, and every other piece of text would be
+              // paying a call to put nothing in the buffer.
+              if (reopening.isNotEmpty) {
+                buf.write(reopening);
+              }
+
               buf
-                ..write(reopening)
                 ..write(transit)
                 ..write(substring);
               currentState = m.state.toStyle();
@@ -552,7 +555,10 @@ final class _ParserBase<S extends State<S>> {
                 heldLink = m.link;
               }
             } else {
-              final held = takeHeldLinkCodes();
+              final held = heldLinkCodes;
+              heldLinkCodes = '';
+              writtenLink = heldLink;
+
               final transit = currentState.transitTo(m.state);
 
               // Nothing is ever added here — an escape code begins with an
