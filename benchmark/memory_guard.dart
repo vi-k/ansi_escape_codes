@@ -56,11 +56,23 @@
 // same corpus on the same machine, read 229.6 to 230.4, and what moved it was
 // deliberate: every `Match` now carries a `Link?`, the field a slice and a
 // printed string reopen a hyperlink from, the way they already reopen a
-// style. That is some 35 bytes on each of 372727 matches, and it is the whole
-// of the rise — the parsing iterator's own held link costs nothing, the
-// object it points at being alive in the parse tree already. So the band
-// below was redrawn by the rule at the foot of this comment, from five fresh
-// runs, rather than stretched to fit the reading that broke it.
+// style. What the field costs and what the reading rose by are not the same
+// number, and the difference is the point. The field is one reference on each
+// of 372727 matches — four bytes here, eight once the allocator has rounded
+// the object it sits in up to its next step — so three megabytes at the
+// outside, against the thirteen the reading moved by. Nothing else per match
+// grew, and nothing is pointed at that was not alive already: this corpus
+// holds no `OSC 8` at all, so every one of those fields is `null`, and the
+// parsing iterator's own held link points into the parse tree.
+//
+// The other ten megabytes this measurement does not account for and does not
+// have to. RSS is the pages the VM holds, not the bytes the objects need, and
+// a heap whose every match grew by a word takes its own slack in its own
+// steps. The band is drawn on the reading, because the reading is what CI
+// compares against; an account of where the reading comes from would be a
+// second measurement, and this is not it. So the band below was redrawn by
+// the rule at the foot of this comment, from five fresh runs, rather than
+// stretched to fit the reading that broke it.
 //
 // The ×1.50 is the corpus's doing and not the threshold's. Coloured
 // word by word, the way `parser_benchmark.dart` colours, the same regression
@@ -88,10 +100,11 @@
 // `dart compile exe` reads over a quarter lower — 190.8 bytes per match
 // against the 265.5 above — so a number from one cannot be checked against a
 // band calibrated on the other. That gap was a fifth at the first
-// calibration and has widened, a `Link?` costing the AOT heap much less than
-// it costs the JIT one; and the warning has widened with it, because the
-// regression above, compiled the same way, reads 280.8 and passes this
-// ceiling without a word. The CI runs it the way it is calibrated here.
+// calibration and has widened, the same change costing the AOT heap much
+// less than it costs the JIT one; and the warning has widened with it,
+// because the regression above, compiled the same way, reads 280.8 and
+// passes this ceiling without a word. The CI runs it the way it is
+// calibrated here.
 //
 // They are of one machine, and for the moment of one machine only. There was
 // a second reading and it has been struck out: the first CI run on the ubuntu
