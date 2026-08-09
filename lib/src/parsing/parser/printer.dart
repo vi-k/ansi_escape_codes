@@ -163,6 +163,19 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// itself closes the link.
   Link? _ambientLink;
 
+  /// Whether what has been written of the current line ends in an `OSC` that
+  /// never got its terminator, with nothing behind it to end it.
+  ///
+  /// The bytes themselves are not held back: a sink writes what it was handed
+  /// when it was handed it, so what is carried into the piece that ends the
+  /// line is the debt and not the sequence. It is paid there the way the
+  /// hyperlink close is — by an `ST` of its own, or by that close, which
+  /// begins with an `ESC` and ends the sequence already.
+  ///
+  /// Only a sink ever carries it. A printer is handed the whole line and
+  /// settles at its end, where [_terminatedUnlessCodeFollows] is asked.
+  bool _owesTerminator = false;
+
   /// Prepares the given line for printing.
   ///
   /// A [Printer] and a [StackedPrinter] are handed a whole line here, and a
@@ -211,6 +224,9 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// says the line ends here.
   String _prepare(String line, {required bool closeLink}) {
     if (!ansiCodesEnabled) {
+      // A printer that writes none of its own codes owes no terminator.
+      _owesTerminator = false;
+
       return line.ansiRemoveEscapeCodes();
     }
 
@@ -218,20 +234,34 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     // the line goes out exactly as it came, its own codes included.
     // Taking those out is what `ansiCodesEnabled: false` is for.
     if (defaultStyle is NoStyle) {
+      _owesTerminator = false;
+
       return line;
     }
 
     if (line.isEmpty) {
-      // Nothing of its own to prepare — but a line that ends here still owes
-      // the close for a link an earlier write of the same line left open. The
-      // link stays open in the text, and the line after reopens it.
-      if (closeLink && _writtenLink != null) {
+      // Nothing of its own to prepare, and nothing owed either until the line
+      // really ends: a piece the writes go on past leaves both debts standing.
+      if (!closeLink) {
+        return '';
+      }
+
+      // A line that ends here still owes what an earlier write of the same
+      // line left open: the close for a link — which stays open in the text,
+      // for the line after to reopen — and the terminator for an `OSC` that
+      // never got one.
+      final owedTerminator = _owesTerminator;
+      _owesTerminator = false;
+
+      if (_writtenLink != null) {
         _writtenLink = null;
 
+        // The close begins with an `ESC`, and an `ESC` ends an unterminated
+        // `OSC` — see [_terminatedUnlessCodeFollows]. It pays for both.
         return linkClose;
       }
 
-      return '';
+      return owedTerminator ? ST : '';
     }
 
     var lastState = stateDefaults.toStyle();
@@ -333,6 +363,12 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
           ? _terminatedUnlessCodeFollows(heldOpening, following)
           : _terminatedIfTextFollows(heldOpening, following),
     );
+
+    // Where the piece goes on into the next write and the opening went out
+    // with nothing behind it, the sequence is unterminated in the sink and
+    // the piece that ends the line has to pay for it. Recomputed on every
+    // piece, so a later one that ends the opening clears the debt with it.
+    _owesTerminator = !closeLink && heldOpening.isNotEmpty && following.isEmpty;
 
     if (closingLink.isNotEmpty) {
       buf.write(closingLink);
@@ -447,14 +483,17 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   /// sink, so a piece prepared here and not written leaves it as it was — in
   /// the output and in the text alike: a link opened in what was only asked
   /// about is not one the sink would ever be owed a close for, nor one a
-  /// later line should open again.
+  /// later line should open again. The terminator owed for an unterminated
+  /// `OSC` is carried the same way and left alone here for the same reason.
   @override
   String prepare(String line) {
     final keepWrittenLink = _writtenLink;
     final keepAmbientLink = _ambientLink;
+    final keepOwesTerminator = _owesTerminator;
     final prepared = super.prepare(line);
     _writtenLink = keepWrittenLink;
     _ambientLink = keepAmbientLink;
+    _owesTerminator = keepOwesTerminator;
 
     return prepared;
   }
