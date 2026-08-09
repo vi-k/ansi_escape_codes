@@ -199,16 +199,34 @@ Fixed:
   default style: a string that opened a link and never closed it comes back
   closed, so that what is printed after it is not clickable. With
   `close: false` both are left as the string leaves them.
-- Copying a hyperlink out of a string could swallow the text behind it. An
-  `OSC 8;;` opening that never got its terminator runs on to the next `ESC` or
-  to the end of the text — the parser reads it that way on purpose — and
-  written again in front of text that had not followed it there, by a slice or
-  by a printed line, it read that text as part of the URL and showed nothing.
-  The terminator it lacks is supplied where text follows it. That is of the
-  codes copied over as they stand: there an escape code following, or nothing
-  at all, leaves the bytes exactly as they came, the `ESC` of what stands
-  behind being terminator enough. An opening written again for a slice or a
-  line that began inside the link carries its terminator whatever follows it.
+- Copying an `OSC` out of a string could swallow the text behind it. One that
+  never got its terminator — a hyperlink opening no less than a window title
+  or anything else the terminal answers to — runs on to the next `ESC` or to
+  the end of the text, which is how the parser reads it on purpose, and
+  written again in front of text that had not followed it there, by a slice,
+  by `optimize` or by a printed line, it read that text as part of the
+  sequence and showed nothing. The terminator it lacks is supplied where text
+  follows it. That is of the codes copied over as they stand: there an escape
+  code following leaves the bytes exactly as they came, the `ESC` of what
+  stands behind being terminator enough. At the edge of an output that closes
+  — a slice or an `optimize` with `close: true`, a printed line — the
+  terminator is written although nothing follows it there, for the reason the
+  hyperlink close is written in the same place: what is printed after must not
+  be read as more of the sequence. With `close: false` the bytes are left as
+  they came. `SinkPrinter` and `StackedSinkPrinter` pay the same debt where
+  the line really ends — at a `writeln`, or at a `'\n'` in what is written —
+  and owe nothing at the end of a `write` the line goes on past.
+  `insertBefore` owes nothing at any position: it lands in front of whatever
+  codes stand at the seam, so an unterminated `OSC` never comes between it and
+  the text it was aimed at. `insertAfter` goes past those codes instead, and
+  where the string ends inside an unterminated `OSC` that puts an insertion at
+  the end of the text inside the sequence —
+  `Parser('aa\x1B]0;title').insertAfter(2, 'X')` hands back a string whose
+  plain text is still `aa`, and a hyperlink opening swallows the `X` no
+  differently. That is the same mechanism on a surface this release does not
+  reach, and it is left as it stands. An opening written again for a slice or
+  a line that began inside the link carries its terminator whatever follows
+  it.
 - `insertBefore` and `insertAfter` could put text between the halves of a
   surrogate pair and hand back a string that is no longer valid UTF-16. A
   position inside a pair now shifts to its edge — `insertBefore` to the

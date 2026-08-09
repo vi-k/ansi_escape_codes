@@ -12,6 +12,11 @@ part of 'parser.dart';
 /// line after opens it again, so a link a line break falls inside of goes on
 /// being one link.
 ///
+/// An `OSC` a line leaves unterminated — a window title as readily as a link
+/// opening — is given its terminator at the end of the line, and for the same
+/// reason: what is printed after must not be read as more of the sequence.
+/// See [prepare].
+///
 /// See also [runZonedPrinter] for usage within a zone.
 final class Printer extends _PrintPrinterBase<Style> {
   /// Creates a printer that processes ANSI escape codes and replaces the
@@ -59,6 +64,10 @@ final class StackedPrinter extends _PrintPrinterBase<Stack> {
 /// them. It is closed where the line ends — at a [writeln] or a `'\n'` in
 /// what is written — and, the text being inside it still, opened again on the
 /// line after, the way the style is.
+///
+/// The terminator an unterminated `OSC` owes is paid in the same place: a
+/// write the line goes on past owes nothing at its end, and the piece that
+/// really ends the line settles for whatever the writes before it left open.
 final class SinkPrinter extends _SinkPrinterBase<Style> {
   /// Creates a printer that processes ANSI escape codes and writes the output
   /// to a [StringSink].
@@ -135,10 +144,12 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   void print(Object? object) => writeln(object);
 
   /// Whether a string handed to [prepare] is a whole line, so that a
-  /// hyperlink it left open is closed at its end.
+  /// hyperlink it left open is closed at its end and an `OSC` it left
+  /// unterminated is terminated there.
   ///
-  /// A printer that takes a line at a time closes as it goes; one that takes
-  /// a write at a time cannot, and waits for the line to end.
+  /// A printer that takes a line at a time settles as it goes; one that takes
+  /// a write at a time cannot, and waits for the line to end. The name is the
+  /// link's, the debt is both.
   bool get _closesLinkAtEnd;
 
   /// The hyperlink open in what has been written of the current line, or null
@@ -163,6 +174,22 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// itself closes the link.
   Link? _ambientLink;
 
+  /// Whether what has been written of the current line ends in an `OSC` that
+  /// never got its terminator, with nothing behind it to end it.
+  ///
+  /// The bytes themselves are not held back: a sink writes what it was handed
+  /// when it was handed it, so what is carried into the piece that ends the
+  /// line is the debt and not the sequence. It is paid there the way the
+  /// hyperlink close is — by an `ST` of its own, or by that close, which
+  /// begins with an `ESC` and ends the sequence already.
+  ///
+  /// Only a sink ever carries it. A printer is handed the whole line and
+  /// settles at its end, where [_terminatedUnlessCodeFollows] is asked. A
+  /// printer that writes none of its own codes never sets it at all: with
+  /// [ansiCodesEnabled] off, or a [NoStyle] for a [defaultStyle], [_prepare]
+  /// turns back before there is anything to owe, and both of them are final.
+  bool _owesTerminator = false;
+
   /// Prepares the given line for printing.
   ///
   /// A [Printer] and a [StackedPrinter] are handed a whole line here, and a
@@ -178,6 +205,18 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// carried over the same way. A link the text itself closes is carried no
   /// further, and a line with nothing to show inside the link writes no
   /// opening at all and hands it on.
+  ///
+  /// An `OSC` the line never terminated is held back until what follows it is
+  /// known — a window title as readily as a link opening. The sequence runs
+  /// to the next `ESC` or to the end of the text, and in what was handed over
+  /// one of those two always followed it; put in front of text that did not
+  /// follow it there, it would read that text as its own. Where text follows
+  /// in the line the terminator it lacks is supplied; where an escape code
+  /// follows the bytes go out as they came, that code's `ESC` ending the
+  /// sequence as the line's did; and at the end of the line the terminator is
+  /// written although nothing follows it there, for the reason the link is
+  /// closed there. [Parser.optimize] and [Parser.substring] hold an opening
+  /// back the same way.
   ///
   /// What the line carries goes through as it stands, its link codes
   /// included: a close for a link nothing has open, or a second opening of
@@ -198,13 +237,15 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// accepted here.
   ///
   /// A [SinkPrinter] and a [StackedSinkPrinter] are handed a piece rather
-  /// than a line, and this only prepares it: nothing is written, and the
-  /// link is left as it was — both what is open in the output and what is
-  /// open in the text. The carry belongs to their [write] and [writeln]
-  /// instead — a line there may be composed of several writes, an open link
-  /// is carried into the write that follows, and the close waits for the line
-  /// to really end, for a [writeln] or for a `'\n'` in what is written. The
-  /// line after that one opens the link again.
+  /// than a line, and this only prepares it: nothing is written, and the link
+  /// is left as it was — both what is open in the output and what is open in
+  /// the text — as is the terminator an unterminated `OSC` owes. The carry
+  /// belongs to their [write] and [writeln] instead — a line there may be
+  /// composed of several writes, an open link is carried into the write that
+  /// follows, and the close waits for the line to really end, for a [writeln]
+  /// or for a `'\n'` in what is written. The terminator waits in the same
+  /// place, and a piece that has not ended the line owes neither. The line
+  /// after that one opens the link again.
   String prepare(String line) => _prepare(line, closeLink: _closesLinkAtEnd);
 
   /// Prepares [line], closing a hyperlink it leaves open where [closeLink]
@@ -222,16 +263,28 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     }
 
     if (line.isEmpty) {
-      // Nothing of its own to prepare — but a line that ends here still owes
-      // the close for a link an earlier write of the same line left open. The
-      // link stays open in the text, and the line after reopens it.
-      if (closeLink && _writtenLink != null) {
+      // Nothing of its own to prepare, and nothing owed either until the line
+      // really ends: a piece the writes go on past leaves both debts standing.
+      if (!closeLink) {
+        return '';
+      }
+
+      // A line that ends here still owes what an earlier write of the same
+      // line left open: the close for a link — which stays open in the text,
+      // for the line after to reopen — and the terminator for an `OSC` that
+      // never got one.
+      final owedTerminator = _owesTerminator;
+      _owesTerminator = false;
+
+      if (_writtenLink != null) {
         _writtenLink = null;
 
+        // The close begins with an `ESC`, and an `ESC` ends an unterminated
+        // `OSC` — see [_terminatedUnlessCodeFollows]. It pays for both.
         return linkClose;
       }
 
-      return '';
+      return owedTerminator ? ST : '';
     }
 
     var lastState = stateDefaults.toStyle();
@@ -251,7 +304,8 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     // what comes after it is known. In the line it was ended by the `ESC` of
     // whatever stood behind it, and that may have been an `SGR` — which this
     // loop does not copy but writes again as a transition, and a transition
-    // that changes nothing writes nothing. See [_terminatedIfTextFollows].
+    // that changes nothing writes nothing. See [_terminatedIfTextFollows]
+    // inside the line, and [_terminatedUnlessCodeFollows] where it ends here.
     var heldOpening = '';
 
     for (final m in parser.matches) {
@@ -311,7 +365,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
 
       // An opening with no terminator waits to see what it is written in
       // front of; everything else goes out where it stands.
-      if (m.entity is Link && !_oscTerminated(string)) {
+      if (m.entity is Osc && !_oscTerminated(string)) {
         heldOpening = string;
       } else {
         buf.write(string);
@@ -319,13 +373,32 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       lastState = newState;
     }
 
-    // The line is over: an `ESC` follows the opening held back — the close
-    // below, or the unwinding of the style — or nothing does, and either way
-    // it goes out as it came.
-    buf.write(heldOpening);
+    // The line is over. What follows the opening held back is the close
+    // below, or the unwinding of the style, or nothing at all — and where it
+    // is nothing, whether a terminator is owed is the same question as
+    // whether a link close is: a piece that has not ended the line is not
+    // the end of an output, and owes neither. The call taken where nothing is
+    // owed supplies nothing by construction — an `ESC` or nothing at all
+    // follows it — and is asked all the same, so that the guarantee is
+    // checked and not assumed.
+    final closingLink = closeLink && writtenLink != null ? linkClose : '';
+    final tail = lastState.transitTo(stateDefaults);
+    final following = _firstNotEmpty(closingLink, tail);
 
-    if (closeLink && writtenLink != null) {
-      buf.write(linkClose);
+    buf.write(
+      closeLink
+          ? _terminatedUnlessCodeFollows(heldOpening, following)
+          : _terminatedIfTextFollows(heldOpening, following),
+    );
+
+    // Where the piece goes on into the next write and the opening went out
+    // with nothing behind it, the sequence is unterminated in the sink and
+    // the piece that ends the line has to pay for it. Recomputed on every
+    // piece, so a later one that ends the opening clears the debt with it.
+    _owesTerminator = !closeLink && heldOpening.isNotEmpty && following.isEmpty;
+
+    if (closingLink.isNotEmpty) {
+      buf.write(closingLink);
       writtenLink = null;
     }
     _writtenLink = writtenLink;
@@ -335,7 +408,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     // accident, and this is for the next line, which opens the link again.
     _ambientLink = parser.finalLink;
 
-    buf.write(lastState.transitTo(stateDefaults));
+    buf.write(tail);
     this.lastState = parser.finalState;
 
     return buf.toString();
@@ -422,12 +495,14 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   });
 
   /// A write goes to the sink as it comes, and one line may be composed of
-  /// several, so a piece on its own is never known to end one and no close
-  /// is owed at its end. Where the line really ends the write path says for
-  /// itself, and it is there that a link left open is carried into the write
-  /// that follows — see [_writeBuf] and [_writeLine]. [prepare], which reads
-  /// this, hands the piece back without a close and without touching either
-  /// carry: the one inside the line or the one across it.
+  /// several, so a piece on its own is never known to end one and nothing is
+  /// owed at its end — neither the close for a link nor the terminator for an
+  /// `OSC`. Where the line really ends the write path says for itself, and it
+  /// is there that what a piece left open is carried into the write that
+  /// follows — see [_writeBuf] and [_writeLine]. [prepare], which reads this,
+  /// hands the piece back without a close, without a terminator and without
+  /// touching any of the carries: the link inside the line, the link across
+  /// it, or the debt the sequence left.
   @override
   bool get _closesLinkAtEnd => false;
 
@@ -437,14 +512,17 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   /// sink, so a piece prepared here and not written leaves it as it was — in
   /// the output and in the text alike: a link opened in what was only asked
   /// about is not one the sink would ever be owed a close for, nor one a
-  /// later line should open again.
+  /// later line should open again. The terminator owed for an unterminated
+  /// `OSC` is carried the same way and left alone here for the same reason.
   @override
   String prepare(String line) {
     final keepWrittenLink = _writtenLink;
     final keepAmbientLink = _ambientLink;
+    final keepOwesTerminator = _owesTerminator;
     final prepared = super.prepare(line);
     _writtenLink = keepWrittenLink;
     _ambientLink = keepAmbientLink;
+    _owesTerminator = keepOwesTerminator;
 
     return prepared;
   }

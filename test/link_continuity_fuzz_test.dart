@@ -107,6 +107,31 @@ String _piece(
       }
 
       return '\n';
+    case 13:
+      // A window title with no terminator of its own: the same shape as the
+      // opening in case 3, and it ends the same way — at the `ESC` of
+      // whatever stands behind it. `readWhole` is honoured for the same
+      // reason: a line break put in front of that `ESC` changes how far the
+      // sequence reaches, and then the two sides are no longer reading the
+      // same document.
+      return readWhole
+          ? '${OSC}0;title'
+          : '${OSC}0;title${random.nextBool() ? reset : cursorUp}';
+    case 14:
+      // The same title, terminated: the shape that must not change.
+      return '${OSC}0;title$ST';
+    case 15:
+      // The bytes of a close with nothing to end them. A close is an `OSC`
+      // like any other and runs to the next `ESC` too, so what these bytes
+      // are depends on what is drawn behind them: a close where an `ESC` or
+      // the end of the document follows, and an opening on the url they read
+      // out of the text where anything else does. Drawing them puts both
+      // readings in the alphabet, and with them the shortest link opening
+      // there is — the one whose url the text alone supplies. `readWhole` is
+      // honoured as in case 3, and pins the first reading where it is off.
+      return readWhole
+          ? '${OSC}8;;'
+          : '${OSC}8;;${random.nextBool() ? reset : cursorUp}';
     default:
       break;
   }
@@ -343,8 +368,8 @@ void main() {
       }
 
       expect(findings, isEmpty, reason: findings.join('\n'));
-      // The seed is fixed, so these are what the run really draws — 2301 and
-      // 2096 — held well below by a guard that only has to catch a generator
+      // The seed is fixed, so these are what the run really draws — 2114 and
+      // 2030 — held well below by a guard that only has to catch a generator
       // that has stopped generating.
       expect(
         roundsWithLink,
@@ -490,6 +515,81 @@ void main() {
             'left open — the same limit, on the other channel, which is why '
             'the fuzz puts a save and its restore in one line',
       );
+    });
+  });
+
+  group('the visible text survives every surface:', () {
+    test('nothing a surface hands back has lost a character', () {
+      // The codes may be rewritten, reordered or dropped — that is what
+      // these surfaces are for — but the characters a terminal draws may
+      // not change. An `OSC` that swallows what follows it is the one way
+      // they do, and this is the oracle that says so.
+      final random = Random(_seed);
+
+      for (var round = 0; round < 500; round++) {
+        final whole = _document(random, 12, readWhole: true);
+        final plain = Parser(whole).removeAll();
+
+        expect(
+          Parser(Parser(whole).optimize()).removeAll(),
+          plain,
+          reason: 'optimize lost text:\n  in: ${_show(whole)}',
+        );
+        expect(
+          Parser(Parser(whole).optimize(close: false)).removeAll(),
+          plain,
+          reason: 'optimize(close: false) lost text:\n  in: ${_show(whole)}',
+        );
+        expect(
+          Parser(Parser(whole).substring(0)).removeAll(),
+          plain,
+          reason: 'substring lost text:\n  in: ${_show(whole)}',
+        );
+        expect(
+          Parser(Parser(whole).substring(0, close: false)).removeAll(),
+          plain,
+          reason: 'substring(close: false) lost text:\n  in: ${_show(whole)}',
+        );
+      }
+
+      // The printer reads a document that keeps an unterminated sequence
+      // and the code ending it in one piece, the way the rest of this file
+      // does: a line break in between would change how far the sequence
+      // reaches, and the two sides would stop reading the same document.
+      for (var round = 0; round < 500; round++) {
+        // The pieces are drawn one at a time, which is all `_document` does,
+        // so the printer and the sink below are asked about one and the same
+        // document.
+        final pieces = [
+          for (var i = 0; i < 12; i++)
+            _piece(random, readWhole: false, saves: false),
+        ];
+        final printed = pieces.join();
+        final plain = Parser(printed).removeAll();
+
+        final lines = <String>[];
+        Printer(output: lines.add).print(printed);
+
+        expect(
+          lines.map((line) => Parser(line).removeAll()).join('\n'),
+          plain,
+          reason: 'the printer lost text:\n  in: ${_show(printed)}',
+        );
+
+        // The sink takes the same document a piece at a time — a write ends
+        // where the printer had no boundary at all — and the `writeln` is the
+        // end of the line the last writes were making.
+        final sink = StringBuffer();
+        final printer = SinkPrinter(sink);
+        pieces.forEach(printer.write);
+        printer.writeln();
+
+        expect(
+          Parser(sink.toString()).removeAll(),
+          '$plain\n',
+          reason: 'the sink lost text:\n  in: ${_show(printed)}',
+        );
+      }
     });
   });
 }
