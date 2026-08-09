@@ -57,10 +57,20 @@ bool _oscTerminated(String string) =>
 /// pieces: a reopening, a transition, the text. They pass those pieces to
 /// [_firstNotEmpty] rather than joining them — see there.
 String _terminatedIfTextFollows(String codes, String following) =>
-    codes.isEmpty ||
-            _oscTerminated(codes) ||
-            following.isEmpty ||
-            following.startsWith(ESC)
+    following.isEmpty ? codes : _terminatedUnlessCodeFollows(codes, following);
+
+/// [codes] with a terminator supplied where they end in an `OSC` that never
+/// got one and nothing beginning with an `ESC` follows to end it.
+///
+/// The rule at the edge of an output, where [_terminatedIfTextFollows] is the
+/// rule inside one, and the two differ in what an empty [following] means.
+/// Inside a string it means nothing follows the opening at all, so there is
+/// nothing to be swallowed and the bytes go out as they came. At the edge of
+/// an output that closes — a slice with `close: true`, a printed line — it
+/// means the next thing written is whatever the caller prints after, and the
+/// terminator is owed for the same reason the hyperlink close is.
+String _terminatedUnlessCodeFollows(String codes, String following) =>
+    codes.isEmpty || _oscTerminated(codes) || following.startsWith(ESC)
         ? codes
         : '$codes$ST';
 

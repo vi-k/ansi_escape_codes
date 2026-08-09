@@ -837,11 +837,12 @@ final class _ParserBase<S extends State<S>> {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
 
-    // An opening the string never terminated, held back until what comes
-    // after it is known. In the string it was ended by the `ESC` of whatever
-    // stood behind it, and that may have been an `SGR` — which this loop does
-    // not copy but writes again as a transition, and a transition that
-    // changes nothing writes nothing. See [_terminatedIfTextFollows].
+    // An `OSC` the string never terminated — a window title no less than a
+    // link opening — held back until what comes after it is known. In the
+    // string it was ended by the `ESC` of whatever stood behind it, and that
+    // may have been an `SGR` — which this loop does not copy but writes again
+    // as a transition, and a transition that changes nothing writes nothing.
+    // See [_terminatedIfTextFollows].
     var heldOpening = '';
 
     for (final m in matches) {
@@ -875,7 +876,7 @@ final class _ParserBase<S extends State<S>> {
         // A code that carries no style of its own is kept as it was written —
         // save for an opening with no terminator, which waits to see what it
         // is written in front of.
-        if (entity is Link && !_oscTerminated(string)) {
+        if (entity is Osc && !_oscTerminated(string)) {
           heldOpening = string;
         } else {
           buf.write(string);
@@ -885,27 +886,31 @@ final class _ParserBase<S extends State<S>> {
       currentState = m.state.toStyle();
     }
 
-    // The string is over: an `ESC` follows the opening held back — the close
-    // below, or the unwinding of the style — or nothing does, and either way
-    // it goes out as it came.
-    buf.write(heldOpening);
-
+    // The string is over. What follows the opening held back is the close
+    // below, or the unwinding of the style, or nothing at all — and where it
+    // is nothing, `close` says whether a terminator is owed: what is printed
+    // after a closed string must not be read as more of an `OSC`.
     final lastMatch = matches.lastOrNull;
+    final closingLink = close && finalLink != null ? linkClose : '';
+    final tail = close
+        ? currentState.transitTo(initialState)
+        : lastMatch == null
+            ? ''
+            : currentState.transitTo(lastMatch.state);
+    final following = _firstNotEmpty(closingLink, tail);
 
-    if (close) {
-      // The link is closed the way the style is, and before it: whatever the
-      // string left open — an opening of its own, or the link it was seeded
-      // inside — must not go on catching what is printed after. The codes
-      // are copied as they were written, so the close stands after an
-      // opening the input never terminated; that opening ends at the next
-      // ESC, and the close begins with one, so nothing is swallowed.
-      if (finalLink != null) {
-        buf.write(linkClose);
-      }
-      buf.write(currentState.transitTo(initialState));
-    } else if (lastMatch != null) {
-      buf.write(currentState.transitTo(lastMatch.state));
-    }
+    buf
+      ..write(
+        close
+            ? _terminatedUnlessCodeFollows(heldOpening, following)
+            : _terminatedIfTextFollows(heldOpening, following),
+      )
+      // The link is closed the way the style is, and after the opening held
+      // back: whatever the string left open — an opening of its own, or the
+      // link it was seeded inside — must not go on catching what is printed
+      // after.
+      ..write(closingLink)
+      ..write(tail);
 
     return buf.toString();
   }
