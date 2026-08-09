@@ -545,6 +545,11 @@ void main() {
           plain,
           reason: 'substring lost text:\n  in: ${_show(whole)}',
         );
+        expect(
+          Parser(Parser(whole).substring(0, close: false)).removeAll(),
+          plain,
+          reason: 'substring(close: false) lost text:\n  in: ${_show(whole)}',
+        );
       }
 
       // The printer reads a document that keeps an unterminated sequence
@@ -552,14 +557,37 @@ void main() {
       // does: a line break in between would change how far the sequence
       // reaches, and the two sides would stop reading the same document.
       for (var round = 0; round < 500; round++) {
-        final printed = _document(random, 12, readWhole: false, saves: false);
+        // The pieces are drawn one at a time, which is all `_document` does,
+        // so the printer and the sink below are asked about one and the same
+        // document.
+        final pieces = [
+          for (var i = 0; i < 12; i++)
+            _piece(random, readWhole: false, saves: false),
+        ];
+        final printed = pieces.join();
+        final plain = Parser(printed).removeAll();
+
         final lines = <String>[];
         Printer(output: lines.add).print(printed);
 
         expect(
           lines.map((line) => Parser(line).removeAll()).join('\n'),
-          Parser(printed).removeAll(),
+          plain,
           reason: 'the printer lost text:\n  in: ${_show(printed)}',
+        );
+
+        // The sink takes the same document a piece at a time — a write ends
+        // where the printer had no boundary at all — and the `writeln` is the
+        // end of the line the last writes were making.
+        final sink = StringBuffer();
+        final printer = SinkPrinter(sink);
+        pieces.forEach(printer.write);
+        printer.writeln();
+
+        expect(
+          Parser(sink.toString()).removeAll(),
+          '$plain\n',
+          reason: 'the sink lost text:\n  in: ${_show(printed)}',
         );
       }
     });
