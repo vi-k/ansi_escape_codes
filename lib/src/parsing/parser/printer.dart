@@ -184,7 +184,10 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// begins with an `ESC` and ends the sequence already.
   ///
   /// Only a sink ever carries it. A printer is handed the whole line and
-  /// settles at its end, where [_terminatedUnlessCodeFollows] is asked.
+  /// settles at its end, where [_terminatedUnlessCodeFollows] is asked. A
+  /// printer that writes none of its own codes never sets it at all: with
+  /// [ansiCodesEnabled] off, or a [NoStyle] for a [defaultStyle], [_prepare]
+  /// turns back before there is anything to owe, and both of them are final.
   bool _owesTerminator = false;
 
   /// Prepares the given line for printing.
@@ -249,9 +252,6 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// says the line ends here.
   String _prepare(String line, {required bool closeLink}) {
     if (!ansiCodesEnabled) {
-      // A printer that writes none of its own codes owes no terminator.
-      _owesTerminator = false;
-
       return line.ansiRemoveEscapeCodes();
     }
 
@@ -259,8 +259,6 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     // the line goes out exactly as it came, its own codes included.
     // Taking those out is what `ansiCodesEnabled: false` is for.
     if (defaultStyle is NoStyle) {
-      _owesTerminator = false;
-
       return line;
     }
 
