@@ -311,7 +311,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
 
       // An opening with no terminator waits to see what it is written in
       // front of; everything else goes out where it stands.
-      if (m.entity is Link && !_oscTerminated(string)) {
+      if (m.entity is Osc && !_oscTerminated(string)) {
         heldOpening = string;
       } else {
         buf.write(string);
@@ -319,13 +319,23 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       lastState = newState;
     }
 
-    // The line is over: an `ESC` follows the opening held back — the close
-    // below, or the unwinding of the style — or nothing does, and either way
-    // it goes out as it came.
-    buf.write(heldOpening);
+    // The line is over. What follows the opening held back is the close
+    // below, or the unwinding of the style, or nothing at all — and where it
+    // is nothing, whether a terminator is owed is the same question as
+    // whether a link close is: a piece that has not ended the line is not
+    // the end of an output, and owes neither.
+    final closingLink = closeLink && writtenLink != null ? linkClose : '';
+    final tail = lastState.transitTo(stateDefaults);
+    final following = _firstNotEmpty(closingLink, tail);
 
-    if (closeLink && writtenLink != null) {
-      buf.write(linkClose);
+    buf.write(
+      closeLink
+          ? _terminatedUnlessCodeFollows(heldOpening, following)
+          : _terminatedIfTextFollows(heldOpening, following),
+    );
+
+    if (closingLink.isNotEmpty) {
+      buf.write(closingLink);
       writtenLink = null;
     }
     _writtenLink = writtenLink;
@@ -335,7 +345,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     // accident, and this is for the next line, which opens the link again.
     _ambientLink = parser.finalLink;
 
-    buf.write(lastState.transitTo(stateDefaults));
+    buf.write(tail);
     this.lastState = parser.finalState;
 
     return buf.toString();

@@ -48,4 +48,61 @@ void main() {
       expect(Parser('a$title').optimize(close: false), 'a$title');
     });
   });
+
+  group('a printed line terminates an OSC it would leave open', () {
+    test('a title in front of the line text', () {
+      final lines = <String>[];
+      Printer(output: lines.add).print('$title${reset}word');
+
+      // Every prepared piece opens with a reset — that is the printer's own
+      // doing and not this rule's.
+      expect(lines, ['$reset$title${ST}word']);
+    });
+
+    test('a title at the end of the line', () {
+      // The line is over, and a newline follows it into the terminal: the
+      // terminator is owed here the way a link close is.
+      final lines = <String>[];
+      Printer(output: lines.add).print('a$title');
+
+      expect(lines, ['${reset}a$title$ST']);
+    });
+
+    test('a line that got its terminator is left alone', () {
+      final lines = <String>[];
+      Printer(output: lines.add).print('$title$ST${reset}word');
+
+      expect(lines, ['$reset$title${ST}word']);
+    });
+
+    test('a title carried to the end of the first line of two', () {
+      final lines = <String>[];
+      Printer(output: lines.add).print('$title${reset}one\ntwo');
+
+      expect(lines, ['$reset$title${ST}one', '${reset}two']);
+    });
+  });
+
+  group('a sink terminates where the line really ends', () {
+    test('a write that has not ended the line owes nothing', () {
+      final buf = StringBuffer();
+      SinkPrinter(buf).write('a$title');
+
+      expect(buf.toString(), '${reset}a$title');
+    });
+
+    test('a writeln ends the line and owes the terminator', () {
+      final buf = StringBuffer();
+      SinkPrinter(buf).writeln('a$title');
+
+      expect(buf.toString(), '${reset}a$title$ST\n');
+    });
+
+    test('a newline inside a write ends the line there', () {
+      final buf = StringBuffer();
+      SinkPrinter(buf).write('a$title${reset}word\nnext');
+
+      expect(buf.toString(), '${reset}a$title${ST}word\n${reset}next');
+    });
+  });
 }
