@@ -152,4 +152,82 @@ void main() {
       expect(buf.toString(), '${reset}a$title${reset}b\n');
     });
   });
+
+  group('a slice terminates an OSC that would swallow its text', () {
+    test('a title in front of the text of the slice', () {
+      expect(
+        Parser('$title${reset}word').substring(0),
+        '$title${ST}word',
+      );
+    });
+
+    test('and with close: false, where the text follows all the same', () {
+      // `close` decides what is owed at the end of the slice, not what is
+      // owed in front of text inside it.
+      expect(
+        Parser('$title${reset}word').substring(0, close: false),
+        '$title${ST}word',
+      );
+    });
+
+    test('a title at the end of a closed slice is terminated', () {
+      expect(Parser('a$title').substring(0), 'a$title$ST');
+    });
+
+    test('a title at the end of an unclosed slice is left as it came', () {
+      expect(Parser('a$title').substring(0, close: false), 'a$title');
+    });
+
+    test('a title behind a link, with the text behind both', () {
+      // The link opening is written first and its `ESC` ends nothing, so the
+      // title is the one that needs the terminator.
+      const link = '${OSC}8;;https://a.test$ST';
+
+      expect(
+        Parser('$link$title${reset}word').substring(0),
+        '$link$title${ST}word$linkClose',
+      );
+    });
+
+    test('a link behind a title changes nothing: the ESC ends it', () {
+      // The link opening begins with an `ESC`, so it ends the title itself
+      // and nothing is supplied. A regression pin: this is what must not
+      // move.
+      const link = '${OSC}8;;https://a.test$ST';
+
+      expect(
+        Parser('$title$link${reset}word').substring(0),
+        '$title${link}word$linkClose',
+      );
+    });
+
+    test('an insertion is not touched by any of this', () {
+      // `insertBefore` and `insertAfter` copy the input around the seam byte
+      // for byte, so the title keeps whatever it had there. A regression pin.
+      expect(
+        Parser('$title${reset}word').insertBefore(2, 'X'),
+        '$title${reset}woXrd',
+      );
+      expect(
+        Parser('$title${reset}word').insertAfter(2, 'X'),
+        '$title${reset}woXrd',
+      );
+    });
+
+    test('the two held things never wait together', () {
+      const link = '${OSC}8;;https://a.test$ST';
+      const close = '${OSC}8;;$ST';
+
+      // A title, a link, a title, and text: whichever order they come in,
+      // each is written out before the other is filled, so nothing is
+      // written twice and nothing comes out backwards. The link close is the
+      // last thing in front of the text and it carries its own `ST`, so
+      // nothing is supplied here; drop either of the two hand-offs and an
+      // `ST` appears between the second title and the close.
+      expect(
+        Parser('$title$link$title$close${reset}word').substring(0),
+        '$title$link$title${close}word',
+      );
+    });
+  });
 }

@@ -444,6 +444,12 @@ final class _ParserBase<S extends State<S>> {
     Link? heldLink;
     var heldLinkCodes = '';
 
+    // An `OSC` of the slice's own that never terminated, held back until
+    // what comes after it is known — the same waiting the link codes above
+    // do, and never at the same time as them: each of the two is written out
+    // before the other is filled, so at most one is ever waiting.
+    var heldOpening = '';
+
     var walk = _walk;
     int pos;
     Match<S>? piece;
@@ -500,6 +506,9 @@ final class _ParserBase<S extends State<S>> {
               heldLinkCodes = '';
               writtenLink = heldLink;
 
+              final opening = heldOpening;
+              heldOpening = '';
+
               // A slice that began inside a link opens it again itself, in
               // the bytes it was opened with: the text is shown inside that
               // link, and nothing the slice has read opened it. An opening
@@ -513,6 +522,17 @@ final class _ParserBase<S extends State<S>> {
               }
 
               final transit = currentState.transitTo(m.state);
+
+              // `held` is empty wherever this is not — the two never wait at
+              // once — so what follows the opening is what follows the piece.
+              if (opening.isNotEmpty) {
+                buf.write(
+                  _terminatedIfTextFollows(
+                    opening,
+                    _firstNotEmpty(reopening, transit, substring),
+                  ),
+                );
+              }
 
               // The codes held back are the input's own, ending as they ended
               // there — and what ended an unterminated opening there was the
@@ -551,6 +571,16 @@ final class _ParserBase<S extends State<S>> {
               // nothing open, an opening of what that same sequence opened —
               // is nothing to write.
               if (m.link != heldLink) {
+                // An opening waiting for something to stand in front of gets
+                // the link codes, which begin with an `ESC` and end it. This
+                // is what keeps the two from ever waiting together.
+                if (heldOpening.isNotEmpty) {
+                  buf.write(
+                    _terminatedIfTextFollows(heldOpening, entity.string),
+                  );
+                  heldOpening = '';
+                }
+
                 heldLinkCodes += entity.string;
                 heldLink = m.link;
               }
@@ -560,6 +590,17 @@ final class _ParserBase<S extends State<S>> {
               writtenLink = heldLink;
 
               final transit = currentState.transitTo(m.state);
+
+              final opening = heldOpening;
+              heldOpening = '';
+              if (opening.isNotEmpty) {
+                buf.write(
+                  _terminatedIfTextFollows(
+                    opening,
+                    _firstNotEmpty(transit, entity.string),
+                  ),
+                );
+              }
 
               // Nothing is ever added here — an escape code begins with an
               // `ESC`, and that is what an unterminated opening needs — but
@@ -574,9 +615,16 @@ final class _ParserBase<S extends State<S>> {
                 );
               }
 
-              buf
-                ..write(transit)
-                ..write(entity.string);
+              buf.write(transit);
+
+              // An opening with no terminator waits to see what it is
+              // written in front of; everything else goes out where it
+              // stands.
+              if (entity is Osc && !_oscTerminated(entity.string)) {
+                heldOpening = entity.string;
+              } else {
+                buf.write(entity.string);
+              }
               currentState = m.state.toStyle();
 
               // `ESC 8` carries the link the way it carries the rendition, so
@@ -611,18 +659,30 @@ final class _ParserBase<S extends State<S>> {
       if (close) {
         // A slice closes the link it has open, the one it began inside as
         // readily as the one it opened itself: what is printed after the
-        // slice must not stay clickable on the slice's URL. Whatever was
-        // held back is dropped — nothing follows it to be shown inside it.
-        if (writtenLink != null) {
-          buf.write(linkClose);
-        }
+        // slice must not stay clickable on the slice's URL. An opening held
+        // back is written first and terminated, for the same reason and by
+        // the same right — what is printed after must not be read as more of
+        // it. Held link codes are dropped instead: nothing follows them to
+        // be shown inside.
+        final closingLink = writtenLink != null ? linkClose : '';
+
+        buf
+          ..write(
+            _terminatedUnlessCodeFollows(
+              heldOpening,
+              _firstNotEmpty(closingLink, tail),
+            ),
+          )
+          ..write(closingLink);
       } else {
-        // Left open, the way the style is left: the codes held back are
+        // Left open, the way the style is left: what was held back is
         // written out, and the slice ends inside whatever the string is
         // inside at that point. Nothing but the unwinding of the style
-        // follows them, so an opening that never terminated is left as it
-        // came — see [_terminatedIfTextFollows].
-        buf.write(_terminatedIfTextFollows(heldLinkCodes, tail));
+        // follows, so an opening that never terminated is left as it came —
+        // see [_terminatedIfTextFollows]. At most one of the two is waiting.
+        buf
+          ..write(_terminatedIfTextFollows(heldOpening, tail))
+          ..write(_terminatedIfTextFollows(heldLinkCodes, tail));
       }
       buf.write(tail);
     }
