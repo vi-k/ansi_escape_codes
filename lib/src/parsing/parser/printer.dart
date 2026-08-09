@@ -304,7 +304,8 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     // what comes after it is known. In the line it was ended by the `ESC` of
     // whatever stood behind it, and that may have been an `SGR` — which this
     // loop does not copy but writes again as a transition, and a transition
-    // that changes nothing writes nothing. See [_terminatedIfTextFollows].
+    // that changes nothing writes nothing. See [_terminatedIfTextFollows]
+    // inside the line, and [_terminatedUnlessCodeFollows] where it ends here.
     var heldOpening = '';
 
     for (final m in parser.matches) {
@@ -376,7 +377,10 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     // below, or the unwinding of the style, or nothing at all — and where it
     // is nothing, whether a terminator is owed is the same question as
     // whether a link close is: a piece that has not ended the line is not
-    // the end of an output, and owes neither.
+    // the end of an output, and owes neither. The call taken where nothing is
+    // owed supplies nothing by construction — an `ESC` or nothing at all
+    // follows it — and is asked all the same, so that the guarantee is
+    // checked and not assumed.
     final closingLink = closeLink && writtenLink != null ? linkClose : '';
     final tail = lastState.transitTo(stateDefaults);
     final following = _firstNotEmpty(closingLink, tail);

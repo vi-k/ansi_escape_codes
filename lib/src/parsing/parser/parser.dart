@@ -603,7 +603,11 @@ final class _ParserBase<S extends State<S>> {
               final transit = currentState.transitTo(m.state);
 
               // Ahead of the held link codes, which is where they were read
-              // and so what follows the opening where there are any.
+              // and so what follows the opening where there are any. Nothing
+              // is ever supplied here — every candidate begins with an `ESC`,
+              // as the code being written does — but the opening goes out
+              // through the same door as everywhere else, so that the
+              // guarantee is checked and not assumed.
               final opening = heldOpening;
               heldOpening = '';
               if (opening.isNotEmpty) {
@@ -691,9 +695,10 @@ final class _ParserBase<S extends State<S>> {
         // Left open, the way the style is left: what was held back is
         // written out, opening ahead of link codes as everywhere else, and
         // the slice ends inside whatever the string is inside at that point.
-        // Nothing but the unwinding of the style follows, so an opening that
-        // never terminated is left as it came — see
-        // [_terminatedIfTextFollows].
+        // Neither call supplies anything — nothing follows but the unwinding
+        // of the style, which is an `ESC` or nothing at all — but both go
+        // through the same door as everywhere else, so that the guarantee is
+        // checked and not assumed. See [_terminatedIfTextFollows].
         buf
           ..write(
             _terminatedIfTextFollows(
@@ -930,7 +935,8 @@ final class _ParserBase<S extends State<S>> {
     // string it was ended by the `ESC` of whatever stood behind it, and that
     // may have been an `SGR` — which this loop does not copy but writes again
     // as a transition, and a transition that changes nothing writes nothing.
-    // See [_terminatedIfTextFollows].
+    // See [_terminatedIfTextFollows] inside the string, and
+    // [_terminatedUnlessCodeFollows] at the end of a closed one.
     var heldOpening = '';
 
     for (final m in matches) {
@@ -977,7 +983,10 @@ final class _ParserBase<S extends State<S>> {
     // The string is over. What follows the opening held back is the close
     // below, or the unwinding of the style, or nothing at all — and where it
     // is nothing, `close` says whether a terminator is owed: what is printed
-    // after a closed string must not be read as more of an `OSC`.
+    // after a closed string must not be read as more of an `OSC`. The
+    // `close: false` call supplies nothing by construction — an `ESC` or
+    // nothing at all follows it — and is asked all the same, so that the
+    // guarantee is checked and not assumed.
     final lastMatch = matches.lastOrNull;
     final closingLink = close && finalLink != null ? linkClose : '';
     final tail = close
