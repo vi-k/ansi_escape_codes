@@ -15,8 +15,10 @@
 как пришли. На краю вывода, где поверхность и так закрывает ссылку,
 терминатор тоже подставляется. Условие `entity is Link` становится
 `entity is Osc` в двух поверхностях; в третьей (`substring`) заводится
-второй придержанный буфер, и держит их врозь инвариант «в любой момент
-придержано не больше одного».
+второй придержанный буфер, и порядок между ними задаёт инвариант «где
+придержаны оба, открытие пришло первым» — он заменил инвариант «в любой
+момент придержано не больше одного», по которому Task 3 был написан и
+который оказался ложным; см. поправку в самой задаче.
 
 **Tech Stack:** Dart 3.6+, `package:test`. Пакет `ansi_escape_codes`,
 ветка `fix/osc-termination`, база main @ `80b68b2`.
@@ -253,7 +255,8 @@ git commit
   в `entities/osc.dart`, обе доступны здесь — `printer.dart` это
   `part of '../parser.dart'`.
 - Consumes: `_firstNotEmpty(String first, String second, [String third])`,
-  уже существует.
+  уже существует. Четвёртый необязательный аргумент у неё появится в
+  Task 3 — принтеру он не нужен, здесь кандидатов два.
 
 - [ ] **Step 1: Написать падающие тесты**
 
@@ -410,12 +413,31 @@ git commit
 - Consumes: `_terminatedUnlessCodeFollows` и `_terminatedIfTextFollows` из
   Task 1.
 
-**Инвариант этой задачи:** `heldOpening` и `heldLinkCodes` **никогда не
-непусты одновременно**. Ветка не-ссылочного кода уже сбрасывает
-`heldLinkCodes` перед тем, как писать своё; сюда добавляется зеркальное —
-ветка `Link` сбрасывает `heldOpening` перед тем, как дописать ссылочные
-байты. Из инварианта следует, что четвёртый аргумент `_firstNotEmpty` не
-нужен нигде: если одно придержано, другое пусто.
+**Инвариант этой задачи:** где придержаны оба, **открытие пришло
+первым**. `heldOpening` заполняет одна только ветка не-ссылочного кода,
+и она сбрасывает оба буфера прежде, чем заполнить его; ветка `Link` не
+трогает ничего, кроме `heldLinkCodes`. Значит открытие всегда старше, и
+всякий, кто пишет их обоих, пишет открытие первым, а за открытием идут
+придержанные ссылочные коды. Из этого следует четвёртый аргумент
+`_firstNotEmpty`: в текстовой ветке за открытием стоят придержанные
+ссылочные коды, переоткрытие, переход и текст — четыре кандидата.
+
+> **Поправка после реализации (коммит `de1b5bf`).** Задача написана по
+> инварианту «`heldOpening` и `heldLinkCodes` **никогда не непусты
+> одновременно**»: ветка `Link` сбрасывает `heldOpening` перед тем, как
+> дописать ссылочные байты, и четвёртый аргумент `_firstNotEmpty` тогда
+> не нужен нигде. Инвариант ложный. Сброс в ветке `Link` писал байты под
+> обещание, что ссылочные байты встанут прямо за ними и оборвут их своим
+> `ESC`; они не вставали, а уходили в `heldLinkCodes`, которые закрытый
+> хвост выбрасывает — показывать внутри них нечего. `Parser('a' + title +
+> link).substring(0)` кончался голым незавершённым `OSC`. Ветка `Link`
+> вернулась к тому, чем была (Шаг 5), в текстовой ветке появился
+> четвёртый аргумент (Шаг 4), в незакрытом хвосте — придержанные
+> ссылочные коды в голове «что следом» (Шаг 7). Шаги ниже приведены к
+> тому, что стоит в коде; порядок записи не менялся ни разу. Сдача
+> открытия из ветки escape-кода (Шаг 6) до той правки не была прикрыта
+> ничем — её убирали, и все 507 оставались зелёными, — так что в файл
+> тестов пришли ещё три пина, помимо переписанного Шага 9.
 
 - [ ] **Step 1: Написать падающие тесты**
 
@@ -502,8 +524,13 @@ title changes nothing'` и `'an insertion is not touched by any of this'`)
 ```dart
     // An `OSC` of the slice's own that never terminated, held back until
     // what comes after it is known — the same waiting the link codes above
-    // do, and never at the same time as them: each of the two is written out
-    // before the other is filled, so at most one is ever waiting.
+    // do, and sometimes beside them.
+    //
+    // Where the two wait together, this one came first: only the branch that
+    // drains both of them fills this one, and the branch that fills the link
+    // codes fills nothing else. So every place that writes them out writes
+    // this one ahead of the link codes, and what follows an opening is the
+    // held link codes wherever there are any.
     var heldOpening = '';
 ```
 
@@ -521,49 +548,35 @@ title changes nothing'` и `'an insertion is not touched by any of this'`)
 строка 523) вставить:
 
 ```dart
-              // `held` is empty wherever this is not — the two never wait at
-              // once — so what follows the opening is what follows the piece.
+              // The link codes read after the opening are written straight
+              // behind it, so they are the first of what follows it — and
+              // where there are none, what follows the piece does.
               if (opening.isNotEmpty) {
                 buf.write(
                   _terminatedIfTextFollows(
                     opening,
-                    _firstNotEmpty(reopening, transit, substring),
+                    _firstNotEmpty(held, reopening, transit, substring),
                   ),
                 );
               }
 ```
 
-- [ ] **Step 5: Сбрасывать придержанное открытие в ветке `Link`**
+**Не** `_firstNotEmpty(reopening, transit, substring)`: `held` может быть
+непуст рядом с открытием, и тогда за открытием идут именно ссылочные
+коды. С тремя аргументами открытие получило бы `ST` там, где `ESC`
+ссылочных кодов и так его обрывает. См. поправку выше.
 
-Заменить ветку `if (entity is Link)` (строки 549-558) на:
+- [ ] **Step 5: Ветку `Link` не трогать**
 
-```dart
-            if (entity is Link) {
-              // Held, and only where it changes what the slice has open: the
-              // link the code leaves behind is what the slice is to be left
-              // with, and a code saying what is said already — a close with
-              // nothing open, an opening of what that same sequence opened —
-              // is nothing to write.
-              if (m.link != heldLink) {
-                // An opening waiting for something to stand in front of gets
-                // the link codes, which begin with an `ESC` and end it. This
-                // is what keeps the two from ever waiting together.
-                if (heldOpening.isNotEmpty) {
-                  buf.write(
-                    _terminatedIfTextFollows(heldOpening, entity.string),
-                  );
-                  heldOpening = '';
-                }
+Ветка `if (entity is Link)` (строки 549-558) остаётся как есть: она
+дописывает к `heldLinkCodes` и больше ничего не касается. Придержанное
+открытие ждёт рядом.
 
-                heldLinkCodes += entity.string;
-                heldLink = m.link;
-              }
-            } else {
-```
-
-Сброс стоит **внутри** `if (m.link != heldLink)` нарочно: где ссылочный код
-не пишется вовсе, за придержанным открытием ничего не следует, и оно
-продолжает ждать.
+**Не** сбрасывать в ней `heldOpening` «под ссылочные байты, которые
+оборвут его своим `ESC`»: ссылочные байты в этой ветке не пишутся, а
+уходят в `heldLinkCodes`, и закрытый хвост их выбрасывает. Открытие,
+записанное под это обещание, остаётся в срезе без терминатора. Так было
+написано в первой реализации — см. поправку выше.
 
 - [ ] **Step 6: Придерживать незавершённый `OSC` в ветке escape-кода**
 
@@ -572,17 +585,22 @@ title changes nothing'` и `'an insertion is not touched by any of this'`)
 записью `held` (перед `if (held.isNotEmpty)`, строка 572):
 
 ```dart
+              // Ahead of the held link codes, which is where they were read
+              // and so what follows the opening where there are any.
               final opening = heldOpening;
               heldOpening = '';
               if (opening.isNotEmpty) {
                 buf.write(
                   _terminatedIfTextFollows(
                     opening,
-                    _firstNotEmpty(transit, entity.string),
+                    _firstNotEmpty(held, transit, entity.string),
                   ),
                 );
               }
 ```
+
+`held` в голове по той же причине, что и в текстовой ветке: придержанные
+ссылочные коды пишутся сразу за открытием, значит они и следуют за ним.
 
 и заменить безусловную запись байтов кода (строки 581-583) на:
 
@@ -624,15 +642,24 @@ title changes nothing'` и `'an insertion is not touched by any of this'`)
           ..write(closingLink);
       } else {
         // Left open, the way the style is left: what was held back is
-        // written out, and the slice ends inside whatever the string is
-        // inside at that point. Nothing but the unwinding of the style
-        // follows, so an opening that never terminated is left as it came —
-        // see [_terminatedIfTextFollows]. At most one of the two is waiting.
+        // written out, opening ahead of link codes as everywhere else, and
+        // the slice ends inside whatever the string is inside at that point.
+        // Nothing but the unwinding of the style follows, so an opening that
+        // never terminated is left as it came — see
+        // [_terminatedIfTextFollows].
         buf
-          ..write(_terminatedIfTextFollows(heldOpening, tail))
+          ..write(
+            _terminatedIfTextFollows(
+              heldOpening,
+              _firstNotEmpty(heldLinkCodes, tail),
+            ),
+          )
           ..write(_terminatedIfTextFollows(heldLinkCodes, tail));
       }
 ```
+
+**Не** `_terminatedIfTextFollows(heldOpening, tail)`: рядом с открытием
+могут ждать ссылочные коды, и пишутся они сразу за ним. См. поправку выше.
 
 - [ ] **Step 8: Прогнать тесты**
 
@@ -643,28 +670,32 @@ Run: `dart test`
 Expected: PASS. Особое внимание `test/parser_substring_links_test.dart` —
 он стережёт ссылочный канал, который здесь трогается.
 
-- [ ] **Step 9: Пин на инвариант**
+- [ ] **Step 9: Пин на порядок двух придержанных**
 
-Дописать в группу среза тест, который сломается, если один из сбросов
-уберут:
+Дописать в группу среза тест, который сломается, если сдачу открытия из
+ветки escape-кода уберут или если два придержанных поменяются местами:
 
 ```dart
-    test('the two held things never wait together', () {
+    test('the two held things come out in the order they were read', () {
       const link = '${OSC}8;;https://a.test$ST';
       const close = '${OSC}8;;$ST';
 
-      // A title, a link, a title, and text: whichever order they come in,
-      // each is written out before the other is filled, so nothing is
-      // written twice and nothing comes out backwards.
+      // A title, a link, a title, and text. The two wait side by side, and
+      // the opening is always the older of them: it goes out first, and the
+      // link codes behind it end it with their own `ESC`. The link close is
+      // the last thing in front of the text and carries its own `ST`, so
+      // nothing is supplied here either.
       expect(
         Parser('$title$link$title$close${reset}word').substring(0),
-        '$title$link$title$close${ST}word',
+        '$title$link$title${close}word',
       );
     });
 ```
 
-Ожидание проверить прогоном: если оно не сходится, **не подгонять** —
-разобраться, какая из двух записей встала не туда, и записать в отчёт.
+`ST` перед `word` не пишется: последним перед текстом стоит закрывашка
+ссылки, а она терминирована сама. Ожидание проверить прогоном: если оно
+не сходится, **не подгонять** — разобраться, какая из двух записей встала
+не туда, и записать в отчёт.
 
 - [ ] **Step 10: Ворота и коммит**
 
