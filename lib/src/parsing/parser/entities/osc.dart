@@ -74,8 +74,8 @@ String _terminatedUnlessCodeFollows(String codes, String following) =>
         ? codes
         : '$codes$ST';
 
-/// The first of [first], [second] and [third] with anything in it, or the
-/// empty string where none of them has.
+/// The first of [first], [second], [third] and [fourth] with anything in it,
+/// or the empty string where none of them has.
 ///
 /// [_terminatedIfTextFollows] asks two things of what follows: whether there
 /// is any of it, and whether it begins with an `ESC`. Both are answered by
@@ -83,16 +83,28 @@ String _terminatedUnlessCodeFollows(String codes, String following) =>
 /// every piece is, and begins where its first non-empty piece begins — so the
 /// pieces go over unjoined and the answer is the same to the byte.
 ///
+/// The pieces must be given in the order they are about to be written. Four
+/// of them is the longest any caller has: an opening held back by
+/// [Parser.substring] is written ahead of the held link codes, the reopening,
+/// the transition and the text of the piece.
+///
 /// This is on the path every piece of a slice and every piece of a printed
 /// line takes, and the string it does not build there is the whole of what is
 /// about to be written: joining it cost a link-heavy slicing run some tenth
 /// of its time to look at one character.
-String _firstNotEmpty(String first, String second, [String third = '']) =>
+String _firstNotEmpty(
+  String first,
+  String second, [
+  String third = '',
+  String fourth = '',
+]) =>
     first.isNotEmpty
         ? first
         : second.isNotEmpty
             ? second
-            : third;
+            : third.isNotEmpty
+                ? third
+                : fourth;
 
 /// A hyperlink, `OSC 8`: the text between an open and a close is what the
 /// terminal makes clickable.

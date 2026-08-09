@@ -201,6 +201,41 @@ void main() {
       );
     });
 
+    test('a title behind held link codes that the close then drops', () {
+      // The link is read and held, and a closed slice drops what it held —
+      // nothing follows it to be shown inside. So the `ESC` those bytes
+      // begin with is never written, and the title behind them is the last
+      // thing in the slice: the terminator is owed after all.
+      const link = '${OSC}8;;https://a.test$ST';
+
+      expect(Parser('a$title$link').substring(0), 'a$title$ST');
+    });
+
+    test('and the same where the link is opened and closed again', () {
+      const link = '${OSC}8;;https://a.test$ST';
+      const close = '${OSC}8;;$ST';
+
+      expect(Parser('a$title$link$close').substring(0), 'a$title$ST');
+    });
+
+    test('a title in front of another title', () {
+      // The second one ends the first with its `ESC`, and the second is the
+      // one left waiting for the text.
+      expect(
+        Parser('$title$title${reset}word').substring(0),
+        '$title$title${ST}word',
+      );
+    });
+
+    test('a title in front of a code that is copied over as it stands', () {
+      // The `CSI` is written where it stands and its `ESC` ends the title,
+      // which must go out ahead of it and not behind it.
+      expect(
+        Parser('$title\x1B[2Cword').substring(0),
+        '$title\x1B[2Cword',
+      );
+    });
+
     test('an insertion is not touched by any of this', () {
       // `insertBefore` and `insertAfter` copy the input around the seam byte
       // for byte, so the title keeps whatever it had there. A regression pin.
@@ -214,16 +249,17 @@ void main() {
       );
     });
 
-    test('the two held things never wait together', () {
+    test('the two held things come out in the order they were read', () {
       const link = '${OSC}8;;https://a.test$ST';
       const close = '${OSC}8;;$ST';
 
-      // A title, a link, a title, and text: whichever order they come in,
-      // each is written out before the other is filled, so nothing is
-      // written twice and nothing comes out backwards. The link close is the
-      // last thing in front of the text and it carries its own `ST`, so
-      // nothing is supplied here; drop either of the two hand-offs and an
-      // `ST` appears between the second title and the close.
+      // A title, a link, a title, and text. The two wait side by side, and
+      // the opening is always the older of them: it goes out first, and the
+      // link codes behind it end it with their own `ESC`. The link close is
+      // the last thing in front of the text and carries its own `ST`, so
+      // nothing is supplied here either. Drop the escape-code branch's
+      // hand-off and the first title comes out behind the link instead of in
+      // front of it.
       expect(
         Parser('$title$link$title$close${reset}word').substring(0),
         '$title$link$title${close}word',

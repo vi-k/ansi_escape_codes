@@ -446,8 +446,13 @@ final class _ParserBase<S extends State<S>> {
 
     // An `OSC` of the slice's own that never terminated, held back until
     // what comes after it is known — the same waiting the link codes above
-    // do, and never at the same time as them: each of the two is written out
-    // before the other is filled, so at most one is ever waiting.
+    // do, and sometimes beside them.
+    //
+    // Where the two wait together, this one came first: only the branch that
+    // drains both of them fills this one, and the branch that fills the link
+    // codes fills nothing else. So every place that writes them out writes
+    // this one ahead of the link codes, and what follows an opening is the
+    // held link codes wherever there are any.
     var heldOpening = '';
 
     var walk = _walk;
@@ -523,13 +528,14 @@ final class _ParserBase<S extends State<S>> {
 
               final transit = currentState.transitTo(m.state);
 
-              // `held` is empty wherever this is not — the two never wait at
-              // once — so what follows the opening is what follows the piece.
+              // The link codes read after the opening are written straight
+              // behind it, so they are the first of what follows it — and
+              // where there are none, what follows the piece does.
               if (opening.isNotEmpty) {
                 buf.write(
                   _terminatedIfTextFollows(
                     opening,
-                    _firstNotEmpty(reopening, transit, substring),
+                    _firstNotEmpty(held, reopening, transit, substring),
                   ),
                 );
               }
@@ -571,16 +577,6 @@ final class _ParserBase<S extends State<S>> {
               // nothing open, an opening of what that same sequence opened —
               // is nothing to write.
               if (m.link != heldLink) {
-                // An opening waiting for something to stand in front of gets
-                // the link codes, which begin with an `ESC` and end it. This
-                // is what keeps the two from ever waiting together.
-                if (heldOpening.isNotEmpty) {
-                  buf.write(
-                    _terminatedIfTextFollows(heldOpening, entity.string),
-                  );
-                  heldOpening = '';
-                }
-
                 heldLinkCodes += entity.string;
                 heldLink = m.link;
               }
@@ -591,13 +587,15 @@ final class _ParserBase<S extends State<S>> {
 
               final transit = currentState.transitTo(m.state);
 
+              // Ahead of the held link codes, which is where they were read
+              // and so what follows the opening where there are any.
               final opening = heldOpening;
               heldOpening = '';
               if (opening.isNotEmpty) {
                 buf.write(
                   _terminatedIfTextFollows(
                     opening,
-                    _firstNotEmpty(transit, entity.string),
+                    _firstNotEmpty(held, transit, entity.string),
                   ),
                 );
               }
@@ -676,12 +674,18 @@ final class _ParserBase<S extends State<S>> {
           ..write(closingLink);
       } else {
         // Left open, the way the style is left: what was held back is
-        // written out, and the slice ends inside whatever the string is
-        // inside at that point. Nothing but the unwinding of the style
-        // follows, so an opening that never terminated is left as it came —
-        // see [_terminatedIfTextFollows]. At most one of the two is waiting.
+        // written out, opening ahead of link codes as everywhere else, and
+        // the slice ends inside whatever the string is inside at that point.
+        // Nothing but the unwinding of the style follows, so an opening that
+        // never terminated is left as it came — see
+        // [_terminatedIfTextFollows].
         buf
-          ..write(_terminatedIfTextFollows(heldOpening, tail))
+          ..write(
+            _terminatedIfTextFollows(
+              heldOpening,
+              _firstNotEmpty(heldLinkCodes, tail),
+            ),
+          )
           ..write(_terminatedIfTextFollows(heldLinkCodes, tail));
       }
       buf.write(tail);
