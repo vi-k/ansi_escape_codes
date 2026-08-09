@@ -216,9 +216,17 @@ Fixed:
   they came. `SinkPrinter` and `StackedSinkPrinter` pay the same debt where
   the line really ends — at a `writeln`, or at a `'\n'` in what is written —
   and owe nothing at the end of a `write` the line goes on past.
-  `insertBefore` and `insertAfter` owe nothing either: they copy the input
-  around the seam byte for byte. An opening written again for a slice or a
-  line that began inside the link carries its terminator whatever follows it.
+  `insertBefore` owes nothing at any position: it lands in front of whatever
+  codes stand at the seam, so an unterminated `OSC` never comes between it and
+  the text it was aimed at. `insertAfter` goes past those codes instead, and
+  where the string ends inside an unterminated `OSC` that puts an insertion at
+  the end of the text inside the sequence —
+  `Parser('aa\x1B]0;title').insertAfter(2, 'X')` hands back a string whose
+  plain text is still `aa`, and a hyperlink opening swallows the `X` no
+  differently. That is the same mechanism on a surface this release does not
+  reach, and it is left as it stands. An opening written again for a slice or
+  a line that began inside the link carries its terminator whatever follows
+  it.
 - `insertBefore` and `insertAfter` could put text between the halves of a
   surrogate pair and hand back a string that is no longer valid UTF-16. A
   position inside a pair now shifts to its edge — `insertBefore` to the
