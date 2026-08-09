@@ -258,8 +258,10 @@ void main() {
       // link codes behind it end it with their own `ESC`. The link close is
       // the last thing in front of the text and carries its own `ST`, so
       // nothing is supplied here either. Drop the escape-code branch's
-      // hand-off and the first title comes out behind the link instead of in
-      // front of it.
+      // hand-off and the second title takes the slot the first is still
+      // waiting in, and the first is lost altogether. A title coming out
+      // behind the link rather than in front of it is the other way this can
+      // go, and `a link behind a title changes nothing` is what catches it.
       expect(
         Parser('$title$link$title$close${reset}word').substring(0),
         '$title$link$title${close}word',
