@@ -54,8 +54,9 @@ bool _oscTerminated(String string) =>
 /// byte for byte.
 ///
 /// [following] is what would be written next, and the callers write it in
-/// pieces: a reopening, a transition, the text. They pass those pieces to
-/// [_firstNotEmpty] rather than joining them — see there.
+/// pieces: the link codes held back, a reopening, a transition, the text.
+/// They pass those pieces to [_firstNotEmpty] rather than joining them — see
+/// there.
 String _terminatedIfTextFollows(String codes, String following) =>
     following.isEmpty ? codes : _terminatedUnlessCodeFollows(codes, following);
 
@@ -66,9 +67,10 @@ String _terminatedIfTextFollows(String codes, String following) =>
 /// rule inside one, and the two differ in what an empty [following] means.
 /// Inside a string it means nothing follows the opening at all, so there is
 /// nothing to be swallowed and the bytes go out as they came. At the edge of
-/// an output that closes — a slice with `close: true`, a printed line — it
-/// means the next thing written is whatever the caller prints after, and the
-/// terminator is owed for the same reason the hyperlink close is.
+/// an output that closes — [Parser.substring] or [Parser.optimize] with
+/// `close: true`, a printed line — it means the next thing written is
+/// whatever the caller prints after, and the terminator is owed for the same
+/// reason the hyperlink close is.
 String _terminatedUnlessCodeFollows(String codes, String following) =>
     codes.isEmpty || _oscTerminated(codes) || following.startsWith(ESC)
         ? codes
@@ -77,21 +79,21 @@ String _terminatedUnlessCodeFollows(String codes, String following) =>
 /// The first of [first], [second], [third] and [fourth] with anything in it,
 /// or the empty string where none of them has.
 ///
-/// [_terminatedIfTextFollows] asks two things of what follows: whether there
-/// is any of it, and whether it begins with an `ESC`. Both are answered by
-/// the first piece that is not empty — a joined string is empty only where
-/// every piece is, and begins where its first non-empty piece begins — so the
-/// pieces go over unjoined and the answer is the same to the byte.
+/// The two rules above ask two things of what follows: whether there is any
+/// of it, and whether it begins with an `ESC`. Both are answered by the first
+/// piece that is not empty — a joined string is empty only where every piece
+/// is, and begins where its first non-empty piece begins — so the pieces go
+/// over unjoined and the answer is the same to the byte.
 ///
 /// The pieces must be given in the order they are about to be written. Four
 /// of them is the longest any caller has: an opening held back by
 /// [Parser.substring] is written ahead of the held link codes, the reopening,
 /// the transition and the text of the piece.
 ///
-/// This is on the path every piece of a slice and every piece of a printed
-/// line takes, and the string it does not build there is the whole of what is
-/// about to be written: joining it cost a link-heavy slicing run some tenth
-/// of its time to look at one character.
+/// This is on the path every piece of a slice, of an optimized string and of
+/// a printed line takes, and the string it does not build there is the whole
+/// of what is about to be written: joining it cost a link-heavy slicing run
+/// some tenth of its time to look at one character.
 String _firstNotEmpty(
   String first,
   String second, [

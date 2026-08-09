@@ -356,7 +356,8 @@ final class _ParserBase<S extends State<S>> {
   /// [maxLength] is the maximum length of the substring.
   ///
   /// [close] is whether to close the substring with the default style, and
-  /// with it the hyperlink the slice has open.
+  /// with it the hyperlink the slice has open and the terminator an `OSC` it
+  /// ends inside still owes.
   ///
   /// A slice is self-contained: one that began inside a link opens that link
   /// again in front of its first piece of text, so that the text stays
@@ -384,6 +385,20 @@ final class _ParserBase<S extends State<S>> {
   /// string stands in there: an empty slice cut at the very place a link code
   /// stands comes out carrying that code, and one cut anywhere else is empty
   /// as before.
+  ///
+  /// An `OSC` the string never terminated is held back until what follows it
+  /// in the slice is known — a window title as readily as a link opening. The
+  /// sequence runs to the next `ESC` or to the end of the text, and in the
+  /// string one of those two always followed it; written in front of text
+  /// that did not follow it there, it would read that text as its own. Where
+  /// text follows in the slice, then, the terminator it lacks is supplied,
+  /// and where an escape code follows the bytes go out exactly as they came
+  /// — that code's `ESC` ends the sequence as the string's did. With
+  /// `close: true` the terminator is written at the end of the slice as well,
+  /// though nothing follows it there, for the reason the link is closed
+  /// there: what is printed after the slice must not be read as more of the
+  /// sequence. With `close: false` the bytes are left as they came, as the
+  /// link is left open.
   ///
   /// A slice holding an `ESC 8` is where a link can still come out other than
   /// it was, and this is accepted rather than mended: the restore gives back
@@ -897,6 +912,15 @@ final class _ParserBase<S extends State<S>> {
   /// back closed, so that what is printed after it is not clickable. With
   /// `close: false` both are left as the string leaves them, the link no less
   /// than the style. [substring] closes a slice the same way.
+  ///
+  /// An `OSC` the string never terminated — a window title as readily as a
+  /// link opening — is held back until what follows it is known. Where that
+  /// is text the terminator it lacks is supplied, or the sequence would read
+  /// that text as its own; where it is an escape code the bytes go out as
+  /// they came, that code's `ESC` ending the sequence as the string's did.
+  /// With `close: true` the terminator is written at the end as well, though
+  /// nothing follows it there, for the reason the link is closed there. See
+  /// [substring], which says the whole of it.
   String optimize({bool close = true}) {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();

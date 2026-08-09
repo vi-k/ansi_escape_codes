@@ -121,12 +121,14 @@ String _piece(
       // The same title, terminated: the shape that must not change.
       return '${OSC}0;title$ST';
     case 15:
-      // A close whose terminator never came. A close is an `OSC` like any
-      // other and ends at the next `ESC` too, which is why it is drawn here:
-      // the closed edge of a slice and the end of a printed line owe it a
-      // terminator, and nothing else in this alphabet asks them for one on a
-      // sequence the parser reads as a link. `readWhole` is honoured as in
-      // case 3.
+      // The bytes of a close with nothing to end them. A close is an `OSC`
+      // like any other and runs to the next `ESC` too, so what these bytes
+      // are depends on what is drawn behind them: a close where an `ESC` or
+      // the end of the document follows, and an opening on the url they read
+      // out of the text where anything else does. Drawing them puts both
+      // readings in the alphabet, and with them the shortest link opening
+      // there is — the one whose url the text alone supplies. `readWhole` is
+      // honoured as in case 3, and pins the first reading where it is off.
       return readWhole
           ? '${OSC}8;;'
           : '${OSC}8;;${random.nextBool() ? reset : cursorUp}';
