@@ -141,8 +141,9 @@ ready to use.
 > If you need the ability to roll back to the previous color, use
 > [styles](#the-power-of-styles) or [StackedPrinter](#stackedprinter).
 
-Since you cannot set `bold` and `dim` at the same time, a single escape
-sequence is used in ANSI to reset both: `resetBoldAndDim`.
+`bold` and `dim` are the two ends of one property — the intensity — and ANSI
+puts it back to normal with a single code: `resetBoldAndDim`. Both can be on
+at once, and that one code takes off whichever of them are.
 
 `reset` returns all settings to default.
 
