@@ -54,7 +54,7 @@
 
 Печать устроена парой: `Printer` и `StackedPrinter` получают строку
 целиком, `SinkPrinter` и `StackedSinkPrinter` — по куску за раз. Отсюда
-их разница в обязанностях (`_PrinterBase._closesLinkAtEnd`).
+их разница в обязанностях (`_PrinterBase._takesWholeLines`).
 
 ## Шесть мест, которые кусали
 
