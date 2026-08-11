@@ -23,6 +23,10 @@
 # agent how work is conducted here, which is nothing to whoever installs the
 # package. CLAUDE.md only imports AGENTS.md, so the two travel together.
 #
+# README.ru.md is the Russian README, kept for whoever works on the package
+# here. The published README is the English one, and pub.dev renders a single
+# README anyway; the translation is left out by the owner's decision.
+#
 # coverage/ is what `dart test --coverage` writes — the CI collects it there
 # and a local run puts it in the same place. It is a report about the tests,
 # not a part of the package, and the replacement rule above is why naming it
@@ -30,6 +34,7 @@
 docs/
 AGENTS.md
 CLAUDE.md
+README.ru.md
 doc/api/
 benchmark/compare.dart
 benchmark/memory_guard.dart
