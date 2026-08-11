@@ -503,8 +503,8 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   /// is there that what a piece left open is carried into the write that
   /// follows — see [_writeBuf] and [_writeLine]. [prepare], which reads this,
   /// hands the piece back without a close, without a terminator and without
-  /// touching any of the carries: the link inside the line, the link across
-  /// it, or the debt the sequence left.
+  /// touching any of the four carries: the link inside the line, the link
+  /// across it, the debt the sequence left, or the style the piece ends in.
   @override
   bool get _takesWholeLines => false;
 
