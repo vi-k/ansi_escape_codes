@@ -185,7 +185,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// begins with an `ESC` and ends the sequence already.
   ///
   /// Only a sink ever carries it. A printer is handed the whole line and
-  /// settles at its end, where [_terminatedUnlessCodeFollows] is asked. A
+  /// settles at its end, where [_terminatedOpening] is asked. A
   /// printer that writes none of its own codes never sets it at all: with
   /// [ansiCodesEnabled] off, or a [NoStyle] for a [defaultStyle], [_prepare]
   /// turns back before there is anything to owe, and both of them are final.
@@ -282,7 +282,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
         _writtenLink = null;
 
         // The close begins with an `ESC`, and an `ESC` ends an unterminated
-        // `OSC` — see [_terminatedUnlessCodeFollows]. It pays for both.
+        // control string — see [_terminatedOpening]. It pays for both.
         return linkClose;
       }
 
@@ -306,8 +306,8 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     // what comes after it is known. In the line it was ended by the `ESC` of
     // whatever stood behind it, and that may have been an `SGR` — which this
     // loop does not copy but writes again as a transition, and a transition
-    // that changes nothing writes nothing. See [_terminatedIfTextFollows]
-    // inside the line, and [_terminatedUnlessCodeFollows] where it ends here.
+    // that changes nothing writes nothing. See [_terminatedOpening], asked
+    // inside the line and again where it ends here.
     var heldOpening = '';
 
     for (final m in parser.matches) {
@@ -337,8 +337,10 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       // An opening the line before never terminated is terminated here: the
       // text of this line follows it now, and would otherwise be read as part
       // of the url — see [Link._reopening].
+      final entity = m.entity;
+
       var reopening = '';
-      if (m.entity is Text && writtenLink == null) {
+      if (entity is Text && writtenLink == null) {
         if (m.link case final link?) {
           reopening = link._reopening;
           writtenLink = link;
@@ -349,13 +351,14 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       // scrolling take the background colour of the moment.
       final newState = m.state.changeDefaultsTo(defaultStyle);
       final transit = lastState.transitTo(newState);
-      final string = m.entity.string;
+      final string = entity.string;
 
       if (heldOpening.isNotEmpty) {
         buf.write(
-          _terminatedIfTextFollows(
+          _terminatedOpening(
             heldOpening,
             _firstNotEmpty(reopening, transit, string),
+            closing: false,
           ),
         );
         heldOpening = '';
@@ -367,7 +370,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
 
       // An opening with no terminator waits to see what it is written in
       // front of; everything else goes out where it stands.
-      if (m.entity is Osc && !_oscTerminated(string)) {
+      if (entity is ControlString && !entity.terminated) {
         heldOpening = string;
       } else {
         buf.write(string);
@@ -387,11 +390,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     final tail = lastState.transitTo(stateDefaults);
     final following = _firstNotEmpty(closingLink, tail);
 
-    buf.write(
-      endsLine
-          ? _terminatedUnlessCodeFollows(heldOpening, following)
-          : _terminatedIfTextFollows(heldOpening, following),
-    );
+    buf.write(_terminatedOpening(heldOpening, following, closing: endsLine));
 
     // Where the piece goes on into the next write and the opening went out
     // with nothing behind it, the sequence is unterminated in the sink and

@@ -550,9 +550,10 @@ final class _ParserBase<S extends State<S>> {
               // where there are none, what follows the piece does.
               if (opening.isNotEmpty) {
                 buf.write(
-                  _terminatedIfTextFollows(
+                  _terminatedOpening(
                     opening,
                     _firstNotEmpty(held, reopening, transit, substring),
+                    closing: false,
                   ),
                 );
               }
@@ -614,9 +615,10 @@ final class _ParserBase<S extends State<S>> {
               heldOpening = '';
               if (opening.isNotEmpty) {
                 buf.write(
-                  _terminatedIfTextFollows(
+                  _terminatedOpening(
                     opening,
                     _firstNotEmpty(held, transit, entity.string),
+                    closing: false,
                   ),
                 );
               }
@@ -639,7 +641,7 @@ final class _ParserBase<S extends State<S>> {
               // An opening with no terminator waits to see what it is
               // written in front of; everything else goes out where it
               // stands.
-              if (entity is Osc && !_oscTerminated(entity.string)) {
+              if (entity is ControlString && !entity.terminated) {
                 heldOpening = entity.string;
               } else {
                 buf.write(entity.string);
@@ -687,9 +689,10 @@ final class _ParserBase<S extends State<S>> {
 
         buf
           ..write(
-            _terminatedUnlessCodeFollows(
+            _terminatedOpening(
               heldOpening,
               _firstNotEmpty(closingLink, tail),
+              closing: true,
             ),
           )
           ..write(closingLink);
@@ -700,12 +703,14 @@ final class _ParserBase<S extends State<S>> {
         // Neither call supplies anything — nothing follows but the unwinding
         // of the style, which is an `ESC` or nothing at all — but both go
         // through the same door as everywhere else, so that the guarantee is
-        // checked and not assumed. See [_terminatedIfTextFollows].
+        // checked and not assumed. See [_terminatedOpening] for the opening
+        // and [_terminatedIfTextFollows] for the link codes.
         buf
           ..write(
-            _terminatedIfTextFollows(
+            _terminatedOpening(
               heldOpening,
               _firstNotEmpty(heldLinkCodes, tail),
+              closing: false,
             ),
           )
           ..write(_terminatedIfTextFollows(heldLinkCodes, tail));
@@ -994,13 +999,13 @@ final class _ParserBase<S extends State<S>> {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
 
-    // An `OSC` the string never terminated — a window title no less than a
-    // link opening — held back until what comes after it is known. In the
-    // string it was ended by the `ESC` of whatever stood behind it, and that
-    // may have been an `SGR` — which this loop does not copy but writes again
-    // as a transition, and a transition that changes nothing writes nothing.
-    // See [_terminatedIfTextFollows] inside the string, and
-    // [_terminatedUnlessCodeFollows] at the end of a closed one.
+    // A control string the string never terminated — a window title no less
+    // than a link opening, a `DCS` no less than an `OSC` — held back until
+    // what comes after it is known. In the string it was ended by the `ESC`
+    // of whatever stood behind it, and that may have been an `SGR` — which
+    // this loop does not copy but writes again as a transition, and a
+    // transition that changes nothing writes nothing. See
+    // [_terminatedOpening], asked inside the string and again at its end.
     var heldOpening = '';
 
     for (final m in matches) {
@@ -1021,9 +1026,10 @@ final class _ParserBase<S extends State<S>> {
 
         if (heldOpening.isNotEmpty) {
           buf.write(
-            _terminatedIfTextFollows(
+            _terminatedOpening(
               heldOpening,
               _firstNotEmpty(transit, string),
+              closing: false,
             ),
           );
           heldOpening = '';
@@ -1034,7 +1040,7 @@ final class _ParserBase<S extends State<S>> {
         // A code that carries no style of its own is kept as it was written —
         // save for an opening with no terminator, which waits to see what it
         // is written in front of.
-        if (entity is Osc && !_oscTerminated(string)) {
+        if (entity is ControlString && !entity.terminated) {
           heldOpening = string;
         } else {
           buf.write(string);
@@ -1061,11 +1067,7 @@ final class _ParserBase<S extends State<S>> {
     final following = _firstNotEmpty(closingLink, tail);
 
     buf
-      ..write(
-        close
-            ? _terminatedUnlessCodeFollows(heldOpening, following)
-            : _terminatedIfTextFollows(heldOpening, following),
-      )
+      ..write(_terminatedOpening(heldOpening, following, closing: close))
       // The link is closed the way the style is, and after the opening held
       // back: whatever the string left open — an opening of its own, or the
       // link it was seeded inside — must not go on catching what is printed
@@ -1149,14 +1151,15 @@ final class _Walk<S extends State<S>> {
 /// Whether the parser could not finish this escape code, so that whatever is
 /// written after it is read as part of it.
 ///
-/// An `OSC` without its terminator runs to the next `ESC` or to the end of
-/// the text; a bare `ESC`, a `CSI` with no final byte and an `ESC` left on an
+/// A control string without its terminator — an `OSC`, a `DCS`, an `SOS`, a
+/// `PM` or an `APC` — runs to the next `ESC` or to the end of the text; a
+/// bare `ESC`, a `CSI` with no final byte and an `ESC` left on an
 /// intermediate byte are all waiting for the byte that ends them, and
 /// whatever is written next supplies it — `ESC` and `X` make `SOS`, `CSI` and
 /// `X` make `ECH`. Everything else stands finished: `ESC 7` is a save,
 /// `CSI 31 m` is a colour, and text written behind either is text.
 bool _unfinished(Entity entity) => switch (entity) {
-      Osc() => !_oscTerminated(entity.string),
+      ControlString() => !entity.terminated,
       Esc() => entity.string == ESC ||
           entity.string == CSI ||
           _isIntermediate(entity.string.codeUnitAt(entity.string.length - 1)),

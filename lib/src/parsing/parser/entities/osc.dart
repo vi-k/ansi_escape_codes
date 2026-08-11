@@ -37,10 +37,12 @@ final class OscUnknown extends Osc with UnrecognizedEscapeCode {
 
 /// Whether [string] ends where an `OSC` sequence is allowed to end.
 ///
-/// An `OSC` runs until a `ST` or a `BEL`; one that got neither runs on to the
-/// next `ESC` or to the end of the text — the parser reads it that way on
-/// purpose, see `oscPattern`. Ending that way is ending nowhere: whatever is
-/// written straight after is read as more of the sequence.
+/// Asked of link codes, which are always an `OSC`; the openings held back go
+/// through [_terminatedOpening], which must not ask it. An `OSC` runs until a
+/// `ST` or a `BEL`; one that got neither runs on to the next `ESC` or to the
+/// end of the text — the parser reads it that way on purpose, see
+/// `oscPattern`. Ending that way is ending nowhere: whatever is written
+/// straight after is read as more of the sequence.
 bool _oscTerminated(String string) =>
     string.endsWith(ST) || string.endsWith(BEL);
 
@@ -80,6 +82,34 @@ String _terminatedUnlessCodeFollows(String codes, String following) =>
     codes.isEmpty || _oscTerminated(codes) || following.startsWith(ESC)
         ? codes
         : '$codes$ST';
+
+/// [opening] with the terminator it lacks, where what follows would otherwise
+/// be swallowed by it.
+///
+/// Only an opening the parser found unterminated is ever held back, so this
+/// does not ask again whether it ended — and it must not ask: a `BEL` ends an
+/// [Osc] and no other control string, so an unterminated [Dcs] whose body
+/// happens to end in one would be called finished by that question and left
+/// open. [_terminatedIfTextFollows] and [_terminatedUnlessCodeFollows] go on
+/// asking it, because what they are given is link codes, and those are always
+/// an `OSC`.
+///
+/// [closing] says what an empty [following] means. Inside a string it means
+/// nothing follows the opening at all, so there is nothing to be swallowed
+/// and the bytes go out as they came. At the edge of an output that closes —
+/// [Parser.substring] or [Parser.optimize] with `close: true`, a printed line
+/// — it means the next thing written is whatever the caller prints after, and
+/// the terminator is owed for the reason the hyperlink close is.
+String _terminatedOpening(
+  String opening,
+  String following, {
+  required bool closing,
+}) =>
+    opening.isEmpty ||
+            following.startsWith(ESC) ||
+            (following.isEmpty && !closing)
+        ? opening
+        : '$opening$ST';
 
 /// The first of [first], [second], [third] and [fourth] with anything in it,
 /// or the empty string where none of them has.
