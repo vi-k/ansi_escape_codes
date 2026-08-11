@@ -1,6 +1,7 @@
 # Written for whoever works on the package, not for whoever installs it.
 #
-# docs/ is where the design notes and specs live. doc/ is published: pub.dev
+# docs/ is where the working papers live — the handoff, the backlog and the
+# records of past waves. doc/ is published: pub.dev
 # renders only README, CHANGELOG and LICENSE, but what rides in the archive is
 # there for whoever opens the package, and a link from the readme reaches it.
 # A .pubignore replaces .gitignore rather than adding to it, so what `dart doc`
@@ -28,4 +29,3 @@ benchmark/compare.dart
 benchmark/memory_guard.dart
 tool/
 coverage/
-TODO.md
