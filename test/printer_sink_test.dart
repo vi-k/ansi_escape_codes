@@ -60,4 +60,46 @@ void main() {
       );
     });
   });
+
+  group('a piece prepared and not written:', () {
+    test('leaves the style where it was', () {
+      final buf = StringBuffer();
+      final printer = SinkPrinter(buf);
+
+      expect(
+        Parser(printer.prepare('${bold}asked about')).showControlFunctions(),
+        '[reset][bold]asked about[reset]',
+        reason: 'the answer is dressed as the piece asks',
+      );
+      expect(
+        printer.lastState,
+        isNull,
+        reason: 'but nothing reached the sink, so nothing is carried',
+      );
+
+      printer
+        ..write('one ')
+        ..write('two');
+
+      expect(
+        Parser(buf.toString()).showControlFunctions(),
+        '[reset]one [reset]two',
+        reason: 'and the writes after it go out as if it had not been asked',
+      );
+    });
+
+    test('while a line prepared by a printer is carried, as it always was', () {
+      final printer = Printer();
+
+      expect(
+        Parser(printer.prepare('${bold}one')).showControlFunctions(),
+        '[reset][bold]one[reset]',
+      );
+      expect(
+        Parser(printer.prepare('two')).showControlFunctions(),
+        '[reset][bold]two[reset]',
+        reason: 'a printer reads each line from where the line before ended',
+      );
+    });
+  });
 }
