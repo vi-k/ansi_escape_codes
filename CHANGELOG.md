@@ -268,6 +268,13 @@ Fixed:
   exports test. The `extensions` point had the same gap:
   `ansiRemoveControlCodes` takes a `Set<ControlFunctionsC0>` its own
   importer could not name, so the enum is now part of the point.
+- `prepare` on `SinkPrinter` and `StackedSinkPrinter` coloured the writes
+  that came after it. The piece it is asked about never reaches the sink, and
+  the link open in the output, the link open in the text and the terminator an
+  unterminated `OSC` owes were all put back for that reason — the style the
+  piece ended in was not, so `prepare('${bold}asked')` left the printer
+  reading the next `write` as if the bold had been sent. All four carries are
+  put back now.
 
 Renamed:
 
