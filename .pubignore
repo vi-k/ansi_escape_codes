@@ -19,11 +19,17 @@
 # measurement. The benchmark beside it is the one that says something
 # anywhere.
 #
+# AGENTS.md and CLAUDE.md are the same kind of paper as docs/: they tell an
+# agent how work is conducted here, which is nothing to whoever installs the
+# package. CLAUDE.md only imports AGENTS.md, so the two travel together.
+#
 # coverage/ is what `dart test --coverage` writes — the CI collects it there
 # and a local run puts it in the same place. It is a report about the tests,
 # not a part of the package, and the replacement rule above is why naming it
 # in .gitignore is not enough.
 docs/
+AGENTS.md
+CLAUDE.md
 doc/api/
 benchmark/compare.dart
 benchmark/memory_guard.dart
