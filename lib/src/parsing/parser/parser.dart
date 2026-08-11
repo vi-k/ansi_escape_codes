@@ -860,6 +860,23 @@ final class _ParserBase<S extends State<S>> {
           return _seamAt(after ? pos + 1 : pos - 1, after: after);
         }
 
+        // The piece may be the parameters of a `CSI` that never got its final
+        // byte: the parser hands them back as text, a terminal reads them as
+        // part of the sequence, and a cut among them makes the inserted text
+        // its final byte. The seam in front of the sequence is served — that
+        // is where the insertion was aimed — and nothing past it is: moving
+        // the text there would put it before characters the caller counted in
+        // front of it, and leaving it where it was asked for would make it
+        // part of the sequence.
+        if (walk.lastCode case final code?
+            when code.end == m.start && _unfinished(code.entity)) {
+          if (pos > plainPos) {
+            throw UnfinishedSequenceException(pos: pos, offset: code.start);
+          }
+
+          return (code.start, m.state, m.link);
+        }
+
         return (cut, m.state, m.link);
       }
     }

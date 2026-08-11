@@ -160,4 +160,72 @@ void main() {
       );
     });
   });
+
+  group('inserting among the parameters of a CSI with no final byte:', () {
+    test('the seam in front of it takes the text', () {
+      expect(
+        Parser('aa\x1B[31').insertAfter(2, 'X'),
+        'aaX\x1B[31',
+        reason: 'the position is the seam, and in front of the sequence is '
+            'where the text was asked to go',
+      );
+      expect(
+        Parser('aa\x1B[31').insertBefore(2, 'X'),
+        'aaX\x1B[31',
+        reason: 'insertBefore already stood there and stays where it was',
+      );
+    });
+
+    test('and every position past it is refused', () {
+      expect(
+        () => Parser('aa\x1B[31').insertAfter(3, 'X'),
+        throwsA(isA<UnfinishedSequenceException>()),
+      );
+      expect(
+        () => Parser('aa\x1B[31').insertAfter(4, 'X'),
+        throwsA(isA<UnfinishedSequenceException>()),
+      );
+      expect(
+        () => Parser('aa\x1B[31').insertBefore(3, 'X'),
+        throwsA(isA<UnfinishedSequenceException>()),
+      );
+      expect(
+        () => Parser('aa\x1B[31').insertBefore(4, 'X'),
+        throwsA(isA<UnfinishedSequenceException>()),
+      );
+    });
+
+    test('the exception says where the sequence begins', () {
+      try {
+        Parser('aa\x1B[31').insertAfter(3, 'X');
+        fail('the insertion was expected to be refused');
+      } on UnfinishedSequenceException catch (e) {
+        expect(e.pos, 3);
+        expect(e.offset, 2, reason: 'the ESC of the sequence stands at 2');
+      }
+    });
+
+    test('while a code after the parameters puts the end back in reach', () {
+      expect(
+        Parser('aa\x1B[31\x1B[0m').insertAfter(4, 'X'),
+        'aa\x1B[31\x1B[0mX',
+        reason: 'the cut goes past the SGR, outside the sequence, and that '
+            'was right before this wave and stays right',
+      );
+      expect(
+        () => Parser('aa\x1B[31\x1B[0m').insertBefore(4, 'X'),
+        throwsA(isA<UnfinishedSequenceException>()),
+        reason: 'insertBefore puts the cut against the parameters instead',
+      );
+    });
+
+    test('and a CSI that did get its final byte is untouched', () {
+      expect(
+        Parser('aa\x1B[31bb').insertAfter(2, 'X'),
+        'aa\x1B[31bXb',
+        reason: 'b is a final byte, so the sequence is finished, the text '
+            'after it is text, and the insertion goes past the code',
+      );
+    });
+  });
 }
