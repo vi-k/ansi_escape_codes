@@ -1,5 +1,18 @@
 # insertBefore / insertAfter — design
 
+> **Состояние документа**
+>
+> - **Тип:** дизайн, написан 2026-08-02 до кода
+> - **Статус:** реализован, код в `86d4a9d`; закрыл первый пункт тогдашнего
+>   `TODO.md`
+> - **Актуальность:** действующий дизайн `insertBefore` / `insertAfter`
+> - **Осторожно:** у `insertAfter` с тех пор известен незакрытый дефект:
+>   вставка в самый конец строки, которая кончается незавершённым `OSC`,
+>   уходит внутрь последовательности. Пункт открыт, описан в `docs/backlog.md`
+> - **Пути:** ссылки в тексте старые — записи с тех пор лежат в
+>   `docs/records/`, `TODO.md` стал `docs/backlog.md`, текущий handoff —
+>   `docs/handoff.md`
+
 ansi_escape_codes, 2026-08-02. Written before the code, shipped in `86d4a9d`.
 It closed the first item of TODO.md:
 

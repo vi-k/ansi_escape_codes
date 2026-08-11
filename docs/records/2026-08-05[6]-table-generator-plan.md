@@ -1,5 +1,16 @@
 # Генератор таблиц цветов — план имплементации
 
+> **Состояние документа**
+>
+> - **Тип:** план, 2026-08-05, по дизайну `2026-08-05[5]`
+> - **Статус:** выполнен, влит в `main` мержем `fecaaf9`
+> - **Актуальность:** верификация `2026-08-05[9]` подтвердила: восемь
+>   поверхностей покрыты, генератор идемпотентен, CI краснеет при ручной
+>   правке генерируемой зоны
+> - **Пути:** ссылки в тексте старые — записи с тех пор лежат в
+>   `docs/records/`, `TODO.md` стал `docs/backlog.md`, текущий handoff —
+>   `docs/handoff.md`
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps use

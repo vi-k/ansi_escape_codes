@@ -1,5 +1,14 @@
 # Унификация SGR-классификатора — план имплементации
 
+> **Состояние документа**
+>
+> - **Тип:** план, 2026-08-05, по дизайну `2026-08-05[1]`
+> - **Статус:** выполнен, влит в `main` мержем `812836b` (PR #12)
+> - **Актуальность:** вердикт по пункту #3 — в отчёте `2026-08-05[9]`
+> - **Пути:** ссылки в тексте старые — записи с тех пор лежат в
+>   `docs/records/`, `TODO.md` стал `docs/backlog.md`, текущий handoff —
+>   `docs/handoff.md`
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps use

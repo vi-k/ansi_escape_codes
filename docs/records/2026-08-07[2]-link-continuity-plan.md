@@ -1,5 +1,16 @@
 # План: непрерывность гиперссылки (N5)
 
+> **Состояние документа**
+>
+> - **Тип:** план, 2026-08-07, по дизайну `2026-08-07[1]`
+> - **Статус:** выполнен, влит в `main` мержем `5623e12`
+> - **Осторожно:** волна оставила два долга: незавершённый не-ссылочный `OSC`
+>   продолжал съедать текст (закрыт волной `57b8443`) и `lastState` в
+>   `prepare` (открыт, `docs/backlog.md`)
+> - **Пути:** ссылки в тексте старые — записи с тех пор лежат в
+>   `docs/records/`, `TODO.md` стал `docs/backlog.md`, текущий handoff —
+>   `docs/handoff.md`
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ссылка ведёт себя как стиль: срез, напечатанная строка и вставка переоткрывают её, а пакет умеет ответить, какая ссылка открыта в позиции.

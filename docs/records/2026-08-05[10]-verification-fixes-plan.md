@@ -1,5 +1,16 @@
 # План: фиксы по итогам верификации ревью
 
+> **Состояние документа**
+>
+> - **Тип:** план, 2026-08-05; закрывает находки отчёта `2026-08-05[9]`
+> - **Статус:** выполнен, влит в `main` мержем `56c8244`
+> - **Осторожно:** волна оставила долг: `_SinkPrinterBase.prepare` возвращает
+>   на место обе ссылочные переменные, но `lastState` оставляет сдвинутым.
+>   Пункт до сих пор открыт — `docs/backlog.md`
+> - **Пути:** ссылки в тексте старые — записи с тех пор лежат в
+>   `docs/records/`, `TODO.md` стал `docs/backlog.md`, текущий handoff —
+>   `docs/handoff.md`
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Закрыть находки отчёта верификации `docs/2026-08-05[9]-review-verification-report.md`: регрессию памяти M5, дыру L7-класса в `extensions.dart`, лишний `namedGroup` (M7-минимум), незащищённое выключение режимов в `currentCursorPos`, незакрываемую ссылку в `Printer`; запиннить риски M6; хвосты — в бэклог.

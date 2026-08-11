@@ -1,5 +1,16 @@
 # Перформанс-фиксы 4.0.0 — план реализации
 
+> **Состояние документа**
+>
+> - **Тип:** план, 2026-08-04, по дизайну `2026-08-04[2]`
+> - **Статус:** выполнен, влит в `main` мержем `8ece39c` (PR #10)
+> - **Актуальность:** числа бенчмарков — той ревизии; полоса гарда памяти с
+>   тех пор перемерена на двух машинах (`80b68b2`), актуальная — в
+>   `docs/handoff.md`. Итог по M5 и M7 поправлен отчётом `2026-08-05[9]`
+> - **Пути:** ссылки в тексте старые — записи с тех пор лежат в
+>   `docs/records/`, `TODO.md` стал `docs/backlog.md`, текущий handoff —
+>   `docs/handoff.md`
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Устранить четыре перформанс-находки ревью (H3, M4, M7, M5) без изменения публичного API и семантики, с доказательствами в виде бенчмарк-чисел и гардов.

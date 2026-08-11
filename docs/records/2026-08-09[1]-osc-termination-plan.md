@@ -1,5 +1,16 @@
 # План: незавершённый `OSC` перестаёт съедать текст
 
+> **Состояние документа**
+>
+> - **Тип:** план, 2026-08-09, по дизайну `2026-08-08[1]`
+> - **Статус:** выполнен, влит в `main` мержем `57b8443`
+> - **Осторожно:** часть задач написана по ложному инварианту (см. дизайн);
+>   поправки внесены в текст задач после реализации. Волна закрыла три
+>   поверхности из четырёх — `insertAfter` осталась, пункт в `docs/backlog.md`
+> - **Пути:** ссылки в тексте старые — записи с тех пор лежат в
+>   `docs/records/`, `TODO.md` стал `docs/backlog.md`, текущий handoff —
+>   `docs/handoff.md`
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps use

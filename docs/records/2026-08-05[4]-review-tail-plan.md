@@ -1,5 +1,16 @@
 # Хвост ревью — план имплементации
 
+> **Состояние документа**
+>
+> - **Тип:** план, 2026-08-05, по дизайну `2026-08-05[3]`
+> - **Статус:** выполнен, влит в `main` мержем `5af798b`
+> - **Актуальность:** переименования доков в тексте — та самая волна, что
+>   ввела схему `YYYY-MM-DD[N]`; сегодня записи лежат в `docs/records/`.
+>   Оговорка верификации по L7/L8 закрыта волной `56c8244`
+> - **Пути:** ссылки в тексте старые — записи с тех пор лежат в
+>   `docs/records/`, `TODO.md` стал `docs/backlog.md`, текущий handoff —
+>   `docs/handoff.md`
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps use

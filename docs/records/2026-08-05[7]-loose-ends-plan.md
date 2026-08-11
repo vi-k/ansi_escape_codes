@@ -1,5 +1,15 @@
 # Мелкие хвосты — дизайн и план одним документом
 
+> **Состояние документа**
+>
+> - **Тип:** дизайн и план одним документом, 2026-08-05
+> - **Статус:** выполнен, влит в `main` мержем `6acae3a`; закрыл остаток
+>   мелочей плана ревью `2026-08-04[1]`
+> - **Актуальность:** исторический документ
+> - **Пути:** ссылки в тексте старые — записи с тех пор лежат в
+>   `docs/records/`, `TODO.md` стал `docs/backlog.md`, текущий handoff —
+>   `docs/handoff.md`
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps use

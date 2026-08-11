@@ -1,5 +1,16 @@
 # План: волна по бэклогу — TODO минус дизайн-заход
 
+> **Состояние документа**
+>
+> - **Тип:** план волны по бэклогу, 2026-08-05
+> - **Статус:** выполнен, влит в `main` мержем `7a7a550`; закрыл весь
+>   тогдашний `TODO.md`, кроме N5
+> - **Актуальность:** N5 закрыта следующей волной — дизайн `2026-08-07[1]`,
+>   мерж `5623e12`
+> - **Пути:** ссылки в тексте старые — записи с тех пор лежат в
+>   `docs/records/`, `TODO.md` стал `docs/backlog.md`, текущий handoff —
+>   `docs/handoff.md`
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Закрыть все пункты TODO.md, кроме N5 (переоткрытие ссылок — дизайн-заход с пользователем), плюс запаркованный хвост волны [10]: два предложения dartdoc в printer.dart про carry.

@@ -1,5 +1,15 @@
 # Корректность-фиксы 4.0.0 — план имплементации
 
+> **Состояние документа**
+>
+> - **Тип:** план, 2026-08-04, по дизайну `2026-08-04[5]`
+> - **Статус:** выполнен, влит в `main` мержем `7373f69` (PR #11)
+> - **Актуальность:** вердикты по H1, H2, M1, M8 — в отчёте `2026-08-05[9]`:
+>   все закрыты, хвосты N3 и N4 добраны волной `56c8244`
+> - **Пути:** ссылки в тексте старые — записи с тех пор лежат в
+>   `docs/records/`, `TODO.md` стал `docs/backlog.md`, текущий handoff —
+>   `docs/handoff.md`
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps use
