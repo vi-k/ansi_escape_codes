@@ -118,4 +118,46 @@ void main() {
       expect(text.ansiInsertAfter(5, '!'), '${fgRed}Hello$reset! world');
     });
   });
+
+  group('inserting where the string ends inside a sequence:', () {
+    test('the text goes in front of what never finished', () {
+      expect(
+        Parser('aa\x1B]0;title').insertAfter(2, 'X'),
+        'aaX\x1B]0;title',
+        reason: 'the tail is copied as it came, the text lands before it',
+      );
+      expect(
+        Parser('aa\x1B').insertAfter(2, 'X'),
+        'aaX\x1B',
+        reason: 'a bare ESC cannot be finished, so nothing is written for it',
+      );
+      expect(Parser('aa\x1B[').insertAfter(2, 'X'), 'aaX\x1B[');
+      expect(
+        Parser('aa\x1B(').insertAfter(2, 'X'),
+        'aaX\x1B(',
+        reason: 'an ESC waiting for a final byte takes the insertion no more '
+            'than a CSI does',
+      );
+    });
+
+    test('and the hyperlink opening keeps the text outside it', () {
+      final inserted = Parser('aa\x1B]8;;http://a/').insertAfter(2, 'X');
+
+      expect(inserted, 'aaX\x1B]8;;http://a/');
+      expect(
+        Parser(inserted).linkAt(2),
+        isNull,
+        reason: 'the opening still stands after the text, not around it',
+      );
+    });
+
+    test('while a finished tail is still passed by', () {
+      expect(
+        Parser('aa\x1B]0;t\x1B\\').insertAfter(2, 'X'),
+        'aa\x1B]0;t\x1B\\X',
+        reason: 'a terminated OSC ends where it says, and insertAfter goes '
+            'past it as it always did',
+      );
+    });
+  });
 }

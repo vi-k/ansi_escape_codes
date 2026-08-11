@@ -23,6 +23,7 @@ import '../control_functions/control_sequences.dart';
 import '../control_functions/sgr.dart';
 import '../patterns/patterns.dart';
 import '../state/state.dart';
+import 'unfinished_sequence_exception.dart';
 
 part 'printer.dart';
 part 'entities/csi.dart';
@@ -867,6 +868,28 @@ final class _ParserBase<S extends State<S>> {
       throw RangeError.range(pos, 0, walk.passed, 'pos');
     }
 
+    // The walk is spent, and the string may end inside a sequence that never
+    // finished: a cut at the end of the input would fall among bytes a
+    // terminal reads as that sequence, and the text would be read as its
+    // parameters instead of shown. The insertion goes in front of the
+    // sequence instead — no byte of the input is invented — and it lands in
+    // the state and the link that stood before it, which for a hyperlink
+    // opening means outside the link that opening opens.
+    if (walk.lastCode case final code? when _unfinished(code.entity)) {
+      // Everything past the last code is plain text, so the sequence runs to
+      // the end of the input and its seam is that much before the end.
+      final seam = walk.passed - (input.length - code.end);
+      if (pos > seam) {
+        throw UnfinishedSequenceException(pos: pos, offset: code.start);
+      }
+
+      return (
+        code.start,
+        walk.current?.state ?? initialState,
+        walk.current?.link ?? initialLink,
+      );
+    }
+
     return (input.length, finalState, finalLink);
   }
 
@@ -1081,6 +1104,27 @@ final class _Walk<S extends State<S>> {
     return false;
   }
 }
+
+/// Whether the parser could not finish this escape code, so that whatever is
+/// written after it is read as part of it.
+///
+/// An `OSC` without its terminator runs to the next `ESC` or to the end of
+/// the text; a bare `ESC`, a `CSI` with no final byte and an `ESC` left on an
+/// intermediate byte are all waiting for the byte that ends them, and
+/// whatever is written next supplies it — `ESC` and `X` make `SOS`, `CSI` and
+/// `X` make `ECH`. Everything else stands finished: `ESC 7` is a save,
+/// `CSI 31 m` is a colour, and text written behind either is text.
+bool _unfinished(Entity entity) => switch (entity) {
+      Osc() => !_oscTerminated(entity.string),
+      Esc() => entity.string == ESC ||
+          entity.string == CSI ||
+          _isIntermediate(entity.string.codeUnitAt(entity.string.length - 1)),
+      _ => false,
+    };
+
+/// Whether [codeUnit] is an intermediate byte, which cannot end an escape
+/// sequence: ECMA-48 gives them the range `02/00` to `02/15`.
+bool _isIntermediate(int codeUnit) => codeUnit >= 0x20 && codeUnit <= 0x2F;
 
 /// Whether [codeUnit] is the leading half of a surrogate pair.
 bool _isHighSurrogate(int codeUnit) => (codeUnit & 0xFC00) == 0xD800;
