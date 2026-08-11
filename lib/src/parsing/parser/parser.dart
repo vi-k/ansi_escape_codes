@@ -749,6 +749,20 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// The exclamation mark is red: at position 5 stands the `reset`, and this
   /// goes in front of it. See [insertAfter] for the other side of it.
+  ///
+  /// Neither insertion lands inside a sequence the parser could not finish —
+  /// an `OSC` that never got its terminator, a bare `ESC`, a `CSI` with no
+  /// final byte, an `ESC` left on an intermediate byte. Whatever is written
+  /// among the bytes of one is read as part of it: `ESC` and an `X` are an
+  /// `SOS`, `CSI` and an `X` an `ECH`, and neither shows the letter. Aimed at
+  /// the seam in front of such a sequence, the text is put there, in front of
+  /// it, and the tail is copied on as it came. Aimed past that seam — among
+  /// the parameters of a `CSI` handed back as text — it is refused with an
+  /// [UnfinishedSequenceException], because no answer is right: in front of
+  /// the sequence is before characters counted in front of it, and where it
+  /// was asked for is inside the sequence.
+  ///
+  /// A [pos] outside the plain text is a [RangeError], as it always was.
   String insertBefore(int pos, String text) => _insert(pos, text, after: false);
 
   /// Inserts [text] at the plain text [pos], behind the escape codes standing
@@ -771,6 +785,15 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// The exclamation mark is not red: it goes behind the `reset` standing at
   /// position 5.
+  ///
+  /// The codes it goes behind are the finished ones. A sequence the parser
+  /// could not finish is not passed but stood in front of, and a position
+  /// among the bytes of one is refused with an [UnfinishedSequenceException];
+  /// [insertBefore] says the whole of it.
+  ///
+  /// ```dart
+  /// print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
+  /// ```
   String insertAfter(int pos, String text) => _insert(pos, text, after: true);
 
   String _insert(int pos, String text, {required bool after}) {

@@ -216,17 +216,29 @@ Fixed:
   they came. `SinkPrinter` and `StackedSinkPrinter` pay the same debt where
   the line really ends — at a `writeln`, or at a `'\n'` in what is written —
   and owe nothing at the end of a `write` the line goes on past.
-  `insertBefore` owes nothing at any position: it lands in front of whatever
-  codes stand at the seam, so an unterminated `OSC` never comes between it and
-  the text it was aimed at. `insertAfter` goes past those codes instead, and
-  where the string ends inside an unterminated `OSC` that puts an insertion at
-  the end of the text inside the sequence —
-  `Parser('aa\x1B]0;title').insertAfter(2, 'X')` hands back a string whose
-  plain text is still `aa`, and a hyperlink opening swallows the `X` no
-  differently. That is the same mechanism on a surface this release does not
-  reach, and it is left as it stands. An opening written again for a slice or
-  a line that began inside the link carries its terminator whatever follows
-  it.
+  An opening written again for a slice or a line that began inside the link
+  carries its terminator whatever follows it.
+- The insertions reached the same mechanism last. `insertAfter` goes past the
+  codes standing at the seam, and where the string ended inside a sequence
+  that never finished it went past those bytes as well —
+  `Parser('aa\x1B]0;title').insertAfter(2, 'X')` handed back a string whose
+  plain text was still `aa`, the `X` having become part of the window title,
+  and a hyperlink opening swallowed it no differently. A bare `ESC` turned the
+  insertion into an `SOS` and a `CSI` with no final byte into an `ECH`. Both
+  insertions now stand in front of such a sequence rather than inside it, and
+  the tail is copied on as it came: no byte of the input is invented, which is
+  why no terminator is supplied here as it is for a slice.
+
+  Where the sequence is a `CSI` whose parameters the parser hands back as
+  text, a position among them has no right answer — in front of the sequence
+  is before characters counted in front of it, and where it was asked for is
+  inside the sequence — and it is refused with an
+  `UnfinishedSequenceException`. It carries the position asked for and the
+  offset the sequence begins at. Before this the same position quietly ate
+  what stood there: `Parser('aa\x1B[31').insertAfter(3, 'X')` answered a
+  string whose plain text was `aa1`, the `3` having become a parameter.
+  `insertBefore` was no better, though the backlog had it down as safe
+  everywhere.
 - `insertBefore` and `insertAfter` could put text between the halves of a
   surrogate pair and hand back a string that is no longer valid UTF-16. A
   position inside a pair now shifts to its edge — `insertBefore` to the

@@ -191,8 +191,8 @@ Each entry point brings a different part of the package:
 |:---|---:|:---|
 | `ansi_escape_codes.dart` | ~1000 | all of it: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state, the control function tables, the `String` extensions and the two terminal utilities |
 | `ansi.dart` | ~500 | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F`. The only one that is not part of the first — the ready-to-use strings are built from these, and neither brings the other |
-| `style.dart` | 81 | the styles, the state and the parser with its control function tables, without the tables of ready-to-use strings |
-| `extensions.dart` | 7 | the `String` extensions, with the two enums their signatures name |
+| `style.dart` | 82 | the styles, the state and the parser with its control function tables, without the tables of ready-to-use strings |
+| `extensions.dart` | 8 | the `String` extensions, with the two enums their signatures name and the exception the two insertions throw |
 | `utils.dart` | 2 | `tabs` and `currentCursorPos` alone |
 
 The bottom three are parts of the first, and are there for the times a smaller
@@ -961,6 +961,29 @@ print(Parser(text).insertBefore(5, '!').ansiShowControlFunctions());
 print(Parser(text).insertAfter(5, '!').ansiShowControlFunctions());
 // [fgRed]Hello[reset]! world
 ```
+
+Neither insertion lands inside a sequence the parser could not finish — an
+`OSC` that never got its terminator, a bare `ESC`, a `CSI` with no final byte.
+Whatever is written among the bytes of one is read as part of it, so the text
+goes in front of the sequence and the tail is copied on as it came:
+
+```dart
+print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
+```
+
+A `CSI` with no final byte is the one that can carry parameters behind it, and
+those come back as text although a terminal reads them as part of the
+sequence. A position among them has no right answer — in front of the sequence
+is before characters counted in front of it, and where it was asked for is
+inside the sequence — so it is refused:
+
+```dart
+Parser('aa\x1B[31').insertAfter(3, 'X'); // throws UnfinishedSequenceException
+```
+
+The exception carries the position asked for and the offset the sequence
+begins at. A position outside the plain text is a `RangeError`, as everywhere
+else.
 
 For a string parsed only once there are the `ansiInsertBefore` and
 `ansiInsertAfter` extensions, like the other shortcuts below.
