@@ -4,8 +4,13 @@ part of '../parser.dart';
 /// the terminal rather than to the screen.
 ///
 /// The one this package names is [Link]; the rest come back [OscUnknown].
-sealed class Osc extends EscapeCode {
+sealed class Osc extends ControlString {
   const Osc._(super.string) : super._();
+
+  /// A `BEL` ends an `OSC` — xterm's terminator, kept because the strings
+  /// written with it are everywhere — where it ends no other control string.
+  @override
+  bool get terminated => string.endsWith(ST) || string.endsWith(BEL);
 
   static Osc _parse<S extends State<S>>(_MatchingState<S> state) {
     final params = state['osc_params']!.split(';');
@@ -151,7 +156,7 @@ final class Link extends Osc {
   ///
   /// This is what [Parser.substring], the insertions and the printers write
   /// where they open a link the text they are copying was already inside.
-  String get _reopening => _oscTerminated(string) ? string : '$string$ST';
+  String get _reopening => terminated ? string : '$string$ST';
 
   @override
   String get id => url.isEmpty ? 'linkClose' : 'link($url)';

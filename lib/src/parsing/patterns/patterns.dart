@@ -2,7 +2,7 @@ import '../../ansi/c0.dart';
 
 /// Pattern for escape codes.
 final escapeCodesRe = RegExp(
-  '(?<all>($csiPattern|$oscPattern|$escPattern))',
+  '(?<all>($csiPattern|$oscPattern|$controlStringPattern|$escPattern))',
 );
 
 /// Pattern for CSI.
@@ -33,6 +33,24 @@ final RegExp sgrRe = RegExp(sgrPattern);
 const String oscPattern = '(?<osc>$ESC\\])'
     '(?<osc_params>[^$BEL$ESC]*)'
     '(?<osc_terminator>$BEL|$ESC\\\\)?';
+
+/// Pattern for the C1 string openers other than `OSC`: `DCS`, `SOS`, `PM`
+/// and `APC`.
+///
+/// Each opens a string that runs to its `ST`, and one that never got a
+/// terminator ends at the next `ESC` or at the end of the text — the reading
+/// `oscPattern` gives, and for the reason it gives it: read as a
+/// two-character escape instead, the string would surface its body as text
+/// and whatever was written after the opener would be swallowed by the
+/// terminal.
+///
+/// A `BEL` ends none of these. It ends an `OSC`, which is xterm's and not the
+/// standard's, and the standard gives all five `ST`.
+const String controlStringPattern =
+    // P, X, ^ and _: DCS, SOS, PM and APC.
+    '(?<cstr>$ESC[\x50\x58\x5E\x5F])'
+    '(?<cstr_params>[^$ESC]*)'
+    '(?<cstr_terminator>$ESC\\\\)?';
 
 /// Pattern for ESC.
 ///

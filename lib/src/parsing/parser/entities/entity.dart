@@ -92,6 +92,8 @@ sealed class EscapeCode extends Entity {
           return Csi._parse(state);
         case 0x5D: // ]
           return Osc._parse(state);
+        case 0x50 || 0x58 || 0x5E || 0x5F: // P, X, ^, _
+          return ControlString._parse(state);
       }
     }
 

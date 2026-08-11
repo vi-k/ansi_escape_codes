@@ -26,6 +26,7 @@ import '../state/state.dart';
 import 'unfinished_sequence_exception.dart';
 
 part 'printer.dart';
+part 'entities/control_string.dart';
 part 'entities/csi.dart';
 part 'entities/entity.dart';
 part 'entities/esc.dart';
