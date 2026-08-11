@@ -10,4 +10,13 @@ void main() {
       'a\nb',
     );
   });
+
+  test('the extensions entry point names the exception its insertions throw',
+      () {
+    expect(
+      const UnfinishedSequenceException(pos: 2, offset: 2),
+      isA<Exception>(),
+      reason: 'the two insertions throw it, and it has to be nameable here',
+    );
+  });
 }
