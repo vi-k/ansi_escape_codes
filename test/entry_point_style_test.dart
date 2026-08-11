@@ -21,5 +21,11 @@ void main() {
     expect(Stack.terminalColors, isA<Stack>());
     expect(const NoStyle(), isA<Style>());
     expect(Color256.red, isA<Color>());
+
+    expect(
+      const UnfinishedSequenceException(pos: 0, offset: 0),
+      isA<Exception>(),
+      reason: 'the parser lives here, and so does what its insertions throw',
+    );
   });
 }

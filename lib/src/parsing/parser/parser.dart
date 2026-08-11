@@ -23,6 +23,7 @@ import '../control_functions/control_sequences.dart';
 import '../control_functions/sgr.dart';
 import '../patterns/patterns.dart';
 import '../state/state.dart';
+import 'unfinished_sequence_exception.dart';
 
 part 'printer.dart';
 part 'entities/csi.dart';
@@ -748,6 +749,20 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// The exclamation mark is red: at position 5 stands the `reset`, and this
   /// goes in front of it. See [insertAfter] for the other side of it.
+  ///
+  /// Neither insertion lands inside a sequence the parser could not finish —
+  /// an `OSC` that never got its terminator, a bare `ESC`, a `CSI` with no
+  /// final byte, an `ESC` left on an intermediate byte. Whatever is written
+  /// among the bytes of one is read as part of it: `ESC` and an `X` are an
+  /// `SOS`, `CSI` and an `X` an `ECH`, and neither shows the letter. Aimed at
+  /// the seam in front of such a sequence, the text is put there, in front of
+  /// it, and the tail is copied on as it came. Aimed past that seam — among
+  /// the parameters of a `CSI` handed back as text — it is refused with an
+  /// [UnfinishedSequenceException], because no answer is right: in front of
+  /// the sequence is before characters counted in front of it, and where it
+  /// was asked for is inside the sequence.
+  ///
+  /// A [pos] outside the plain text is a [RangeError], as it always was.
   String insertBefore(int pos, String text) => _insert(pos, text, after: false);
 
   /// Inserts [text] at the plain text [pos], behind the escape codes standing
@@ -770,6 +785,15 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// The exclamation mark is not red: it goes behind the `reset` standing at
   /// position 5.
+  ///
+  /// The codes it goes behind are the finished ones. A sequence the parser
+  /// could not finish is not passed but stood in front of, and a position
+  /// among the bytes of one is refused with an [UnfinishedSequenceException];
+  /// [insertBefore] says the whole of it.
+  ///
+  /// ```dart
+  /// print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
+  /// ```
   String insertAfter(int pos, String text) => _insert(pos, text, after: true);
 
   String _insert(int pos, String text, {required bool after}) {
@@ -859,12 +883,51 @@ final class _ParserBase<S extends State<S>> {
           return _seamAt(after ? pos + 1 : pos - 1, after: after);
         }
 
+        // The piece may be the parameters of a `CSI` that never got its final
+        // byte: the parser hands them back as text, a terminal reads them as
+        // part of the sequence, and a cut among them makes the inserted text
+        // its final byte. The seam in front of the sequence is served — that
+        // is where the insertion was aimed — and nothing past it is: moving
+        // the text there would put it before characters the caller counted in
+        // front of it, and leaving it where it was asked for would make it
+        // part of the sequence.
+        if (walk.lastCode case final code?
+            when code.end == m.start && _unfinished(code.entity)) {
+          if (pos > plainPos) {
+            throw UnfinishedSequenceException(pos: pos, offset: code.start);
+          }
+
+          return (code.start, m.state, m.link);
+        }
+
         return (cut, m.state, m.link);
       }
     }
 
     if (pos > walk.passed) {
       throw RangeError.range(pos, 0, walk.passed, 'pos');
+    }
+
+    // The walk is spent, and the string may end inside a sequence that never
+    // finished: a cut at the end of the input would fall among bytes a
+    // terminal reads as that sequence, and the text would be read as its
+    // parameters instead of shown. The insertion goes in front of the
+    // sequence instead — no byte of the input is invented — and it lands in
+    // the state and the link that stood before it, which for a hyperlink
+    // opening means outside the link that opening opens.
+    if (walk.lastCode case final code? when _unfinished(code.entity)) {
+      // Everything past the last code is plain text, so the sequence runs to
+      // the end of the input and its seam is that much before the end.
+      final seam = walk.passed - (input.length - code.end);
+      if (pos > seam) {
+        throw UnfinishedSequenceException(pos: pos, offset: code.start);
+      }
+
+      return (
+        code.start,
+        walk.current?.state ?? initialState,
+        walk.current?.link ?? initialLink,
+      );
     }
 
     return (input.length, finalState, finalLink);
@@ -1081,6 +1144,27 @@ final class _Walk<S extends State<S>> {
     return false;
   }
 }
+
+/// Whether the parser could not finish this escape code, so that whatever is
+/// written after it is read as part of it.
+///
+/// An `OSC` without its terminator runs to the next `ESC` or to the end of
+/// the text; a bare `ESC`, a `CSI` with no final byte and an `ESC` left on an
+/// intermediate byte are all waiting for the byte that ends them, and
+/// whatever is written next supplies it — `ESC` and `X` make `SOS`, `CSI` and
+/// `X` make `ECH`. Everything else stands finished: `ESC 7` is a save,
+/// `CSI 31 m` is a colour, and text written behind either is text.
+bool _unfinished(Entity entity) => switch (entity) {
+      Osc() => !_oscTerminated(entity.string),
+      Esc() => entity.string == ESC ||
+          entity.string == CSI ||
+          _isIntermediate(entity.string.codeUnitAt(entity.string.length - 1)),
+      _ => false,
+    };
+
+/// Whether [codeUnit] is an intermediate byte, which cannot end an escape
+/// sequence: ECMA-48 gives them the range `02/00` to `02/15`.
+bool _isIntermediate(int codeUnit) => codeUnit >= 0x20 && codeUnit <= 0x2F;
 
 /// Whether [codeUnit] is the leading half of a surrogate pair.
 bool _isHighSurrogate(int codeUnit) => (codeUnit & 0xFC00) == 0xD800;
