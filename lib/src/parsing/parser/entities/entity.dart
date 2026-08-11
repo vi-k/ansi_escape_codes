@@ -60,8 +60,9 @@ final class Text extends Entity {
   }
 }
 
-/// An escape code: a [Csi] control sequence, an [Osc] string, an [Esc]
-/// sequence, or something none of those could be made of.
+/// An escape code: a [Csi] control sequence, a [ControlString] — the [Osc]
+/// and the four the standard puts beside it — an [Esc] sequence, or something
+/// none of those could be made of.
 sealed class EscapeCode extends Entity {
   @override
   final String string;
@@ -79,7 +80,7 @@ sealed class EscapeCode extends Entity {
     final string = state.string;
 
     // Every match begins with ESC; the byte after it says which of the
-    // three kinds this is, without asking the regex for its groups — save
+    // four kinds this is, without asking the regex for its groups — save
     // for one case the byte alone cannot settle: `ESC[` with nothing after
     // it that could complete a CSI (cut short, or followed by a byte a CSI
     // could never end on) is not a [csiPattern] match but an [escPattern]
@@ -113,14 +114,16 @@ sealed class EscapeCode extends Entity {
 ///
 /// [EscapeCode.id] falls back to the bytes themselves, so nothing is lost by
 /// not being understood. Carried by [UnknownEscapeCode], [CsiUnknown],
-/// [CsiPrivate], [EscUnknown] and [OscUnknown]; one check catches them all.
+/// [CsiPrivate], [EscUnknown], [OscUnknown] and the four control strings this
+/// package carries without reading — [Dcs], [Sos], [Pm] and [Apc]; one check
+/// catches them all.
 mixin UnrecognizedEscapeCode on EscapeCode {
   @override
   String get id => string.ansiShowEscapeSequences(open: '', close: '');
 }
 
-/// What an escape code falls back to when it is none of [Csi], [Osc] or
-/// [Esc].
+/// What an escape code falls back to when it is none of [Csi],
+/// [ControlString] or [Esc].
 ///
 /// The patterns as they stand leave nothing for it: whatever they match is one
 /// of the three, so nothing in a string being read comes back as this today.
