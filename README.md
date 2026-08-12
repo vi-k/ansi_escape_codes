@@ -1023,8 +1023,8 @@ print(text.ansiHasBackground); // false
 print(text.ansiShowEscapeSequences()); // [CSI 31 SGR]ERROR[CSI 0 SGR]
 ```
 
-The method `ansiShowControlCodes` allows to show all control codes from C0
-set in a string:
+The method `ansiShowControlCodes` allows to show all control codes in a
+string — the C0 set, `DEL` and the eight-bit C1:
 
 ```dart
 const text = 'Tab: \t Line feed: \n Carriage return: \r Bell: \x07';
@@ -1048,6 +1048,31 @@ print(text.ansiShowControlCodes(preferStyle: ControlCodeStyle.unicode));
 print(text.ansiShowControlCodes(preferStyle: ControlCodeStyle.escapeOrUnicode));
 // Tab: \t Line feed: \n Carriage return: \r Bell: ␇
 ```
+
+The eight-bit forms of the C1 controls — the bytes `0x80` through `0x9F` — are
+shown too, as the number of the byte and in every style alike, since they have
+neither an abbreviation nor a Unicode picture of their own:
+
+```dart
+print('a\u{9B}b'.ansiShowControlCodes()); // a\x9Bb
+print('a\u{9B}b'.ansiShowControlCodes(preferStyle: ControlCodeStyle.abbr)); // a\x9Bb
+print('a\u{9B}b'.ansiHasControlCodes); // true
+print('a\u{9B}b'.ansiRemoveControlCodes()); // ab
+```
+
+They are controls by Unicode's own category and a terminal handed one prints
+rubbish rather than a glyph, so a string cleaned for display is not clean while
+they stand in it. `0xA0` and above are not controls and are left alone.
+
+Being controls does not make them escape codes here, and this package does not
+read them as such: `Parser` reads `0x9B` as text rather than as a `CSI`, and
+`ansiRemoveEscapeCodes` leaves it where it stands. That is a decision and not
+an omission. What is parsed here are decoded Dart strings rather than byte
+streams, and a genuine eight-bit C1 does not survive UTF-8 decoding — it
+arrives whole only from a stream decoded as latin1, where the caller already
+knows it is holding eight-bit bytes. Terminals emit the seven-bit `ESC [` form
+by default, so reading `0x9B` as a `CSI` would break honest text more often
+than it would help.
 
 You can quickly remove all codes using the methods:
 
@@ -1081,10 +1106,12 @@ print(withoutAllEscapeCodes.ansiShowEscapeSequences());
 The rest of the extensions, in one breath: `ansiHasUnderlineColor` and
 `ansiRemoveUnderlineColor` do for the color of the underline what the pairs
 above do for the foreground and the background; `ansiHasControlCodes` and
-`ansiRemoveControlCodes` ask about and take out the C0 bytes and `DEL` rather
-than the escape codes — `ESC` is one of those bytes, so take the escape codes
-out first or their bodies are left behind as text, and name the ones to keep
-with `exclude: {ControlFunctionsC0.LF}`; `lengthWithoutEscapeCodes` is
+`ansiRemoveControlCodes` ask about and take out the control codes — the C0
+bytes, `DEL` and the eight-bit C1 — rather than the escape codes; `ESC` is one
+of those bytes, so take the escape codes out first or their bodies are left
+behind as text, and name the ones to keep with
+`exclude: {ControlFunctionsC0.LF}`, which names C0 members and so cannot spare
+an eight-bit C1; `lengthWithoutEscapeCodes` is
 `Parser.length` for a string read once; `ansiShowControlFunctions` and
 `ansiOptimizeControlFunctions` are `Parser.showControlFunctions` and
 `Parser.optimize` for a string read once.

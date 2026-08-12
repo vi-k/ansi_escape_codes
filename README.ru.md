@@ -1019,8 +1019,8 @@ print(text.ansiHasBackground); // false
 print(text.ansiShowEscapeSequences()); // [CSI 31 SGR]ERROR[CSI 0 SGR]
 ```
 
-Метод `ansiShowControlCodes` показывает в строке все управляющие коды набора
-C0:
+Метод `ansiShowControlCodes` показывает в строке все управляющие коды —
+набор C0, `DEL` и восьмибитные C1:
 
 ```dart
 const text = 'Tab: \t Line feed: \n Carriage return: \r Bell: \x07';
@@ -1044,6 +1044,32 @@ print(text.ansiShowControlCodes(preferStyle: ControlCodeStyle.unicode));
 print(text.ansiShowControlCodes(preferStyle: ControlCodeStyle.escapeOrUnicode));
 // Tab: \t Line feed: \n Carriage return: \r Bell: ␇
 ```
+
+Восьмибитные формы управляющих C1 — байты с `0x80` по `0x9F` — показываются
+тоже, числом байта и одинаково во всех стилях: ни аббревиатуры, ни картинки
+Unicode у них нет:
+
+```dart
+print('a\u{9B}b'.ansiShowControlCodes()); // a\x9Bb
+print('a\u{9B}b'.ansiShowControlCodes(preferStyle: ControlCodeStyle.abbr)); // a\x9Bb
+print('a\u{9B}b'.ansiHasControlCodes); // true
+print('a\u{9B}b'.ansiRemoveControlCodes()); // ab
+```
+
+Они управляющие по категории самого Unicode, и терминал, которому такой байт
+достался, печатает мусор, а не символ, — поэтому строка, очищенная для показа,
+не очищена, пока они в ней стоят. `0xA0` и выше управляющими не являются и не
+трогаются.
+
+Но то, что они управляющие, не делает их здесь escape-кодами, и пакет их так
+не читает: `Parser` видит в `0x9B` текст, а не `CSI`, и
+`ansiRemoveEscapeCodes` оставляет его на месте. Это решение, а не упущение.
+Разбираются здесь декодированные Dart-строки, а не байтовые потоки, и
+настоящий восьмибитный C1 не переживает UTF-8-декодирования — целым он
+доезжает только из потока, декодированного как latin1, где вызывающий и сам
+знает, что держит восьмибитные байты. Терминалы по умолчанию пишут семибитную
+форму `ESC [`, так что чтение `0x9B` как `CSI` ломало бы честный текст чаще,
+чем помогало.
 
 Быстро убрать коды можно этими методами:
 
@@ -1077,10 +1103,12 @@ print(withoutAllEscapeCodes.ansiShowEscapeSequences());
 Остальные расширения, одним духом: `ansiHasUnderlineColor` и
 `ansiRemoveUnderlineColor` делают для цвета подчёркивания то же, что пары выше
 делают для цвета текста и фона; `ansiHasControlCodes` и
-`ansiRemoveControlCodes` спрашивают и убирают байты C0 вместе с `DEL`, а не
-escape-коды — `ESC` как раз один из этих байтов, поэтому сначала уберите
-escape-коды, иначе их тела останутся текстом, а те, что нужно сохранить,
-назовите через `exclude: {ControlFunctionsC0.LF}`; `lengthWithoutEscapeCodes` —
+`ansiRemoveControlCodes` спрашивают и убирают управляющие коды — байты C0,
+`DEL` и восьмибитные C1, — а не escape-коды; `ESC` как раз один из этих
+байтов, поэтому сначала уберите escape-коды, иначе их тела останутся текстом,
+а те, что нужно сохранить, назовите через `exclude: {ControlFunctionsC0.LF}`,
+который называет членов C0 и потому восьмибитный C1 пощадить не может;
+`lengthWithoutEscapeCodes` —
 это `Parser.length` для строки, читаемой один раз; `ansiShowControlFunctions` и
 `ansiOptimizeControlFunctions` — это `Parser.showControlFunctions` и
 `Parser.optimize` для строки, читаемой один раз.

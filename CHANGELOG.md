@@ -39,9 +39,11 @@ Added:
 - `ansiHasUnderlineColor` and `ansiRemoveUnderlineColor`: the extensions knew
   the foreground and the background but not the underline colour.
 - `ansiRemoveControlCodes`, the other half of `ansiHasControlCodes`: the C0
-  set and `DEL` taken out, with `exclude` for the ones to keep — a text that
-  is to stay in lines keeps its `LF`. `ESC` is one of them, so the escape
-  codes come out first or their bodies are left behind as text.
+  set, `DEL` and the eight-bit C1 taken out, with `exclude` for the ones to
+  keep — a text that is to stay in lines keeps its `LF`. `ESC` is one of them,
+  so the escape codes come out first or their bodies are left behind as text.
+  `exclude` names members of `ControlFunctionsC0` and so cannot spare an
+  eight-bit C1: this package gives those no names, on the reasoning below.
 - `Colors implements Comparable`, so a list of them can be sorted.
 - `ansiShowControlFunctions` and `ansiOptimizeControlFunctions`, which used to
   live in the tests though the README and the examples took them for public.
@@ -310,6 +312,20 @@ Fixed:
   style the piece ended in was not, so `prepare('${bold}asked')` left the
   printer reading the next `write` as if the bold had been sent. All four
   carries are put back now.
+- The eight-bit forms of the C1 controls — the bytes `0x80` through `0x9F` —
+  went through the control-code extensions unseen. `ansiHasControlCodes`
+  answered `false` for a string made of them, `ansiRemoveControlCodes` left
+  them where they stood and `ansiShowControlCodes` showed nothing, so a string
+  cleaned or spelt out for display still carried bytes a terminal prints as
+  rubbish. All three know them now, and the display writes them as the number
+  of the byte in every style: they have neither an abbreviation nor a Unicode
+  picture of their own, and this package gives them no names, since a name
+  would suggest it reads them as sequences. It does not, and that has not
+  changed: `Parser` reads `0x9B` as text rather than as a `CSI`, and
+  `ansiRemoveEscapeCodes` leaves it standing. What is parsed here are decoded
+  Dart strings rather than byte streams, where a genuine eight-bit C1 does not
+  survive UTF-8 decoding and terminals emit the seven-bit `ESC [` form anyway.
+  `0xA0` and above are not controls and are untouched.
 
 Renamed:
 
