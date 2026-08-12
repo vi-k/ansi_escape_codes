@@ -1222,7 +1222,7 @@ final class _Walk<S extends State<S>> {
   bool resumesAt(int pos) => current != null && pos > pieceStart;
 
   /// Takes in the escape code [m] the walk has just gone past, keeping
-  /// [lastCode], [unfinishedRunStart] and [runSeamInside] on it.
+  /// [lastCode], [unfinishedRunStart], [runSeamInside] and [beforeRun] on it.
   ///
   /// Two things end a run: a code that stands finished, and a piece of text.
   /// Matches tile the input, so the text needs no looking at — a code that

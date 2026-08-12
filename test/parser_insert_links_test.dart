@@ -285,6 +285,25 @@ void main() {
       );
     });
 
+    test('a run at the head of the string reads what the parser began in', () {
+      final parser = Parser.debugInsideLink(run, const Link(outer));
+
+      expect(
+        parser.insertAfter(0, '@$linkClose'),
+        '@$linkClose${opens(outer)}$run',
+        reason: 'no match of the string stands in front of the run, so the '
+            'link at the seam is the one the parser was seeded with, and '
+            'the insertion that closed it hands that one back',
+      );
+      expect(
+        Parser.debugInsideLink(run, const Link(outer))
+            .insertBefore(0, '@$linkClose'),
+        '@$linkClose${opens(outer)}$run',
+        reason: 'insertBefore at nought answers off the same seed without '
+            'walking at all, and the two cut at the same byte',
+      );
+    });
+
     test('a link open in front of the run is given back', () {
       // The run opens with a close of its own: `OSC 8;;` with no URL and no
       // terminator, which ends whatever link was open.
