@@ -509,7 +509,7 @@ final class _ParserBase<S extends State<S>> {
           ..passed = pos + (m.end - m.start)
           ..current = m;
       } else {
-        walk.lastCode = m;
+        walk.takeCode(m);
       }
 
       switch (entity) {
@@ -910,7 +910,7 @@ final class _ParserBase<S extends State<S>> {
             throw UnfinishedSequenceException(pos: pos, offset: code.start);
           }
 
-          return (code.start, m.state, m.link);
+          return (walk.unfinishedRunStart ?? code.start, m.state, m.link);
         }
 
         return (cut, m.state, m.link);
@@ -937,7 +937,7 @@ final class _ParserBase<S extends State<S>> {
       }
 
       return (
-        code.start,
+        walk.unfinishedRunStart ?? code.start,
         walk.current?.state ?? initialState,
         walk.current?.link ?? initialLink,
       );
@@ -1114,6 +1114,17 @@ final class _Walk<S extends State<S>> {
   /// would.
   Match<S>? lastCode;
 
+  /// Where the run of unfinished codes that [lastCode] ends begins, or null
+  /// where that code is finished and where there is none.
+  ///
+  /// [lastCode] is not enough to step back from: it is the code nearest the
+  /// piece, and an insertion that stops in front of it can still land inside
+  /// the one before. Two in a row is the case that shows it — a control
+  /// string that never closed and a truncated `CSI` behind it — and the seam
+  /// belongs in front of both, since the string's body swallows whatever
+  /// stands between them.
+  int? unfinishedRunStart;
+
   /// Whether the iterator has run out.
   ///
   /// Everything past [current] has then been taken from it, escape codes and
@@ -1131,6 +1142,23 @@ final class _Walk<S extends State<S>> {
   /// is already past those.
   bool resumesAt(int pos) => current != null && pos > pieceStart;
 
+  /// Takes in the escape code [m] the walk has just gone past, keeping
+  /// [lastCode] and [unfinishedRunStart] on it.
+  ///
+  /// Two things end a run: a code that stands finished, and a piece of text.
+  /// Matches tile the input, so the text needs no looking at — a code that
+  /// does not begin where the last one ended has text in front of it, and
+  /// starts a run of its own.
+  ///
+  /// Every walk goes through here, `substring` — which steps over the matches
+  /// itself, to write out what it passes — no less than [nextPiece].
+  void takeCode(Match<S> m) {
+    unfinishedRunStart = _unfinished(m.entity)
+        ? (lastCode?.end == m.start ? unfinishedRunStart ?? m.start : m.start)
+        : null;
+    lastCode = m;
+  }
+
   /// Moves to the next [Text] piece; false at the end of the string.
   bool nextPiece() {
     while (iterator.moveNext()) {
@@ -1146,7 +1174,7 @@ final class _Walk<S extends State<S>> {
         return true;
       }
 
-      lastCode = m;
+      takeCode(m);
     }
 
     isSpent = true;
