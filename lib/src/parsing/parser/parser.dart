@@ -924,7 +924,20 @@ final class _ParserBase<S extends State<S>> {
             throw UnfinishedSequenceException(pos: pos, offset: inside);
           }
 
-          return (walk.unfinishedRunStart ?? code.start, m.state, m.link);
+          // The seam is in front of the whole run, so what is in force there
+          // is what stood before the run — read off [_Walk.beforeRun] and not
+          // off the piece, which reads what the run leaves behind it. On the
+          // state channel the two agree, unfinished codes carrying none; on
+          // the link channel they do not, because an `OSC 8` the parser never
+          // saw terminated opens one all the same, and a seam that steps back
+          // over that opening steps out of the link it opens.
+          final before = walk.beforeRun;
+
+          return (
+            walk.unfinishedRunStart ?? code.start,
+            before?.state ?? initialState,
+            before == null ? initialLink : before.link,
+          );
         }
 
         return (cut, m.state, m.link);
@@ -1174,6 +1187,23 @@ final class _Walk<S extends State<S>> {
   /// terminal has long since read as something else.
   int? runSeamInside;
 
+  /// The match standing in front of the run [unfinishedRunStart] begins, or
+  /// null where the run begins the string.
+  ///
+  /// A seam served in front of a run is served the state and the link that
+  /// stand at its own place, and that is what this match leaves behind it.
+  /// Neither can be read off the piece the walk stopped in: the whole run
+  /// lies between the two, and an unfinished `OSC 8` — three parameters, the
+  /// terminator optional — opens a link there like any other. Probed on the
+  /// live parser: `aa OSC 8;;http://u/ CSI 31` reads as a link over the last
+  /// two pieces, so the piece says the seam sits inside a link the seam is in
+  /// fact in front of, and the insertion writes that link back where nothing
+  /// asked for it.
+  ///
+  /// The state channel is quieter, all eleven unfinished forms leaving it
+  /// alone, but it is read from here too rather than from two places at once.
+  Match<S>? beforeRun;
+
   /// Whether the iterator has run out.
   ///
   /// Everything past [current] has then been taken from it, escape codes and
@@ -1209,10 +1239,15 @@ final class _Walk<S extends State<S>> {
     if (!_unfinished(m.entity)) {
       unfinishedRunStart = null;
       runSeamInside = null;
+      beforeRun = null;
     } else if (lastCode?.end != m.start || unfinishedRunStart == null) {
       // A run begins here rather than goes on, and it is worth what the code
       // in front of it is: nothing, where that code stands finished.
       runSeamInside = unfinishedRunStart == null ? null : lastCode?.start;
+      // Matches tile the input, so what the run stands behind is named by one
+      // comparison: the code where the run begins right where that code
+      // ended, and the piece of text that fills the gap where it does not.
+      beforeRun = lastCode?.end == m.start ? lastCode : current;
       unfinishedRunStart = m.start;
     }
     lastCode = m;

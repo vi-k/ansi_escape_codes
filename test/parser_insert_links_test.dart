@@ -197,4 +197,81 @@ void main() {
       );
     });
   });
+
+  group('a seam that steps back over a run:', () {
+    const url = 'http://run/';
+
+    // An opening the parser never saw terminated. It is a link all the same:
+    // the parameters are all three there and the terminator is optional, so
+    // the parser reads a link that runs to the end of the string.
+    const opening = '$linkOpen$url';
+
+    // The run itself: that opening, and behind it a `CSI` with no final byte.
+    // Two codes is the shortest such run there is — an unterminated opening
+    // swallows text up to the next `ESC`, so a code always follows it — and
+    // the seam belongs in front of both.
+    const run = '$opening${CSI}31';
+
+    test('the seam in front of the run stands outside the link it opens', () {
+      final result = Parser('aa$run').insertAfter(2, '@$linkClose');
+
+      expect(
+        result,
+        'aa@$linkClose$run',
+        reason: 'nothing is open where the text goes, so the close it '
+            'carries is the last word on the link and no opening is '
+            'written back',
+      );
+      expect(
+        result,
+        Parser('aa$run').insertBefore(2, '@$linkClose'),
+        reason: 'both insertions cut at the same byte, in front of the '
+            'whole run, and have nothing left to disagree about',
+      );
+    });
+
+    test('the marker in front of the run does not join the URL', () {
+      final result = Parser('aa$run').insertAfter(2, '@');
+
+      expect(result, 'aa@$run');
+      expect(Parser(result).removeAll(), 'aa@31');
+      expect(
+        Parser(result).linkAt(2),
+        isNull,
+        reason: 'the marker went in front of the opening, not into it',
+      );
+      expect(
+        Parser(result).linkAt(3)?.url,
+        url,
+        reason: 'and the URL is the one the input wrote, character for '
+            'character',
+      );
+    });
+
+    test('a finished code in front of the run is passed and opens no link', () {
+      final result = Parser('aa$fgRed$run').insertAfter(2, '@$linkClose');
+
+      expect(
+        result,
+        'aa$fgRed@$linkClose$run',
+        reason: 'the run begins behind the colour, so that is where the '
+            'seam is — and no link is open there either',
+      );
+    });
+
+    test('a link open in front of the run is given back', () {
+      // The run opens with a close of its own: `OSC 8;;` with no URL and no
+      // terminator, which ends whatever link was open.
+      final input = '${opens(outer)}aa$linkOpen${CSI}31';
+      final result = Parser(input).insertAfter(2, '@$linkClose');
+
+      expect(
+        result,
+        '${opens(outer)}aa@$linkClose${opens(outer)}$linkOpen${CSI}31',
+        reason: 'the outer link is open at the seam, so the insertion that '
+            'closed it hands it back before the run closes it in turn',
+      );
+      expect(result, Parser(input).insertBefore(2, '@$linkClose'));
+    });
+  });
 }
