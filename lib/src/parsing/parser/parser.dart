@@ -768,6 +768,12 @@ final class _ParserBase<S extends State<S>> {
   /// because no answer is right: in front of the sequence is before characters
   /// counted in front of it, and where it was asked for is inside the sequence.
   ///
+  /// One seam is left over: where an unfinished code ended the control string —
+  /// a bare `ESC`, a `CSI` with no final byte, an `ESC` left on an intermediate
+  /// byte — [insertAfter] lands among the string's bytes still, as it has since
+  /// the `OSC` was the only string this could happen to. [insertBefore] stands
+  /// in front of the string there, as everywhere else.
+  ///
   /// A [pos] outside the plain text is a [RangeError], as it always was.
   String insertBefore(int pos, String text) => _insert(pos, text, after: false);
 
@@ -793,9 +799,10 @@ final class _ParserBase<S extends State<S>> {
   /// position 5.
   ///
   /// The codes it goes behind are the finished ones. A sequence the parser
-  /// could not finish is not passed but stood in front of, and a position
-  /// among the bytes of one is refused with an [UnfinishedSequenceException];
-  /// [insertBefore] says the whole of it.
+  /// could not finish is not passed but stood in front of — save at the one
+  /// seam [insertBefore] names, where an unfinished code ended a control string
+  /// — and a position among the bytes of one is refused with an
+  /// [UnfinishedSequenceException]; [insertBefore] says the whole of it.
   ///
   /// ```dart
   /// print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'

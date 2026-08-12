@@ -963,19 +963,21 @@ print(Parser(text).insertAfter(5, '!').ansiShowControlFunctions());
 ```
 
 Neither insertion lands inside a sequence the parser could not finish — a
-control string that never got its terminator, be it an `OSC`, a `DCS`, an
-`SOS`, a `PM` or an `APC`; a bare `ESC`; a `CSI` with no final byte. Whatever
-is written among the bytes of one is read as part of it, so the text goes in
-front of the sequence and the tail is copied on as it came:
+control string that never got its terminator, be it an `OSC`, a `DCS`, an `SOS`,
+a `PM` or an `APC`; a bare `ESC`; a `CSI` with no final byte; an `ESC` left on
+an intermediate byte. Whatever is written among the bytes of one is read as part
+of it, so the text goes in front of the sequence and the tail is copied on as it
+came:
 
 ```dart
 print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
 ```
 
 One seam is left over: where an unfinished code — a bare `ESC`, a `CSI` with no
-final byte — ended the control string, `insertAfter` lands among the string's
-bytes still, as it has since the `OSC` was the only string this could happen
-to; `insertBefore` stands in front of the string there, as everywhere else.
+final byte, an `ESC` left on an intermediate byte — ended the control string,
+`insertAfter` lands among the string's bytes still, as it has since the `OSC`
+was the only string this could happen to; `insertBefore` stands in front of the
+string there, as everywhere else.
 
 A `CSI` with no final byte is the one that can carry parameters behind it, and
 those come back as text although a terminal reads them as part of the
