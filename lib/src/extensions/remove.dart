@@ -25,7 +25,8 @@ extension StringRemoveEscapeCodesExtension on String {
   String ansiRemoveEscapeCodes() =>
       contains(ESC) ? replaceAll(escapeCodesRe, '') : this;
 
-  /// Removes the control codes in the text: the C0 set and `DEL`.
+  /// Removes the control codes in the text: the C0 set, `DEL` and the
+  /// eight-bit C1.
   ///
   /// This is what `ansiHasControlCodes` asks about, taken out — the tabs, the
   /// line feeds, the carriage returns and the rest of the bytes below `0x20`,
@@ -46,8 +47,12 @@ extension StringRemoveEscapeCodesExtension on String {
   /// print(text.ansiRemoveEscapeCodes().ansiRemoveControlCodes());
   /// ```
   ///
-  /// The eight-bit forms of the C1 controls are not touched: `0x9B` is above
-  /// `DEL`, and in a Dart string it is a character of its own.
+  /// The eight-bit forms of the C1 controls go with the rest. They open no
+  /// escape sequence in this package and are read as text, but Unicode files
+  /// them under its control category and a terminal handed one prints
+  /// rubbish, so a text cleaned for display is not clean while they are in
+  /// it. [exclude] cannot spare them: it names members of
+  /// [ControlFunctionsC0], and the set ends at `0x1F`.
   String ansiRemoveControlCodes({
     Set<ControlFunctionsC0> exclude = const {},
   }) {
