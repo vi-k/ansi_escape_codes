@@ -157,10 +157,10 @@ Fixed:
   counted in the length: `Parser('a\x1BPq#0;2;0;0;0\x1B\\b').length` says 2
   where it said 13, and neither a slice nor an insertion cuts through the body,
   an unfinished code ending the string included. `ST` ends all five; the `BEL`
-  that ends an `OSC` is xterm's and not
-  the standard's, and it ends none of the other four, so a `DCS` whose body
-  happens to end in one is unterminated still — and one left unterminated is
-  held back and given its terminator the way an unterminated `OSC` is.
+  that ends an `OSC` is xterm's and not the standard's, and it ends none of the
+  other four, so a `DCS` whose body happens to end in one is unterminated still
+  — and one left unterminated is held back and given its terminator the way an
+  unterminated `OSC` is.
 - `SaveCursor`, `RestoreCursor` and `Link` carried a `reset` as their text, so
   all three were equal to one another — an `Entity` compares by what it is
   written with — and none of them equalled the same entity read back by the
