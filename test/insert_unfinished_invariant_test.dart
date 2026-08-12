@@ -39,6 +39,15 @@ const _inputs = <String>[
   '',
 ];
 
+/// The text these tests insert.
+///
+/// Both of them read the marker back out of the answer — one out of the plain
+/// text, the other by taking it out of the string again — so it may not be a
+/// character the inputs are built from. `X` is the byte that opens an `SOS`,
+/// and behind an `ESC` it stops being a marker and becomes part of a control
+/// string that swallows the rest; `@` opens nothing.
+const _marker = '@';
+
 void main() {
   test('an insertion either lands where it was asked or is refused', () {
     for (final input in _inputs) {
@@ -49,15 +58,15 @@ void main() {
           final String result;
           try {
             result = after
-                ? parser.insertAfter(pos, 'X')
-                : parser.insertBefore(pos, 'X');
+                ? parser.insertAfter(pos, _marker)
+                : parser.insertBefore(pos, _marker);
           } on UnfinishedSequenceException {
             continue;
           }
 
           expect(
             Parser(result).removeAll(),
-            '${plain.substring(0, pos)}X${plain.substring(pos)}',
+            '${plain.substring(0, pos)}$_marker${plain.substring(pos)}',
             reason: 'input ${input.ansiShowEscapeSequences()}, pos $pos, '
                 'after: $after',
           );
@@ -75,14 +84,14 @@ void main() {
           final String result;
           try {
             result = after
-                ? parser.insertAfter(pos, 'X')
-                : parser.insertBefore(pos, 'X');
+                ? parser.insertAfter(pos, _marker)
+                : parser.insertBefore(pos, _marker);
           } on UnfinishedSequenceException {
             continue;
           }
 
           expect(
-            result.replaceFirst('X', ''),
+            result.replaceFirst(_marker, ''),
             input,
             reason: 'no byte of the input is invented or dropped: '
                 '${input.ansiShowEscapeSequences()}, pos $pos, after: $after',
@@ -94,11 +103,14 @@ void main() {
 
   test('a position outside the plain text is still a RangeError', () {
     expect(
-      () => Parser('aa\x1B[31').insertAfter(5, 'X'),
+      () => Parser('aa\x1B[31').insertAfter(5, _marker),
       throwsRangeError,
       reason: 'the plain text is four characters long, and asking past it is '
           "the caller's mistake rather than the input's",
     );
-    expect(() => Parser('aa\x1B[31').insertBefore(-1, 'X'), throwsRangeError);
+    expect(
+      () => Parser('aa\x1B[31').insertBefore(-1, _marker),
+      throwsRangeError,
+    );
   });
 }
