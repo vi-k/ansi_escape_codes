@@ -261,6 +261,33 @@ void main() {
       );
     });
 
+    test('a piece of text starts the run behind it over', () {
+      // A CSI with no final byte hands its parameters back as text, and that
+      // is the one way a piece of text stands behind a code that never
+      // finished: everything else finishes the code or is swallowed by it.
+      // So this input carries two runs — ESC [ in front of the text 31, and
+      // the DCS with the bare ESC behind it — and the seam at the end of the
+      // text belongs to the second one, not to the first.
+      const input = 'aa\x1B[31\x1B(B\x1BPpay\x1B';
+
+      // Probed, and checked against the invariant rather than against
+      // insertBefore, which refuses this position: the plain text is aa31,
+      // so the answer has to show aa31X and keep every byte of the input.
+      expect(
+        Parser(input).insertAfter(4, 'X'),
+        'aa\x1B[31\x1B(BX\x1BPpay\x1B',
+        reason: 'the finished ESC ( B ends the run in front of the text, the '
+            'DCS begins the one behind it, and the seam is that DCS',
+      );
+      expect(Parser(Parser(input).insertAfter(4, 'X')).removeAll(), 'aa31X');
+      expect(
+        () => Parser(input).insertBefore(4, 'X'),
+        throwsA(isA<UnfinishedSequenceException>()),
+        reason: 'insertBefore puts the cut among the parameters instead, and '
+            'that refusal is the one this wave does not touch',
+      );
+    });
+
     test('a run at the end of the input is stepped over too', () {
       expect(Parser('aa\x1BPpay\x1B').insertAfter(2, 'X'), 'aaX\x1BPpay\x1B');
     });

@@ -29,6 +29,12 @@ const _inputs = <String>[
   // A finished code breaks the run, and the insertion behind it is right
   // already and has to stay where it is.
   'aa\x1BPpay\x1B(B\x1B[31',
+  // Two runs with a piece of text between them: a CSI with no final byte
+  // hands its parameters back as text, which is the one way a piece of text
+  // can stand behind a code that never finished. The run behind the text is
+  // its own, and an insertion aimed at the end of the text goes in front of
+  // the finished code that follows it and no further back.
+  'aa\x1B[31\x1B(B\x1BPpay\x1B',
   'aa',
   '',
 ];
