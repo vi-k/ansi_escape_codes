@@ -962,10 +962,11 @@ print(Parser(text).insertAfter(5, '!').ansiShowControlFunctions());
 // [fgRed]Hello[reset]! world
 ```
 
-Neither insertion lands inside a sequence the parser could not finish — an
-`OSC` that never got its terminator, a bare `ESC`, a `CSI` with no final byte.
-Whatever is written among the bytes of one is read as part of it, so the text
-goes in front of the sequence and the tail is copied on as it came:
+Neither insertion lands inside a sequence the parser could not finish — a
+control string that never got its terminator, be it an `OSC`, a `DCS`, an
+`SOS`, a `PM` or an `APC`; a bare `ESC`; a `CSI` with no final byte. Whatever
+is written among the bytes of one is read as part of it, so the text goes in
+front of the sequence and the tail is copied on as it came:
 
 ```dart
 print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
@@ -1155,9 +1156,10 @@ for (final m in Parser(text).matches) {
 The parser never throws on what it cannot name. Whatever it fails to recognize
 comes back as an entity of its own with the raw bytes kept intact: `CsiUnknown`,
 `EscUnknown`, `OscUnknown` and `UnknownEscapeCode` for what has no meaning here,
-and `CsiPrivate` for the private-use sequences, whose meaning the standard
-leaves to the terminal. All of them carry the `UnrecognizedEscapeCode` mixin, so
-a single check covers them:
+`Dcs`, `Sos`, `Pm` and `Apc` for the control strings this package carries
+without reading, and `CsiPrivate` for the private-use sequences, whose meaning
+the standard leaves to the terminal. All of them carry the
+`UnrecognizedEscapeCode` mixin, so a single check covers them:
 
 ```dart
 const text = 'a\x1B[!pb\x1B[?7hc';
