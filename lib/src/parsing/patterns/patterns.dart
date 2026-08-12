@@ -65,5 +65,12 @@ const String escPattern =
 /// Bytes that may precede the final byte of a sequence.
 const String _intermediates = '[\x20-\x2F]';
 
-/// Pattern for control codes.
-final controlCodesRe = RegExp('[\x00-\x1F\x7F]');
+/// Pattern for control codes: the C0 set, `DEL`, and the eight-bit C1.
+///
+/// The eight-bit C1 are here and nowhere else. They are controls by
+/// Unicode's own category and print as rubbish rather than as characters,
+/// so what strips and shows controls must know them — but they open no
+/// escape sequence in this package, and `escapeCodesRe` does not look for
+/// them. The reasoning is in
+/// `docs/records/2026-08-12[1]-eight-bit-c1-design.md`.
+final controlCodesRe = RegExp('[\x00-\x1F\x7F-\x9F]');

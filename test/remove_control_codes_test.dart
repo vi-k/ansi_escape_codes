@@ -79,11 +79,18 @@ void main() {
       );
     });
 
-    test('and the eight-bit C1 controls are not C0', () {
+    test('and the eight-bit C1 go too, though they are not C0', () {
       expect(
         'a\x9Bb'.ansiRemoveControlCodes(),
-        'a\x9Bb',
-        reason: 'the C0 set ends at 0x1F, and DEL is the one above it',
+        'ab',
+        reason: 'a control by Unicode category, whatever it opens here',
+      );
+      expect(
+        'a\x9Bb'.ansiRemoveControlCodes(
+          exclude: ControlFunctionsC0.values.toSet(),
+        ),
+        'ab',
+        reason: 'the C0 set ends at 0x1F, so exclude has no name for them',
       );
     });
   });

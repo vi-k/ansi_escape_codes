@@ -74,4 +74,51 @@ void main() {
       expect(Parser('aa\x1B]0;t\x1B\\bb').removeAll(), 'aabb');
     });
   });
+
+  // Opening no sequence is not the same as being a character. These bytes are
+  // controls by Unicode's own category and print as rubbish, so what asks
+  // after control codes and what strips them must know them — and that is
+  // `controlCodesRe`, which the parser never reads.
+  group('the eight-bit C1 are control codes all the same:', () {
+    test('they are seen and taken out', () {
+      expect('aa\u{9B}bb'.ansiHasControlCodes, isTrue);
+      expect('aa\u{9B}31mbb'.ansiRemoveControlCodes(), 'aa31mbb');
+    });
+
+    test('the whole set is covered', () {
+      for (var byte = 0x80; byte <= 0x9F; byte++) {
+        final text = 'aa${String.fromCharCode(byte)}bb';
+
+        expect(
+          text.ansiHasControlCodes,
+          isTrue,
+          reason: 'byte 0x${byte.toRadixString(16)}',
+        );
+        expect(text.ansiRemoveControlCodes(), 'aabb');
+      }
+    });
+
+    test('the range ends where the controls do', () {
+      expect('aa\u{A0}bb'.ansiHasControlCodes, isFalse);
+      expect('aa\u{A0}bb'.ansiRemoveControlCodes(), 'aa\u{A0}bb');
+    });
+
+    test('the C0 set and DEL are untouched by the widening', () {
+      expect('a\nb\tc'.ansiRemoveControlCodes(), 'abc');
+      expect('a\x00b\x1Fc\x7Fd'.ansiRemoveControlCodes(), 'abcd');
+      expect('плайн текст'.ansiRemoveControlCodes(), 'плайн текст');
+    });
+
+    test('no exclusion reaches them, keeping every C0 included', () {
+      // `exclude` takes `ControlFunctionsC0`, and the eight-bit C1 have no
+      // enum here to be named by, so asking to keep all of them keeps every
+      // C0 and takes the eight-bit C1 out regardless.
+      expect(
+        'a\nb\u{9B}c'.ansiRemoveControlCodes(
+          exclude: ControlFunctionsC0.values.toSet(),
+        ),
+        'a\nbc',
+      );
+    });
+  });
 }
