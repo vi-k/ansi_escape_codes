@@ -261,13 +261,14 @@ void main() {
       );
     });
 
-    test('a piece of text starts the run behind it over', () {
-      // A CSI with no final byte hands its parameters back as text, and that
-      // is the one way a piece of text stands behind a code that never
-      // finished: everything else finishes the code or is swallowed by it.
-      // So this input carries two runs — ESC [ in front of the text 31, and
-      // the DCS with the bare ESC behind it — and the seam at the end of the
-      // text belongs to the second one, not to the first.
+    test('a finished code inside the tail ends the run in front of it', () {
+      // Two runs with a piece of text between them: ESC [ | 31 | ESC ( B |
+      // ESC P pay | ESC. A CSI with no final byte hands its parameters back
+      // as text, which is how the text got in there at all.
+      //
+      // What decides this seam is the finished ESC ( B, not the text: the run
+      // behind it begins at the DCS. The text is what the next test is about,
+      // and it decides nothing here.
       const input = 'aa\x1B[31\x1B(B\x1BPpay\x1B';
 
       // Probed, and checked against the invariant rather than against
@@ -286,6 +287,51 @@ void main() {
         reason: 'insertBefore puts the cut among the parameters instead, and '
             'that refusal is the one this wave does not touch',
       );
+    });
+
+    test('and a run behind a piece of text does not reach back over it', () {
+      // The same two runs with nothing finished between them: ESC [ | 31 |
+      // ESC P pay | ESC. The run behind the text is its own and begins at the
+      // DCS; were it to carry the first run's start along, the insertion
+      // would be written in front of the 31 it was aimed behind.
+      const input = 'aa\x1B[31\x1BPpay\x1B';
+
+      // Where exactly it belongs is not settled, and this test does not
+      // pretend otherwise: the seam behind the parameters of a CSI that never
+      // got its final byte has no end that survives — in front of the DCS the
+      // text becomes the final byte of that CSI, behind the bare ESC it
+      // becomes the final byte of the ESC — and the answer owed here is the
+      // refusal insertBefore already gives. What is settled either way is
+      // that plain text the insertion was aimed behind stays in front of it.
+      String? answer;
+      try {
+        answer = Parser(input).insertAfter(4, 'X');
+      } on UnfinishedSequenceException {
+        // The refusal this seam is owed. It is not what the insertion does
+        // today, and it is still not a step in front of the text.
+      }
+
+      expect(
+        answer,
+        anyOf(isNull, startsWith('aa\x1B[31')),
+        reason: 'the run begins at the DCS, so the seam is at worst there, '
+            'and never in front of the parameters the text stands for',
+      );
+    });
+
+    test('a slice leaves the walk answering as a fresh parser would', () {
+      // substring steps over the matches itself rather than through the walk,
+      // so a run it goes past has to be taken in there too. Where it is not,
+      // the seam is read off a walk that has forgotten the run, and the same
+      // question answers differently depending on what was asked before it.
+      const input = 'aa\x1B]pay\x1B';
+
+      // Probed on both: the slice changes nothing, and the answer is the one
+      // the invariant asks for — the plain text is aa, and X goes behind it.
+      final parser = Parser(input)..substring(2, maxLength: 0);
+
+      expect(parser.insertAfter(2, 'X'), 'aaX\x1B]pay\x1B');
+      expect(Parser(input).insertAfter(2, 'X'), 'aaX\x1B]pay\x1B');
     });
 
     test('a run at the end of the input is stepped over too', () {
