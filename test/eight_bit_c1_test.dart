@@ -36,6 +36,7 @@ void main() {
           reason: 'byte 0x${byte.toRadixString(16)}',
         );
         expect(parser.removeAll(), input);
+        expect(parser.length, 9, reason: 'byte 0x${byte.toRadixString(16)}');
       }
     });
 
