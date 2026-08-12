@@ -973,25 +973,31 @@ came:
 print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
 ```
 
-One seam is left over: where an unfinished code — a bare `ESC`, a `CSI` with no
-final byte, an `ESC` left on an intermediate byte — ended the control string,
-`insertAfter` lands among the string's bytes still, as it has since the `OSC`
-was the only string this could happen to; `insertBefore` stands in front of the
-string there, as everywhere else.
+Where several of them stand in a row, the text goes in front of the whole run:
+a gap between two unfinished codes is no seam but the inside of the first.
 
-A `CSI` with no final byte is the one that can carry parameters behind it, and
-those come back as text although a terminal reads them as part of the
-sequence. A position among them has no right answer — in front of the sequence
-is before characters counted in front of it, and where it was asked for is
-inside the sequence — so it is refused:
+The last bytes of such a sequence come back as text although a terminal reads
+them as part of it. The parameters of a `CSI` with no final byte are the case
+worth naming, but any byte no sequence can be built from — a `LF`, a `DEL`, a
+letter outside ASCII — breaks off the pattern just as well and leaves the code
+in front of it waiting for its ending all the same. A position among those
+bytes has no right answer — in front of the sequence is before characters
+counted in front of it, and where it was asked for is inside the sequence — so
+both insertions refuse it:
 
 ```dart
 Parser('aa\x1B[31').insertAfter(3, 'X'); // throws UnfinishedSequenceException
 ```
 
-The exception carries the position asked for and the offset the sequence
-begins at. A position outside the plain text is a `RangeError`, as everywhere
-else.
+The seam itself is refused where it is one of those positions: a run beginning
+behind such a piece of text begins among bytes the sequence in front of the
+text is still reading, so the place before the run is where that sequence's
+ending would be written. A code that stands finished between the text and the
+run gives the run a seam of its own, and that one is served.
+
+The exception carries the position asked for and the offset the sequence it
+would have been read as part of begins at. A position outside the plain text is
+a `RangeError`, as everywhere else.
 
 For a string parsed only once there are the `ansiInsertBefore` and
 `ansiInsertAfter` extensions, like the other shortcuts below.

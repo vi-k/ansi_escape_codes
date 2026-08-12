@@ -509,7 +509,7 @@ final class _ParserBase<S extends State<S>> {
           ..passed = pos + (m.end - m.start)
           ..current = m;
       } else {
-        walk.lastCode = m;
+        walk.takeCode(m);
       }
 
       switch (entity) {
@@ -763,16 +763,27 @@ final class _ParserBase<S extends State<S>> {
   /// one is read as part of it: `ESC` and an `X` are an `SOS`, `CSI` and an `X`
   /// an `ECH`, and neither shows the letter. Aimed at the seam in front of such
   /// a sequence, the text is put there, in front of it, and the tail is copied
-  /// on as it came. Aimed past that seam — among the parameters of a `CSI`
-  /// handed back as text — it is refused with an [UnfinishedSequenceException],
-  /// because no answer is right: in front of the sequence is before characters
-  /// counted in front of it, and where it was asked for is inside the sequence.
+  /// on as it came. Where several of them stand in a row, that seam is in front
+  /// of the whole run rather than in a gap between two — a gap between two
+  /// unfinished codes is inside the first of them.
   ///
-  /// One seam is left over: where an unfinished code ended the control string —
-  /// a bare `ESC`, a `CSI` with no final byte, an `ESC` left on an intermediate
-  /// byte — [insertAfter] lands among the string's bytes still, as it has since
-  /// the `OSC` was the only string this could happen to. [insertBefore] stands
-  /// in front of the string there, as everywhere else.
+  /// Aimed past that seam, the insertion is refused with an
+  /// [UnfinishedSequenceException], because no answer is right: in front of the
+  /// sequence is before characters counted in front of it, and where it was
+  /// asked for is inside the sequence. Past the seam is any position among the
+  /// bytes the sequence is still reading, whatever the piece of text they come
+  /// back as looks like: the parameters of a truncated `CSI` are the case worth
+  /// naming, but a byte no sequence can be built from — a `LF`, a `DEL`, a
+  /// letter outside ASCII — breaks off the pattern just as well and leaves the
+  /// code in front of it waiting for its ending all the same.
+  ///
+  /// The seam can be one of those positions itself, and then there is nothing
+  /// to serve and both insertions refuse alike. A run that begins behind such a
+  /// piece of text begins among bytes the sequence in front of that text is
+  /// still reading, so the place before the run is where the byte that ends
+  /// that sequence would be written. A code that stands finished between the
+  /// text and the run gives the run a seam of its own, and that one is served
+  /// as ever.
   ///
   /// A [pos] outside the plain text is a [RangeError], as it always was.
   String insertBefore(int pos, String text) => _insert(pos, text, after: false);
@@ -799,13 +810,30 @@ final class _ParserBase<S extends State<S>> {
   /// position 5.
   ///
   /// The codes it goes behind are the finished ones. A sequence the parser
-  /// could not finish is not passed but stood in front of — save at the one
-  /// seam [insertBefore] names, where an unfinished code ended a control string
-  /// — and a position among the bytes of one is refused with an
-  /// [UnfinishedSequenceException]; [insertBefore] says the whole of it.
+  /// could not finish is not passed but stood in front of, and a run of them is
+  /// stood in front of whole.
   ///
   /// ```dart
   /// print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
+  /// ```
+  ///
+  /// The refusal is about the seam this one would take, which is the place
+  /// past the codes standing at [pos]. Where that place falls among bytes a
+  /// sequence is still reading — because the codes it went behind are
+  /// unfinished themselves, or because the run they belong to begins among
+  /// such bytes — there is nothing to serve, and an
+  /// [UnfinishedSequenceException] is thrown; [insertBefore] says the rule in
+  /// full, and this one reads it from its own side.
+  ///
+  /// Its own side is not the same side, so the two do not refuse in step. A
+  /// code that stands finished between such bytes and what follows them puts a
+  /// place past the waiting sequence within this one's reach, and it is served
+  /// there while [insertBefore], stepping the other way, is refused:
+  ///
+  /// ```dart
+  /// const text = 'aa\x1B[31\x1B(B\x1B[31';
+  /// print(Parser(text).insertAfter(4, 'X')); // 'aa\x1B[31\x1B(BX\x1B[31'
+  /// Parser(text).insertBefore(4, 'X');       // throws: 4 is inside the CSI
   /// ```
   String insertAfter(int pos, String text) => _insert(pos, text, after: true);
 
@@ -910,7 +938,34 @@ final class _ParserBase<S extends State<S>> {
             throw UnfinishedSequenceException(pos: pos, offset: code.start);
           }
 
-          return (code.start, m.state, m.link);
+          // The run itself may begin inside a sequence that never finished:
+          // where a piece of text broke the run, that text is bytes the
+          // sequence in front of it is still reading, and the place before
+          // the run is where the byte that ends it would be written. Text put
+          // there is read as that ending and takes the text before it along,
+          // and every other byte of the seam belongs to a code that could not
+          // be finished either — so the seam has no end to serve, and the
+          // insertion is refused the way one aimed past a seam is. A code
+          // that stands finished in front of the run gives it a place of its
+          // own, and that seam is served as it always was.
+          if (walk.runSeamInside case final inside?) {
+            throw UnfinishedSequenceException(pos: pos, offset: inside);
+          }
+
+          // The seam is in front of the whole run, so what is in force there
+          // is what stood before the run — read off [_Walk.beforeRun] and not
+          // off the piece, which reads what the run leaves behind it. On the
+          // state channel the two agree, unfinished codes carrying none; on
+          // the link channel they do not, because an `OSC 8` the parser never
+          // saw terminated opens one all the same, and a seam that steps back
+          // over that opening steps out of the link it opens.
+          final before = walk.beforeRun;
+
+          return (
+            walk.unfinishedRunStart ?? code.start,
+            before?.state ?? initialState,
+            before == null ? initialLink : before.link,
+          );
         }
 
         return (cut, m.state, m.link);
@@ -936,8 +991,15 @@ final class _ParserBase<S extends State<S>> {
         throw UnfinishedSequenceException(pos: pos, offset: code.start);
       }
 
+      // And the run at the end of the input begins inside an earlier sequence
+      // as readily as one before a piece of text does — the same refusal, for
+      // the same reason, naming the same sequence.
+      if (walk.runSeamInside case final inside?) {
+        throw UnfinishedSequenceException(pos: pos, offset: inside);
+      }
+
       return (
-        code.start,
+        walk.unfinishedRunStart ?? code.start,
         walk.current?.state ?? initialState,
         walk.current?.link ?? initialLink,
       );
@@ -1114,6 +1176,71 @@ final class _Walk<S extends State<S>> {
   /// would.
   Match<S>? lastCode;
 
+  /// Where the run of unfinished codes that [lastCode] ends begins, or null
+  /// where that code is finished and where there is none.
+  ///
+  /// [lastCode] is not enough to step back from: it is the code nearest the
+  /// piece, and an insertion that stops in front of it can still land inside
+  /// the one before. Two in a row is the case that shows it — a control
+  /// string that never closed and a truncated `CSI` behind it — and the seam
+  /// belongs in front of both, since the string's body swallows whatever
+  /// stands between them.
+  int? unfinishedRunStart;
+
+  /// Where the sequence that would swallow a seam in front of the run
+  /// [unfinishedRunStart] begins, or null where that seam is a place of its
+  /// own.
+  ///
+  /// A run is broken by a piece of text, and the code in front of that text
+  /// decides what the run's beginning is worth. Where that code stands
+  /// finished — or where there is none — the text is text, and the seam
+  /// behind it is a place like any other. Where it does not, the text is
+  /// bytes of a sequence still waiting for the one that ends it, and the
+  /// seam behind them is where that ending would be written: the insertion
+  /// is refused there, and this is the sequence to name.
+  ///
+  /// The text is not always parameters. A `CSI` gives up its parameters as
+  /// text because the pattern wants a final byte and does not find one, and
+  /// that is the case worth naming; but the same happens to a bare `ESC`, to
+  /// an `ESC` on an intermediate byte and to a `CSI` before its parameters,
+  /// each time the next byte is one no sequence can be built from — a `LF`, a
+  /// `DEL`, a letter outside ASCII. Probed on the live parser: `ESC LF bb`
+  /// hands back `ESC` and the text `LF bb`. What all of them share is the
+  /// only thing this needs: the code is still waiting, and the first byte a
+  /// terminal can take as its ending is the one written at the seam.
+  ///
+  /// Only the code nearest the text is named. A run of three unfinished codes
+  /// with text behind it is still one sequence waiting at the byte after that
+  /// text — the last of them — and pointing at the first would name bytes a
+  /// terminal has long since read as something else.
+  int? runSeamInside;
+
+  /// The match standing in front of the run [unfinishedRunStart] begins, or
+  /// null where the run begins the string.
+  ///
+  /// A seam served in front of a run is served the state and the link that
+  /// stand at its own place, and that is what this match leaves behind it.
+  /// Neither can be read off the piece the walk stopped in: the whole run
+  /// lies between the two, and an unfinished `OSC 8` — three parameters, the
+  /// terminator optional — opens a link there like any other. Probed on the
+  /// live parser: `aa OSC 8;;http://u/ CSI 31` reads as a link over the last
+  /// two pieces, so the piece says the seam sits inside a link the seam is in
+  /// fact in front of, and the insertion writes that link back where nothing
+  /// asked for it.
+  ///
+  /// The state channel is quieter, all eleven unfinished forms leaving it
+  /// alone, but it is read from here too rather than from two places at once.
+  ///
+  /// Only the branch of `_seamAt` that stopped inside a piece of text reads
+  /// this. The branch for a walk that has run out — the string ending inside
+  /// the run — still reads its state and its link off the last piece, which
+  /// agrees with this while the run follows the piece directly and does not
+  /// where a finished code stands between the two. That disagreement is a
+  /// defect older than the field, it moves `finalState` and `finalLink`, and
+  /// it waits on the owner in `docs/handoff.md` rather than being quietly
+  /// fixed here.
+  Match<S>? beforeRun;
+
   /// Whether the iterator has run out.
   ///
   /// Everything past [current] has then been taken from it, escape codes and
@@ -1131,6 +1258,38 @@ final class _Walk<S extends State<S>> {
   /// is already past those.
   bool resumesAt(int pos) => current != null && pos > pieceStart;
 
+  /// Takes in the escape code [m] the walk has just gone past, keeping
+  /// [lastCode], [unfinishedRunStart], [runSeamInside] and [beforeRun] on it.
+  ///
+  /// Two things end a run: a code that stands finished, and a piece of text.
+  /// Matches tile the input, so the text needs no looking at — a code that
+  /// does not begin where the last one ended has text in front of it, and
+  /// starts a run of its own. What that text was worth is read off the run it
+  /// broke: [unfinishedRunStart] is set exactly where [lastCode] could not be
+  /// finished, so a run beginning while it stands is a run beginning behind
+  /// bytes a terminal is still reading, and [lastCode] is the sequence
+  /// reading them.
+  ///
+  /// Every walk goes through here, `substring` — which steps over the matches
+  /// itself, to write out what it passes — no less than [nextPiece].
+  void takeCode(Match<S> m) {
+    if (!_unfinished(m.entity)) {
+      unfinishedRunStart = null;
+      runSeamInside = null;
+      beforeRun = null;
+    } else if (lastCode?.end != m.start || unfinishedRunStart == null) {
+      // A run begins here rather than goes on, and it is worth what the code
+      // in front of it is: nothing, where that code stands finished.
+      runSeamInside = unfinishedRunStart == null ? null : lastCode?.start;
+      // Matches tile the input, so what the run stands behind is named by one
+      // comparison: the code where the run begins right where that code
+      // ended, and the piece of text that fills the gap where it does not.
+      beforeRun = lastCode?.end == m.start ? lastCode : current;
+      unfinishedRunStart = m.start;
+    }
+    lastCode = m;
+  }
+
   /// Moves to the next [Text] piece; false at the end of the string.
   bool nextPiece() {
     while (iterator.moveNext()) {
@@ -1146,7 +1305,7 @@ final class _Walk<S extends State<S>> {
         return true;
       }
 
-      lastCode = m;
+      takeCode(m);
     }
 
     isSpent = true;

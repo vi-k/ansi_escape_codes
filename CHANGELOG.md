@@ -155,13 +155,12 @@ Fixed:
   string carries — a sixel image, a `DECRQSS` answer, a termcap reply — is part
   of the escape code now rather than of the plain text, and is no longer
   counted in the length: `Parser('a\x1BPq#0;2;0;0;0\x1B\\b').length` says 2
-  where it said 13, and neither a slice nor an insertion cuts through the body
-  — save where an unfinished code ended the string, and `insertAfter` lands
-  among the body's bytes there still, as it has for an unterminated `OSC` all
-  along. `ST` ends all five; the `BEL` that ends an `OSC` is xterm's and not
-  the standard's, and it ends none of the other four, so a `DCS` whose body
-  happens to end in one is unterminated still — and one left unterminated is
-  held back and given its terminator the way an unterminated `OSC` is.
+  where it said 13, and neither a slice nor an insertion cuts through the body,
+  an unfinished code ending the string included. `ST` ends all five; the `BEL`
+  that ends an `OSC` is xterm's and not the standard's, and it ends none of the
+  other four, so a `DCS` whose body happens to end in one is unterminated still
+  — and one left unterminated is held back and given its terminator the way an
+  unterminated `OSC` is.
 - `SaveCursor`, `RestoreCursor` and `Link` carried a `reset` as their text, so
   all three were equal to one another — an `Entity` compares by what it is
   written with — and none of them equalled the same entity read back by the
@@ -254,16 +253,35 @@ Fixed:
   the tail is copied on as it came: no byte of the input is invented, which is
   why no terminator is supplied here as it is for a slice.
 
-  Where the sequence is a `CSI` whose parameters the parser hands back as
-  text, a position among them has no right answer — in front of the sequence
-  is before characters counted in front of it, and where it was asked for is
-  inside the sequence — and it is refused with an
-  `UnfinishedSequenceException`. It carries the position asked for and the
-  offset the sequence begins at. Before this the same position quietly ate
-  what stood there: `Parser('aa\x1B[31').insertAfter(3, 'X')` answered a
-  string whose plain text was `aa1`, the `3` having become a parameter.
-  `insertBefore` was no better, though the backlog had it down as safe
-  everywhere.
+  A sequence still waiting for the byte that ends it hands the bytes it waits
+  through back as text — the parameters of a truncated `CSI` are the case
+  worth naming, but a `LF`, a `DEL` or a letter outside ASCII breaks off the
+  pattern of a bare `ESC` and of an `ESC` on an intermediate byte the same
+  way — and a position among them has no right answer: in front of the
+  sequence is before characters counted in front of it, and where it was
+  asked for is inside the sequence. Both insertions refuse it with an
+  `UnfinishedSequenceException`, which carries the position asked for and the
+  offset of the sequence the text would have been read as part of. Before
+  this the same position quietly ate what stood there:
+  `Parser('aa\x1B[31').insertAfter(3, 'X')` answered a string whose plain
+  text was `aa1`, the `3` having become a parameter. `insertBefore` was no
+  better, though the backlog had it down as safe everywhere.
+
+  Unfinished codes come in runs, and the seam is in front of a whole run
+  rather than in a gap between two of them — a gap between two of them is the
+  inside of the first. `Parser('aa\x1BPpay\x1B[31').insertAfter(2, 'X')`
+  answers `'aaX\x1BPpay\x1B[31'`, where before it answered
+  `'aa\x1BPpayX\x1B[31'`, whose plain text was `aa31`: the `X` had gone into
+  the body of the `DCS`.
+
+  Where such a run begins behind a piece of text a sequence in front of it is
+  still reading, the place before the run is where that sequence's ending
+  would be written, so the seam has no end to serve and is refused along with
+  everything past it. This takes back answers that used to come:
+  `Parser('aa\x1B[31\x1BPpay\x1B').insertAfter(4, 'X')` throws where it
+  answered `'aa\x1B[31\x1BPpayX\x1B'` — plain text `aa31`, the `X` swallowed
+  by the body of the `DCS`. A code that stands finished between the text and
+  the run gives the run a seam of its own, and that one is served.
 - `insertBefore` and `insertAfter` could put text between the halves of a
   surrogate pair and hand back a string that is no longer valid UTF-16. A
   position inside a pair now shifts to its edge — `insertBefore` to the
