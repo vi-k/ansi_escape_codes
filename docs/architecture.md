@@ -12,10 +12,28 @@
 
 ## Конвейер: из строки в разбор
 
-Одна регулярка `escapeCodesRe` (`parsing/patterns/patterns.dart`) режет
-вход на escape-коды и текст между ними. Каждый кусок становится
+Вход режет **пара** — сканер и регулярка, и порознь ни один из них этого
+не делает. `_ParserIterator._read` (`parser/matches/parser_iterator.dart`)
+идёт по строке байтовым `indexOf('\x1B')`, который дешевле прогона
+regex-движка, и только на найденном `ESC` прикладывает `escapeCodesRe`
+(`parsing/patterns/patterns.dart`) через `matchAsPrefix`. То есть сканер
+решает, **где** совпадение может начаться, регулярка — **из чего** оно
+состоит; между совпадениями лежит `Text`. Каждый кусок становится
 `Match<S>` (`parser/matches/match.dart`) — сущность, состояние после неё
 и ссылка, действующая в этом месте.
+
+Следствие, за которое заплачено дважды: правка, добавляющая открыватель,
+требует **обоих** мест сразу. Расширенная регулярка без сканера шанса не
+получает — обход не встанет на новый байт; расширенный сканер без
+регулярки получает от `matchAsPrefix` `null` и сдвигается на байт вперёд.
+Инвариант записан комментарием в самом `parser_iterator.dart`, полный
+набор мест, которые правятся вместе, — в `docs/backlog.md`.
+
+Ту же `escapeCodesRe` читают напрямую расширения `String`
+(`ansiRemoveEscapeCodes`, `lengthWithoutEscapeCodes`) — мимо сканера, но
+за быстрым выходом `contains(ESC)`. Что оба пути дают один ответ, держат
+`test/remove_agrees_with_parser_test.dart` и
+`test/round_trip_invariant_test.dart`.
 
 Сущности — sealed-модель `Entity` (`parser/entities/entity.dart`):
 `Text` и `EscapeCode`, дальше `Csi`, `Esc`, `Sgr` и `ControlString` —
@@ -38,7 +56,7 @@
 | каталог | что там |
 |---|---|
 | `lib/src/ansi/` | сырые байты стандарта: `c0`, `c1`, `csi` (константы, сверенные с ECMA-48), `sgr`, `colors`, `esc_fs` |
-| `lib/src/parsing/patterns/` | регулярки разбора; `sgrPattern` отделяет `SGR` от приватных последовательностей |
+| `lib/src/parsing/patterns/` | регулярки: разборные — `escapeCodesRe` и его альтернативы, где `sgrPattern` отделяет `SGR` от приватных последовательностей; и `controlCodesRe`, которого разбор не касается вовсе — его читают только `ansiHasControlCodes` и `ansiRemoveControlCodes` |
 | `lib/src/parsing/parser/` | `Parser` и `StackedParser` (`parser.dart`), принтеры (`printer.dart`), сущности (`entities/`), кэш и курсор (`matches/`) |
 | `lib/src/parsing/state/` | `State<S>` и две реализации: `Style` — значение, `Stack` — история; плюс генерируемые цветовые поверхности |
 | `lib/src/parsing/colors/` | модель цвета: `Color16`, `Color256`, `ColorRgb`, индексы |
