@@ -90,7 +90,7 @@ void main() {
           exclude: ControlFunctionsC0.values.toSet(),
         ),
         'ab',
-        reason: 'the C0 set ends at 0x1F, so exclude has no name for them',
+        reason: 'that set has no member above DEL, so exclude cannot name them',
       );
     });
   });

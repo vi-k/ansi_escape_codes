@@ -52,7 +52,8 @@ extension StringRemoveEscapeCodesExtension on String {
   /// them under its control category and a terminal handed one prints
   /// rubbish, so a text cleaned for display is not clean while they are in
   /// it. [exclude] cannot spare them: it names members of
-  /// [ControlFunctionsC0], and the set ends at `0x1F`.
+  /// [ControlFunctionsC0], and that set has no member above `DEL` — there is
+  /// no enum here for the eight-bit C1 to be named by, and none is wanted.
   String ansiRemoveControlCodes({
     Set<ControlFunctionsC0> exclude = const {},
   }) {
