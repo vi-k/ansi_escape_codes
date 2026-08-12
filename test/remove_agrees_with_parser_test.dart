@@ -5,8 +5,15 @@ import 'package:test/test.dart';
 
 /// The pieces a terminal stream is made of, the broken ones included: an
 /// unterminated OSC, a CSI with nothing to end it, an ESC on its own.
+///
+/// The eight-bit CSI is among them because it is text to this package and
+/// has to stay text on both paths. Alone it proves little — with no ESC in
+/// the string `ansiRemoveEscapeCodes` returns early and never looks at the
+/// pattern — but drawn beside any of the sequences here it lands in a string
+/// that does reach the regex.
 const _fragments = <String>[
   'text',
+  '\x9B31m',
   ' ',
   'a',
   '\n',
