@@ -391,17 +391,16 @@ final class _ParserBase<S extends State<S>> {
   /// A control string the string never terminated — an `OSC`, a `DCS`, an
   /// `SOS`, a `PM` or an `APC`, a window title as readily as a link opening —
   /// is held back until what follows it in the slice is known. The sequence
-  /// runs to the next `ESC` or to the end of the text, and in the string one
-  /// of those two always followed it; written in front of text that did not
-  /// follow it there, it would read that text as its own. Where
-  /// text follows in the slice, then, the terminator it lacks is supplied,
-  /// and where an escape code follows the bytes go out exactly as they came
-  /// — that code's `ESC` ends the sequence as the string's did. With
-  /// `close: true` the terminator is written at the end of the slice as well,
-  /// though nothing follows it there, for the reason the link is closed
-  /// there: what is printed after the slice must not be read as more of the
-  /// sequence. With `close: false` the bytes are left as they came, as the
-  /// link is left open.
+  /// runs to the next `ESC` or to the end of the text, and in the string one of
+  /// those two always followed it; written in front of text that did not follow
+  /// it there, it would read that text as its own. Where text follows in the
+  /// slice, then, the terminator it lacks is supplied, and where an escape code
+  /// follows the bytes go out exactly as they came — that code's `ESC` ends the
+  /// sequence as the string's did. With `close: true` the terminator is written
+  /// at the end of the slice as well, though nothing follows it there, for the
+  /// reason the link is closed there: what is printed after the slice must not
+  /// be read as more of the sequence. With `close: false` the bytes are left as
+  /// they came, as the link is left open.
   ///
   /// A slice holding an `ESC 8` is where a link can still come out other than
   /// it was, and this is accepted rather than mended: the restore gives back
@@ -757,18 +756,17 @@ final class _ParserBase<S extends State<S>> {
   /// The exclamation mark is red: at position 5 stands the `reset`, and this
   /// goes in front of it. See [insertAfter] for the other side of it.
   ///
-  /// Neither insertion lands inside a sequence the parser could not finish —
-  /// a control string that never got its terminator, be it an `OSC`, a `DCS`,
-  /// an `SOS`, a `PM` or an `APC`; a bare `ESC`; a `CSI` with no final byte;
-  /// an `ESC` left on an intermediate byte. Whatever is written among the
-  /// bytes of one is read as part of it: `ESC` and an `X` are an
-  /// `SOS`, `CSI` and an `X` an `ECH`, and neither shows the letter. Aimed at
-  /// the seam in front of such a sequence, the text is put there, in front of
-  /// it, and the tail is copied on as it came. Aimed past that seam — among
-  /// the parameters of a `CSI` handed back as text — it is refused with an
-  /// [UnfinishedSequenceException], because no answer is right: in front of
-  /// the sequence is before characters counted in front of it, and where it
-  /// was asked for is inside the sequence.
+  /// Neither insertion lands inside a sequence the parser could not finish — a
+  /// control string that never got its terminator, be it an `OSC`, a `DCS`, an
+  /// `SOS`, a `PM` or an `APC`; a bare `ESC`; a `CSI` with no final byte; an
+  /// `ESC` left on an intermediate byte. Whatever is written among the bytes of
+  /// one is read as part of it: `ESC` and an `X` are an `SOS`, `CSI` and an `X`
+  /// an `ECH`, and neither shows the letter. Aimed at the seam in front of such
+  /// a sequence, the text is put there, in front of it, and the tail is copied
+  /// on as it came. Aimed past that seam — among the parameters of a `CSI`
+  /// handed back as text — it is refused with an [UnfinishedSequenceException],
+  /// because no answer is right: in front of the sequence is before characters
+  /// counted in front of it, and where it was asked for is inside the sequence.
   ///
   /// A [pos] outside the plain text is a [RangeError], as it always was.
   String insertBefore(int pos, String text) => _insert(pos, text, after: false);
@@ -992,12 +990,11 @@ final class _ParserBase<S extends State<S>> {
   /// A control string the string never terminated — a window title as readily
   /// as a link opening, a `DCS` as readily as an `OSC` — is held back until
   /// what follows it is known. Where that is text the terminator it lacks is
-  /// supplied, or the sequence would read that text as its own; where it is
-  /// an escape code the bytes go out as
-  /// they came, that code's `ESC` ending the sequence as the string's did.
-  /// With `close: true` the terminator is written at the end as well, though
-  /// nothing follows it there, for the reason the link is closed there. See
-  /// [substring], which says the whole of it.
+  /// supplied, or the sequence would read that text as its own; where it is an
+  /// escape code the bytes go out as they came, that code's `ESC` ending the
+  /// sequence as the string's did. With `close: true` the terminator is written
+  /// at the end as well, though nothing follows it there, for the reason the
+  /// link is closed there. See [substring], which says the whole of it.
   String optimize({bool close = true}) {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();

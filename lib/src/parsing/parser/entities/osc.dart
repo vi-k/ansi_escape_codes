@@ -71,11 +71,11 @@ String _terminatedIfTextFollows(String codes, String following) =>
 /// got one and nothing beginning with an `ESC` follows to end it.
 ///
 /// Reached only through [_terminatedIfTextFollows], which settles an empty
-/// [following] on its own and hands the rest down here; nothing calls this
-/// directly. It was the rule at the edge of an output too, until the four
-/// control strings beside the `OSC` arrived and took the openings to
-/// [_terminatedOpening] — where an empty [following] is read by `closing`
-/// rather than refused outright.
+/// [following] on its own — as nothing owed — and hands the rest down here;
+/// nothing calls this directly. The pair was the rule at the edge of an output
+/// too, until the four control strings beside the `OSC` arrived and took the
+/// openings to [_terminatedOpening], where an empty [following] means what
+/// `closing` says it means rather than what the pair settles it to mean here.
 ///
 /// What is left here is the half of the old pair that link codes still want,
 /// and it is safe for them for the reason [_oscTerminated] gives: they are

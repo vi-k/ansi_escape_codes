@@ -208,18 +208,18 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// further, and a line with nothing to show inside the link writes no
   /// opening at all and hands it on.
   ///
-  /// A control string the line never terminated — an `OSC`, a `DCS`, an
-  /// `SOS`, a `PM` or an `APC`, a window title as readily as a link opening —
-  /// is held back until what follows it is known. The sequence runs to the
-  /// next `ESC` or to the end of the text, and in what was handed over one
-  /// of those two always followed it; put in front of text that did not
-  /// follow it there, it would read that text as its own. Where text follows
-  /// in the line the terminator it lacks is supplied; where an escape code
-  /// follows the bytes go out as they came, that code's `ESC` ending the
-  /// sequence as the line's did; and at the end of the line the terminator is
-  /// written although nothing follows it there, for the reason the link is
-  /// closed there. [Parser.optimize] and [Parser.substring] hold an opening
-  /// back the same way.
+  /// A control string the line never terminated — an `OSC`, a `DCS`, an `SOS`,
+  /// a `PM` or an `APC`, a window title as readily as a link opening — is held
+  /// back until what follows it is known. The sequence runs to the next `ESC`
+  /// or to the end of the text, and in what was handed over one of those two
+  /// always followed it; put in front of text that did not follow it there, it
+  /// would read that text as its own. Where text follows in the line the
+  /// terminator it lacks is supplied; where an escape code follows the bytes go
+  /// out as they came, that code's `ESC` ending the sequence as the line's did;
+  /// and at the end of the line the terminator is written although nothing
+  /// follows it there, for the reason the link is closed there.
+  /// [Parser.optimize] and [Parser.substring] hold an opening back the same
+  /// way.
   ///
   /// What the line carries goes through as it stands, its link codes
   /// included: a close for a link nothing has open, or a second opening of
@@ -500,9 +500,8 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   /// A write goes to the sink as it comes, and one line may be composed of
   /// several, so a piece on its own is never known to end one and nothing is
   /// owed at its end — neither the close for a link nor the terminator for a
-  /// control string. Where the line really ends the write path says for
-  /// itself, and it is there that what a piece left open is carried into the
-  /// write that
+  /// control string. Where the line really ends the write path says for itself,
+  /// and it is there that what a piece left open is carried into the write that
   /// follows — see [_writeBuf] and [_writeLine]. [prepare], which reads this,
   /// hands the piece back without a close, without a terminator and without
   /// touching any of the four carries: the link inside the line, the link
