@@ -26,6 +26,7 @@ extension StringHasEscapeCodesExtension on String {
       contains(ESC) && hasSgrFunction(this, isUnderlineColorFunction);
 
   /// Whether there are control codes in the text: the C0 bytes, `ESC` and
-  /// `DEL`, escape sequences or not.
+  /// `DEL`, escape sequences or not — and the eight-bit C1, `0x80` through
+  /// `0x9F`, which open no sequence here but are controls all the same.
   bool get ansiHasControlCodes => controlCodesRe.hasMatch(this);
 }

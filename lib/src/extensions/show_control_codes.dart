@@ -25,6 +25,10 @@ enum ControlCodeStyle {
 /// Showing the control codes in a string instead of sending them.
 extension StringShowControlCodesExtension on String {
   /// Show control codes.
+  ///
+  /// The C0 set and `DEL` are shown the way [preferStyle] asks. The eight-bit
+  /// C1, `0x80` through `0x9F`, are controls with neither a name nor a picture
+  /// to be shown by, so they are written as their byte under every style.
   String ansiShowControlCodes({
     String open = '',
     String close = '',
@@ -69,7 +73,25 @@ extension StringShowControlCodesExtension on String {
       final controlCode = ControlFunctionsC0.byIndex(charCode);
 
       if (controlCode == null) {
-        buf.writeCharCode(charCode);
+        // The eight-bit C1 are controls with nothing to call them by. The
+        // standard names the function, not the byte — `CSI` is the name of
+        // something with two spellings, and this package reads only the
+        // other one — and Unicode's pictures stop at `DEL`. The byte is the
+        // only honest way to show them, and showing them beats letting them
+        // through unseen: they print as rubbish, and whoever is reading a
+        // string to find out what is in it cannot see them otherwise.
+        //
+        // The range is spelt out here instead of coming from
+        // `controlCodesRe`, which covers the same bytes for
+        // `ansiHasControlCodes` and `ansiRemoveControlCodes`: this walks
+        // code units and rules on one at a time, where that is a pattern
+        // matched against whole strings. Two spellings of one class, to be
+        // changed together.
+        if (charCode >= 0x80 && charCode <= 0x9F) {
+          charCodeToBuf(charCode);
+        } else {
+          buf.writeCharCode(charCode);
+        }
       } else {
         switch (preferStyle) {
           case ControlCodeStyle.charCode:

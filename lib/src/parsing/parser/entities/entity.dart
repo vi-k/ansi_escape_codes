@@ -103,6 +103,13 @@ sealed class EscapeCode extends Entity {
 
   /// The sequence with its control codes spelt out by their abbreviations:
   /// `[ESC][` where the bytes are.
+  ///
+  /// The abbreviations run out at the eight-bit C1. Those are controls too,
+  /// and one that found its way into a body — a `0x9B` inside an `OSC`
+  /// payload, say — is written as the number of its byte instead:
+  /// `[ESC]]0;t\x9Bx[BEL]`. This package gives them no names on purpose,
+  /// since a name would suggest it reads them as sequences and it does not;
+  /// the reasoning is in `docs/records/2026-08-12[1]-eight-bit-c1-design.md`.
   String toStringAsControlCodes() =>
       string.ansiShowControlCodes(preferStyle: ControlCodeStyle.abbr);
 
