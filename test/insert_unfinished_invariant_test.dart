@@ -44,6 +44,14 @@ const _inputs = <String>[
   'aa\x1B[31\x1B[31',
   'aa\x1B[31\x1B]8;;http://u',
   'aa\x1B(B\x1B[31\x1B',
+  // And the text behind a code that never finished is not always parameters:
+  // a byte no sequence can be built from — a LF, a letter outside ASCII —
+  // leaves the code waiting and comes back as text all the same.
+  'aa\x1B\n\x1BPpay\x1B',
+  'aa\x1B(я\x1B[31',
+  // More than one sequence waiting in the same stretch.
+  'aa\x1B[31\x1B[32\x1BPpay\x1B',
+  'aa\x1B]0;t\x1B[31\x1B',
   'aa',
   '',
 ];

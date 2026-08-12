@@ -322,14 +322,15 @@ void main() {
     test('and a run beginning inside a truncated CSI is refused', () {
       // The same input the test above leaves open, and here is the answer it
       // is owed. A run broken by a piece of text begins behind that text, and
-      // the only text that can stand behind a code that never finished is the
-      // parameters of a CSI with no final byte — so the place in front of
-      // such a run is the byte that CSI is waiting for. Both insertions say
-      // so, and both name the CSI rather than the code the walk stopped on.
+      // where the code in front of that text could not be finished either the
+      // text is bytes it is still reading — here the parameters of a CSI with
+      // no final byte — so the place in front of such a run is the byte that
+      // CSI is waiting for. Both insertions say so, and both name the CSI
+      // rather than the code the walk stopped on.
       const input = 'aa\x1B[31\x1BPpay\x1B';
 
       // Probed: the CSI begins at 2, and that is the sequence the text would
-      // have landed inside — 'ESC [ 31 X' is a finished ICH, and the 31 goes
+      // have landed inside — 'ESC [ 31 X' is a finished ECH, and the 31 goes
       // with it.
       expect(
         () => Parser(input).insertAfter(4, 'X'),
@@ -393,6 +394,80 @@ void main() {
       expect(
         () => Parser(input).insertBefore(4, 'X'),
         throwsA(isA<UnfinishedSequenceException>()),
+      );
+    });
+
+    test('the refusal names the sequence nearest the text', () {
+      // A stretch may hold more than one sequence still waiting, and the one
+      // that takes the inserted text is the last of them — the one the text
+      // stands behind. Naming the first would point at bytes a terminal read
+      // long ago. ESC [ | 31 | ESC [ | 32 | ESC P pay | ESC: the run in front
+      // of the DCS begins behind the 32, and the 32 belongs to the second
+      // CSI. Probed: offset 6, from both insertions.
+      const two = 'aa\x1B[31\x1B[32\x1BPpay\x1B';
+
+      expect(
+        () => Parser(two).insertAfter(6, 'X'),
+        throwsA(
+          isA<UnfinishedSequenceException>()
+              .having((e) => e.offset, 'offset', 6),
+        ),
+      );
+      expect(
+        () => Parser(two).insertBefore(6, 'X'),
+        throwsA(
+          isA<UnfinishedSequenceException>()
+              .having((e) => e.offset, 'offset', 6),
+        ),
+      );
+
+      // And a control string is never what gets named, which is what
+      // UnfinishedSequenceException promises about itself: a string that
+      // never closed swallows text whole, so no piece of text ever stands
+      // behind one and no insertion is ever refused on its account. Here the
+      // OSC begins at 2 and the CSI behind it at 7, and 7 is the answer.
+      const string = 'aa\x1B]0;t\x1B[31\x1B';
+
+      expect(
+        () => Parser(string).insertAfter(4, 'X'),
+        throwsA(
+          isA<UnfinishedSequenceException>()
+              .having((e) => e.offset, 'offset', 7),
+        ),
+      );
+      expect(
+        () => Parser(string).insertBefore(4, 'X'),
+        throwsA(
+          isA<UnfinishedSequenceException>()
+              .having((e) => e.offset, 'offset', 7),
+        ),
+      );
+    });
+
+    test('and the text behind a waiting code need not be parameters', () {
+      // Parameters are the case worth naming, not the only one: the pattern
+      // for a CSI wants a final byte and simply does not match without one,
+      // so bytes no sequence can be built from come back as text with a code
+      // still waiting in front of them. ESC | LF | ESC P pay | ESC — on a
+      // terminal the LF is executed where it stands and the next byte ends
+      // the ESC, which is why the seam behind it is refused like any other.
+      // Probed: the bare ESC at 2 is named, by both insertions.
+      const input = 'aa\x1B\n\x1BPpay\x1B';
+
+      expect(Parser(input).removeAll(), 'aa\n');
+      expect(
+        () => Parser(input).insertAfter(3, 'X'),
+        throwsA(
+          isA<UnfinishedSequenceException>()
+              .having((e) => e.offset, 'offset', 2),
+        ),
+      );
+      expect(
+        () => Parser(input).insertBefore(3, 'X'),
+        throwsA(
+          isA<UnfinishedSequenceException>()
+              .having((e) => e.offset, 'offset', 2),
+        ),
       );
     });
 
