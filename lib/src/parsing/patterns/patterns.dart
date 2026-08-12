@@ -67,10 +67,18 @@ const String _intermediates = '[\x20-\x2F]';
 
 /// Pattern for control codes: the C0 set, `DEL`, and the eight-bit C1.
 ///
-/// The eight-bit C1 are here and nowhere else. They are controls by
-/// Unicode's own category and print as rubbish rather than as characters,
-/// so what strips and shows controls must know them — but they open no
-/// escape sequence in this package, and `escapeCodesRe` does not look for
-/// them. The reasoning is in
+/// Read by `ansiHasControlCodes` and `ansiRemoveControlCodes`, and by
+/// nothing else. The parser scans for `ESC` and never consults this, so the
+/// eight-bit C1 standing in this class says nothing about what opens a
+/// sequence: they open none, and `escapeCodesRe` does not look for them.
+///
+/// They are in the class because Unicode files them under its control
+/// category and a terminal handed one prints rubbish rather than a glyph, so
+/// what asks after control codes and what strips them must know them — and
+/// so must what shows them. `ansiShowControlCodes` knows the same range
+/// separately: it walks code units and rules on one at a time, which a
+/// pattern matched against whole strings cannot do for it. The class is
+/// therefore written twice — here and in `show_control_codes.dart` — and the
+/// two are to be changed together. The reasoning is in
 /// `docs/records/2026-08-12[1]-eight-bit-c1-design.md`.
 final controlCodesRe = RegExp('[\x00-\x1F\x7F-\x9F]');

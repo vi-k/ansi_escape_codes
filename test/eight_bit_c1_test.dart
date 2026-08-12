@@ -121,4 +121,50 @@ void main() {
       );
     });
   });
+
+  // Being taken out is half of it. The other question a caller asks of a
+  // string is what is in it, and showing could not answer for these bytes:
+  // `ansiShowControlCodes` walks `codeUnits` and asks
+  // `ControlFunctionsC0.byIndex`, which knows nothing above `DEL`, so the byte
+  // was copied through and the reader saw whatever the terminal made of it.
+  // Showing reads no pattern, so it knows the range on its own.
+  group('the eight-bit C1 are shown by their byte:', () {
+    test('the default style writes the byte', () {
+      expect('aa\u{9B}31mbb'.ansiShowControlCodes(), r'aa\x9B31mbb');
+    });
+
+    test('every style writes the byte, having no name to write', () {
+      for (final style in ControlCodeStyle.values) {
+        expect(
+          'aa\u{9B}bb'.ansiShowControlCodes(preferStyle: style),
+          r'aa\x9Bbb',
+          reason: '$style',
+        );
+      }
+    });
+
+    test('the whole set is covered, the same range showing as stripping', () {
+      for (var byte = 0x80; byte <= 0x9F; byte++) {
+        final hex = byte.toRadixString(16).toUpperCase();
+
+        expect(
+          'aa${String.fromCharCode(byte)}bb'.ansiShowControlCodes(),
+          'aa\\x${hex}bb',
+          reason: 'byte 0x$hex',
+        );
+      }
+    });
+
+    test('the C0 set keeps its names and pictures', () {
+      expect('a\tb'.ansiShowControlCodes(), r'a\tb');
+      expect(
+        'a\tb'.ansiShowControlCodes(preferStyle: ControlCodeStyle.abbr),
+        'a[HT]b',
+      );
+    });
+
+    test('what is not a control is left alone', () {
+      expect('aa\u{A0}bb'.ansiShowControlCodes(), 'aa\u{A0}bb');
+    });
+  });
 }
