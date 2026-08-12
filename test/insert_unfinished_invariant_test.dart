@@ -17,6 +17,18 @@ const _inputs = <String>[
   'aa\x1B]0;t\x1B7bb',
   'aa\x1B[31bb',
   'aa\x1B[31m bb \x1B[0m',
+  // Two unfinished sequences in a row: the seam belongs in front of both of
+  // them rather than in the gap between them.
+  'aa\x1B]0;t\x1B[31',
+  'aa\x1BPpay\x1B[31',
+  'aa\x1BPpay\x1B',
+  'aa\x1B\x1B[31',
+  'aa\x1B(\x1B[31',
+  // A run longer than two.
+  'aa\x1BPpay\x1B(\x1B[31',
+  // A finished code breaks the run, and the insertion behind it is right
+  // already and has to stay where it is.
+  'aa\x1BPpay\x1B(B\x1B[31',
   'aa',
   '',
 ];

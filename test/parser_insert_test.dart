@@ -1,3 +1,4 @@
+import 'package:ansi_escape_codes/ansi.dart';
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:test/test.dart';
 
@@ -225,6 +226,80 @@ void main() {
         'aa\x1B[31bXb',
         reason: 'b is a final byte, so the sequence is finished, the text '
             'after it is text, and the insertion goes past the code',
+      );
+    });
+  });
+
+  group('a seam in front of a run of unfinished codes:', () {
+    test('an insertion does not land between two unfinished codes', () {
+      // insertBefore is right today; insertAfter must agree with it, since
+      // both mean "in front of what could not be finished".
+      const input = 'aa\x1BPpay\x1B[31';
+
+      expect(Parser(input).insertAfter(2, 'X'), 'aaX\x1BPpay\x1B[31');
+      expect(Parser(input).insertBefore(2, 'X'), 'aaX\x1BPpay\x1B[31');
+    });
+
+    test('the run needs no control string in it', () {
+      expect(Parser('aa\x1B\x1B[31').insertAfter(2, 'X'), 'aaX\x1B\x1B[31');
+      expect(Parser('aa\x1B(\x1B[31').insertAfter(2, 'X'), 'aaX\x1B(\x1B[31');
+    });
+
+    test('a run longer than two is stepped over whole', () {
+      expect(
+        Parser('aa\x1BPpay\x1B(\x1B[31').insertAfter(2, 'X'),
+        'aaX\x1BPpay\x1B(\x1B[31',
+      );
+    });
+
+    test('a finished code ends the run and is passed over', () {
+      // The DCS body ends at the ESC of the ESC ( B, so text behind that
+      // code is outside the string and belongs there.
+      expect(
+        Parser('aa\x1BPpay\x1B(B\x1B[31').insertAfter(2, 'X'),
+        'aa\x1BPpay\x1B(BX\x1B[31',
+      );
+    });
+
+    test('a run at the end of the input is stepped over too', () {
+      expect(Parser('aa\x1BPpay\x1B').insertAfter(2, 'X'), 'aaX\x1BPpay\x1B');
+    });
+
+    test('every opener and every unfinished tail agree with insertBefore', () {
+      // The matrix the design asks for: five openers, three kinds of tail
+      // that cannot finish, and both insertions at the seam. insertBefore is
+      // right today, so it is the answer insertAfter must give.
+      for (final opener in [OSC, DCS, SOS, PM, APC]) {
+        for (final tail in [ESC, '$ESC[31', '$ESC(']) {
+          final input = 'aa${opener}pay$tail';
+          final parser = Parser(input);
+          final reason = 'input ${input.ansiShowEscapeSequences()}';
+
+          expect(
+            parser.insertAfter(2, 'X'),
+            parser.insertBefore(2, 'X'),
+            reason: reason,
+          );
+          expect(
+            Parser(parser.insertAfter(2, 'X')).removeAll(),
+            '${parser.removeAll().substring(0, 2)}X'
+            '${parser.removeAll().substring(2)}',
+            reason: reason,
+          );
+        }
+      }
+    });
+
+    test('the refusal among a truncated CSI stays where it was', () {
+      final parser = Parser('aa\x1BPpay\x1B[31');
+
+      expect(
+        () => parser.insertAfter(3, 'X'),
+        throwsA(isA<UnfinishedSequenceException>()),
+      );
+      expect(
+        () => parser.insertBefore(4, 'X'),
+        throwsA(isA<UnfinishedSequenceException>()),
       );
     });
   });
