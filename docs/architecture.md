@@ -29,10 +29,12 @@ regex-движка, и только на найденном `ESC` приклад
 Инвариант записан комментарием в самом `parser_iterator.dart`, полный
 набор мест, которые правятся вместе, — в `docs/backlog.md`.
 
-Ту же `escapeCodesRe` читают напрямую расширения `String`
-(`ansiRemoveEscapeCodes`, `lengthWithoutEscapeCodes`) — мимо сканера, но
-за быстрым выходом `contains(ESC)`. Что оба пути дают один ответ, держат
-`test/remove_agrees_with_parser_test.dart` и
+Ту же `escapeCodesRe` читают напрямую расширения `String`, и все трое —
+мимо сканера: `ansiRemoveEscapeCodes` и `lengthWithoutEscapeCodes`
+(`extensions/remove.dart`) за быстрым выходом `contains(ESC)`, а
+`ansiShowEscapeSequences` (`extensions/show_escape_codes.dart`) — без
+него, сразу в `allMatches`. Что путь расширений и путь парсера дают один
+ответ, держат `test/remove_agrees_with_parser_test.dart` и
 `test/round_trip_invariant_test.dart`.
 
 Сущности — sealed-модель `Entity` (`parser/entities/entity.dart`):
