@@ -6,8 +6,14 @@
 name: ansi_escape_codes
 
 on:
+  # The wave branches are here so that the gate stands before `main` and not
+  # after it. A wave is verified locally on one SDK; the 3.6.0 leg of the
+  # matrix is the floor the package claims to support and nothing local runs
+  # it, so without this the first time anything sees it is a push to `main` —
+  # and by then a red is already there. Prefixes, not `**`: dependabot
+  # branches arrive with a pull request and would otherwise run twice.
   push:
-    branches: [ "main" ]
+    branches: [ "main", "feat/**", "fix/**", "perf/**" ]
   pull_request:
     branches: [ "main" ]
 
