@@ -1,3 +1,4 @@
+import 'package:ansi_escape_codes/ansi.dart';
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:test/test.dart';
 
@@ -43,6 +44,27 @@ void main() {
       'UTF-8 terminal',
       () {
         expect(Parser('aa\x1B]0;t\u{9C}bb').removeAll(), 'aa');
+
+        // All five of the strings the parser knows, not the OSC alone: the
+        // terminator is written once per family in `patterns.dart`, and
+        // teaching any one of them the eight-bit ST would swallow `bb` in
+        // that one only.
+        for (final opener in [OSC, DCS, SOS, PM, APC]) {
+          expect(
+            Parser('aa${opener}pay\u{9C}bb').removeAll(),
+            'aa',
+            reason: 'opener ${opener.ansiShowEscapeSequences()}',
+          );
+
+          // The contrast that gives the line above its meaning: the
+          // seven-bit ST does end them, so what the eight-bit one fails to
+          // do is end a string, not merely be absent.
+          expect(
+            Parser('aa${opener}pay${ST}bb').removeAll(),
+            'aabb',
+            reason: 'opener ${opener.ansiShowEscapeSequences()}',
+          );
+        }
       },
     );
 
