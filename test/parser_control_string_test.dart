@@ -323,4 +323,57 @@ void main() {
       }
     });
   });
+
+  // Showing a code is reading it out, and a reader that does not know a code
+  // writes its bytes instead — which for these four means sending the very
+  // sequence the caller asked to see. Expectations taken off `OSC` on the
+  // same shapes, spaces and all.
+  group('control strings, shown:', () {
+    test('a string is shown as one code with a body', () {
+      expect(
+        'aa${DCS}pay${ST}bb'.ansiShowEscapeSequences(),
+        'aa[DCS pay ST]bb',
+      );
+    });
+
+    test('all four are named', () {
+      expect('${SOS}x$ST'.ansiShowEscapeSequences(), '[SOS x ST]');
+      expect('${PM}x$ST'.ansiShowEscapeSequences(), '[PM x ST]');
+      expect('${APC}x$ST'.ansiShowEscapeSequences(), '[APC x ST]');
+    });
+
+    test('a string without its terminator shows none', () {
+      expect('aa${DCS}pay'.ansiShowEscapeSequences(), 'aa[DCS pay ]');
+    });
+
+    test('an empty body is shown the way OSC shows one', () {
+      expect('aa$DCS$ST'.ansiShowEscapeSequences(), 'aa[DCS  ST]');
+    });
+
+    test('the shown string carries no ESC of its own', () {
+      // The point of the whole group: what is shown must be safe to print.
+      for (final opener in [DCS, SOS, PM, APC]) {
+        expect(
+          'aa${opener}pay${ST}bb'.ansiShowEscapeSequences(),
+          isNot(contains(ESC)),
+          reason: 'opener ${opener.ansiShowEscapeSequences()}',
+        );
+      }
+    });
+
+    test('the parser names them the same way', () {
+      expect(
+        Parser('aa${DCS}pay${ST}bb').showControlFunctions(),
+        'aa[DCS pay ST]bb',
+      );
+      expect(Parser('aa${DCS}pay').showControlFunctions(), 'aa[DCS pay ]');
+    });
+
+    test('the id of a control string is its name, not its bytes', () {
+      expect(
+        Parser('aa${DCS}pay${ST}bb').replaceAll((code) => '<${code.id}>'),
+        'aa<DCS pay ST>bb',
+      );
+    });
+  });
 }
