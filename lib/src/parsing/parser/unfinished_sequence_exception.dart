@@ -9,9 +9,7 @@
 /// shown. What the piece of text looks like decides nothing: a truncated `CSI`
 /// gives up its parameters, and a byte no sequence can be built from — a `LF`,
 /// a `DEL`, a letter outside ASCII — breaks off the pattern of any of the three
-/// and leaves the code in front of it waiting just the same. Nor does which of
-/// the two insertions asked: `insertBefore` and `insertAfter` refuse the same
-/// positions.
+/// and leaves the code in front of it waiting just the same.
 ///
 /// An insertion aimed at the seam in front of the sequence is placed there and
 /// nothing is thrown. This is for the positions past that seam, where no answer
@@ -25,6 +23,16 @@
 /// of that text is still reading, and the place before it is where that
 /// sequence's ending would be written. A code that stands finished between the
 /// text and the run gives the run a seam of its own, and that one is served.
+///
+/// Which of the two insertions asked is not beside the point, because each is
+/// refused by the seam it would take and the two take different ones —
+/// `insertBefore` the place behind the position, `insertAfter` the place past
+/// the codes standing at it. Both are inside the waiting sequence often
+/// enough, and then both throw; but a finished code standing between those
+/// bytes and what follows them puts a place past the sequence within
+/// `insertAfter`'s reach and none within `insertBefore`'s, and there only
+/// `insertBefore` is refused. `Parser('aa\x1B[31\x1B(B\x1B[31')` at position 4
+/// is such a place.
 ///
 /// A control string that never got its terminator — an `OSC`, a `DCS`, an
 /// `SOS`, a `PM` or an `APC` — is unfinished no less, and is never the sequence

@@ -811,13 +811,29 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// The codes it goes behind are the finished ones. A sequence the parser
   /// could not finish is not passed but stood in front of, and a run of them is
-  /// stood in front of whole; a position among the bytes of one is refused with
-  /// an [UnfinishedSequenceException], and so is the seam in front of a run
-  /// that begins among such bytes itself. This refuses wherever [insertBefore]
-  /// does and for the same reasons; [insertBefore] says the whole of it.
+  /// stood in front of whole.
   ///
   /// ```dart
   /// print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
+  /// ```
+  ///
+  /// The refusal is about the seam this one would take, which is the place
+  /// past the codes standing at [pos]. Where that place falls among bytes a
+  /// sequence is still reading — because the codes it went behind are
+  /// unfinished themselves, or because the run they belong to begins among
+  /// such bytes — there is nothing to serve, and an
+  /// [UnfinishedSequenceException] is thrown; [insertBefore] says the rule in
+  /// full, and this one reads it from its own side.
+  ///
+  /// Its own side is not the same side, so the two do not refuse in step. A
+  /// code that stands finished between such bytes and what follows them puts a
+  /// place past the waiting sequence within this one's reach, and it is served
+  /// there while [insertBefore], stepping the other way, is refused:
+  ///
+  /// ```dart
+  /// const text = 'aa\x1B[31\x1B(B\x1B[31';
+  /// print(Parser(text).insertAfter(4, 'X')); // 'aa\x1B[31\x1B(BX\x1B[31'
+  /// Parser(text).insertBefore(4, 'X');       // throws: 4 is inside the CSI
   /// ```
   String insertAfter(int pos, String text) => _insert(pos, text, after: true);
 
@@ -1214,6 +1230,15 @@ final class _Walk<S extends State<S>> {
   ///
   /// The state channel is quieter, all eleven unfinished forms leaving it
   /// alone, but it is read from here too rather than from two places at once.
+  ///
+  /// Only the branch of `_seamAt` that stopped inside a piece of text reads
+  /// this. The branch for a walk that has run out — the string ending inside
+  /// the run — still reads its state and its link off the last piece, which
+  /// agrees with this while the run follows the piece directly and does not
+  /// where a finished code stands between the two. That disagreement is a
+  /// defect older than the field, it moves `finalState` and `finalLink`, and
+  /// it waits on the owner in `docs/handoff.md` rather than being quietly
+  /// fixed here.
   Match<S>? beforeRun;
 
   /// Whether the iterator has run out.
