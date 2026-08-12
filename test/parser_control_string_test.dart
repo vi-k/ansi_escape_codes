@@ -1,5 +1,9 @@
 import 'package:ansi_escape_codes/ansi.dart';
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+// The opener set the pattern is built from. Not exported by any entry point —
+// it is an implementation detail — but the test that ties its two copies
+// together has to read the real one, or it would only be a third copy.
+import 'package:ansi_escape_codes/src/parsing/patterns/patterns.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -374,6 +378,44 @@ void main() {
         Parser('aa${DCS}pay${ST}bb').replaceAll((code) => '<${code.id}>'),
         'aa<DCS pay ST>bb',
       );
+    });
+  });
+
+  group('control strings, the opener set:', () {
+    test('the pattern and the dispatcher agree on which bytes open one', () {
+      // The set is written twice and the copies cannot see each other:
+      // `controlStringOpeners` feeds the pattern, and a `case` in
+      // `EscapeCode._parse` spells the same bytes out again because a pattern
+      // match cannot read them from a string. Widening one copy alone changes
+      // no parse at all — the half that is left behind keeps the old reading —
+      // so nothing but a test that walks the whole `ESC Fe` range notices.
+      const csi = 0x5B; // [
+      const osc = 0x5D; // ]
+      final openers = controlStringOpeners.codeUnits.toSet();
+
+      for (var byte = 0x40; byte <= 0x5F; byte++) {
+        final entity = Parser('aa$ESC${String.fromCharCode(byte)}pay${ST}bb')
+            .matches
+            .elementAt(1)
+            .entity;
+        final reason = 'ESC ${String.fromCharCode(byte)} '
+            '(0x${byte.toRadixString(16).toUpperCase()})';
+
+        if (openers.contains(byte)) {
+          expect(entity, isA<ControlString>(), reason: reason);
+          expect(entity, isNot(isA<Osc>()), reason: reason);
+        } else if (byte == osc) {
+          expect(entity, isA<Osc>(), reason: reason);
+        } else if (byte == csi) {
+          expect(entity, isA<Csi>(), reason: reason);
+        } else {
+          expect(entity, isA<Esc>(), reason: reason);
+        }
+      }
+    });
+
+    test('the set is the four the standard puts beside the OSC', () {
+      expect(controlStringOpeners.codeUnits, [0x50, 0x58, 0x5E, 0x5F]);
     });
   });
 }

@@ -64,24 +64,17 @@ bool _oscTerminated(String string) =>
 /// pieces: the link codes held back, a reopening, a transition, the text.
 /// They pass those pieces to [_firstNotEmpty] rather than joining them — see
 /// there.
+///
+/// Asking [_oscTerminated] is safe here for the reason that function gives:
+/// what comes here is link codes, and those are always an `OSC`, so asking
+/// whether they ended tells the truth. An opening held back must not be asked
+/// — see [_terminatedOpening], which is where the openings went when the four
+/// control strings beside the `OSC` arrived, and which does not ask.
 String _terminatedIfTextFollows(String codes, String following) =>
-    following.isEmpty ? codes : _terminatedUnlessCodeFollows(codes, following);
-
-/// [codes] with a terminator supplied where they end in an `OSC` that never
-/// got one and nothing beginning with an `ESC` follows to end it.
-///
-/// Reached only through [_terminatedIfTextFollows], which settles an empty
-/// [following] on its own — as nothing owed — and hands the rest down here;
-/// nothing calls this directly. The pair was the rule at the edge of an output
-/// too, until the four control strings beside the `OSC` arrived and took the
-/// openings to [_terminatedOpening], where an empty [following] means what
-/// `closing` says it means rather than what the pair settles it to mean here.
-///
-/// What is left here is the half of the old pair that link codes still want,
-/// and it is safe for them for the reason [_oscTerminated] gives: they are
-/// always an `OSC`, so asking whether they ended tells the truth.
-String _terminatedUnlessCodeFollows(String codes, String following) =>
-    codes.isEmpty || _oscTerminated(codes) || following.startsWith(ESC)
+    following.isEmpty ||
+            codes.isEmpty ||
+            _oscTerminated(codes) ||
+            following.startsWith(ESC)
         ? codes
         : '$codes$ST';
 
@@ -92,9 +85,8 @@ String _terminatedUnlessCodeFollows(String codes, String following) =>
 /// does not ask again whether it ended — and it must not ask: a `BEL` ends an
 /// [Osc] and no other control string, so an unterminated [Dcs] whose body
 /// happens to end in one would be called finished by that question and left
-/// open. [_terminatedIfTextFollows] and [_terminatedUnlessCodeFollows] go on
-/// asking it, because what they are given is link codes, and those are always
-/// an `OSC`.
+/// open. [_terminatedIfTextFollows] goes on asking it, because what it is
+/// given is link codes, and those are always an `OSC`.
 ///
 /// [closing] says what an empty [following] means. Inside a string it means
 /// nothing follows the opening at all, so there is nothing to be swallowed
