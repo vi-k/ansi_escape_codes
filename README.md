@@ -972,6 +972,11 @@ front of the sequence and the tail is copied on as it came:
 print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
 ```
 
+One seam is left over: where an unfinished code — a bare `ESC`, a `CSI` with no
+final byte — ended the control string, `insertAfter` lands among the string's
+bytes still, as it has since the `OSC` was the only string this could happen
+to; `insertBefore` stands in front of the string there, as everywhere else.
+
 A `CSI` with no final byte is the one that can carry parameters behind it, and
 those come back as text although a terminal reads them as part of the
 sequence. A position among them has no right answer — in front of the sequence
