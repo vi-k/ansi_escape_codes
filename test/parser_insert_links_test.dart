@@ -259,6 +259,32 @@ void main() {
       );
     });
 
+    test('the style in front of the run is the one the marker sits in', () {
+      final result = Parser('aa$fgRed$run').insertAfter(2, '$fgGreen@');
+
+      expect(
+        result,
+        'aa$fgRed$fgGreen@$fgRed$run',
+        reason: 'the seam is behind the colour, so the marker is given that '
+            'colour back and not a reset — the run carries no style of its '
+            'own to read it off',
+      );
+    });
+
+    test('a close in front of the run leaves the seam outside every link', () {
+      final parser = Parser.debugInsideLink(
+        'aa$linkClose$run',
+        const Link(outer),
+      );
+
+      expect(
+        parser.insertAfter(2, '@$linkClose'),
+        'aa$linkClose@$linkClose$run',
+        reason: 'the string began inside a link and the close in front of '
+            'the run ended it, so there is nothing at the seam to hand back',
+      );
+    });
+
     test('a link open in front of the run is given back', () {
       // The run opens with a close of its own: `OSC 8;;` with no URL and no
       // terminator, which ends whatever link was open.
