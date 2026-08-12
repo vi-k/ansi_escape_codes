@@ -279,10 +279,18 @@ void main() {
       expect(Parser('aa${DCS}pay').insertAfter(2, 'X'), 'aaX${DCS}pay');
     });
 
-    test('a string the next code ended is passed over, not entered', () {
+    test('a string a finished code ended is passed over, not entered', () {
       // The other shape of an unterminated string: it runs to the `ESC` of
       // the code behind it rather than to the end of the input, and the
       // insertion goes behind that code, where the string is over.
+      //
+      // Only where that code is finished. An unfinished one — a bare `ESC`,
+      // a `CSI` still waiting for its final byte — takes the insertion in
+      // front of itself, which is the end of the body of a string that never
+      // got its terminator: `aa DCS pay` + `X` + `ESC`, with the `X` inside
+      // the string as a terminal reads it. That is the seam the caller asked
+      // for, and moving it further would put the text behind bytes counted
+      // in front of it.
       final parser = Parser('aa${DCS}pay${fgRed}x$reset');
 
       expect(parser.insertBefore(2, 'X'), 'aaX${DCS}pay${fgRed}x$reset');
