@@ -78,6 +78,43 @@ void main() {
     });
   });
 
+  // What opens a string is written down twice: the class of openers in
+  // `patterns.dart` says how many bytes the match takes, and the switch in
+  // `EscapeCode._parse` says which entity it becomes. Nothing ties the two
+  // together, and widening either one alone is silent — a match that takes
+  // the body but is built as an `EscUnknown`, or an entity built as an `Apc`
+  // out of two bytes. These tests hold both: the plain text holds the class,
+  // the entity holds the switch.
+  group('control strings, what does not open one:', () {
+    // PU1, PU2, STS, CCH, MW, SPA, EPA and SCI, and the unassigned `\x59`
+    // among them: the whole of `\x50`–`\x5F` but the four openers, `CSI`,
+    // `ST` and `OSC`.
+    const neighbours = ['Q', 'R', 'S', 'T', 'U', 'V', 'W', 'Y', 'Z'];
+
+    test('the C1 neighbours of the openers stay escape codes', () {
+      for (final letter in neighbours) {
+        final parser = Parser('aa$ESC${letter}pay${ST}bb');
+
+        expect(
+          parser.matches.elementAt(1).entity,
+          isA<Esc>(),
+          reason: 'ESC $letter',
+        );
+        expect(parser.removeAll(), 'aapaybb', reason: 'ESC $letter');
+      }
+    });
+
+    test('the C1 neighbours owe no terminator', () {
+      for (final letter in neighbours) {
+        expect(
+          Parser('aa$ESC${letter}pay').optimize(),
+          'aa$ESC${letter}pay',
+          reason: 'ESC $letter',
+        );
+      }
+    });
+  });
+
   // The expectations here were taken off `OSC` on the same shapes of input,
   // which already pays this debt, and then written for the other four. Where
   // one of them differs from `OSC` — the `BEL` test — the difference is the
