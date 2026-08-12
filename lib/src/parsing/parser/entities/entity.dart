@@ -93,6 +93,9 @@ sealed class EscapeCode extends Entity {
           return Csi._parse(state);
         case 0x5D: // ]
           return Osc._parse(state);
+        // The bytes `controlStringOpeners` gives the pattern, spelt out again
+        // because a `case` cannot read them out of a string. The two copies
+        // are tied by a test rather than by the compiler — see that constant.
         case 0x50 || 0x58 || 0x5E || 0x5F: // P, X, ^, _
           return ControlString._parse(state);
       }

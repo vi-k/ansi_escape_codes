@@ -46,11 +46,21 @@ const String oscPattern = '(?<osc>$ESC\\])'
 ///
 /// A `BEL` ends none of these. It ends an `OSC`, which is xterm's and not the
 /// standard's, and the standard gives all five `ST`.
-const String controlStringPattern =
-    // P, X, ^ and _: DCS, SOS, PM and APC.
-    '(?<cstr>$ESC[\x50\x58\x5E\x5F])'
+const String controlStringPattern = '(?<cstr>$ESC[$controlStringOpeners])'
     '(?<cstr_params>[^$ESC]*)'
     '(?<cstr_terminator>$ESC\\\\)?';
+
+/// The bytes that open a control string other than an `OSC`: `P`, `X`, `^` and
+/// `_`, which after an `ESC` are `DCS`, `SOS`, `PM` and `APC`.
+///
+/// Named because the set is written twice and the two copies cannot see each
+/// other: [controlStringPattern] decides what a match is made of, and the
+/// `switch` in `EscapeCode._parse` decides what entity it becomes. Widening
+/// one alone changes no parse at all — the half left behind keeps the old
+/// reading — so `test/parser_control_string_test.dart` ties them together and
+/// goes red where one was edited and the other forgotten. Other places carry a
+/// copy of some opener set too; `docs/handoff.md` lists what was found.
+const String controlStringOpeners = '\x50\x58\x5E\x5F';
 
 /// Pattern for ESC.
 ///
