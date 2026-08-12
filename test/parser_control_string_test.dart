@@ -260,4 +260,59 @@ void main() {
       }
     });
   });
+
+  // Insertions were left to the two halves above: the body of a string is no
+  // longer text, so no plain-text position falls inside one, and `_unfinished`
+  // asks the family rather than `OSC` alone, so an insertion stands in front
+  // of a string that never ended instead of among its bytes. These tests hold
+  // that, and their expectations were taken off `OSC` on the same shapes.
+  group('control strings, insertions:', () {
+    test('an insertion does not land inside a terminated string', () {
+      final parser = Parser('aa${DCS}pay${ST}bb');
+
+      expect(parser.insertBefore(2, 'X'), 'aaX${DCS}pay${ST}bb');
+      expect(parser.insertAfter(2, 'X'), 'aa${DCS}pay${ST}Xbb');
+    });
+
+    test('an insertion stands before a string that never ended', () {
+      expect(Parser('aa$DCS').insertAfter(2, 'X'), 'aaX$DCS');
+      expect(Parser('aa${DCS}pay').insertAfter(2, 'X'), 'aaX${DCS}pay');
+    });
+
+    test('a string the next code ended is passed over, not entered', () {
+      // The other shape of an unterminated string: it runs to the `ESC` of
+      // the code behind it rather than to the end of the input, and the
+      // insertion goes behind that code, where the string is over.
+      final parser = Parser('aa${DCS}pay${fgRed}x$reset');
+
+      expect(parser.insertBefore(2, 'X'), 'aaX${DCS}pay${fgRed}x$reset');
+      expect(parser.insertAfter(2, 'X'), 'aa${DCS}pay${fgRed}Xx$reset');
+    });
+
+    test('a string standing first is passed over by an insertion after 0', () {
+      final parser = Parser('${DCS}pay${ST}bb');
+
+      expect(parser.insertBefore(0, 'X'), 'X${DCS}pay${ST}bb');
+      expect(parser.insertAfter(0, 'X'), '${DCS}pay${ST}Xbb');
+    });
+
+    test('all four keep an insertion out of the body', () {
+      for (final opener in [DCS, SOS, PM, APC]) {
+        expect(
+          Parser('aa${opener}pay${ST}bb').insertAfter(2, 'X'),
+          'aa${opener}pay${ST}Xbb',
+          reason: 'opener ${opener.ansiShowEscapeSequences()}',
+        );
+      }
+    });
+
+    test('no position falls inside a control string, so none is refused', () {
+      final parser = Parser('aa${DCS}pay${ST}bb');
+
+      for (var pos = 0; pos <= parser.length; pos++) {
+        expect(() => parser.insertBefore(pos, 'X'), returnsNormally);
+        expect(() => parser.insertAfter(pos, 'X'), returnsNormally);
+      }
+    });
+  });
 }
