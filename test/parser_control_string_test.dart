@@ -147,4 +147,80 @@ void main() {
       }
     });
   });
+
+  // The group above settles what is owed where the output ends. This one is
+  // the other half: the opening is held inside the loop and something of the
+  // output itself follows it. The `reset` in these inputs is what ended the
+  // string in the input, and it is not copied over — it is written again as a
+  // transition to the default style, which changes nothing and so writes
+  // nothing, leaving the text against the opening. Expectations taken off
+  // `OSC` on the same shapes; the `BEL` ones differ from it, and that is the
+  // point.
+  group('control strings, held openings inside the output:', () {
+    test('a terminator is supplied where text follows in the string', () {
+      expect(
+        Parser('${DCS}pay${reset}word').optimize(),
+        '${DCS}pay${ST}word',
+      );
+    });
+
+    test('a code copied over as it stands ends the string already', () {
+      // The `CSI` is written where it stands and its `ESC` ends the string,
+      // so nothing is supplied — the branch that reads what follows.
+      expect(
+        Parser('${DCS}pay\x1B[2Cword').optimize(),
+        '${DCS}pay\x1B[2Cword',
+      );
+    });
+
+    test('a body ending in BEL owes the terminator here too', () {
+      // The in-loop half of the trap: ask whether these bytes ended and the
+      // `BEL` says yes, so the text would be swallowed into the string.
+      expect(
+        Parser('${DCS}pay$BEL${reset}word').optimize(),
+        '${DCS}pay$BEL${ST}word',
+        reason: 'BEL ends an OSC and no other control string',
+      );
+      expect(
+        Parser('${OSC}pay$BEL${reset}word').optimize(),
+        '${OSC}pay${BEL}word',
+        reason: 'the OSC it is taken from owes nothing',
+      );
+    });
+
+    test('a slice supplies it inside even with close: false', () {
+      // `close` decides what is owed at the end of the slice, not what is
+      // owed in front of text inside it.
+      expect(
+        Parser('${DCS}pay${reset}word').substring(0, close: false),
+        '${DCS}pay${ST}word',
+      );
+    });
+
+    test('a printed line supplies it inside the line', () {
+      final lines = <String>[];
+
+      Printer(output: lines.add).print('${DCS}pay${reset}word');
+
+      expect(lines, ['$reset${DCS}pay${ST}word']);
+    });
+
+    test('a sink supplies it inside a write that ends no line', () {
+      final buf = StringBuffer();
+
+      SinkPrinter(buf).write('${DCS}pay${reset}word');
+
+      expect(buf.toString(), '$reset${DCS}pay${ST}word');
+    });
+
+    test('all four are mended inside the string alike', () {
+      for (final opener in [DCS, SOS, PM, APC]) {
+        expect(
+          Parser('${opener}pay${reset}word').optimize(),
+          '${opener}pay${ST}word',
+          reason: 'opener ${opener.ansiShowEscapeSequences()}',
+        );
+      }
+    });
+  });
 }

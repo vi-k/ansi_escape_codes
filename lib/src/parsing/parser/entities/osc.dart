@@ -70,14 +70,16 @@ String _terminatedIfTextFollows(String codes, String following) =>
 /// [codes] with a terminator supplied where they end in an `OSC` that never
 /// got one and nothing beginning with an `ESC` follows to end it.
 ///
-/// The rule at the edge of an output, where [_terminatedIfTextFollows] is the
-/// rule inside one, and the two differ in what an empty [following] means.
-/// Inside a string it means nothing follows the opening at all, so there is
-/// nothing to be swallowed and the bytes go out as they came. At the edge of
-/// an output that closes — [Parser.substring] or [Parser.optimize] with
-/// `close: true`, a printed line — it means the next thing written is
-/// whatever the caller prints after, and the terminator is owed for the same
-/// reason the hyperlink close is.
+/// Reached only through [_terminatedIfTextFollows], which settles an empty
+/// [following] on its own and hands the rest down here; nothing calls this
+/// directly. It was the rule at the edge of an output too, until the four
+/// control strings beside the `OSC` arrived and took the openings to
+/// [_terminatedOpening] — where an empty [following] is read by `closing`
+/// rather than refused outright.
+///
+/// What is left here is the half of the old pair that link codes still want,
+/// and it is safe for them for the reason [_oscTerminated] gives: they are
+/// always an `OSC`, so asking whether they ended tells the truth.
 String _terminatedUnlessCodeFollows(String codes, String following) =>
     codes.isEmpty || _oscTerminated(codes) || following.startsWith(ESC)
         ? codes

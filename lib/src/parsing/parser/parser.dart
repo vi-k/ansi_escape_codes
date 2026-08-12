@@ -358,8 +358,8 @@ final class _ParserBase<S extends State<S>> {
   /// [maxLength] is the maximum length of the substring.
   ///
   /// [close] is whether to close the substring with the default style, and
-  /// with it the hyperlink the slice has open and the terminator an `OSC` it
-  /// ends inside still owes.
+  /// with it the hyperlink the slice has open and the terminator a control
+  /// string it ends inside still owes.
   ///
   /// A slice is self-contained: one that began inside a link opens that link
   /// again in front of its first piece of text, so that the text stays
@@ -388,11 +388,12 @@ final class _ParserBase<S extends State<S>> {
   /// stands comes out carrying that code, and one cut anywhere else is empty
   /// as before.
   ///
-  /// An `OSC` the string never terminated is held back until what follows it
-  /// in the slice is known — a window title as readily as a link opening. The
-  /// sequence runs to the next `ESC` or to the end of the text, and in the
-  /// string one of those two always followed it; written in front of text
-  /// that did not follow it there, it would read that text as its own. Where
+  /// A control string the string never terminated — an `OSC`, a `DCS`, an
+  /// `SOS`, a `PM` or an `APC`, a window title as readily as a link opening —
+  /// is held back until what follows it in the slice is known. The sequence
+  /// runs to the next `ESC` or to the end of the text, and in the string one
+  /// of those two always followed it; written in front of text that did not
+  /// follow it there, it would read that text as its own. Where
   /// text follows in the slice, then, the terminator it lacks is supplied,
   /// and where an escape code follows the bytes go out exactly as they came
   /// — that code's `ESC` ends the sequence as the string's did. With
@@ -461,9 +462,9 @@ final class _ParserBase<S extends State<S>> {
     Link? heldLink;
     var heldLinkCodes = '';
 
-    // An `OSC` of the slice's own that never terminated, held back until
-    // what comes after it is known — the same waiting the link codes above
-    // do, and sometimes beside them.
+    // A control string of the slice's own that never terminated — a `DCS` no
+    // less than an `OSC` — held back until what comes after it is known, the
+    // same waiting the link codes above do, and sometimes beside them.
     //
     // Where the two wait together, this one came first: only the branch that
     // drains both of them fills this one, and the branch that fills the link
@@ -757,9 +758,10 @@ final class _ParserBase<S extends State<S>> {
   /// goes in front of it. See [insertAfter] for the other side of it.
   ///
   /// Neither insertion lands inside a sequence the parser could not finish —
-  /// an `OSC` that never got its terminator, a bare `ESC`, a `CSI` with no
-  /// final byte, an `ESC` left on an intermediate byte. Whatever is written
-  /// among the bytes of one is read as part of it: `ESC` and an `X` are an
+  /// a control string that never got its terminator, be it an `OSC`, a `DCS`,
+  /// an `SOS`, a `PM` or an `APC`; a bare `ESC`; a `CSI` with no final byte;
+  /// an `ESC` left on an intermediate byte. Whatever is written among the
+  /// bytes of one is read as part of it: `ESC` and an `X` are an
   /// `SOS`, `CSI` and an `X` an `ECH`, and neither shows the letter. Aimed at
   /// the seam in front of such a sequence, the text is put there, in front of
   /// it, and the tail is copied on as it came. Aimed past that seam — among
@@ -987,10 +989,11 @@ final class _ParserBase<S extends State<S>> {
   /// `close: false` both are left as the string leaves them, the link no less
   /// than the style. [substring] closes a slice the same way.
   ///
-  /// An `OSC` the string never terminated — a window title as readily as a
-  /// link opening — is held back until what follows it is known. Where that
-  /// is text the terminator it lacks is supplied, or the sequence would read
-  /// that text as its own; where it is an escape code the bytes go out as
+  /// A control string the string never terminated — a window title as readily
+  /// as a link opening, a `DCS` as readily as an `OSC` — is held back until
+  /// what follows it is known. Where that is text the terminator it lacks is
+  /// supplied, or the sequence would read that text as its own; where it is
+  /// an escape code the bytes go out as
   /// they came, that code's `ESC` ending the sequence as the string's did.
   /// With `close: true` the terminator is written at the end as well, though
   /// nothing follows it there, for the reason the link is closed there. See
@@ -1053,10 +1056,10 @@ final class _ParserBase<S extends State<S>> {
     // The string is over. What follows the opening held back is the close
     // below, or the unwinding of the style, or nothing at all — and where it
     // is nothing, `close` says whether a terminator is owed: what is printed
-    // after a closed string must not be read as more of an `OSC`. The
-    // `close: false` call supplies nothing by construction — an `ESC` or
-    // nothing at all follows it — and is asked all the same, so that the
-    // guarantee is checked and not assumed.
+    // after a closed string must not be read as more of the control string.
+    // With `close: false` nothing is supplied by construction — an `ESC` or
+    // nothing at all follows it — and the call is made all the same, so that
+    // the guarantee is checked and not assumed.
     final lastMatch = matches.lastOrNull;
     final closingLink = close && finalLink != null ? linkClose : '';
     final tail = close
