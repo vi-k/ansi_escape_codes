@@ -296,19 +296,19 @@ void main() {
       // would be written in front of the 31 it was aimed behind.
       const input = 'aa\x1B[31\x1BPpay\x1B';
 
-      // Where exactly it belongs is not settled, and this test does not
-      // pretend otherwise: the seam behind the parameters of a CSI that never
-      // got its final byte has no end that survives — in front of the DCS the
-      // text becomes the final byte of that CSI, behind the bare ESC it
-      // becomes the final byte of the ESC — and the answer owed here is the
-      // refusal insertBefore already gives. What is settled either way is
-      // that plain text the insertion was aimed behind stays in front of it.
+      // The seam behind the parameters of a CSI that never got its final byte
+      // has no end that survives — in front of the DCS the text becomes the
+      // final byte of that CSI, behind the bare ESC it becomes the final byte
+      // of the ESC — so the answer owed here is the refusal insertBefore
+      // gives, and the next test is where that refusal is pinned. What this
+      // one holds either way is that plain text the insertion was aimed
+      // behind stays in front of it.
       String? answer;
       try {
         answer = Parser(input).insertAfter(4, 'X');
       } on UnfinishedSequenceException {
-        // The refusal this seam is owed. It is not what the insertion does
-        // today, and it is still not a step in front of the text.
+        // The refusal this seam is owed, and a refusal is still not a step in
+        // front of the text.
       }
 
       expect(
@@ -316,6 +316,83 @@ void main() {
         anyOf(isNull, startsWith('aa\x1B[31')),
         reason: 'the run begins at the DCS, so the seam is at worst there, '
             'and never in front of the parameters the text stands for',
+      );
+    });
+
+    test('and a run beginning inside a truncated CSI is refused', () {
+      // The same input the test above leaves open, and here is the answer it
+      // is owed. A run broken by a piece of text begins behind that text, and
+      // the only text that can stand behind a code that never finished is the
+      // parameters of a CSI with no final byte — so the place in front of
+      // such a run is the byte that CSI is waiting for. Both insertions say
+      // so, and both name the CSI rather than the code the walk stopped on.
+      const input = 'aa\x1B[31\x1BPpay\x1B';
+
+      // Probed: the CSI begins at 2, and that is the sequence the text would
+      // have landed inside — 'ESC [ 31 X' is a finished ICH, and the 31 goes
+      // with it.
+      expect(
+        () => Parser(input).insertAfter(4, 'X'),
+        throwsA(
+          isA<UnfinishedSequenceException>()
+              .having((e) => e.offset, 'offset', 2),
+        ),
+      );
+      expect(
+        () => Parser(input).insertBefore(4, 'X'),
+        throwsA(
+          isA<UnfinishedSequenceException>()
+              .having((e) => e.offset, 'offset', 2),
+        ),
+      );
+
+      // What the refusal turns on is the run, not the position: the seam in
+      // front of the whole tail is served as it always was.
+      expect(Parser(input).insertAfter(2, 'X'), 'aaX\x1B[31\x1BPpay\x1B');
+    });
+
+    test('and so is a run with a piece of text behind it', () {
+      // The other place the seam is read off: a run standing in front of a
+      // piece of text rather than at the end of the input. ESC [ | 31 | ESC [
+      // | 31 — the second CSI hands its parameters back as text too, and the
+      // run in front of them is the one that begins behind the first CSI's.
+      // Probed: the sequence named is the first CSI, at 2.
+      expect(
+        () => Parser('aa\x1B[31\x1B[31').insertAfter(4, 'X'),
+        throwsA(
+          isA<UnfinishedSequenceException>()
+              .having((e) => e.offset, 'offset', 2),
+        ),
+      );
+
+      // And the position behind the second run's own parameters is the
+      // refusal that was there before this wave, unmoved.
+      expect(
+        () => Parser('aa\x1B[31\x1B[31').insertAfter(6, 'X'),
+        throwsA(
+          isA<UnfinishedSequenceException>()
+              .having((e) => e.offset, 'offset', 6),
+        ),
+      );
+    });
+
+    test('a finished code in front of the CSI does not save that seam', () {
+      // ESC ( B | ESC [ | 31 | ESC. The finished code ends the run before the
+      // CSI and none behind it, so the text is the CSI's parameters still and
+      // the seam behind them is still its missing final byte. Probed: the CSI
+      // begins at 5.
+      const input = 'aa\x1B(B\x1B[31\x1B';
+
+      expect(
+        () => Parser(input).insertAfter(4, 'X'),
+        throwsA(
+          isA<UnfinishedSequenceException>()
+              .having((e) => e.offset, 'offset', 5),
+        ),
+      );
+      expect(
+        () => Parser(input).insertBefore(4, 'X'),
+        throwsA(isA<UnfinishedSequenceException>()),
       );
     });
 

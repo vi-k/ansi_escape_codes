@@ -910,6 +910,21 @@ final class _ParserBase<S extends State<S>> {
             throw UnfinishedSequenceException(pos: pos, offset: code.start);
           }
 
+          // The run itself may begin inside a sequence that never finished:
+          // where a piece of text broke the run, that text was the parameters
+          // of a truncated `CSI`, and the place in front of the run is the
+          // final byte that `CSI` is waiting for. Text put there is read as
+          // the end of it and takes the parameters with it, and every other
+          // byte of the seam belongs to a code that could not be finished
+          // either — so the seam has no end to serve, and the insertion is
+          // refused the way one aimed past a seam is. A code that stands
+          // finished ends the stretch and gives the run a place of its own;
+          // that seam is served as it always was.
+          if (walk.unfinishedReachStart case final reach?
+              when reach != walk.unfinishedRunStart) {
+            throw UnfinishedSequenceException(pos: pos, offset: reach);
+          }
+
           return (walk.unfinishedRunStart ?? code.start, m.state, m.link);
         }
 
@@ -934,6 +949,14 @@ final class _ParserBase<S extends State<S>> {
       final seam = walk.passed - (input.length - code.end);
       if (pos > seam) {
         throw UnfinishedSequenceException(pos: pos, offset: code.start);
+      }
+
+      // And the run at the end of the input begins inside an earlier sequence
+      // as readily as one before a piece of text does — the same refusal, for
+      // the same reason.
+      if (walk.unfinishedReachStart case final reach?
+          when reach != walk.unfinishedRunStart) {
+        throw UnfinishedSequenceException(pos: pos, offset: reach);
       }
 
       return (
@@ -1125,6 +1148,18 @@ final class _Walk<S extends State<S>> {
   /// stands between them.
   int? unfinishedRunStart;
 
+  /// Where the stretch of input a terminal is still reading as an unfinished
+  /// sequence begins, or null where nothing is left open.
+  ///
+  /// A piece of text ends the run [unfinishedRunStart] counts; it does not
+  /// end this. The one piece of text that can stand behind a code that never
+  /// finished is the parameters of a truncated `CSI` — a terminal reads them
+  /// as part of the sequence, whatever this package hands them back as — so a
+  /// run beginning behind such a piece begins inside the sequence in front of
+  /// it, and the place before that run is the sequence's missing final byte.
+  /// Only a code that stands finished ends the stretch.
+  int? unfinishedReachStart;
+
   /// Whether the iterator has run out.
   ///
   /// Everything past [current] has then been taken from it, escape codes and
@@ -1143,19 +1178,22 @@ final class _Walk<S extends State<S>> {
   bool resumesAt(int pos) => current != null && pos > pieceStart;
 
   /// Takes in the escape code [m] the walk has just gone past, keeping
-  /// [lastCode] and [unfinishedRunStart] on it.
+  /// [lastCode], [unfinishedRunStart] and [unfinishedReachStart] on it.
   ///
   /// Two things end a run: a code that stands finished, and a piece of text.
   /// Matches tile the input, so the text needs no looking at — a code that
   /// does not begin where the last one ended has text in front of it, and
-  /// starts a run of its own.
+  /// starts a run of its own. The stretch a terminal is still reading ends on
+  /// the finished code alone, which is what tells the two fields apart.
   ///
   /// Every walk goes through here, `substring` — which steps over the matches
   /// itself, to write out what it passes — no less than [nextPiece].
   void takeCode(Match<S> m) {
-    unfinishedRunStart = _unfinished(m.entity)
+    final unfinished = _unfinished(m.entity);
+    unfinishedRunStart = unfinished
         ? (lastCode?.end == m.start ? unfinishedRunStart ?? m.start : m.start)
         : null;
+    unfinishedReachStart = unfinished ? unfinishedReachStart ?? m.start : null;
     lastCode = m;
   }
 

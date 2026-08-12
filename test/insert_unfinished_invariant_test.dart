@@ -35,6 +35,15 @@ const _inputs = <String>[
   // its own, and an insertion aimed at the end of the text goes in front of
   // the finished code that follows it and no further back.
   'aa\x1B[31\x1B(B\x1BPpay\x1B',
+  // And the same two runs with nothing finished between them. There the run
+  // behind the text begins inside the CSI in front of it — the text is that
+  // CSI's parameters, and the place before the run is the final byte it is
+  // waiting for — so every position at the end of the parameters is owed a
+  // refusal rather than an answer, from both insertions.
+  'aa\x1B[31\x1BPpay\x1B',
+  'aa\x1B[31\x1B[31',
+  'aa\x1B[31\x1B]8;;http://u',
+  'aa\x1B(B\x1B[31\x1B',
   'aa',
   '',
 ];
