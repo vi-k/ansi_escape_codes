@@ -763,16 +763,27 @@ final class _ParserBase<S extends State<S>> {
   /// one is read as part of it: `ESC` and an `X` are an `SOS`, `CSI` and an `X`
   /// an `ECH`, and neither shows the letter. Aimed at the seam in front of such
   /// a sequence, the text is put there, in front of it, and the tail is copied
-  /// on as it came. Aimed past that seam — among the parameters of a `CSI`
-  /// handed back as text — it is refused with an [UnfinishedSequenceException],
-  /// because no answer is right: in front of the sequence is before characters
-  /// counted in front of it, and where it was asked for is inside the sequence.
+  /// on as it came. Where several of them stand in a row, that seam is in front
+  /// of the whole run rather than in a gap between two — a gap between two
+  /// unfinished codes is inside the first of them.
   ///
-  /// One seam is left over: where an unfinished code ended the control string —
-  /// a bare `ESC`, a `CSI` with no final byte, an `ESC` left on an intermediate
-  /// byte — [insertAfter] lands among the string's bytes still, as it has since
-  /// the `OSC` was the only string this could happen to. [insertBefore] stands
-  /// in front of the string there, as everywhere else.
+  /// Aimed past that seam, the insertion is refused with an
+  /// [UnfinishedSequenceException], because no answer is right: in front of the
+  /// sequence is before characters counted in front of it, and where it was
+  /// asked for is inside the sequence. Past the seam is any position among the
+  /// bytes the sequence is still reading, whatever the piece of text they come
+  /// back as looks like: the parameters of a truncated `CSI` are the case worth
+  /// naming, but a byte no sequence can be built from — a `LF`, a `DEL`, a
+  /// letter outside ASCII — breaks off the pattern just as well and leaves the
+  /// code in front of it waiting for its ending all the same.
+  ///
+  /// The seam can be one of those positions itself, and then there is nothing
+  /// to serve and both insertions refuse alike. A run that begins behind such a
+  /// piece of text begins among bytes the sequence in front of that text is
+  /// still reading, so the place before the run is where the byte that ends
+  /// that sequence would be written. A code that stands finished between the
+  /// text and the run gives the run a seam of its own, and that one is served
+  /// as ever.
   ///
   /// A [pos] outside the plain text is a [RangeError], as it always was.
   String insertBefore(int pos, String text) => _insert(pos, text, after: false);
@@ -799,10 +810,11 @@ final class _ParserBase<S extends State<S>> {
   /// position 5.
   ///
   /// The codes it goes behind are the finished ones. A sequence the parser
-  /// could not finish is not passed but stood in front of — save at the one
-  /// seam [insertBefore] names, where an unfinished code ended a control string
-  /// — and a position among the bytes of one is refused with an
-  /// [UnfinishedSequenceException]; [insertBefore] says the whole of it.
+  /// could not finish is not passed but stood in front of, and a run of them is
+  /// stood in front of whole; a position among the bytes of one is refused with
+  /// an [UnfinishedSequenceException], and so is the seam in front of a run
+  /// that begins among such bytes itself. This refuses wherever [insertBefore]
+  /// does and for the same reasons; [insertBefore] says the whole of it.
   ///
   /// ```dart
   /// print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
