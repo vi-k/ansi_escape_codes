@@ -9,9 +9,10 @@ extension StringRemoveEscapeCodesExtension on String {
   ///
   /// The same as `Parser(text).removeAll()` — they read by the same pattern —
   /// and quicker, since nothing is built for what is taken out. A broken
-  /// sequence goes with the rest: an `ESC` with nothing after it, or an OSC
-  /// string that was never terminated, which runs to the next sequence or to
-  /// the end as a terminal waiting for its terminator would.
+  /// sequence goes with the rest: an `ESC` with nothing after it, or a control
+  /// string that never got its terminator — an `OSC`, a `DCS`, an `SOS`, a `PM`
+  /// or an `APC` — running to the next sequence or to the end as a terminal
+  /// waiting for its terminator would, and taking the text it ran over with it.
   ///
   /// A control sequence with no final byte is not a sequence at all: `ESC [`
   /// goes and what followed it stays, so `'a\x1B[31'` leaves `'a31'`. That is

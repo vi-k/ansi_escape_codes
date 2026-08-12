@@ -26,6 +26,7 @@ import '../state/state.dart';
 import 'unfinished_sequence_exception.dart';
 
 part 'printer.dart';
+part 'entities/control_string.dart';
 part 'entities/csi.dart';
 part 'entities/entity.dart';
 part 'entities/esc.dart';
@@ -357,8 +358,8 @@ final class _ParserBase<S extends State<S>> {
   /// [maxLength] is the maximum length of the substring.
   ///
   /// [close] is whether to close the substring with the default style, and
-  /// with it the hyperlink the slice has open and the terminator an `OSC` it
-  /// ends inside still owes.
+  /// with it the hyperlink the slice has open and the terminator a control
+  /// string it ends inside still owes.
   ///
   /// A slice is self-contained: one that began inside a link opens that link
   /// again in front of its first piece of text, so that the text stays
@@ -387,19 +388,19 @@ final class _ParserBase<S extends State<S>> {
   /// stands comes out carrying that code, and one cut anywhere else is empty
   /// as before.
   ///
-  /// An `OSC` the string never terminated is held back until what follows it
-  /// in the slice is known — a window title as readily as a link opening. The
-  /// sequence runs to the next `ESC` or to the end of the text, and in the
-  /// string one of those two always followed it; written in front of text
-  /// that did not follow it there, it would read that text as its own. Where
-  /// text follows in the slice, then, the terminator it lacks is supplied,
-  /// and where an escape code follows the bytes go out exactly as they came
-  /// — that code's `ESC` ends the sequence as the string's did. With
-  /// `close: true` the terminator is written at the end of the slice as well,
-  /// though nothing follows it there, for the reason the link is closed
-  /// there: what is printed after the slice must not be read as more of the
-  /// sequence. With `close: false` the bytes are left as they came, as the
-  /// link is left open.
+  /// A control string the string never terminated — an `OSC`, a `DCS`, an
+  /// `SOS`, a `PM` or an `APC`, a window title as readily as a link opening —
+  /// is held back until what follows it in the slice is known. The sequence
+  /// runs to the next `ESC` or to the end of the text, and in the string one of
+  /// those two always followed it; written in front of text that did not follow
+  /// it there, it would read that text as its own. Where text follows in the
+  /// slice, then, the terminator it lacks is supplied, and where an escape code
+  /// follows the bytes go out exactly as they came — that code's `ESC` ends the
+  /// sequence as the string's did. With `close: true` the terminator is written
+  /// at the end of the slice as well, though nothing follows it there, for the
+  /// reason the link is closed there: what is printed after the slice must not
+  /// be read as more of the sequence. With `close: false` the bytes are left as
+  /// they came, as the link is left open.
   ///
   /// A slice holding an `ESC 8` is where a link can still come out other than
   /// it was, and this is accepted rather than mended: the restore gives back
@@ -460,9 +461,9 @@ final class _ParserBase<S extends State<S>> {
     Link? heldLink;
     var heldLinkCodes = '';
 
-    // An `OSC` of the slice's own that never terminated, held back until
-    // what comes after it is known — the same waiting the link codes above
-    // do, and sometimes beside them.
+    // A control string of the slice's own that never terminated — a `DCS` no
+    // less than an `OSC` — held back until what comes after it is known, the
+    // same waiting the link codes above do, and sometimes beside them.
     //
     // Where the two wait together, this one came first: only the branch that
     // drains both of them fills this one, and the branch that fills the link
@@ -549,9 +550,10 @@ final class _ParserBase<S extends State<S>> {
               // where there are none, what follows the piece does.
               if (opening.isNotEmpty) {
                 buf.write(
-                  _terminatedIfTextFollows(
+                  _terminatedOpening(
                     opening,
                     _firstNotEmpty(held, reopening, transit, substring),
+                    closing: false,
                   ),
                 );
               }
@@ -613,9 +615,10 @@ final class _ParserBase<S extends State<S>> {
               heldOpening = '';
               if (opening.isNotEmpty) {
                 buf.write(
-                  _terminatedIfTextFollows(
+                  _terminatedOpening(
                     opening,
                     _firstNotEmpty(held, transit, entity.string),
+                    closing: false,
                   ),
                 );
               }
@@ -638,7 +641,7 @@ final class _ParserBase<S extends State<S>> {
               // An opening with no terminator waits to see what it is
               // written in front of; everything else goes out where it
               // stands.
-              if (entity is Osc && !_oscTerminated(entity.string)) {
+              if (entity is ControlString && !entity.terminated) {
                 heldOpening = entity.string;
               } else {
                 buf.write(entity.string);
@@ -686,9 +689,10 @@ final class _ParserBase<S extends State<S>> {
 
         buf
           ..write(
-            _terminatedUnlessCodeFollows(
+            _terminatedOpening(
               heldOpening,
               _firstNotEmpty(closingLink, tail),
+              closing: true,
             ),
           )
           ..write(closingLink);
@@ -699,12 +703,14 @@ final class _ParserBase<S extends State<S>> {
         // Neither call supplies anything — nothing follows but the unwinding
         // of the style, which is an `ESC` or nothing at all — but both go
         // through the same door as everywhere else, so that the guarantee is
-        // checked and not assumed. See [_terminatedIfTextFollows].
+        // checked and not assumed. See [_terminatedOpening] for the opening
+        // and [_terminatedIfTextFollows] for the link codes.
         buf
           ..write(
-            _terminatedIfTextFollows(
+            _terminatedOpening(
               heldOpening,
               _firstNotEmpty(heldLinkCodes, tail),
+              closing: false,
             ),
           )
           ..write(_terminatedIfTextFollows(heldLinkCodes, tail));
@@ -750,17 +756,23 @@ final class _ParserBase<S extends State<S>> {
   /// The exclamation mark is red: at position 5 stands the `reset`, and this
   /// goes in front of it. See [insertAfter] for the other side of it.
   ///
-  /// Neither insertion lands inside a sequence the parser could not finish —
-  /// an `OSC` that never got its terminator, a bare `ESC`, a `CSI` with no
-  /// final byte, an `ESC` left on an intermediate byte. Whatever is written
-  /// among the bytes of one is read as part of it: `ESC` and an `X` are an
-  /// `SOS`, `CSI` and an `X` an `ECH`, and neither shows the letter. Aimed at
-  /// the seam in front of such a sequence, the text is put there, in front of
-  /// it, and the tail is copied on as it came. Aimed past that seam — among
-  /// the parameters of a `CSI` handed back as text — it is refused with an
-  /// [UnfinishedSequenceException], because no answer is right: in front of
-  /// the sequence is before characters counted in front of it, and where it
-  /// was asked for is inside the sequence.
+  /// Neither insertion lands inside a sequence the parser could not finish — a
+  /// control string that never got its terminator, be it an `OSC`, a `DCS`, an
+  /// `SOS`, a `PM` or an `APC`; a bare `ESC`; a `CSI` with no final byte; an
+  /// `ESC` left on an intermediate byte. Whatever is written among the bytes of
+  /// one is read as part of it: `ESC` and an `X` are an `SOS`, `CSI` and an `X`
+  /// an `ECH`, and neither shows the letter. Aimed at the seam in front of such
+  /// a sequence, the text is put there, in front of it, and the tail is copied
+  /// on as it came. Aimed past that seam — among the parameters of a `CSI`
+  /// handed back as text — it is refused with an [UnfinishedSequenceException],
+  /// because no answer is right: in front of the sequence is before characters
+  /// counted in front of it, and where it was asked for is inside the sequence.
+  ///
+  /// One seam is left over: where an unfinished code ended the control string —
+  /// a bare `ESC`, a `CSI` with no final byte, an `ESC` left on an intermediate
+  /// byte — [insertAfter] lands among the string's bytes still, as it has since
+  /// the `OSC` was the only string this could happen to. [insertBefore] stands
+  /// in front of the string there, as everywhere else.
   ///
   /// A [pos] outside the plain text is a [RangeError], as it always was.
   String insertBefore(int pos, String text) => _insert(pos, text, after: false);
@@ -787,9 +799,10 @@ final class _ParserBase<S extends State<S>> {
   /// position 5.
   ///
   /// The codes it goes behind are the finished ones. A sequence the parser
-  /// could not finish is not passed but stood in front of, and a position
-  /// among the bytes of one is refused with an [UnfinishedSequenceException];
-  /// [insertBefore] says the whole of it.
+  /// could not finish is not passed but stood in front of — save at the one
+  /// seam [insertBefore] names, where an unfinished code ended a control string
+  /// — and a position among the bytes of one is refused with an
+  /// [UnfinishedSequenceException]; [insertBefore] says the whole of it.
   ///
   /// ```dart
   /// print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
@@ -981,25 +994,25 @@ final class _ParserBase<S extends State<S>> {
   /// `close: false` both are left as the string leaves them, the link no less
   /// than the style. [substring] closes a slice the same way.
   ///
-  /// An `OSC` the string never terminated — a window title as readily as a
-  /// link opening — is held back until what follows it is known. Where that
-  /// is text the terminator it lacks is supplied, or the sequence would read
-  /// that text as its own; where it is an escape code the bytes go out as
-  /// they came, that code's `ESC` ending the sequence as the string's did.
-  /// With `close: true` the terminator is written at the end as well, though
-  /// nothing follows it there, for the reason the link is closed there. See
-  /// [substring], which says the whole of it.
+  /// A control string the string never terminated — a window title as readily
+  /// as a link opening, a `DCS` as readily as an `OSC` — is held back until
+  /// what follows it is known. Where that is text the terminator it lacks is
+  /// supplied, or the sequence would read that text as its own; where it is an
+  /// escape code the bytes go out as they came, that code's `ESC` ending the
+  /// sequence as the string's did. With `close: true` the terminator is written
+  /// at the end as well, though nothing follows it there, for the reason the
+  /// link is closed there. See [substring], which says the whole of it.
   String optimize({bool close = true}) {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
 
-    // An `OSC` the string never terminated — a window title no less than a
-    // link opening — held back until what comes after it is known. In the
-    // string it was ended by the `ESC` of whatever stood behind it, and that
-    // may have been an `SGR` — which this loop does not copy but writes again
-    // as a transition, and a transition that changes nothing writes nothing.
-    // See [_terminatedIfTextFollows] inside the string, and
-    // [_terminatedUnlessCodeFollows] at the end of a closed one.
+    // A control string the string never terminated — a window title no less
+    // than a link opening, a `DCS` no less than an `OSC` — held back until what
+    // comes after it is known. In the string it was ended by the `ESC` of
+    // whatever stood behind it, and that may have been an `SGR` — which this
+    // loop does not copy but writes again as a transition, and a transition
+    // that changes nothing writes nothing. See [_terminatedOpening], asked
+    // inside the string and again at its end.
     var heldOpening = '';
 
     for (final m in matches) {
@@ -1020,9 +1033,10 @@ final class _ParserBase<S extends State<S>> {
 
         if (heldOpening.isNotEmpty) {
           buf.write(
-            _terminatedIfTextFollows(
+            _terminatedOpening(
               heldOpening,
               _firstNotEmpty(transit, string),
+              closing: false,
             ),
           );
           heldOpening = '';
@@ -1033,7 +1047,7 @@ final class _ParserBase<S extends State<S>> {
         // A code that carries no style of its own is kept as it was written —
         // save for an opening with no terminator, which waits to see what it
         // is written in front of.
-        if (entity is Osc && !_oscTerminated(string)) {
+        if (entity is ControlString && !entity.terminated) {
           heldOpening = string;
         } else {
           buf.write(string);
@@ -1046,10 +1060,10 @@ final class _ParserBase<S extends State<S>> {
     // The string is over. What follows the opening held back is the close
     // below, or the unwinding of the style, or nothing at all — and where it
     // is nothing, `close` says whether a terminator is owed: what is printed
-    // after a closed string must not be read as more of an `OSC`. The
-    // `close: false` call supplies nothing by construction — an `ESC` or
-    // nothing at all follows it — and is asked all the same, so that the
-    // guarantee is checked and not assumed.
+    // after a closed string must not be read as more of the control string.
+    // With `close: false` nothing is supplied by construction — an `ESC` or
+    // nothing at all follows it — and the call is made all the same, so that
+    // the guarantee is checked and not assumed.
     final lastMatch = matches.lastOrNull;
     final closingLink = close && finalLink != null ? linkClose : '';
     final tail = close
@@ -1060,11 +1074,7 @@ final class _ParserBase<S extends State<S>> {
     final following = _firstNotEmpty(closingLink, tail);
 
     buf
-      ..write(
-        close
-            ? _terminatedUnlessCodeFollows(heldOpening, following)
-            : _terminatedIfTextFollows(heldOpening, following),
-      )
+      ..write(_terminatedOpening(heldOpening, following, closing: close))
       // The link is closed the way the style is, and after the opening held
       // back: whatever the string left open — an opening of its own, or the
       // link it was seeded inside — must not go on catching what is printed
@@ -1148,14 +1158,15 @@ final class _Walk<S extends State<S>> {
 /// Whether the parser could not finish this escape code, so that whatever is
 /// written after it is read as part of it.
 ///
-/// An `OSC` without its terminator runs to the next `ESC` or to the end of
-/// the text; a bare `ESC`, a `CSI` with no final byte and an `ESC` left on an
+/// A control string without its terminator — an `OSC`, a `DCS`, an `SOS`, a
+/// `PM` or an `APC` — runs to the next `ESC` or to the end of the text; a
+/// bare `ESC`, a `CSI` with no final byte and an `ESC` left on an
 /// intermediate byte are all waiting for the byte that ends them, and
 /// whatever is written next supplies it — `ESC` and `X` make `SOS`, `CSI` and
 /// `X` make `ECH`. Everything else stands finished: `ESC 7` is a save,
 /// `CSI 31 m` is a colour, and text written behind either is text.
 bool _unfinished(Entity entity) => switch (entity) {
-      Osc() => !_oscTerminated(entity.string),
+      ControlString() => !entity.terminated,
       Esc() => entity.string == ESC ||
           entity.string == CSI ||
           _isIntermediate(entity.string.codeUnitAt(entity.string.length - 1)),

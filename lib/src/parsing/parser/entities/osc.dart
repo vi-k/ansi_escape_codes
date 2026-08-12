@@ -4,8 +4,13 @@ part of '../parser.dart';
 /// the terminal rather than to the screen.
 ///
 /// The one this package names is [Link]; the rest come back [OscUnknown].
-sealed class Osc extends EscapeCode {
+sealed class Osc extends ControlString {
   const Osc._(super.string) : super._();
+
+  /// A `BEL` ends an `OSC` — xterm's terminator, kept because the strings
+  /// written with it are everywhere — where it ends no other control string.
+  @override
+  bool get terminated => string.endsWith(ST) || string.endsWith(BEL);
 
   static Osc _parse<S extends State<S>>(_MatchingState<S> state) {
     final params = state['osc_params']!.split(';');
@@ -32,10 +37,12 @@ final class OscUnknown extends Osc with UnrecognizedEscapeCode {
 
 /// Whether [string] ends where an `OSC` sequence is allowed to end.
 ///
-/// An `OSC` runs until a `ST` or a `BEL`; one that got neither runs on to the
-/// next `ESC` or to the end of the text — the parser reads it that way on
-/// purpose, see `oscPattern`. Ending that way is ending nowhere: whatever is
-/// written straight after is read as more of the sequence.
+/// Asked of link codes, which are always an `OSC`; the openings held back go
+/// through [_terminatedOpening], which must not ask it. An `OSC` runs until a
+/// `ST` or a `BEL`; one that got neither runs on to the next `ESC` or to the
+/// end of the text — the parser reads it that way on purpose, see `oscPattern`.
+/// Ending that way is ending nowhere: whatever is written straight after is
+/// read as more of the sequence.
 bool _oscTerminated(String string) =>
     string.endsWith(ST) || string.endsWith(BEL);
 
@@ -63,18 +70,48 @@ String _terminatedIfTextFollows(String codes, String following) =>
 /// [codes] with a terminator supplied where they end in an `OSC` that never
 /// got one and nothing beginning with an `ESC` follows to end it.
 ///
-/// The rule at the edge of an output, where [_terminatedIfTextFollows] is the
-/// rule inside one, and the two differ in what an empty [following] means.
-/// Inside a string it means nothing follows the opening at all, so there is
-/// nothing to be swallowed and the bytes go out as they came. At the edge of
-/// an output that closes — [Parser.substring] or [Parser.optimize] with
-/// `close: true`, a printed line — it means the next thing written is
-/// whatever the caller prints after, and the terminator is owed for the same
-/// reason the hyperlink close is.
+/// Reached only through [_terminatedIfTextFollows], which settles an empty
+/// [following] on its own — as nothing owed — and hands the rest down here;
+/// nothing calls this directly. The pair was the rule at the edge of an output
+/// too, until the four control strings beside the `OSC` arrived and took the
+/// openings to [_terminatedOpening], where an empty [following] means what
+/// `closing` says it means rather than what the pair settles it to mean here.
+///
+/// What is left here is the half of the old pair that link codes still want,
+/// and it is safe for them for the reason [_oscTerminated] gives: they are
+/// always an `OSC`, so asking whether they ended tells the truth.
 String _terminatedUnlessCodeFollows(String codes, String following) =>
     codes.isEmpty || _oscTerminated(codes) || following.startsWith(ESC)
         ? codes
         : '$codes$ST';
+
+/// [opening] with the terminator it lacks, where what follows would otherwise
+/// be swallowed by it.
+///
+/// Only an opening the parser found unterminated is ever held back, so this
+/// does not ask again whether it ended — and it must not ask: a `BEL` ends an
+/// [Osc] and no other control string, so an unterminated [Dcs] whose body
+/// happens to end in one would be called finished by that question and left
+/// open. [_terminatedIfTextFollows] and [_terminatedUnlessCodeFollows] go on
+/// asking it, because what they are given is link codes, and those are always
+/// an `OSC`.
+///
+/// [closing] says what an empty [following] means. Inside a string it means
+/// nothing follows the opening at all, so there is nothing to be swallowed
+/// and the bytes go out as they came. At the edge of an output that closes —
+/// [Parser.substring] or [Parser.optimize] with `close: true`, a printed line
+/// — it means the next thing written is whatever the caller prints after, and
+/// the terminator is owed for the reason the hyperlink close is.
+String _terminatedOpening(
+  String opening,
+  String following, {
+  required bool closing,
+}) =>
+    opening.isEmpty ||
+            following.startsWith(ESC) ||
+            (following.isEmpty && !closing)
+        ? opening
+        : '$opening$ST';
 
 /// The first of [first], [second], [third] and [fourth] with anything in it,
 /// or the empty string where none of them has.
@@ -151,7 +188,7 @@ final class Link extends Osc {
   ///
   /// This is what [Parser.substring], the insertions and the printers write
   /// where they open a link the text they are copying was already inside.
-  String get _reopening => _oscTerminated(string) ? string : '$string$ST';
+  String get _reopening => terminated ? string : '$string$ST';
 
   @override
   String get id => url.isEmpty ? 'linkClose' : 'link($url)';

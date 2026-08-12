@@ -88,6 +88,39 @@ extension StringShowEscapeCodesExtension on String {
         continue;
       }
 
+      // The four the standard puts beside `OSC`. Read out the way it is: the
+      // opener by its name, the body as it stands, the terminator named where
+      // there is one. Without this branch the match falls past every reader
+      // here and is written out as it came — which for a control string means
+      // sending the very `ESC` the caller asked to be shown.
+      final controlString = m.namedGroup('cstr');
+      if (controlString != null) {
+        final params = m.namedGroup('cstr_params')!;
+        final terminator = m.namedGroup('cstr_terminator');
+
+        buf
+          ..write(open)
+          ..write(codeOpen)
+          // The name is looked up by the two bytes of the opener together,
+          // and the bytes stand in for it should the pattern ever catch one
+          // the enumeration does not carry.
+          ..write(
+            ControlFunctionsC1.byCode(controlString)?.name ?? controlString,
+          )
+          ..write(codeClose)
+          ..write(paramsOpen)
+          ..write(params)
+          ..write(paramsClose)
+          ..write(finalOpen)
+          // A `BEL` ends none of these, so `ST` is the only terminator there
+          // is to name; nothing names a string that never got one.
+          ..write(terminator == null ? '' : ControlFunctionsC1.ST.name)
+          ..write(finalClose)
+          ..write(close);
+
+        continue;
+      }
+
       final esc = m.namedGroup('esc');
       if (esc != null) {
         // The intermediate bytes belong to the code: `ESC ( B` and `ESC ) B`

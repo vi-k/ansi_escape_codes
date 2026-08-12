@@ -29,6 +29,13 @@ Added:
   `EraseInLine` carry an `ErasePart`; `ShowCursor`, `HideCursor`,
   `UseAlternateScreen` and `UseMainScreen` stand for the four private modes
   this package writes itself.
+- `ControlString`, what the five strings of the standard have in common, with
+  `Dcs`, `Sos`, `Pm` and `Apc` beside the `Osc` that was there already, and
+  `terminated` to ask whether one of them got the terminator that ends it.
+  `Osc` is a `ControlString` now rather than a direct child of `EscapeCode`,
+  which leaves a `switch` matching it by name as it was, and the four new
+  entities carry `UnrecognizedEscapeCode` like the other codes this package
+  keeps without reading.
 - `ansiHasUnderlineColor` and `ansiRemoveUnderlineColor`: the extensions knew
   the foreground and the background but not the underline colour.
 - `ansiRemoveControlCodes`, the other half of `ansiHasControlCodes`: the C0
@@ -138,6 +145,21 @@ Fixed:
   switched the underline on.
 - An OSC string ended at the wrong place, or nowhere; a URL carrying `;` was
   refused.
+- `ESC P`, `ESC X`, `ESC ^` and `ESC _` — `DCS`, `SOS`, `PM` and `APC` — were
+  read as finished two-character escape sequences, so the body the standard
+  gives each of them came back as text. Each of the four opens a control string
+  that runs to its `ST`, the way an `OSC` does, and one that never got a
+  terminator ends at the next `ESC` or at the end of the text. What such a
+  string carries — a sixel image, a `DECRQSS` answer, a termcap reply — is part
+  of the escape code now rather than of the plain text, and is no longer
+  counted in the length: `Parser('a\x1BPq#0;2;0;0;0\x1B\\b').length` says 2
+  where it said 13, and neither a slice nor an insertion cuts through the body
+  — save where an unfinished code ended the string, and `insertAfter` lands
+  among the body's bytes there still, as it has for an unterminated `OSC` all
+  along. `ST` ends all five; the `BEL` that ends an `OSC` is xterm's and not
+  the standard's, and it ends none of the other four, so a `DCS` whose body
+  happens to end in one is unterminated still — and one left unterminated is
+  held back and given its terminator the way an unterminated `OSC` is.
 - `SaveCursor`, `RestoreCursor` and `Link` carried a `reset` as their text, so
   all three were equal to one another — an `Entity` compares by what it is
   written with — and none of them equalled the same entity read back by the
@@ -199,23 +221,24 @@ Fixed:
   default style: a string that opened a link and never closed it comes back
   closed, so that what is printed after it is not clickable. With
   `close: false` both are left as the string leaves them.
-- Copying an `OSC` out of a string could swallow the text behind it. One that
-  never got its terminator — a hyperlink opening no less than a window title
-  or anything else the terminal answers to — runs on to the next `ESC` or to
-  the end of the text, which is how the parser reads it on purpose, and
-  written again in front of text that had not followed it there, by a slice,
-  by `optimize` or by a printed line, it read that text as part of the
-  sequence and showed nothing. The terminator it lacks is supplied where text
-  follows it. That is of the codes copied over as they stand: there an escape
-  code following leaves the bytes exactly as they came, the `ESC` of what
-  stands behind being terminator enough. At the edge of an output that closes
-  — a slice or an `optimize` with `close: true`, a printed line — the
-  terminator is written although nothing follows it there, for the reason the
-  hyperlink close is written in the same place: what is printed after must not
-  be read as more of the sequence. With `close: false` the bytes are left as
-  they came. `SinkPrinter` and `StackedSinkPrinter` pay the same debt where
-  the line really ends — at a `writeln`, or at a `'\n'` in what is written —
-  and owe nothing at the end of a `write` the line goes on past.
+- Copying a control string out of the string it was read from could swallow the
+  text behind it. One that never got its terminator — an `OSC`, a `DCS`, an
+  `SOS`, a `PM` or an `APC`, a hyperlink opening no less than a window title or
+  anything else the terminal answers to — runs on to the next `ESC` or to the
+  end of the text, which is how the parser reads it on purpose, and written
+  again in front of text that had not followed it there, by a slice, by
+  `optimize` or by a printed line, it read that text as part of the sequence
+  and showed nothing. The terminator it lacks is supplied where text follows
+  it. That is of the codes copied over as they stand: there an escape code
+  following leaves the bytes exactly as they came, the `ESC` of what stands
+  behind being terminator enough. At the edge of an output that closes — a
+  slice or an `optimize` with `close: true`, a printed line — the terminator is
+  written although nothing follows it there, for the reason the hyperlink close
+  is written in the same place: what is printed after must not be read as more
+  of the sequence. With `close: false` the bytes are left as they came.
+  `SinkPrinter` and `StackedSinkPrinter` pay the same debt where the line
+  really ends — at a `writeln`, or at a `'\n'` in what is written — and owe
+  nothing at the end of a `write` the line goes on past.
   An opening written again for a slice or a line that began inside the link
   carries its terminator whatever follows it.
 - The insertions reached the same mechanism last. `insertAfter` goes past the
@@ -280,13 +303,13 @@ Fixed:
   exports test. The `extensions` point had the same gap:
   `ansiRemoveControlCodes` takes a `Set<ControlFunctionsC0>` its own
   importer could not name, so the enum is now part of the point.
-- `prepare` on `SinkPrinter` and `StackedSinkPrinter` coloured the writes
-  that came after it. The piece it is asked about never reaches the sink, and
-  the link open in the output, the link open in the text and the terminator an
-  unterminated `OSC` owes were all put back for that reason — the style the
-  piece ended in was not, so `prepare('${bold}asked')` left the printer
-  reading the next `write` as if the bold had been sent. All four carries are
-  put back now.
+- `prepare` on `SinkPrinter` and `StackedSinkPrinter` coloured the writes that
+  came after it. The piece it is asked about never reaches the sink, and the
+  link open in the output, the link open in the text and the terminator an
+  unterminated control string owes were all put back for that reason — the
+  style the piece ended in was not, so `prepare('${bold}asked')` left the
+  printer reading the next `write` as if the bold had been sent. All four
+  carries are put back now.
 
 Renamed:
 
