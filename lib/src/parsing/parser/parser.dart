@@ -1000,12 +1000,12 @@ final class _ParserBase<S extends State<S>> {
     var currentState = initialState.toStyle();
 
     // A control string the string never terminated — a window title no less
-    // than a link opening, a `DCS` no less than an `OSC` — held back until
-    // what comes after it is known. In the string it was ended by the `ESC`
-    // of whatever stood behind it, and that may have been an `SGR` — which
-    // this loop does not copy but writes again as a transition, and a
-    // transition that changes nothing writes nothing. See
-    // [_terminatedOpening], asked inside the string and again at its end.
+    // than a link opening, a `DCS` no less than an `OSC` — held back until what
+    // comes after it is known. In the string it was ended by the `ESC` of
+    // whatever stood behind it, and that may have been an `SGR` — which this
+    // loop does not copy but writes again as a transition, and a transition
+    // that changes nothing writes nothing. See [_terminatedOpening], asked
+    // inside the string and again at its end.
     var heldOpening = '';
 
     for (final m in matches) {

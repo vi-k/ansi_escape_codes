@@ -186,10 +186,10 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// begins with an `ESC` and ends the sequence already.
   ///
   /// Only a sink ever carries it. A printer is handed the whole line and
-  /// settles at its end, where [_terminatedOpening] is asked. A
-  /// printer that writes none of its own codes never sets it at all: with
-  /// [ansiCodesEnabled] off, or a [NoStyle] for a [defaultStyle], [_prepare]
-  /// turns back before there is anything to owe, and both of them are final.
+  /// settles at its end, where [_terminatedOpening] is asked. A printer that
+  /// writes none of its own codes never sets it at all: with [ansiCodesEnabled]
+  /// off, or a [NoStyle] for a [defaultStyle], [_prepare] turns back before
+  /// there is anything to owe, and both of them are final.
   bool _owesTerminator = false;
 
   /// Prepares the given line for printing.

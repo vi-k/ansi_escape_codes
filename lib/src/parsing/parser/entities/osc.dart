@@ -40,9 +40,9 @@ final class OscUnknown extends Osc with UnrecognizedEscapeCode {
 /// Asked of link codes, which are always an `OSC`; the openings held back go
 /// through [_terminatedOpening], which must not ask it. An `OSC` runs until a
 /// `ST` or a `BEL`; one that got neither runs on to the next `ESC` or to the
-/// end of the text — the parser reads it that way on purpose, see
-/// `oscPattern`. Ending that way is ending nowhere: whatever is written
-/// straight after is read as more of the sequence.
+/// end of the text — the parser reads it that way on purpose, see `oscPattern`.
+/// Ending that way is ending nowhere: whatever is written straight after is
+/// read as more of the sequence.
 bool _oscTerminated(String string) =>
     string.endsWith(ST) || string.endsWith(BEL);
 
