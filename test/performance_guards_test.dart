@@ -132,9 +132,9 @@ void main() {
       // new string, so a run of them is quadratic in the input however the
       // parser behaves, and a doubling would say nothing about the parser;
       // and the two things that keep a run cheap — the walk carried between
-      // the questions and the matches already read — stand in for each
+      // the questions and the pieces already read — stand in for each
       // other, so neither shows on its own. Measured by mutation: dropping
-      // the walk leaves this ratio at 17, dropping the cache of matches
+      // the walk leaves this ratio at 17, dropping the cache of pieces
       // leaves it at 21, dropping both puts it at 1.0. This is the floor
       // under the pair.
       const line = '\x1B[1m\x1B[31mtag\x1B[22m\x1B[39m '
@@ -173,7 +173,7 @@ void main() {
     test('a Text piece materializes its string once', () {
       final parser = Parser('\x1B[31mred\x1B[0m and plain');
       final texts = [
-        for (final m in parser.matches)
+        for (final m in parser.pieces)
           if (m.entity case final Text text) text,
       ];
 

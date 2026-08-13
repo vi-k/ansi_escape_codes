@@ -19,9 +19,9 @@ void main() {
     });
 
     test('are not mistaken for the cursor sequences', () {
-      expect(Parser('\x1B7').matches.first.entity, const SaveCursor());
-      expect(Parser('\x1B8').matches.first.entity, const RestoreCursor());
-      expect(Parser('\x1B 7').matches.first.entity, isA<EscUnknown>());
+      expect(Parser('\x1B7').pieces.first.entity, const SaveCursor());
+      expect(Parser('\x1B8').pieces.first.entity, const RestoreCursor());
+      expect(Parser('\x1B 7').pieces.first.entity, isA<EscUnknown>());
     });
 
     test('keep those bytes when they are shown', () {
@@ -55,12 +55,12 @@ void main() {
 
     test('leave the bytes reserved beside them unnamed', () {
       // 0x65 lies between CMD and LS2, and the standard keeps it back.
-      expect(Parser('\x1Be').matches.first.entity, isA<EscUnknown>());
+      expect(Parser('\x1Be').pieces.first.entity, isA<EscUnknown>());
     });
 
     test('do not take the cursor sequences with them', () {
-      expect(Parser(saveCursor).matches.first.entity, const SaveCursor());
-      expect(Parser(restoreCursor).matches.first.entity, const RestoreCursor());
+      expect(Parser(saveCursor).pieces.first.entity, const SaveCursor());
+      expect(Parser(restoreCursor).pieces.first.entity, const RestoreCursor());
     });
 
     test('are counted as escape codes, not as text', () {
@@ -118,10 +118,10 @@ void main() {
     });
 
     test('the sequences are still the entities they were', () {
-      final matches = Parser('$saveCursor$restoreCursor').matches.toList();
+      final pieces = Parser('$saveCursor$restoreCursor').pieces.toList();
 
-      expect(matches.first.entity, const SaveCursor());
-      expect(matches.last.entity, const RestoreCursor());
+      expect(pieces.first.entity, const SaveCursor());
+      expect(pieces.last.entity, const RestoreCursor());
     });
   });
 

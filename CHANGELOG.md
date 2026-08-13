@@ -412,6 +412,20 @@ Fixed:
 
 Renamed:
 
+- `Match` is `Piece`, `Matches` is `Pieces`, and `parser.matches` is
+  `parser.pieces`. The old name shadowed `dart:core.Match`, and shadowed it
+  **silently**: an explicit import outranks the implicit one, so the compiler
+  never asked which was meant. Ordinary code written beside this package —
+  `for (final Match m in RegExp(r'\w+').allMatches(s))` — failed with two
+  errors that named no package, and the advice this README gave for the
+  Flutter names did not cover it, because the Flutter names do raise the
+  question and this one did not. `Piece` is the word the package already used
+  for the thing: the class dartdoc opened with "one piece of a parsed string",
+  and `_pieceAt`, `nextPiece` and `takePiece` were there before the rename.
+  There is deliberately no `typedef Match<S> = Piece<S>` to ease the move — it
+  would reintroduce the shadowing this removes. A test holds the name open
+  from the outside: it uses `dart:core.Match` beside a single import of this
+  package, and stops compiling if the name is ever taken back.
 - `RESERVED` to `RESERVED_5F`, named after its byte rather than claiming a word
   that plain in the namespace this package exports.
 - `toStringAsEscapeSquences` to `toStringAsEscapeSequences`, which was missing

@@ -54,7 +54,7 @@
 //
 // This is the second calibration. The first, taken on 2026-08-05 over the
 // same corpus on the same machine, read 229.6 to 230.4, and what moved it was
-// deliberate: every `Match` now carries a `Link?`, the field a slice and a
+// deliberate: every `Piece` now carries a `Link?`, the field a slice and a
 // printed string reopen a hyperlink from, the way they already reopen a
 // style. What the field costs and what the reading rose by are not the same
 // number, and the difference is the point. The field is one reference on each
@@ -208,7 +208,7 @@ void main(List<String> args) {
   final parser = Parser(corpus)..prepare();
   final after = ProcessInfo.currentRss;
 
-  final matches = parser.matches.length;
+  final matches = parser.pieces.length;
   final retained = after - before;
   final perMatch = retained / matches;
 
@@ -243,7 +243,7 @@ void main(List<String> args) {
       'UnmodifiableListView keeps the list under it alive, and a builder\n'
       'list keeps the slack capacity of its backing array alive with it.\n'
       'Look at what the entities in lib/src/parsing/parser/entities/ store,\n'
-      'and at anything newly reachable from a Match, a Text or a Style.',
+      'and at anything newly reachable from a Piece, a Text or a Style.',
     );
 
     return;

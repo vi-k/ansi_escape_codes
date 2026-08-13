@@ -35,7 +35,7 @@ void main() {
 
         expect(
           RegExp(sgrPattern).allMatches(input).isNotEmpty,
-          Parser(input).matches.any((m) => m.entity is Sgr),
+          Parser(input).pieces.any((m) => m.entity is Sgr),
           reason: 'on ${input.codeUnits}',
         );
       }

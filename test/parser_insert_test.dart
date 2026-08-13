@@ -472,7 +472,7 @@ void main() {
     });
 
     test('a slice leaves the walk answering as a fresh parser would', () {
-      // substring steps over the matches itself rather than through the walk,
+      // substring steps over the pieces itself rather than through the walk,
       // so a run it goes past has to be taken in there too. Where it is not,
       // the seam is read off a walk that has forgotten the run, and the same
       // question answers differently depending on what was asked before it.

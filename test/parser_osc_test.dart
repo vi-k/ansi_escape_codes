@@ -7,7 +7,7 @@ void main() {
     test('a hyperlink keeps a url that carries a semicolon', () {
       const url = 'https://example.com/?a=1;b=2';
       final entity = Parser('$linkOpen$url$linkTextOpen text$linkClose')
-          .matches
+          .pieces
           .first
           .entity;
 

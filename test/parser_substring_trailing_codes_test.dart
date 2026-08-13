@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:test/test.dart';
 
-/// Strings whose last match is an escape code and not a piece of text.
+/// Strings whose last piece is an escape code rather than text.
 ///
 /// A parser that keeps its place keeps it in a piece of text, and whatever
 /// stands after the last piece is behind every place there is. These are the
@@ -27,7 +27,7 @@ void main() {
 
       test('slicing again after a slice that read the whole string', () {
         // The first slice reads to the end and so takes the codes standing
-        // after the last piece out of the matches; the slices after it must
+        // after the last piece out of the pieces; the slices after it must
         // write those codes out all the same.
         final reused = Parser(text)..substring(0);
 

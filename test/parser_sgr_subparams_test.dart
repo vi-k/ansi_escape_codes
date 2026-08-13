@@ -105,8 +105,7 @@ void main() {
   });
 
   group('what the parser cannot name, it keeps:', () {
-    String describe(String text) =>
-        Parser(text).matches.first.entity.toString();
+    String describe(String text) => Parser(text).pieces.first.entity.toString();
 
     test('sub-parameters that name no function are kept as they were', () {
       expect(describe('\x1B[99:1m'), 'Sgr(99:1)');

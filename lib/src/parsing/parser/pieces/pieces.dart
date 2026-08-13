@@ -1,11 +1,11 @@
 part of '../parser.dart';
 
-/// An iterable collection of [Match] objects representing the parsed ANSI
+/// An iterable collection of [Piece] objects representing the parsed ANSI
 /// escape codes and text segments in a string.
 ///
 /// This class is created by the [Parser] and provides access to the
-/// individual matches found in the input string.
-final class Matches<S extends State<S>> extends Iterable<Match<S>> {
+/// individual pieces found in the input string.
+final class Pieces<S extends State<S>> extends Iterable<Piece<S>> {
   final S _initialState;
 
   /// The link the string is read as starting inside, where there is one.
@@ -16,14 +16,14 @@ final class Matches<S extends State<S>> extends Iterable<Match<S>> {
   /// What has been read of the string so far, shared by every iterator over
   /// it, so that reading part of it and then asking again does not start the
   /// reading over.
-  final List<Match<S>> _parsed = [];
+  final List<Piece<S>> _parsed = [];
 
-  _MatchesResult<S>? _parsingResult;
+  _PiecesResult<S>? _parsingResult;
 
-  Matches._(this._input, this._initialState, {Link? initialLink})
+  Pieces._(this._input, this._initialState, {Link? initialLink})
       : _initialLink = initialLink;
 
-  _MatchesResult<S> get _requireParsingResult {
+  _PiecesResult<S> get _requireParsingResult {
     final parsingResult = _parsingResult;
     if (parsingResult != null) {
       return parsingResult;
@@ -39,8 +39,8 @@ final class Matches<S extends State<S>> extends Iterable<Match<S>> {
   }
 
   @override
-  Iterator<Match<S>> get iterator =>
-      _parsingResult?.matches.iterator ?? _createIterator();
+  Iterator<Piece<S>> get iterator =>
+      _parsingResult?.pieces.iterator ?? _createIterator();
 
   /// Whether the whole string has been read, rather than as much of it as the
   /// questions asked so far needed.

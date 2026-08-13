@@ -1,17 +1,17 @@
 part of '../parser.dart';
 
-final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
-  final Matches<S> _parent;
+final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
+  final Pieces<S> _parent;
   final S _initialState;
   final Link? _initialLink;
 
   RegExpMatch? _next;
 
-  /// How many matches this iterator has handed out.
+  /// How many pieces this iterator has handed out.
   int _index = 0;
 
   int _pos = 0;
-  Match<S>? _current;
+  Piece<S>? _current;
 
   /// The state and the link [SaveCursor] put away, for [RestoreCursor] to
   /// bring back.
@@ -25,16 +25,16 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
 
   _ParserIterator._(this._parent, this._initialState, this._initialLink);
 
-  /// Current match.
+  /// Current piece.
   @override
-  Match<S> get current => _current ?? (throw StateError('Use moveNext first'));
+  Piece<S> get current => _current ?? (throw StateError('Use moveNext first'));
 
   /// Current state.
   S get currentState => _current?.state ?? _initialState;
 
   /// The link open at this point, the way [currentState] is the state.
   ///
-  /// Told apart by the match, not by the link: a closed link is a `null` of
+  /// Told apart by the piece, not by the link: a closed link is a `null` of
   /// its own, and falling back to the seed would raise it from the dead.
   Link? get currentLink {
     final current = _current;
@@ -49,33 +49,33 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
     // Already read once, by this iterator or another one over the same
     // string. Reading it again would give the same answer.
     if (_index < parsed.length) {
-      final match = parsed[_index];
+      final piece = parsed[_index];
 
       // Read before, and read again from the start by another iterator: the
-      // state and the link of each match are settled and travel in the match
+      // state and the link of each piece are settled and travel in the piece
       // itself, but what was saved along the way has to be picked up again
       // for the restore that may still be ahead — the whole bundle of it, or
       // the second walk would answer where the first one did not.
-      if (match.entity is SaveCursor) {
-        _saved = (state: match.state, link: match.link);
+      if (piece.entity is SaveCursor) {
+        _saved = (state: piece.state, link: piece.link);
       }
 
       _index++;
-      _current = match;
-      _pos = match.end;
+      _current = piece;
+      _pos = piece.end;
 
-      // Taking a match from the cache moves the position, and what this
+      // Taking a piece from the cache moves the position, and what this
       // iterator had found ahead of the old one belongs to where it was.
       _next = null;
 
       return true;
     }
 
-    final match = _read();
-    if (match == null) {
+    final piece = _read();
+    if (piece == null) {
       // Wrap at end-of-input; the list is complete and will not grow.
-      _parent._parsingResult ??= _MatchesResult<S>._(
-        matches: parsed,
+      _parent._parsingResult ??= _PiecesResult<S>._(
+        pieces: parsed,
         finalState: currentState,
         finalLink: currentLink,
       );
@@ -85,17 +85,17 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
 
     // Another iterator may have got here first while this one was reading.
     if (_index == parsed.length) {
-      parsed.add(match);
+      parsed.add(piece);
     }
 
     _index++;
-    _current = match;
+    _current = piece;
 
     return true;
   }
 
-  /// Reads the next match of the string, or `null` at the end of it.
-  Match<S>? _read() {
+  /// Reads the next piece of the string, or `null` at the end of it.
+  Piece<S>? _read() {
     final string = _parent._input;
     final pos = _pos;
 
@@ -146,10 +146,10 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
     }
   }
 
-  Match<S> _text(int start, int end) {
+  Piece<S> _text(int start, int end) {
     _pos = end;
 
-    return Match<S>._(
+    return Piece<S>._(
       state: currentState,
       link: currentLink,
       entity: Text._(_parent._input, start, end),
@@ -158,7 +158,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
     );
   }
 
-  Match<S> _escapeCode(RegExpMatch m) {
+  Piece<S> _escapeCode(RegExpMatch m) {
     final matchingState = _MatchingState(m, currentState);
     final entity = EscapeCode._parse(matchingState);
 
@@ -198,7 +198,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Match<S>> {
 
     _pos = m.end;
 
-    return Match<S>._(
+    return Piece<S>._(
       state: matchingState.state,
       link: link,
       entity: entity,

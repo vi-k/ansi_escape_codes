@@ -11,7 +11,7 @@ void main() {
     test('a terminated string is one entity, and its body is not text', () {
       final parser = Parser('aa${DCS}pay${ST}bb');
 
-      expect(parser.matches.map((m) => m.entity.runtimeType).toList(), [
+      expect(parser.pieces.map((m) => m.entity.runtimeType).toList(), [
         Text,
         Dcs,
         Text,
@@ -30,7 +30,7 @@ void main() {
         final parser = Parser('aa${opener}pay${ST}bb');
 
         expect(
-          parser.matches.elementAt(1).entity.runtimeType,
+          parser.pieces.elementAt(1).entity.runtimeType,
           type,
           reason: 'opener ${opener.ansiShowEscapeSequences()}',
         );
@@ -42,7 +42,7 @@ void main() {
       final parser = Parser('aa${DCS}pay');
 
       expect(parser.removeAll(), 'aa');
-      expect(parser.matches.last.entity, isA<Dcs>());
+      expect(parser.pieces.last.entity, isA<Dcs>());
     });
 
     test('an unterminated string ends where the next sequence starts', () {
@@ -62,11 +62,11 @@ void main() {
       final parser = Parser('aa$DCS${ST}bb');
 
       expect(parser.removeAll(), 'aabb');
-      expect(parser.matches.elementAt(1).entity, isA<Dcs>());
+      expect(parser.pieces.elementAt(1).entity, isA<Dcs>());
     });
 
     test('a lone ST opens nothing', () {
-      expect(Parser('aa${ST}bb').matches.elementAt(1).entity, isA<Esc>());
+      expect(Parser('aa${ST}bb').pieces.elementAt(1).entity, isA<Esc>());
     });
 
     test('the string comes back byte for byte', () {
@@ -75,7 +75,7 @@ void main() {
         final input = 'aa$opener$body${ST}bb';
 
         expect(
-          Parser(input).matches.map((m) => m.entity.string).join(),
+          Parser(input).pieces.map((m) => m.entity.string).join(),
           input,
         );
       }
@@ -100,7 +100,7 @@ void main() {
         final parser = Parser('aa$ESC${letter}pay${ST}bb');
 
         expect(
-          parser.matches.elementAt(1).entity,
+          parser.pieces.elementAt(1).entity,
           isA<Esc>(),
           reason: 'ESC $letter',
         );
@@ -395,7 +395,7 @@ void main() {
 
       for (var byte = 0x40; byte <= 0x5F; byte++) {
         final entity = Parser('aa$ESC${String.fromCharCode(byte)}pay${ST}bb')
-            .matches
+            .pieces
             .elementAt(1)
             .entity;
         final reason = 'ESC ${String.fromCharCode(byte)} '

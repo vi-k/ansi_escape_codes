@@ -79,7 +79,7 @@ bool _touches(
 /// that moved from one sequence into the next would read as no change at
 /// all.
 List<List<SgrFunction>> _parserSequences(String text) => [
-      for (final m in Parser(text).matches)
+      for (final m in Parser(text).pieces)
         if (m.entity case Sgr(:final functions)) functions,
     ];
 
@@ -102,13 +102,13 @@ bool _parserHas(
 /// Whether the parser made an SGR sequence of anything in the text — the
 /// question `ansiHasSgr` answers by its pattern.
 bool _parserHasSgr(String text) =>
-    Parser(text).matches.any((m) => m.entity is Sgr);
+    Parser(text).pieces.any((m) => m.entity is Sgr);
 
 /// The text with every SGR sequence the parser found taken out of it: what
 /// is left written out piece by piece, which is what `ansiRemoveSgr` leaves
 /// if the two readings agree on which pieces are SGR.
 String _parserRemoveSgr(String text) => [
-      for (final m in Parser(text).matches)
+      for (final m in Parser(text).pieces)
         if (m.entity is! Sgr) m.entity.string,
     ].join();
 

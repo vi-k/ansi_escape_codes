@@ -218,25 +218,28 @@ print(Styles.bold('by the style'));
 `Styles.bold` — стиль. Из стилей ничего не пишется со строчной буквы, так что
 эти двое не сталкиваются.
 
-Пакет экспортирует и имена, которые Dart и Flutter считают своими: `Match` —
-из `dart:core`, а `Text`, `State`, `Stack`, `Colors` и `Color` — из Flutter.
-Ничего не ломается, пока одно из них не написано; тогда компилятор спросит,
-что имелось в виду. Во Flutter-приложении спрячьте ту сторону, которую этим
-именем не зовёте:
+Пакет экспортирует и имена, которые Flutter считает своими: `Text`, `State`,
+`Stack`, `Colors` и `Color`. Ничего не ломается, пока одно из них не написано;
+тогда компилятор спросит, что имелось в виду, — Flutter импортируют явно, а
+между двумя явными импортами вопрос остаётся вам. Во Flutter-приложении
+спрячьте ту сторону, которую этим именем не зовёте:
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart'
-    hide Color, Colors, Match, Stack, State, Text;
+    hide Color, Colors, Stack, State, Text;
 ```
 
-То же сокрытие нужно и для `style.dart`: эти шесть имён определяет парсер, а
+То же сокрытие нужно и для `style.dart`: эти пять имён определяет парсер, а
 оба импорта его приносят. Свободны от них только `ansi.dart`,
 `extensions.dart` и `utils.dart`: первый приносит константы, второй — свои две
 функции, третий — расширения и два перечисления из их сигнатур,
 `ControlCodeStyle` и `ControlFunctionsC0`.
 
-Парсер по-прежнему `Parser`, а `Matches` — собственное имя пакета — всего
-этого не касается.
+Имён из `dart:core` здесь не перекрывает ничто, и это сделано намеренно: то,
+что выдаёт парсер, до 4.0.0 звалось `Match` и перекрывало `dart:core.Match`
+**молча** — явный импорт старше неявного, поэтому компилятор ничего не
+спрашивал, а обычный код с регулярным выражением падал с ошибками, ни одна из
+которых не называла пакет. Теперь это `Piece`, а `Matches` — `Pieces`.
 
 Со строчной буквы экспортируются готовые строки — `fgRed`, `cursorUp`,
 `bold` — и `tabs`. Стилей среди них нет: они константы в `Styles`. Поэтому
@@ -766,13 +769,13 @@ import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
 const text = '$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ';
 final parser = Parser(text);
-parser.matches.forEach(print);
-// Match<Style>(start: 0, end: 4, entity: Sgr(bold), state: Style(bold))
-// Match<Style>(start: 4, end: 10, entity: Text(' Bold '), state: Style(bold))
-// Match<Style>(start: 10, end: 15, entity: Sgr(fgCyan), state: Style(bold, foreground: Color16.cyan))
-// Match<Style>(start: 15, end: 26, entity: Text(' Bold+cyan '), state: Style(bold, foreground: Color16.cyan))
-// Match<Style>(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: Style(foreground: Color16.cyan))
-// Match<Style>(start: 31, end: 37, entity: Text(' Cyan '), state: Style(foreground: Color16.cyan))
+parser.pieces.forEach(print);
+// Piece<Style>(start: 0, end: 4, entity: Sgr(bold), state: Style(bold))
+// Piece<Style>(start: 4, end: 10, entity: Text(' Bold '), state: Style(bold))
+// Piece<Style>(start: 10, end: 15, entity: Sgr(fgCyan), state: Style(bold, foreground: Color16.cyan))
+// Piece<Style>(start: 15, end: 26, entity: Text(' Bold+cyan '), state: Style(bold, foreground: Color16.cyan))
+// Piece<Style>(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: Style(foreground: Color16.cyan))
+// Piece<Style>(start: 31, end: 37, entity: Text(' Cyan '), state: Style(foreground: Color16.cyan))
 ```
 
 Так можно, например, убрать все escape-коды:
@@ -780,7 +783,7 @@ parser.matches.forEach(print);
 ```dart
 final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
 final buf = StringBuffer();
-for (final m in parser.matches) {
+for (final m in parser.pieces) {
   switch (m.entity) {
     case Text(:final string):
       buf.write(string);
@@ -802,7 +805,7 @@ print(parser.removeAll());
 ```dart
 final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
 final buf = StringBuffer();
-for (final m in parser.matches) {
+for (final m in parser.pieces) {
   final result = switch (m.entity) {
     EscapeCode(:final id) => '[$id]',
     Text(:final string) => string,
@@ -1013,7 +1016,7 @@ Parser('aa\x1B[31').insertAfter(3, 'X'); // бросает UnfinishedSequenceExc
 встреченный код, и разница между ними видна там, где нужен всего один ответ:
 вопрос `ansiHas` останавливается на первом же коде, который на него отвечает,
 а строку вовсе без кодов отсекает `contains(ESC)` — парсер просматривает её
-так же быстро, но ему ещё строить список матчей, а расширению строить нечего.
+так же быстро, но ему ещё строить список кусков, а расширению строить нечего.
 Там же, где строку всё равно проходить целиком, парсер не дороже: на странице
 цветного лога `ansiRemoveEscapeCodes` стоит чуть больше, чем
 `Parser.removeAll`, а разбор, однажды сделанный, ответит и на всё остальное.
@@ -1129,13 +1132,13 @@ print(withoutAllEscapeCodes.ansiShowEscapeSequences());
 ### Типы последовательностей
 
 Последовательности, несущие что-то стоящее чтения, говорят это сами, так что
-`switch` по `matches` может спросить и про саму последовательность, и про то,
+`switch` по `pieces` может спросить и про саму последовательность, и про то,
 что она держит, одним шаблоном:
 
 ```dart
 final text = '${cursorUpN(4)}$erasePage Hello $hideCursor';
 
-for (final m in Parser(text).matches) {
+for (final m in Parser(text).pieces) {
   switch (m.entity) {
     case CursorUp(:final n):
       print('the cursor goes up $n lines');
@@ -1184,7 +1187,7 @@ RGB; а то, что подпараметры говорят сверх этог
 ```dart
 const text = '\x1B[4:3m wavy \x1B[;5H\x1B[38:2::51:102:153m';
 
-for (final m in Parser(text).matches) {
+for (final m in Parser(text).pieces) {
   if (m.entity case Sgr(:final params, :final id) ||
       CsiCommon(:final params, :final id)) {
     print('$id  $params');
@@ -1207,7 +1210,7 @@ for (final m in Parser(text).matches) {
 
 ```dart
 const text = 'a\x1B[!pb\x1B[?7hc';
-for (final m in Parser(text).matches) {
+for (final m in Parser(text).pieces) {
   if (m.entity case final UnrecognizedEscapeCode e) {
     print('${m.start}..${m.end}: ${e.id}');
   }
@@ -1271,7 +1274,7 @@ print(parser.finalLink); // null
 одного прохода, поэтому спросить каждого из них про череду позиций стоит
 одного прохода по строке на всех. `finalLink` — это то, что строка оставила
 открытым; здесь `null`, потому что текст закрыл то, что открыл. А если
-обходить матчи самому, каждый `Match` несёт свою `link` рядом со `state`.
+обходить куски самому, каждый `Piece` несёт свою `link` рядом со `state`.
 
 `isClosed` — вопрос про один только стиль: строка, кончающаяся в том же
 состоянии, в каком началась, но оставившая гиперссылку открытой, ответит

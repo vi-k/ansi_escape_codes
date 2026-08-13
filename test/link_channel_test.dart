@@ -6,10 +6,10 @@ import 'package:test/test.dart';
 String opens(String url) => '$linkOpen$url$linkTextOpen';
 
 void main() {
-  group('a match says which link it stands in:', () {
+  group('a piece says which link it stands in:', () {
     test('the text inside a link carries it, the text after does not', () {
       final parser = Parser('a${opens('http://u/')}in${linkClose}out');
-      final links = [for (final m in parser.matches) m.link?.url];
+      final links = [for (final m in parser.pieces) m.link?.url];
 
       expect(links, [null, 'http://u/', 'http://u/', null, null]);
     });
@@ -17,7 +17,7 @@ void main() {
     test('an opening supersedes the one before it', () {
       final parser = Parser('${opens('http://a/')}x${opens('http://b/')}y');
       final urls = [
-        for (final m in parser.matches)
+        for (final m in parser.pieces)
           if (m.entity is Text) m.link?.url,
       ];
 
@@ -27,19 +27,19 @@ void main() {
     test('a link left open runs to the end', () {
       final parser = Parser('${opens('http://u/')}tail');
 
-      expect(parser.matches.last.link?.url, 'http://u/');
+      expect(parser.pieces.last.link?.url, 'http://u/');
     });
 
     test('a close with nothing open leaves nothing open', () {
       final parser = Parser('${linkClose}x');
 
-      expect(parser.matches.last.link, isNull);
+      expect(parser.pieces.last.link, isNull);
     });
 
     test('the same answers come back from the cache', () {
       final parser = Parser('a${opens('http://u/')}b${linkClose}c');
-      final first = [for (final m in parser.matches) m.link?.url];
-      final second = [for (final m in parser.matches) m.link?.url];
+      final first = [for (final m in parser.pieces) m.link?.url];
+      final second = [for (final m in parser.pieces) m.link?.url];
 
       expect(second, first);
     });
@@ -51,11 +51,11 @@ void main() {
         'abc${linkClose}def',
         Link('http://outer/'),
       );
-      final links = [for (final m in parser.matches) m.link?.url];
+      final links = [for (final m in parser.pieces) m.link?.url];
 
       expect(links, ['http://outer/', null, null]);
       expect(
-        [for (final m in parser.matches) m.link?.url],
+        [for (final m in parser.pieces) m.link?.url],
         links,
         reason: 'the seeded walk answers the same from the cache',
       );
@@ -64,7 +64,7 @@ void main() {
     test('a string that touches no link carries the seed to the end', () {
       final parser = Parser.debugInsideLink('abc', Link('http://u/'));
 
-      expect(parser.matches.last.link?.url, 'http://u/');
+      expect(parser.pieces.last.link?.url, 'http://u/');
     });
   });
 
@@ -149,10 +149,10 @@ void main() {
     test('the second walk over the cache answers as the first one did', () {
       final input = '${opens('http://u/')}a${saveCursor}b$linkClose'
           'c${restoreCursor}d';
-      final first = [for (final m in Parser(input).matches) m.link?.url];
+      final first = [for (final m in Parser(input).pieces) m.link?.url];
 
       final parser = Parser(input);
-      final stopped = parser.matches.iterator;
+      final stopped = parser.pieces.iterator;
       while (stopped.moveNext()) {
         if (stopped.current.entity is SaveCursor) {
           break;
@@ -160,7 +160,7 @@ void main() {
       }
 
       expect(parser.isParsed, isFalse, reason: 'the walk stopped at the save');
-      expect([for (final m in parser.matches) m.link?.url], first);
+      expect([for (final m in parser.pieces) m.link?.url], first);
     });
   });
 }

@@ -14,13 +14,13 @@
 ## Конвейер: из строки в разбор
 
 Вход режет **пара** — сканер и регулярка, и порознь ни один из них этого
-не делает. `_ParserIterator._read` (`parser/matches/parser_iterator.dart`)
+не делает. `_ParserIterator._read` (`parser/pieces/parser_iterator.dart`)
 идёт по строке байтовым `indexOf('\x1B')`, который дешевле прогона
 regex-движка, и только на найденном `ESC` прикладывает `escapeCodesRe`
 (`parsing/patterns/patterns.dart`) через `matchAsPrefix`. То есть сканер
 решает, **где** совпадение может начаться, регулярка — **из чего** оно
 состоит; между совпадениями лежит `Text`. Каждый кусок становится
-`Match<S>` (`parser/matches/match.dart`) — сущность, состояние после неё
+`Piece<S>` (`parser/pieces/piece.dart`) — сущность, состояние после неё
 и ссылка, действующая в этом месте.
 
 Следствие, за которое заплачено дважды: правка, добавляющая открыватель,
@@ -46,9 +46,9 @@ regex-движка, и только на найденном `ESC` приклад
 `UnrecognizedEscapeCode` — поэтому разбор и обратная сборка дают строку
 байт в байт.
 
-Разбор ленив. `Matches` отдаёт `_ParserIterator`, который читает по мере
-обхода и складывает прочитанное в общий кэш `_MatchesResult`; на большом
-входе поэтому дешевле идти циклом по `matches`, чем звать `length` или
+Разбор ленив. `Pieces` отдаёт `_ParserIterator`, который читает по мере
+обхода и складывает прочитанное в общий кэш `_PiecesResult`; на большом
+входе поэтому дешевле идти циклом по `pieces`, чем звать `length` или
 `prepare` (это сказано и в дартдоке `Parser`). Позиционные вопросы —
 `stateAt`, `linkAt`, `substring`, вставки — идут не по кэшу, а по
 резюмируемому курсору `_Walk`: он помнит, где остановился, и следующий
@@ -72,7 +72,7 @@ regex-движка, и только на найденном `ESC` приклад
 |---|---|
 | `lib/src/ansi/` | сырые байты стандарта: `c0`, `c1`, `csi` (константы, сверенные с ECMA-48), `sgr`, `colors`, `esc_fs` |
 | `lib/src/parsing/patterns/` | регулярки: разборные — `escapeCodesRe` и его альтернативы, где `sgrPattern` отделяет `SGR` от приватных последовательностей; и `controlCodesRe`, которого разбор не касается вовсе — его читают только `ansiHasControlCodes` и `ansiRemoveControlCodes` |
-| `lib/src/parsing/parser/` | `Parser` и `StackedParser` (`parser.dart`), принтеры (`printer.dart`), сущности (`entities/`), кэш и курсор (`matches/`) |
+| `lib/src/parsing/parser/` | `Parser` и `StackedParser` (`parser.dart`), принтеры (`printer.dart`), сущности (`entities/`), кэш и курсор (`pieces/`) |
 | `lib/src/parsing/state/` | `State<S>` и две реализации: `Style` — значение, `Stack` — история; плюс генерируемые цветовые поверхности |
 | `lib/src/parsing/colors/` | модель цвета: `Color16`, `Color256`, `ColorRgb`, индексы |
 | `lib/src/parsing/control_functions/` | перечисления «что значит этот код» для C0, C1, `ESC Fs`, `CSI` и `SGR` |
@@ -158,7 +158,7 @@ regex-движка, и только на найденном `ESC` приклад
 3. **Канал ссылки лежит рядом с `State`, а не внутри.** Ссылка не стиль:
    `SGR 0` её не закрывает, она не вкладывается, её байты несут
    терминатор и `id=`. В коде это отдельная колея: `initialLink`,
-   `Match.link`, `linkAt`, `finalLink`. Обоснование —
+   `Piece.link`, `linkAt`, `finalLink`. Обоснование —
    `docs/records/2026-08-07[1]`, раздел «Почему не внутри State»; вопрос
    закрыт, заново не решается.
 
@@ -191,7 +191,7 @@ regex-движка, и только на найденном `ESC` приклад
       (`lib/src/parsing/patterns/patterns.dart`), читает
       `controlStringOpeners`.
    2. **Сканер** `_ParserIterator._read`
-      (`lib/src/parsing/parser/matches/parser_iterator.dart`): ищет
+      (`lib/src/parsing/parser/pieces/parser_iterator.dart`): ищет
       `string.indexOf('\x1B', searchFrom)` и только на найденном месте
       прикладывает шаблон через `matchAsPrefix`. Регулярка решает, из
       чего состоит совпадение, а сканер — где оно вообще может начаться.
