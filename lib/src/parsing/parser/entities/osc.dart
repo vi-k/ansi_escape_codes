@@ -78,15 +78,26 @@ String _terminatedIfTextFollows(String codes, String following) =>
         ? codes
         : '$codes$ST';
 
-/// [opening] with the terminator it lacks, where what follows would otherwise
-/// be swallowed by it.
+/// [opening] with an `ST` behind it, where what follows would otherwise be
+/// swallowed by it.
 ///
-/// Only an opening the parser found unterminated is ever held back, so this
-/// does not ask again whether it ended — and it must not ask: a `BEL` ends an
-/// [Osc] and no other control string, so an unterminated [Dcs] whose body
-/// happens to end in one would be called finished by that question and left
-/// open. [_terminatedIfTextFollows] goes on asking it, because what it is
-/// given is link codes, and those are always an `OSC`.
+/// What is held back is whatever the parser could not finish — see
+/// `_unfinished`, which names four shapes and not one. For a control string
+/// the `ST` is its own terminator. For the other three — a bare `ESC`, a
+/// `CSI` with no final byte, an `ESC` left on an intermediate byte — it is
+/// not, and it does not need to be: an `ST` is an `ESC` and a `\`, and that
+/// `ESC` breaks off the waiting sequence exactly as the `ESC` of whatever
+/// stood behind it did in the string. The `\` then ends an `ST` that closes
+/// nothing, which outside a control string is no operation at all. So one
+/// answer serves all four, and what it costs is two bytes the input did not
+/// carry.
+///
+/// Only what the parser found unfinished is ever held back, so this does not
+/// ask again whether it ended — and it must not ask: a `BEL` ends an [Osc]
+/// and no other control string, so an unterminated [Dcs] whose body happens
+/// to end in one would be called finished by that question and left open.
+/// [_terminatedIfTextFollows] goes on asking it, because what it is given is
+/// link codes, and those are always an `OSC`.
 ///
 /// [closing] says what an empty [following] means. Inside a string it means
 /// nothing follows the opening at all, so there is nothing to be swallowed

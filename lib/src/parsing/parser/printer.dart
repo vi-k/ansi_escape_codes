@@ -370,9 +370,9 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
         ..write(reopening)
         ..write(transit);
 
-      // An opening with no terminator waits to see what it is written in
+      // A code the parser could not finish waits to see what it is written in
       // front of; everything else goes out where it stands.
-      if (entity is ControlString && !entity.terminated) {
+      if (_unfinished(entity)) {
         heldOpening = string;
       } else {
         buf.write(string);

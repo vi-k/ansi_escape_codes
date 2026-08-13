@@ -360,6 +360,25 @@ Fixed:
   Dart strings rather than byte streams, where a genuine eight-bit C1 does not
   survive UTF-8 decoding and terminals emit the seven-bit `ESC [` form anyway.
   `0xA0` and above are not controls and are untouched.
+- `optimize`, `substring` and the printers swallowed the text behind a code
+  the parser could not finish. All four held a code back only where it was an
+  unterminated control string, while three other shapes wait for a byte just
+  as surely — a bare `ESC`, a `CSI` with no final byte, an `ESC` left on an
+  intermediate byte. In the string each of those was ended by the `ESC` of
+  whatever stood behind it, and where that was an `SGR` these loops do not
+  copy it but write it again as a transition — which, for a redundant `SGR`,
+  writes nothing at all. The code then stood against the text and read it as
+  its own: `Parser('\x1B[3\x1B[0m1m!').optimize()` gave `\x1B[31m!`, three
+  characters of text turned into a colour, and a truncated `CSI` went on
+  eating until it found a final byte. A redundant `SGR` is what `optimize`
+  exists to remove, so the defect was the feature working. All four now hold
+  back whatever the parser could not finish and supply an `ST` where what
+  follows would otherwise be swallowed — an `ST` is an `ESC` and a `\`, so
+  its `ESC` breaks off the waiting sequence exactly as the string's own did,
+  and an `ST` that closes nothing does nothing. What `removeAll` calls the
+  text is what comes out of all four; see `docs/records/2026-08-13[6]` for
+  the invariant and for what it costs on a truncated `CSI`, where this
+  package's reading of the input and a terminal's already differed.
 - `link` and `linkBel` wrote the address into the body of an `OSC 8`
   unchecked. An `ESC` there ends the sequence where it stands, so a url
   carrying one handed the rest of itself to the terminal as codes of its own:
