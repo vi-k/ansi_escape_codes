@@ -444,6 +444,15 @@ Removed — every name deprecated in an earlier release, and some that never wer
 
 Breaking changes:
 
+- `Stack.underlineColor` takes an `ExtendedColor` where it took a `Color`.
+  `SGR 58` carries a 256-colour index or a truecolour triple and has no
+  16-colour form at all, so a `Color16` was a colour the sequence could not
+  be written with — `Style.underlineColor` had always taken the narrower
+  type, and the two now agree. Narrowing a parameter is source-breaking:
+  `stack.underlineColor(Color16.red)` no longer compiles, and
+  `Color256.red`, whose index is the same colour, is what it becomes. The
+  Fixed list below mentions the change as part of the bug it belongs to; it
+  is named here because the compiler will name it first.
 - `Link(url)` is no longer `const`. It percent-escapes a control byte in the
   address, as `link` does and for the same reason, and a `const` initializer
   admits neither a function call nor a `contains` — so the address could there
