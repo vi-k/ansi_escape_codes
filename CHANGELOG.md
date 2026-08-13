@@ -360,6 +360,19 @@ Fixed:
   Dart strings rather than byte streams, where a genuine eight-bit C1 does not
   survive UTF-8 decoding and terminals emit the seven-bit `ESC [` form anyway.
   `0xA0` and above are not controls and are untouched.
+- `substring(close: false)` took an attribute off that was meant to survive.
+  A slice left open is written by asking `transitTo` for the reset half
+  alone — it unwinds what the string took off by the cut and does not put on
+  what belongs to the character after it. But `CSI 22` takes bold and dim off
+  together, so `transitTo` writes it wherever one of the pair goes off and
+  leans on the other half to bring the survivor back: `CSI 22;1`. That `1`
+  belongs to the reset rather than being a set of its own, and going out
+  without it left `\x1B[1;2mAB\x1B[22;1m` sliced open at `\x1B[22m` — a slice
+  standing in neither its own state nor the string's. `skipSet` leaves it in
+  place now. The four other pairs are unaffected: `24`, `25`, `54` and `75`
+  are written only where the far end carries nothing at all, so a change from
+  one kind to the other is a plain set and an open slice goes on leaving it
+  out.
 - `optimize`, `substring` and the printers swallowed the text behind a code
   the parser could not finish. All four held a code back only where it was an
   unterminated control string, while three other shapes wait for a byte just
