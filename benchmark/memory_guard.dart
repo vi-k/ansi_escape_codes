@@ -119,6 +119,22 @@
 // — 229.3 on the same runner, 2026-08-05, run 31053415705. It belonged to a
 // band a sixth lower and says nothing about this one.
 //
+// ## What this does not guard
+//
+// A `Parser`, and so a `Style`. `StackedParser` is not read here and its
+// `Stack` is not what the band was drawn on, so nothing in this file would
+// have noticed the histories a `Stack` keeps growing quadratically — and they
+// did, until frames with a shared tail replaced the lists that copied
+// themselves on every push. The corpus makes it worse than an oversight: every
+// run ends in a `reset`, so the stacks are emptied line by line and never
+// deepen at all, which is the one shape in which the two states cost the same.
+//
+// What guards it instead is `test/performance_guards_test.dart`, 'a stack that
+// only deepens stays linear' — a growth ratio over a corpus that never resets,
+// with the band taken from both implementations. A ratio rather than a reading
+// per match, because what went wrong there was the shape of the growth and not
+// the size of a state.
+//
 // To recalibrate — a deliberate change in what a match keeps, a new corpus, a
 // machine the band no longer fits — run it five times cold, take the worst,
 // and rewrite the table above along with the two constants: the ceiling is

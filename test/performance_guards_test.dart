@@ -76,6 +76,57 @@ void main() {
       );
     });
 
+    test('a stack that only deepens stays linear', () {
+      // A log that switches colour and never resets: every code pushes and
+      // nothing pops, so the histories a `Stack` keeps grow the whole length
+      // of the string. Lists made that quadratic — a push copied the list it
+      // grew, and `_copyWith` copied it again to seal it — and since a parse
+      // keeps every state it passed, the copies were kept as well. 320 kB of
+      // this shape took 15 s and 7.6 GB before frames with a shared tail
+      // replaced them, against 51 ms for the same string through `Parser`.
+      String page(int runs) => '\x1B[31mfoo\x1B[32mbar' * runs;
+      const runs = 4000;
+      final small = page(runs);
+      final large = page(runs * 2);
+
+      // Warm-up, so the JIT settles before anything is timed.
+      StackedParser(page(500)).finalState;
+
+      final tSmall = bestOf(() => StackedParser(small).finalState);
+      final tLarge = bestOf(() => StackedParser(large).finalState);
+
+      // The anchor. A guard that only times something goes green when the
+      // thing stops being done at all, so this says the parse really walked
+      // the string and really kept a history to walk back down.
+      final parsed = StackedParser(small);
+      expect(parsed.length, 6 * runs, reason: 'foo and bar, once a run');
+      var state = parsed.finalState;
+      expect(state.foregroundColor, Color16.green);
+      for (var i = 0; i < 6; i++) {
+        state = state.resetForeground;
+        expect(
+          state.foregroundColor,
+          i.isEven ? Color16.red : Color16.green,
+          reason: 'the colours were pushed and are still there to pop, '
+              'rather than the last of them standing alone',
+        );
+      }
+
+      // The threshold sits between two measured figures rather than at a
+      // round number. Frames read 1.86, 2.24 and 2.09 over three runs of
+      // this very shape — two being what linear looks like — and the lists
+      // they replaced read 5.37 for it, put back by hand to see this go red
+      // (210 ms against 1127 ms). 3.5 leaves each side about half again of
+      // room, which is what a shared runner needs.
+      expect(
+        tLarge / tSmall,
+        lessThan(3.5),
+        reason: 'twice the pushes must not cost near four times the parse '
+            '(${tSmall.toStringAsFixed(0)} µs → '
+            '${tLarge.toStringAsFixed(0)} µs)',
+      );
+    });
+
     test('a run of insertions does not read the string again each time', () {
       // A floor rather than a growth ratio. Every insertion builds a whole
       // new string, so a run of them is quadratic in the input however the

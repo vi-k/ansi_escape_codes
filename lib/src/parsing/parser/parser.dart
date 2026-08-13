@@ -11,6 +11,7 @@ import '../../extensions/remove.dart';
 import '../../extensions/show_control_codes.dart';
 import '../../extensions/show_escape_codes.dart';
 import '../../internal/sgr_rules.dart';
+import '../../internal/strings.dart';
 import '../../ready_to_use/csi.dart';
 import '../../ready_to_use/esc.dart';
 import '../../ready_to_use/osc.dart';
@@ -632,10 +633,10 @@ final class _ParserBase<S extends State<S>> {
 
               buf.write(transit);
 
-              // An opening with no terminator waits to see what it is
+              // A code the parser could not finish waits to see what it is
               // written in front of; everything else goes out where it
               // stands.
-              if (entity is ControlString && !entity.terminated) {
+              if (_unfinished(entity)) {
                 heldOpening = entity.string;
               } else {
                 buf.write(entity.string);
@@ -1122,9 +1123,9 @@ final class _ParserBase<S extends State<S>> {
         buf.write(transit);
 
         // A code that carries no style of its own is kept as it was written —
-        // save for an opening with no terminator, which waits to see what it
+        // save for one the parser could not finish, which waits to see what it
         // is written in front of.
-        if (entity is ControlString && !entity.terminated) {
+        if (_unfinished(entity)) {
           heldOpening = string;
         } else {
           buf.write(string);

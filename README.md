@@ -1248,6 +1248,14 @@ The pieces have names of their own for a link built as a constant —
 `${linkOpen}$url$linkTextOpen$text$linkClose` — and `linkBel` writes the older
 form, ended by a `BEL` where the other ends by an `ST`. Terminals take either.
 
+A control byte in the url is written as its percent-escape. An `ESC` in the
+body of an `OSC 8` ends the sequence where it stands, so what was meant as the
+rest of the address would reach the terminal as codes of its own. An address
+carrying none — which is every address that is one — comes out byte for byte,
+its own percent-escapes untouched. The pieces above put the url in unchecked,
+so an address from a source you do not control wants `link` rather than the
+constants. The text shown is written as it came, styling and all.
+
 A link is state, the way a style is: what is written after an opening is inside
 it until a close. Links do not nest — an opening supersedes the one before it,
 and one close ends whatever was open — so the parser keeps them on a channel

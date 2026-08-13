@@ -78,15 +78,26 @@ String _terminatedIfTextFollows(String codes, String following) =>
         ? codes
         : '$codes$ST';
 
-/// [opening] with the terminator it lacks, where what follows would otherwise
-/// be swallowed by it.
+/// [opening] with an `ST` behind it, where what follows would otherwise be
+/// swallowed by it.
 ///
-/// Only an opening the parser found unterminated is ever held back, so this
-/// does not ask again whether it ended — and it must not ask: a `BEL` ends an
-/// [Osc] and no other control string, so an unterminated [Dcs] whose body
-/// happens to end in one would be called finished by that question and left
-/// open. [_terminatedIfTextFollows] goes on asking it, because what it is
-/// given is link codes, and those are always an `OSC`.
+/// What is held back is whatever the parser could not finish — see
+/// `_unfinished`, which names four shapes and not one. For a control string
+/// the `ST` is its own terminator. For the other three — a bare `ESC`, a
+/// `CSI` with no final byte, an `ESC` left on an intermediate byte — it is
+/// not, and it does not need to be: an `ST` is an `ESC` and a `\`, and that
+/// `ESC` breaks off the waiting sequence exactly as the `ESC` of whatever
+/// stood behind it did in the string. The `\` then ends an `ST` that closes
+/// nothing, which outside a control string is no operation at all. So one
+/// answer serves all four, and what it costs is two bytes the input did not
+/// carry.
+///
+/// Only what the parser found unfinished is ever held back, so this does not
+/// ask again whether it ended — and it must not ask: a `BEL` ends an [Osc]
+/// and no other control string, so an unterminated [Dcs] whose body happens
+/// to end in one would be called finished by that question and left open.
+/// [_terminatedIfTextFollows] goes on asking it, because what it is given is
+/// link codes, and those are always an `OSC`.
 ///
 /// [closing] says what an empty [following] means. Inside a string it means
 /// nothing follows the opening at all, so there is nothing to be swallowed
@@ -159,9 +170,29 @@ final class Link extends Osc {
   /// The parameters the sequence carried are not here; see the class doc.
   final String url;
 
-  /// The sequence that opens a link on [url], or closes one where [url] is
-  /// empty.
-  const Link(this.url) : super._('${OSC}8;;$url$ST');
+  /// The sequence that opens a link on [address], or closes one where
+  /// [address] is empty.
+  ///
+  /// A control byte in [address] is written as its percent-escape, the way
+  /// [link] writes one: the body of an `OSC 8` cannot carry an `ESC`, which
+  /// would end the sequence where it stands and hand the rest of the address
+  /// to the terminal as codes of its own. An address carrying none — which is
+  /// every address that is one — is kept byte for byte.
+  ///
+  /// [url] is the encoded form, not the bytes handed in, so that it is the
+  /// address the sequence actually points at and reading it back off a parse
+  /// of [string] gives the same answer. An [Entity] compares by [string], and
+  /// two links that write the same bytes would otherwise disagree on a field
+  /// while being equal.
+  ///
+  /// Not `const`, and it cannot be: a `const` initializer admits neither a
+  /// function call nor a `contains`, so a url could there be neither encoded
+  /// nor so much as checked.
+  factory Link(String address) {
+    final encoded = encodeControlBytes(address);
+
+    return Link._('${OSC}8;;$encoded$ST', encoded);
+  }
 
   const Link._(super.string, this.url) : super._();
 

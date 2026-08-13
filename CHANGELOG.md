@@ -104,6 +104,19 @@ Performance:
 - What has been read of a string is kept, instead of being read again by
   every question asked of it. Call `prepare` when there are many.
 - A control sequence is looked up in a map rather than by walking the list.
+- A `Stack` keeps its histories as frames with a shared tail rather than as
+  lists. Immutable lists had to be copied to be grown — twice, once to build
+  the new one and once to seal it — so a push cost the whole depth so far, and
+  a parse, which keeps every state it passed, kept every one of those copies
+  with it. Text that switches attributes without resetting them, which is what
+  `ls --color` and most syntax highlighters write, made that quadratic in time
+  and in memory both: 320 kB of it took 15 s and 7.6 GB through
+  `StackedParser`, where `Parser` took 51 ms and nothing above the floor. The
+  same string now takes 55 ms, level with `Parser`, and 2.5 MB of that shape
+  takes 299 ms. A push and a pop are one small allocation each, and every
+  version of a stack shares the whole of its own tail with the versions it
+  came from. Nothing a `Stack` answers has moved: its histories were only ever
+  asked what was on top and whether they were empty.
 
 Fixed:
 
@@ -347,6 +360,55 @@ Fixed:
   Dart strings rather than byte streams, where a genuine eight-bit C1 does not
   survive UTF-8 decoding and terminals emit the seven-bit `ESC [` form anyway.
   `0xA0` and above are not controls and are untouched.
+- `substring(close: false)` took an attribute off that was meant to survive.
+  A slice left open is written by asking `transitTo` for the reset half
+  alone — it unwinds what the string took off by the cut and does not put on
+  what belongs to the character after it. But `CSI 22` takes bold and dim off
+  together, so `transitTo` writes it wherever one of the pair goes off and
+  leans on the other half to bring the survivor back: `CSI 22;1`. That `1`
+  belongs to the reset rather than being a set of its own, and going out
+  without it left `\x1B[1;2mAB\x1B[22;1m` sliced open at `\x1B[22m` — a slice
+  standing in neither its own state nor the string's. `skipSet` leaves it in
+  place now. The four other pairs are unaffected: `24`, `25`, `54` and `75`
+  are written only where the far end carries nothing at all, so a change from
+  one kind to the other is a plain set and an open slice goes on leaving it
+  out.
+- `optimize`, `substring` and the printers swallowed the text behind a code
+  the parser could not finish. All four held a code back only where it was an
+  unterminated control string, while three other shapes wait for a byte just
+  as surely — a bare `ESC`, a `CSI` with no final byte, an `ESC` left on an
+  intermediate byte. In the string each of those was ended by the `ESC` of
+  whatever stood behind it, and where that was an `SGR` these loops do not
+  copy it but write it again as a transition — which, for a redundant `SGR`,
+  writes nothing at all. The code then stood against the text and read it as
+  its own: `Parser('\x1B[3\x1B[0m1m!').optimize()` gave `\x1B[31m!`, three
+  characters of text turned into a colour, and a truncated `CSI` went on
+  eating until it found a final byte. A redundant `SGR` is what `optimize`
+  exists to remove, so the defect was the feature working. All four now hold
+  back whatever the parser could not finish and supply an `ST` where what
+  follows would otherwise be swallowed — an `ST` is an `ESC` and a `\`, so
+  its `ESC` breaks off the waiting sequence exactly as the string's own did,
+  and an `ST` that closes nothing does nothing. What `removeAll` calls the
+  text is what comes out of all four; see `docs/records/2026-08-13[6]` for
+  the invariant and for what it costs on a truncated `CSI`, where this
+  package's reading of the input and a terminal's already differed.
+- `link` and `linkBel` wrote the address into the body of an `OSC 8`
+  unchecked. An `ESC` there ends the sequence where it stands, so a url
+  carrying one handed the rest of itself to the terminal as codes of its own:
+  `link('https://ok\x1B\\\x1B[2J…')` cleared the screen, and the parser read
+  the result as seven entities where three were meant. Urls in a command-line
+  tool arrive from git remotes, HTTP answers and registries, so the bytes are
+  rarely the caller's. Both functions percent-escape what an `OSC 8` cannot
+  carry — the C0 controls and `DEL` — and nothing else: an address that
+  carries none, which is every address that is one, comes out byte for byte,
+  its own percent-escapes untouched. `Uri.encodeFull`, which the `OSC 8` note
+  asks for, escapes the `%` as well and would turn an already-encoded address
+  into `%2520`. The eight-bit C1 are deliberately not escaped: one of them is
+  a single code unit in a Dart string and two bytes in UTF-8, so a single-byte
+  escape would name the wrong byte, and this package does not read them as
+  control codes anyway. The `text` of a link is written as it came — styling
+  it is what the codes are for — and where none is given the encoded address
+  stands for it.
 
 Renamed:
 
@@ -395,6 +457,22 @@ Removed — every name deprecated in an earlier release, and some that never wer
 
 Breaking changes:
 
+- `Stack.underlineColor` takes an `ExtendedColor` where it took a `Color`.
+  `SGR 58` carries a 256-colour index or a truecolour triple and has no
+  16-colour form at all, so a `Color16` was a colour the sequence could not
+  be written with — `Style.underlineColor` had always taken the narrower
+  type, and the two now agree. Narrowing a parameter is source-breaking:
+  `stack.underlineColor(Color16.red)` no longer compiles, and
+  `Color256.red`, whose index is the same colour, is what it becomes. The
+  Fixed list below mentions the change as part of the bug it belongs to; it
+  is named here because the compiler will name it first.
+- `Link(url)` is no longer `const`. It percent-escapes a control byte in the
+  address, as `link` does and for the same reason, and a `const` initializer
+  admits neither a function call nor a `contains` — so the address could there
+  be neither encoded nor so much as checked. `const Link('…')` has to lose the
+  keyword; nothing else about it moves. `Link.url` reads back the encoded
+  address rather than the bytes handed in, so that it agrees with a parse of
+  `Link.string` and with the equality an `Entity` takes from those bytes.
 - The named control sequences print as themselves: `CursorUp(4)`,
   `CursorPos(3, 7)`, `EraseInPage(ErasePart.all)` where `Csi([CSI 4 CUU])` was
   written before. Nothing reads `toString` but a person and a golden test.

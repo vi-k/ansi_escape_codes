@@ -288,49 +288,57 @@ sealed class State<S extends State<S>> {
               _color(50, 0, otherUnderlineColor),
           ].join();
 
-    final setParams = skipSet
-        ? const <int>[]
-        : <int>[
-            if (foregroundColor != otherForeground &&
-                otherForeground is Color16)
-              _colorIndex(30, 90, otherForeground),
-            if (backgroundColor != otherBackground &&
-                otherBackground is Color16)
-              _colorIndex(40, 100, otherBackground),
-            if (isBold && !other.isBold || isDim && !other.isDim) ...[
-              if (other.isBold) 1,
-              if (other.isDim) 2,
-            ] else ...[
-              if (!isBold && other.isBold) 1,
-              if (!isDim && other.isDim) 2,
-            ],
-            if (!isItalic && other.isItalic) 3,
-            if (underlineStyle != otherUnderlineStyle &&
-                otherUnderlineStyle != null)
-              switch (otherUnderlineStyle) {
-                UnderlineStyle.singly => 4,
-                UnderlineStyle.doubly => 21,
-              },
-            if (blinkStyle != otherBlinkStyle && otherBlinkStyle != null)
-              switch (otherBlinkStyle) {
-                BlinkStyle.slow => 5,
-                BlinkStyle.rapid => 6,
-              },
-            if (!isInverse && other.isInverse) 7,
-            if (!isInvisible && other.isInvisible) 8,
-            if (!isStrikethrough && other.isStrikethrough) 9,
-            if (frameStyle != otherFrameStyle && otherFrameStyle != null)
-              switch (otherFrameStyle) {
-                FrameStyle.frame => 51,
-                FrameStyle.encircle => 52,
-              },
-            if (!isOverline && other.isOverline) 53,
-            if (scriptStyle != otherScriptStyle && otherScriptStyle != null)
-              switch (otherScriptStyle) {
-                ScriptStyle.superscript => 73,
-                ScriptStyle.subscript => 74,
-              },
-          ];
+    // `CSI 22` takes bold and dim off together, so where one of the pair goes
+    // off the other has to be put back behind it. Those two parameters belong
+    // to the reset rather than being a set of their own, and [skipSet] leaves
+    // them standing: with them gone, half of a joint reset would go out and
+    // carry off the half of the pair that was meant to survive it.
+    final jointIntensityReset =
+        isBold && !other.isBold || isDim && !other.isDim;
+
+    final setParams = <int>[
+      if (!skipSet) ...[
+        if (foregroundColor != otherForeground && otherForeground is Color16)
+          _colorIndex(30, 90, otherForeground),
+        if (backgroundColor != otherBackground && otherBackground is Color16)
+          _colorIndex(40, 100, otherBackground),
+      ],
+      if (jointIntensityReset) ...[
+        if (other.isBold) 1,
+        if (other.isDim) 2,
+      ] else if (!skipSet) ...[
+        if (!isBold && other.isBold) 1,
+        if (!isDim && other.isDim) 2,
+      ],
+      if (!skipSet) ...[
+        if (!isItalic && other.isItalic) 3,
+        if (underlineStyle != otherUnderlineStyle &&
+            otherUnderlineStyle != null)
+          switch (otherUnderlineStyle) {
+            UnderlineStyle.singly => 4,
+            UnderlineStyle.doubly => 21,
+          },
+        if (blinkStyle != otherBlinkStyle && otherBlinkStyle != null)
+          switch (otherBlinkStyle) {
+            BlinkStyle.slow => 5,
+            BlinkStyle.rapid => 6,
+          },
+        if (!isInverse && other.isInverse) 7,
+        if (!isInvisible && other.isInvisible) 8,
+        if (!isStrikethrough && other.isStrikethrough) 9,
+        if (frameStyle != otherFrameStyle && otherFrameStyle != null)
+          switch (otherFrameStyle) {
+            FrameStyle.frame => 51,
+            FrameStyle.encircle => 52,
+          },
+        if (!isOverline && other.isOverline) 53,
+        if (scriptStyle != otherScriptStyle && otherScriptStyle != null)
+          switch (otherScriptStyle) {
+            ScriptStyle.superscript => 73,
+            ScriptStyle.subscript => 74,
+          },
+      ],
+    ];
 
     return extColorsSetParams.isEmpty
         ? resetParams.isEmpty && setParams.isEmpty
