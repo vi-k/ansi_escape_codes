@@ -1249,6 +1249,8 @@ final class _Walk<S extends State<S>> {
   /// over rather than resume and lose them.
   bool isSpent = false;
 
+  _Walk(this.iterator);
+
   /// Whether what the walk knows of escape codes speaks of the place in front
   /// of [current], rather than of somewhere it has since gone on to.
   ///
@@ -1269,16 +1271,14 @@ final class _Walk<S extends State<S>> {
   /// Asked here rather than kept in a field of its own on purpose. A field
   /// would have to be cleared wherever a piece becomes current, and a
   /// clearing forgotten there costs nothing but speed — the walk stops being
-  /// picked up at all — which no test of this package would notice: measured
-  /// by mutation, all 605 of them stay green.
+  /// picked up at all — which no test of this package notices: measured by
+  /// mutation, the whole suite stays green with the clearing taken out.
   bool get codesStopAtPiece {
     final piece = current;
     final code = lastCode;
 
     return piece == null || code == null || code.end <= piece.start;
   }
-
-  _Walk(this.iterator);
 
   /// Whether a question about the plain text position [pos] can be answered
   /// by reading on from [current] instead of from the start of the string.
