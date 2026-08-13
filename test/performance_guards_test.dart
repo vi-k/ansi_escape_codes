@@ -75,6 +75,47 @@ void main() {
             '${tLarge.toStringAsFixed(0)} µs)',
       );
     });
+
+    test('a run of insertions does not read the string again each time', () {
+      // A floor rather than a growth ratio. Every insertion builds a whole
+      // new string, so a run of them is quadratic in the input however the
+      // parser behaves, and a doubling would say nothing about the parser;
+      // and the two things that keep a run cheap — the walk carried between
+      // the questions and the matches already read — stand in for each
+      // other, so neither shows on its own. Measured by mutation: dropping
+      // the walk leaves this ratio at 17, dropping the cache of matches
+      // leaves it at 21, dropping both puts it at 1.0. This is the floor
+      // under the pair.
+      const line = '\x1B[1m\x1B[31mtag\x1B[22m\x1B[39m '
+          'a sentence of ordinary words to insert into';
+      const lines = 400;
+      final page = List.filled(lines, line).join('\n');
+      final width = Parser(line).length;
+
+      // Warm-up, so the JIT settles before anything is timed.
+      Parser(page).insertAfter(0, '@');
+
+      final shared = bestOf(() {
+        final parser = Parser(page);
+        for (var i = 0; i < lines; i++) {
+          parser.insertAfter(i * (width + 1), '@');
+        }
+      });
+      final fresh = bestOf(() {
+        for (var i = 0; i < lines; i++) {
+          Parser(page).insertAfter(i * (width + 1), '@');
+        }
+      });
+
+      expect(
+        fresh / shared,
+        greaterThan(4),
+        reason: 'a parser asked one insertion after another must not read the '
+            'string from the beginning every time '
+            '(${shared.toStringAsFixed(0)} µs against '
+            '${fresh.toStringAsFixed(0)} µs)',
+      );
+    });
   });
 
   group('memory pins', () {

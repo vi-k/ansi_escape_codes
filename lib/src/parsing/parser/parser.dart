@@ -804,11 +804,20 @@ final class _ParserBase<S extends State<S>> {
   /// position 5.
   ///
   /// The codes it goes behind are the finished ones. A sequence the parser
-  /// could not finish is not passed but stood in front of, and a run of them is
-  /// stood in front of whole.
+  /// could not finish is stood in front of rather than passed, and a run of
+  /// them is stood in front of whole.
   ///
   /// ```dart
   /// print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
+  /// ```
+  ///
+  /// A finished code ends the run, though, and what stands before it is
+  /// passed along with it — the run the seam is put in front of is the one
+  /// reaching the text, not everything unfinished in the string:
+  ///
+  /// ```dart
+  /// print(Parser('aa\x1B]0;title\x1B(B').insertAfter(2, 'X'));
+  /// // 'aa\x1B]0;title\x1B(BX'
   /// ```
   ///
   /// The refusal is about the seam this one would take, which is the place
@@ -997,10 +1006,17 @@ final class _ParserBase<S extends State<S>> {
         throw UnfinishedSequenceException(pos: pos, offset: inside);
       }
 
+      // What is in force at the seam is what stood in front of the run, the
+      // way the branch above reads it: the piece of text reads what the run
+      // leaves behind, and a finished code between the two makes the
+      // difference visible. `??` on the link is not the same question — a
+      // seam standing in no link answers null, and null is an answer.
+      final before = walk.beforeRun;
+
       return (
         walk.unfinishedRunStart ?? code.start,
-        walk.current?.state ?? initialState,
-        walk.current?.link ?? initialLink,
+        before?.state ?? initialState,
+        before == null ? initialLink : before.link,
       );
     }
 
@@ -1232,14 +1248,13 @@ final class _Walk<S extends State<S>> {
   /// The state channel is quieter, all eleven unfinished forms leaving it
   /// alone, but it is read from here too rather than from two places at once.
   ///
-  /// Only the branch of `_seamAt` that stopped inside a piece of text reads
-  /// this. The branch for a walk that has run out — the string ending inside
-  /// the run — still reads its state and its link off the last piece, which
-  /// agrees with this while the run follows the piece directly and does not
-  /// where a finished code stands between the two. That disagreement is a
-  /// defect older than the field, it moves `finalState` and `finalLink`, and
-  /// it waits on the owner in `docs/handoff.md` rather than being quietly
-  /// fixed here.
+  /// Both branches of `_seamAt` read this: the one that stopped inside a
+  /// piece of text, and the one for a walk that has run out — the string
+  /// ending inside the run. They used to disagree, the second reading its
+  /// state and its link off the last piece, which is the same thing only
+  /// while the run follows the piece directly; a finished code standing
+  /// between the two made an insertion drop the style and the link the tail
+  /// stood in.
   Match<S>? beforeRun;
 
   /// Whether the iterator has run out.

@@ -59,7 +59,8 @@ const String controlStringPattern = '(?<cstr>$ESC[$controlStringOpeners])'
 /// one alone changes no parse at all — the half left behind keeps the old
 /// reading — so `test/parser_control_string_test.dart` ties them together and
 /// goes red where one was edited and the other forgotten. Other places carry a
-/// copy of some opener set too; `docs/handoff.md` lists what was found.
+/// copy of some opener set too; `docs/architecture.md` lists what was found,
+/// under the seventh of the mechanisms, along with the test tying each down.
 const String controlStringOpeners = '\x50\x58\x5E\x5F';
 
 /// Pattern for ESC.
