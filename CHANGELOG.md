@@ -347,6 +347,23 @@ Fixed:
   Dart strings rather than byte streams, where a genuine eight-bit C1 does not
   survive UTF-8 decoding and terminals emit the seven-bit `ESC [` form anyway.
   `0xA0` and above are not controls and are untouched.
+- `link` and `linkBel` wrote the address into the body of an `OSC 8`
+  unchecked. An `ESC` there ends the sequence where it stands, so a url
+  carrying one handed the rest of itself to the terminal as codes of its own:
+  `link('https://ok\x1B\\\x1B[2J…')` cleared the screen, and the parser read
+  the result as seven entities where three were meant. Urls in a command-line
+  tool arrive from git remotes, HTTP answers and registries, so the bytes are
+  rarely the caller's. Both functions percent-escape what an `OSC 8` cannot
+  carry — the C0 controls and `DEL` — and nothing else: an address that
+  carries none, which is every address that is one, comes out byte for byte,
+  its own percent-escapes untouched. `Uri.encodeFull`, which the `OSC 8` note
+  asks for, escapes the `%` as well and would turn an already-encoded address
+  into `%2520`. The eight-bit C1 are deliberately not escaped: one of them is
+  a single code unit in a Dart string and two bytes in UTF-8, so a single-byte
+  escape would name the wrong byte, and this package does not read them as
+  control codes anyway. The `text` of a link is written as it came — styling
+  it is what the codes are for — and where none is given the encoded address
+  stands for it.
 
 Renamed:
 
