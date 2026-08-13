@@ -114,9 +114,9 @@ void main() {
       ),
     );
 
-    subtitle('Matches:');
+    subtitle('Pieces:');
     final buf = StringBuffer();
-    for (final m in parser.matches) {
+    for (final m in parser.pieces) {
       switch (m.entity) {
         case Text(:final string):
           buf

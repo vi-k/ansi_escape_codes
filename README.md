@@ -214,25 +214,30 @@ The string and the style are told apart by where they are: `bold` is a `String`
 of escape codes, `Styles.bold` is the style. Of the styles nothing is written
 in lowercase, so the two never collide.
 
-The package also exports names Dart and Flutter use for their own: `Match` is
-`dart:core`'s, and `Text`, `State`, `Stack`, `Colors` and `Color` are Flutter's.
-Nothing breaks until one of them is written, and then the compiler asks which
-was meant. In a Flutter app, hide the side you are not calling by that name:
+The package also exports names Flutter uses for its own: `Text`, `State`,
+`Stack`, `Colors` and `Color`. Nothing breaks until one of them is written, and
+then the compiler asks which was meant — Flutter is imported explicitly, and
+between two explicit imports the question stays open for you to answer. In a
+Flutter app, hide the side you are not calling by that name:
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart'
-    hide Color, Colors, Match, Stack, State, Text;
+    hide Color, Colors, Stack, State, Text;
 ```
 
 The same hiding is wanted for `style.dart`: the parser is what defines those
-six names, and both of these imports bring it. Only `ansi.dart`,
+five names, and both of these imports bring it. Only `ansi.dart`,
 `extensions.dart` and `utils.dart` are free of them: `ansi.dart` brings
 constants, `utils.dart` its two functions, and `extensions.dart` the extensions
 with the two enums their signatures name — `ControlCodeStyle` and
 `ControlFunctionsC0`.
 
-The parser is still `Parser`, and `Matches` — its own name — is untouched by
-this.
+Nothing here shadows a name of `dart:core`'s, and that is a deliberate change:
+what the parser hands out was `Match` until 4.0.0, which shadowed
+`dart:core.Match` **silently** — an explicit import outranks the implicit one,
+so the compiler never asked, and ordinary code with a regular expression failed
+with errors that named no package. It is `Piece` now, and `Matches` is
+`Pieces`.
 
 What is exported in lowercase is the ready-to-use strings — `fgRed`,
 `cursorUp`, `bold` — and `tabs`. The styles are not among them: they are
@@ -769,13 +774,13 @@ import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 
 const text = '$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ';
 final parser = Parser(text);
-parser.matches.forEach(print);
-// Match<Style>(start: 0, end: 4, entity: Sgr(bold), state: Style(bold))
-// Match<Style>(start: 4, end: 10, entity: Text(' Bold '), state: Style(bold))
-// Match<Style>(start: 10, end: 15, entity: Sgr(fgCyan), state: Style(bold, foreground: Color16.cyan))
-// Match<Style>(start: 15, end: 26, entity: Text(' Bold+cyan '), state: Style(bold, foreground: Color16.cyan))
-// Match<Style>(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: Style(foreground: Color16.cyan))
-// Match<Style>(start: 31, end: 37, entity: Text(' Cyan '), state: Style(foreground: Color16.cyan))
+parser.pieces.forEach(print);
+// Piece<Style>(start: 0, end: 4, entity: Sgr(bold), state: Style(bold))
+// Piece<Style>(start: 4, end: 10, entity: Text(' Bold '), state: Style(bold))
+// Piece<Style>(start: 10, end: 15, entity: Sgr(fgCyan), state: Style(bold, foreground: Color16.cyan))
+// Piece<Style>(start: 15, end: 26, entity: Text(' Bold+cyan '), state: Style(bold, foreground: Color16.cyan))
+// Piece<Style>(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: Style(foreground: Color16.cyan))
+// Piece<Style>(start: 31, end: 37, entity: Text(' Cyan '), state: Style(foreground: Color16.cyan))
 ```
 
 In this way we can, for example, remove all escape codes:
@@ -783,7 +788,7 @@ In this way we can, for example, remove all escape codes:
 ```dart
 final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
 final buf = StringBuffer();
-for (final m in parser.matches) {
+for (final m in parser.pieces) {
   switch (m.entity) {
     case Text(:final string):
       buf.write(string);
@@ -805,7 +810,7 @@ Or replace the escape codes with a readable form:
 ```dart
 final parser = Parser('$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ');
 final buf = StringBuffer();
-for (final m in parser.matches) {
+for (final m in parser.pieces) {
   final result = switch (m.entity) {
     EscapeCode(:final id) => '[$id]',
     Text(:final string) => string,
@@ -1017,7 +1022,7 @@ They work by regular expression, where `Parser` builds an entity for every code
 it meets, and the difference between the two tells where one answer is all that
 is wanted: an `ansiHas` question stops at the first code that answers it, and a
 string carrying no codes at all is turned away by a `contains(ESC)` — the
-parser scans it just as fast, but has a list of matches to build where the
+parser scans it just as fast, but has a list of pieces to build where the
 extension has nothing. Where the whole string is to be walked anyway, the
 parser is not the dearer of the two — on a page of colored log
 `ansiRemoveEscapeCodes` costs a little more than `Parser.removeAll` does, and
@@ -1133,13 +1138,13 @@ an eight-bit C1; `lengthWithoutEscapeCodes` is
 ### Sequence types
 
 The sequences that carry something worth reading say it themselves, so a
-`switch` over `matches` can ask for the sequence and for what it holds in one
+`switch` over `pieces` can ask for the sequence and for what it holds in one
 pattern:
 
 ```dart
 final text = '${cursorUpN(4)}$erasePage Hello $hideCursor';
 
-for (final m in Parser(text).matches) {
+for (final m in Parser(text).pieces) {
   switch (m.entity) {
     case CursorUp(:final n):
       print('the cursor goes up $n lines');
@@ -1188,7 +1193,7 @@ than a straight one — is in `params` rather than in the style:
 ```dart
 const text = '\x1B[4:3m wavy \x1B[;5H\x1B[38:2::51:102:153m';
 
-for (final m in Parser(text).matches) {
+for (final m in Parser(text).pieces) {
   if (m.entity case Sgr(:final params, :final id) ||
       CsiCommon(:final params, :final id)) {
     print('$id  $params');
@@ -1211,7 +1216,7 @@ the standard leaves to the terminal. All of them carry the
 
 ```dart
 const text = 'a\x1B[!pb\x1B[?7hc';
-for (final m in Parser(text).matches) {
+for (final m in Parser(text).pieces) {
   if (m.entity case final UnrecognizedEscapeCode e) {
     print('${m.start}..${m.end}: ${e.id}');
   }
@@ -1272,8 +1277,8 @@ print(parser.finalLink); // null
 and answers with the link the character there sits inside. Both read from the
 same walk, so asking each of them about a run of positions costs one pass over
 the string in all. `finalLink` is what the string leaves open — `null` here,
-the text having closed what it opened. Walking the matches yourself, every
-`Match` carries its `link` beside its `state`.
+the text having closed what it opened. Walking the pieces yourself, every
+`Piece` carries its `link` beside its `state`.
 
 `isClosed` is a question about the style alone: a string that ends in the state
 it began in but leaves a hyperlink open answers `true`, so `finalLink` is the

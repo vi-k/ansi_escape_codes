@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 /// Inputs with escape codes standing behind the last piece of text, which is
 /// what takes a walk past the piece it stands in: a slice reads on to the end
-/// of the matches, and `stateAt` asked about the position behind the text
+/// of the pieces, and `stateAt` asked about the position behind the text
 /// walks the rest of the string looking for one more piece. Ordinary strings
 /// stand beside them for company.
 const _inputs = <String>[

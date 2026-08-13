@@ -8,7 +8,7 @@ void main() {
     for (final (i, input) in adversarialInputs.indexed) {
       test('input #$i', () {
         final buf = StringBuffer();
-        for (final m in Parser(input).matches) {
+        for (final m in Parser(input).pieces) {
           buf.write(m.entity.string);
         }
 
@@ -21,7 +21,7 @@ void main() {
 
       test('input #$i, stacked', () {
         final buf = StringBuffer();
-        for (final m in StackedParser(input).matches) {
+        for (final m in StackedParser(input).pieces) {
           buf.write(m.entity.string);
         }
 

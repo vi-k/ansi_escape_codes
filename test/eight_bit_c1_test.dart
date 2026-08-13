@@ -19,7 +19,7 @@ void main() {
     test('an eight-bit CSI stays text, and the length counts it', () {
       final parser = Parser('aa\u{9B}31mbb');
 
-      expect(parser.matches.map((m) => m.entity.runtimeType).toList(), [Text]);
+      expect(parser.pieces.map((m) => m.entity.runtimeType).toList(), [Text]);
       expect(parser.removeAll(), 'aa\u{9B}31mbb');
       expect(parser.length, 8);
     });
@@ -31,7 +31,7 @@ void main() {
         final parser = Parser(input);
 
         expect(
-          parser.matches.map((m) => m.entity.runtimeType).toList(),
+          parser.pieces.map((m) => m.entity.runtimeType).toList(),
           [Text],
           reason: 'byte 0x${byte.toRadixString(16)}',
         );

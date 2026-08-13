@@ -312,7 +312,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     // inside the line and again where it ends here.
     var heldOpening = '';
 
-    for (final m in parser.matches) {
+    for (final m in parser.pieces) {
       // An SGR sequence says what the style is, and the style is written by
       // the transition below instead of being passed on. Everything else —
       // the text, and the codes that move the cursor or clear the screen —

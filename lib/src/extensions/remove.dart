@@ -124,7 +124,7 @@ extension StringRemoveEscapeCodesExtension on String {
   /// [ansiRemoveEscapeCodes] takes them out by, and what they take up is
   /// counted off the length — the answer [ansiRemoveEscapeCodes] would have
   /// given, arrived at without a second copy of the string being made. The
-  /// walk over the matches is the same one either way, so what a page of
+  /// walk over the pieces is the same one either way, so what a page of
   /// megabytes saves here is the copy and not the time.
   int get lengthWithoutEscapeCodes {
     if (!contains(ESC)) {

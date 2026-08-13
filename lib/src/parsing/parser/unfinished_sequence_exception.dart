@@ -55,7 +55,7 @@ final class UnfinishedSequenceException implements Exception {
   final int pos;
 
   /// Where the sequence begins in the string being read, so that a complaint
-  /// can point at the bytes it is about — the way `Match.start` does.
+  /// can point at the bytes it is about — the way `Piece.start` does.
   ///
   /// The sequence named is the one whose bytes the text would have joined: the
   /// one still waiting at the refused position. Where the seam in front of a

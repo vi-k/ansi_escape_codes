@@ -70,7 +70,7 @@ void main() {
       expect(parser.stateAt(2), fresh(2));
       expect(parser.substring(4, maxLength: 3), isNotEmpty);
       expect(parser.stateAt(6), fresh(6));
-      expect(parser.matches, isNotEmpty);
+      expect(parser.pieces, isNotEmpty);
       expect(parser.stateAt(10), fresh(10));
       parser.prepare();
       expect(parser.stateAt(14), fresh(14));
@@ -91,7 +91,7 @@ void main() {
 
     test('an iterator kept while another reads on stays where it was', () {
       final parser = Parser(text);
-      final held = parser.matches.iterator;
+      final held = parser.pieces.iterator;
 
       // Through the first code and the text after it, which leaves the
       // iterator holding the code it found ahead of that text.
@@ -99,7 +99,7 @@ void main() {
       expect(held.moveNext(), isTrue);
       expect(held.current.entity, isA<Text>());
 
-      // Another reader goes further, and the matches it read are now in the
+      // Another reader goes further, and the pieces it read are now in the
       // cache this one takes from.
       parser.substring(4, maxLength: 3);
 
@@ -109,7 +109,7 @@ void main() {
       }
 
       final whole =
-          Parser(text).matches.map((m) => m.entity.toString()).toList();
+          Parser(text).pieces.map((m) => m.entity.toString()).toList();
 
       expect(
         rest,

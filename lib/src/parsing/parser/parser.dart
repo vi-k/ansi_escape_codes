@@ -34,10 +34,10 @@ part 'entities/esc.dart';
 part 'entities/matching_state.dart';
 part 'entities/osc.dart';
 part 'entities/sgr.dart';
-part 'matches/parser_iterator.dart';
-part 'matches/match.dart';
-part 'matches/matches.dart';
-part 'matches/matches_result.dart';
+part 'pieces/parser_iterator.dart';
+part 'pieces/piece.dart';
+part 'pieces/pieces.dart';
+part 'pieces/pieces_result.dart';
 
 /// A parser that processes strings containing ANSI escape codes and tracks the
 /// current [Style].
@@ -54,7 +54,7 @@ part 'matches/matches_result.dart';
 ///   [stateAt] and [finalState].
 /// * Retrieving the hyperlink in force at a text position using [linkAt] and
 ///   [finalLink].
-/// * Analyzing a string using [matches].
+/// * Analyzing a string using [pieces].
 ///
 /// [Parser] allows you to work with a string containing ANSI escape codes as
 /// with a regular string without ANSI escape codes:
@@ -70,7 +70,7 @@ part 'matches/matches_result.dart';
 /// * [endsWith] - whether the string ends with a pattern in the string without
 ///   ANSI escape codes.
 ///
-/// On a large input, prefer walking `matches` with a `for` and taking what
+/// On a large input, prefer walking `pieces` with a `for` and taking what
 /// the loop needs as it goes: the walk parses lazily, and what it has read
 /// it keeps. `prepare`, `length` and the string methods read the whole
 /// string and keep every piece, which on megabytes of input is megabytes
@@ -124,7 +124,7 @@ final class _ParserBase<S extends State<S>> {
   /// outside every link.
   final Link? initialLink;
 
-  Matches<S>? _matches;
+  Pieces<S>? _pieces;
   String? _plainString;
 
   /// Where the last positional question stopped, so that the next can carry
@@ -139,7 +139,7 @@ final class _ParserBase<S extends State<S>> {
 
   String get _requirePlainString => _plainString ??= () {
         final buf = StringBuffer();
-        for (final m in matches) {
+        for (final m in pieces) {
           final entity = m.entity;
           if (entity is Text) {
             buf.write(entity.string);
@@ -152,16 +152,16 @@ final class _ParserBase<S extends State<S>> {
   /// Whether the whole string has been read, rather than as much of it as the
   /// questions asked so far needed. See [prepare].
   @visibleForTesting
-  bool get isParsed => _matches?.isParsed ?? false;
+  bool get isParsed => _pieces?.isParsed ?? false;
 
-  /// The [Matches] of the string.
-  Matches<S> get matches =>
-      _matches ??= Matches._(input, initialState, initialLink: initialLink);
+  /// The [Pieces] of the string.
+  Pieces<S> get pieces =>
+      _pieces ??= Pieces._(input, initialState, initialLink: initialLink);
 
   /// The final [S] after processing the entire string.
   ///
   /// See also [stateAt].
-  S get finalState => matches._requireParsingResult.finalState;
+  S get finalState => pieces._requireParsingResult.finalState;
 
   /// The hyperlink the string leaves open, or `null` where it leaves none.
   ///
@@ -172,7 +172,7 @@ final class _ParserBase<S extends State<S>> {
   /// Reads the whole string, as [finalState] does.
   ///
   /// See also [linkAt].
-  Link? get finalLink => matches._requireParsingResult.finalLink;
+  Link? get finalLink => pieces._requireParsingResult.finalLink;
 
   /// String length without ANSI escape codes, in UTF-16 code units.
   ///
@@ -201,7 +201,7 @@ final class _ParserBase<S extends State<S>> {
   /// the string.
   /// `benchmark/parser_benchmark.dart` measures both.
   void prepare() {
-    matches._requireParsingResult;
+    pieces._requireParsingResult;
     _requirePlainString;
   }
 
@@ -280,20 +280,20 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// Throws a [RangeError] for a negative [pos] and for one past the end of
   /// the text.
-  Match<S>? _pieceAt(int pos) {
+  Piece<S>? _pieceAt(int pos) {
     RangeError.checkNotNegative(pos, 'pos');
 
     // The piece the last question was answered from may hold this one too.
     var walk = _walk;
-    if (walk?.current case final match?
+    if (walk?.current case final piece?
         when pos >= walk!.pieceStart && pos < walk.passed) {
-      return match;
+      return piece;
     }
 
     // Anything else already passed means going back, and the walk starts
     // over.
     if (walk == null || pos < walk.passed) {
-      walk = _walk = _Walk(matches.iterator);
+      walk = _walk = _Walk(pieces.iterator);
     }
 
     while (walk.nextPiece()) {
@@ -318,7 +318,7 @@ final class _ParserBase<S extends State<S>> {
   }) {
     final buf = StringBuffer();
 
-    for (final m in matches) {
+    for (final m in pieces) {
       final entity = m.entity;
 
       final result = switch (entity) {
@@ -443,7 +443,7 @@ final class _ParserBase<S extends State<S>> {
 
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
-    Match<S>? lastMatch;
+    Piece<S>? lastPiece;
 
     // The link the slice has open in what it has written; the link it would
     // have open once the codes read since the last piece are written; and
@@ -475,20 +475,20 @@ final class _ParserBase<S extends State<S>> {
 
     var walk = _walk;
     int pos;
-    Match<S>? piece;
+    Piece<S>? piece;
     if (walk != null && !walk.isSpent && walk.resumesAt(start)) {
       // The walk already stands in a piece the slice begins in or after:
       // pick that piece up and read on, one pass for a run of slices.
       pos = walk.pieceStart;
       piece = walk.current;
-      lastMatch = walk.lastCode;
+      lastPiece = walk.lastCode;
     } else {
-      walk = _walk = _Walk(matches.iterator);
+      walk = _walk = _Walk(pieces.iterator);
       pos = 0;
     }
 
     while (true) {
-      final Match<S> m;
+      final Piece<S> m;
       if (piece != null) {
         m = piece;
         piece = null;
@@ -577,7 +577,7 @@ final class _ParserBase<S extends State<S>> {
                 ..write(transit)
                 ..write(substring);
               currentState = m.state.toStyle();
-              lastMatch = m;
+              lastPiece = m;
             }
           }
 
@@ -654,7 +654,7 @@ final class _ParserBase<S extends State<S>> {
               }
             }
           }
-          lastMatch = m;
+          lastPiece = m;
       }
 
       if (end != null && pos > end) {
@@ -666,9 +666,9 @@ final class _ParserBase<S extends State<S>> {
       throw RangeError.range(start, 0, pos, 'start');
     }
 
-    if (lastMatch != null) {
+    if (lastPiece != null) {
       final tail = currentState.transitTo(
-        close ? initialState : lastMatch.state,
+        close ? initialState : lastPiece.state,
         skipSet: true,
       );
 
@@ -847,7 +847,7 @@ final class _ParserBase<S extends State<S>> {
     // Read from the seam on both channels: the inserted text lands inside the
     // state and inside the link that stand there, and what it leaves behind
     // is what has to be put right for the tail.
-    final read = Matches<S>._(text, ambient, initialLink: ambientLink)
+    final read = Pieces<S>._(text, ambient, initialLink: ambientLink)
         ._requireParsingResult;
 
     return '${input.substring(0, cut)}'
@@ -892,7 +892,7 @@ final class _ParserBase<S extends State<S>> {
     }
 
     // A seam is looked for in the pieces of text and nowhere else, so a walk
-    // that has run out of matches is picked up as readily as one standing in
+    // that has run out of pieces is picked up as readily as one standing in
     // the middle of the string — so long as what it knows of the codes still
     // speaks of the place in front of its piece. Where it does not, the seam
     // would be read off it silently: see [_Walk.codesStopAtPiece]. Such a
@@ -905,7 +905,7 @@ final class _ParserBase<S extends State<S>> {
       walk = resumable;
       standing = true;
     } else {
-      walk = _walk = _Walk(matches.iterator);
+      walk = _walk = _Walk(pieces.iterator);
     }
 
     while (standing || walk.nextPiece()) {
@@ -1093,7 +1093,7 @@ final class _ParserBase<S extends State<S>> {
     // inside the string and again at its end.
     var heldOpening = '';
 
-    for (final m in matches) {
+    for (final m in pieces) {
       final entity = m.entity;
       if (entity is Sgr) {
         continue;
@@ -1142,13 +1142,13 @@ final class _ParserBase<S extends State<S>> {
     // With `close: false` nothing is supplied by construction — an `ESC` or
     // nothing at all follows it — and the call is made all the same, so that
     // the guarantee is checked and not assumed.
-    final lastMatch = matches.lastOrNull;
+    final lastPiece = pieces.lastOrNull;
     final closingLink = close && finalLink != null ? linkClose : '';
     final tail = close
         ? currentState.transitTo(initialState)
-        : lastMatch == null
+        : lastPiece == null
             ? ''
-            : currentState.transitTo(lastMatch.state);
+            : currentState.transitTo(lastPiece.state);
     final following = _firstNotEmpty(closingLink, tail);
 
     buf
@@ -1164,16 +1164,16 @@ final class _ParserBase<S extends State<S>> {
   }
 }
 
-/// A resumable walk over the matches: the iterator, how much plain text it
+/// A resumable walk over the pieces: the iterator, how much plain text it
 /// has passed, and the piece of text it stopped in.
 ///
 /// [_ParserBase.stateAt] and [_ParserBase.linkAt] — which read their answers
 /// off one piece, through [_ParserBase._pieceAt] — `substring` and the insert
-/// seams all walk the same matches forward; sharing the walk makes a run of
+/// seams all walk the same pieces forward; sharing the walk makes a run of
 /// forward questions cost one pass in all, whichever of them is asked and in
 /// whatever order. A question about an earlier position starts a fresh walk.
 final class _Walk<S extends State<S>> {
-  final Iterator<Match<S>> iterator;
+  final Iterator<Piece<S>> iterator;
 
   /// Plain-text position where the piece [current] stands for begins.
   int pieceStart = 0;
@@ -1181,18 +1181,18 @@ final class _Walk<S extends State<S>> {
   /// Plain text passed so far, the current piece included.
   int passed = 0;
 
-  /// The last [Text] match handed out, or null before the first.
-  Match<S>? current;
+  /// The last [Text] piece handed out, or null before the first.
+  Piece<S>? current;
 
   /// The last escape code the walk went past.
   ///
   /// Two things are read off it, and only one of them is true of every walk.
-  /// `substring` closes a slice on the last match it went past and picks the
+  /// `substring` closes a slice on the last piece it went past and picks the
   /// slice up again on it — that is this one, wherever it stands. `_seamAt`
   /// asks it what stands in front of [current], which holds only while the
   /// walk has gone past nothing else: see [codesStopAtPiece], which says why
   /// the difference cannot be seen without asking for it.
-  Match<S>? lastCode;
+  Piece<S>? lastCode;
 
   /// Where the run of unfinished codes that [lastCode] ends begins, or null
   /// where that code is finished and where there is none.
@@ -1233,11 +1233,11 @@ final class _Walk<S extends State<S>> {
   /// terminal has long since read as something else.
   int? runSeamInside;
 
-  /// The match standing in front of the run [unfinishedRunStart] begins, or
+  /// The piece standing in front of the run [unfinishedRunStart] begins, or
   /// null where the run begins the string.
   ///
   /// A seam served in front of a run is served the state and the link that
-  /// stand at its own place, and that is what this match leaves behind it.
+  /// stand at its own place, and that is what this piece leaves behind it.
   /// Neither can be read off the piece the walk stopped in: the whole run
   /// lies between the two, and an unfinished `OSC 8` — three parameters, the
   /// terminator optional — opens a link there like any other. Probed on the
@@ -1256,7 +1256,7 @@ final class _Walk<S extends State<S>> {
   /// while the run follows the piece directly; a finished code standing
   /// between the two made an insertion drop the style and the link the tail
   /// stood in.
-  Match<S>? beforeRun;
+  Piece<S>? beforeRun;
 
   /// Whether the iterator has run out.
   ///
@@ -1272,14 +1272,14 @@ final class _Walk<S extends State<S>> {
   ///
   /// [lastCode] and the fields of the run it ends are kept for two readers,
   /// and only one of them is served by every walk. Two callers take a walk
-  /// past its piece: `substring` steps over the matches itself and reads on
+  /// past its piece: `substring` steps over the pieces itself and reads on
   /// past the piece it stops in — a slice of the whole string reads to the
   /// end of them — and `stateAt` asked about the position behind the last
   /// piece of text walks the rest of the string looking for one more.
   ///
   /// A seam read off such a walk is read off nothing. The guard in `_seamAt`
   /// asks whether [lastCode] ends where the piece begins, and a code taken
-  /// past the piece begins at or after the end of it; matches tile the input,
+  /// past the piece begins at or after the end of it; pieces tile the input,
   /// so that equality cannot come out true. The guard does not fire, and the
   /// insertion lands among bytes a terminal is still reading instead of being
   /// refused.
@@ -1308,7 +1308,7 @@ final class _Walk<S extends State<S>> {
   /// [lastCode], [unfinishedRunStart], [runSeamInside] and [beforeRun] on it.
   ///
   /// Two things end a run: a code that stands finished, and a piece of text.
-  /// Matches tile the input, so the text needs no looking at — a code that
+  /// Pieces tile the input, so the text needs no looking at — a code that
   /// does not begin where the last one ended has text in front of it, and
   /// starts a run of its own. What that text was worth is read off the run it
   /// broke: [unfinishedRunStart] is set exactly where [lastCode] could not be
@@ -1316,9 +1316,9 @@ final class _Walk<S extends State<S>> {
   /// bytes a terminal is still reading, and [lastCode] is the sequence
   /// reading them.
   ///
-  /// Every walk goes through here, `substring` — which steps over the matches
+  /// Every walk goes through here, `substring` — which steps over the pieces
   /// itself, to write out what it passes — no less than [nextPiece].
-  void takeCode(Match<S> m) {
+  void takeCode(Piece<S> m) {
     if (!_unfinished(m.entity)) {
       unfinishedRunStart = null;
       runSeamInside = null;
@@ -1327,7 +1327,7 @@ final class _Walk<S extends State<S>> {
       // A run begins here rather than goes on, and it is worth what the code
       // in front of it is: nothing, where that code stands finished.
       runSeamInside = unfinishedRunStart == null ? null : lastCode?.start;
-      // Matches tile the input, so what the run stands behind is named by one
+      // Pieces tile the input, so what the run stands behind is named by one
       // comparison: the code where the run begins right where that code
       // ended, and the piece of text that fills the gap where it does not.
       beforeRun = lastCode?.end == m.start ? lastCode : current;
@@ -1340,14 +1340,14 @@ final class _Walk<S extends State<S>> {
   /// [plainStart].
   ///
   /// The one door a piece becomes [current] through. Two walks are driven
-  /// over the same matches — [nextPiece] steps to the next piece and stops
-  /// there, `substring` steps over every match itself, to write out what it
+  /// over the same pieces — [nextPiece] steps to the next piece and stops
+  /// there, `substring` steps over every piece itself, to write out what it
   /// passes — and what a piece brings up to date is written here once for
   /// both of them rather than twice.
-  void takePiece(Match<S> m, int plainStart) {
+  void takePiece(Piece<S> m, int plainStart) {
     pieceStart = plainStart;
     // Same as entity.string.length, without reading the text: a Text piece is
-    // cut from exactly [m.start, m.end), so the length is there in the match
+    // cut from exactly [m.start, m.end), so the length is there in the piece
     // already.
     passed = plainStart + (m.end - m.start);
     current = m;

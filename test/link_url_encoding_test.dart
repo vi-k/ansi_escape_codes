@@ -25,7 +25,7 @@ void main() {
       final parser = Parser(link(hostile, text: 'click me'));
 
       expect(
-        parser.matches.map((m) => m.entity.runtimeType.toString()).toList(),
+        parser.pieces.map((m) => m.entity.runtimeType.toString()).toList(),
         ['Link', 'Text', 'Link'],
         reason: 'an opening, the text and a close — no third code in between',
       );
@@ -47,7 +47,7 @@ void main() {
       final parser = Parser(link('https://ok.example\x1B\\\x1B[2J'));
 
       expect(
-        parser.matches.map((m) => m.entity.runtimeType.toString()).toList(),
+        parser.pieces.map((m) => m.entity.runtimeType.toString()).toList(),
         ['Link', 'Text', 'Link'],
       );
       expect(parser.removeAll(), r'https://ok.example%1B\%1B[2J');
@@ -136,7 +136,7 @@ void main() {
         '${OSC}8;;https://ok/%1B\\%1B[2J$ST',
       );
       expect(
-        Parser(Link('https://ok/\x1B\\\x1B[2J').string).matches.length,
+        Parser(Link('https://ok/\x1B\\\x1B[2J').string).pieces.length,
         1,
         reason: 'the whole of it is one code, not a code and a payload',
       );
@@ -146,7 +146,7 @@ void main() {
       // An Entity compares by string, so a field that disagreed with the
       // bytes would let two equal links answer differently.
       final built = Link('https://ok/\x1B\\');
-      final parsed = Parser(built.string).matches.first.entity;
+      final parsed = Parser(built.string).pieces.first.entity;
 
       expect(parsed, isA<Link>());
       expect((parsed as Link).url, built.url);

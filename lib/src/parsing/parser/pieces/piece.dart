@@ -2,9 +2,9 @@ part of '../parser.dart';
 
 /// One piece of a parsed string, and where and in what state it was found.
 ///
-/// This is what [Matches] hands out, and what a `for` over `parser.matches`
+/// This is what [Pieces] hands out, and what a `for` over `parser.pieces`
 /// walks through.
-final class Match<S extends State<S>> {
+final class Piece<S extends State<S>> {
   /// The piece itself: [Text] or one of the [EscapeCode] kinds.
   final Entity entity;
 
@@ -28,7 +28,7 @@ final class Match<S extends State<S>> {
   /// Where it ends: the position just past its last character.
   final int end;
 
-  Match._({
+  Piece._({
     required this.state,
     required this.link,
     required this.entity,
@@ -37,7 +37,7 @@ final class Match<S extends State<S>> {
   });
 
   @override
-  String toString() => '${Match<S>}('
+  String toString() => '${Piece<S>}('
       'start: $start'
       ', end: $end'
       ', entity: $entity'

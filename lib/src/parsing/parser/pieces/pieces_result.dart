@@ -1,7 +1,7 @@
 part of '../parser.dart';
 
-final class _MatchesResult<S extends State<S>> {
-  final List<Match<S>> matches;
+final class _PiecesResult<S extends State<S>> {
+  final List<Piece<S>> pieces;
   final S finalState;
 
   /// The link the string leaves open, or `null` where it leaves none.
@@ -11,20 +11,19 @@ final class _MatchesResult<S extends State<S>> {
   /// all ends in the one it was seeded with.
   final Link? finalLink;
 
-  _MatchesResult._({
-    required List<Match<S>> matches,
+  _PiecesResult._({
+    required List<Piece<S>> pieces,
     required this.finalState,
     required this.finalLink,
-  }) : matches =
-            UnmodifiableListView(matches); // The list is complete once this
+  }) : pieces = UnmodifiableListView(pieces); // The list is complete once this
   // result exists: every iterator reaching the end sets `_parsingResult`, and
   // any later iterator can only append when its index equals the parsed length.
   // A view rather than a copy costs nothing here, unlike in `Sgr`: this is one
   // list per parse, and the parser holds the list behind it either way.
 
   @override
-  String toString() => '_MatchesResult('
-      'matches: $matches'
+  String toString() => '_PiecesResult('
+      'pieces: $pieces'
       ', finalState: $finalState'
       ', finalLink: $finalLink'
       ')';

@@ -291,7 +291,7 @@ void main() {
       expect(
         parser.insertAfter(0, '@$linkClose'),
         '@$linkClose${opens(outer)}$run',
-        reason: 'no match of the string stands in front of the run, so the '
+        reason: 'no piece of the string stands in front of the run, so the '
             'link at the seam is the one the parser was seeded with, and '
             'the insertion that closed it hands that one back',
       );

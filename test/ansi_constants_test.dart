@@ -103,7 +103,7 @@ void main() {
         ']',
       );
 
-      final entity = parser.matches.first.entity as Sgr;
+      final entity = parser.pieces.first.entity as Sgr;
       for (final code in ControlFunctionsSGR.values) {
         expect(entity.contains(code), !code.isUnused);
       }
@@ -812,8 +812,8 @@ void main() {
       expect(parser.finalState.foregroundColor, Color16.cyan);
       expect(parser.isParsed, isTrue);
       expect(
-        parser.matches.map((m) => m.entity.toString()).toList(),
-        Parser(parser.input).matches.map((m) => m.entity.toString()).toList(),
+        parser.pieces.map((m) => m.entity.toString()).toList(),
+        Parser(parser.input).pieces.map((m) => m.entity.toString()).toList(),
       );
     });
 

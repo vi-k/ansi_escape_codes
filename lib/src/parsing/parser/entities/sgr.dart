@@ -336,7 +336,7 @@ final class Sgr extends Csi {
   /// Whether the sequence carries the function [code] stands for.
   ///
   /// ```dart
-  /// final sgr = Parser('$bold').matches.first.entity as Sgr;
+  /// final sgr = Parser('$bold').pieces.first.entity as Sgr;
   /// print(sgr.contains(ControlFunctionsSGR.bold)); // true
   /// ```
   bool contains(ControlFunctionsSGR code) {

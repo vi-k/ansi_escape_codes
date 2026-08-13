@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('EscCommon:', () {
     test('names the function its sequence stands for', () {
-      final entity = Parser(resetTerminal).matches.first.entity;
+      final entity = Parser(resetTerminal).pieces.first.entity;
 
       expect(entity, isA<EscCommon>());
       expect((entity as EscCommon).function, ControlFunctionsEscFs.RIS);
@@ -12,7 +12,7 @@ void main() {
     });
 
     test('a switch over the entity reaches it', () {
-      final label = switch (Parser('\x1Bc').matches.first.entity) {
+      final label = switch (Parser('\x1Bc').pieces.first.entity) {
         EscCommon(:final function) => function.name,
         _ => 'other',
       };

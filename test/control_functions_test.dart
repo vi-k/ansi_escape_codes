@@ -24,15 +24,15 @@ void main() {
 
     test('a sequence kept for private use is not an unknown one', () {
       // DECSCUSR, the shape of the cursor: CSI Ps SP q.
-      expect(Parser('\x1B[1 q').matches.first.entity, isA<CsiPrivate>());
+      expect(Parser('\x1B[1 q').pieces.first.entity, isA<CsiPrivate>());
 
       // Private through its parameters rather than its final bytes. The four
       // modes this package writes itself have names of their own — see
       // ShowCursor and the three beside it — and this is not one of them.
-      expect(Parser('\x1B[?7h').matches.first.entity, isA<CsiPrivate>());
+      expect(Parser('\x1B[?7h').pieces.first.entity, isA<CsiPrivate>());
 
       // Final bytes that name nothing at all.
-      expect(Parser('\x1B[1!p').matches.first.entity, isA<CsiUnknown>());
+      expect(Parser('\x1B[1!p').pieces.first.entity, isA<CsiUnknown>());
     });
 
     test('finds a C0 control by the byte it is', () {

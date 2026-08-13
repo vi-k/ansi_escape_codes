@@ -25,7 +25,7 @@ void main() {
 
     test('describe themselves without mangling what they hold', () {
       expect(
-        Parser('a\nb').matches.first.entity.toString(),
+        Parser('a\nb').pieces.first.entity.toString(),
         r"Text('a\nb')",
       );
       expect(
@@ -36,7 +36,7 @@ void main() {
 
     test('name themselves by what they stand for', () {
       String describe(String text) =>
-          Parser(text).matches.first.entity.toString();
+          Parser(text).pieces.first.entity.toString();
 
       expect(describe(RIS), 'Esc(RIS)');
       expect(describe('\x1B(B'), 'Esc("[ESC (B]")');
@@ -62,16 +62,16 @@ void main() {
       expect(Link('https://example.com').id, 'link(https://example.com)');
     });
 
-    test('a match says where it was found and in what state', () {
+    test('a piece says where it was found and in what state', () {
       expect(
-        Parser('a$fgRed').matches.first.toString(),
-        "Match<Style>(start: 0, end: 1, entity: Text('a'), state: Style(), "
+        Parser('a$fgRed').pieces.first.toString(),
+        "Piece<Style>(start: 0, end: 1, entity: Text('a'), state: Style(), "
         'link: null)',
       );
     });
 
     test('an escape code reads itself out either way', () {
-      final code = Parser(fgRed).matches.first.entity as EscapeCode;
+      final code = Parser(fgRed).pieces.first.entity as EscapeCode;
 
       expect(code.toStringAsControlCodes(), '[ESC][31m');
       expect(code.toStringAsEscapeSequences(), '[CSI 31 SGR]');
@@ -85,7 +85,7 @@ void main() {
       expect(different.toSet(), hasLength(2));
       expect(
         const SaveCursor().hashCode,
-        Parser(saveCursor).matches.first.entity.hashCode,
+        Parser(saveCursor).pieces.first.entity.hashCode,
       );
     });
 
@@ -115,7 +115,7 @@ void main() {
     });
 
     test('equal what the parser reads back from the same text', () {
-      Entity entityOf(String text) => Parser(text).matches.first.entity;
+      Entity entityOf(String text) => Parser(text).pieces.first.entity;
 
       expect(entityOf(saveCursor), const SaveCursor());
       expect(entityOf(restoreCursor), const RestoreCursor());

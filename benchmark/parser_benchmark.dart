@@ -57,7 +57,7 @@ void main(List<String> args) {
 
   _group('Reading a page of coloured log');
   _bench('matches, to the end', () {
-    for (final _ in Parser(_coloured).matches) {}
+    for (final _ in Parser(_coloured).pieces) {}
   });
   _bench('removeAll', () => Parser(_coloured).removeAll());
   _bench('ansiRemoveEscapeCodes', _removeColoured);
@@ -93,7 +93,7 @@ void main(List<String> args) {
 
   _group('A page with no codes at all');
   _bench('matches, to the end', () {
-    for (final _ in Parser(_plain).matches) {}
+    for (final _ in Parser(_plain).pieces) {}
   });
   _bench('removeAll', () => Parser(_plain).removeAll());
   _bench('ansiRemoveEscapeCodes', () {
@@ -123,10 +123,10 @@ void main(List<String> args) {
 
   _group('Keeping the history: Parser against StackedParser');
   _bench('Parser, to the end', () {
-    for (final _ in Parser(_coloured).matches) {}
+    for (final _ in Parser(_coloured).pieces) {}
   });
   _bench('StackedParser, to the end', () {
-    for (final _ in StackedParser(_coloured).matches) {}
+    for (final _ in StackedParser(_coloured).pieces) {}
   });
 
   _group('Printing two hundred lines');
@@ -149,7 +149,7 @@ void main(List<String> args) {
   final walk = Parser(_coloured).length ~/ 10;
   _bench('walking the matches by hand', () {
     var pos = 0;
-    for (final m in Parser(_coloured).matches) {
+    for (final m in Parser(_coloured).pieces) {
       if (m.entity case Text(:final string)) {
         pos += string.length;
       }
@@ -384,7 +384,7 @@ void _growth() {
   print(_paint('  a linear cost gives ×2, a quadratic one ×4', fg256Gray12));
 
   _grow('matches, to the end', (text) {
-    for (final _ in Parser(text).matches) {}
+    for (final _ in Parser(text).pieces) {}
   });
   _grow('ansiRemoveEscapeCodes', (text) {
     _sink = text.ansiRemoveEscapeCodes();
@@ -412,7 +412,7 @@ void _memory() {
   final before = ProcessInfo.currentRss;
   final parser = Parser(big)..prepare();
   final after = ProcessInfo.currentRss;
-  final count = parser.matches.length;
+  final count = parser.pieces.length;
   final deltaMb = (after - before) / (1024 * 1024);
 
   if (_asJson) {
@@ -454,7 +454,7 @@ void _memoryPartialWalk() {
   final beforeSkip = ProcessInfo.currentRss;
   final skipped = Parser(big);
   var skippedLength = 0;
-  for (final m in skipped.matches) {
+  for (final m in skipped.pieces) {
     // Exactly what stateAt and substring's walk read after the M5 fix: the
     // match bounds, never entity.string. Counted for Text only, so this
     // lines up with readLength below rather than also counting the escape
@@ -469,7 +469,7 @@ void _memoryPartialWalk() {
   final beforeRead = ProcessInfo.currentRss;
   final read = Parser(big);
   var readLength = 0;
-  for (final m in read.matches) {
+  for (final m in read.pieces) {
     if (m.entity case Text(:final string)) {
       readLength += string.length;
     }
