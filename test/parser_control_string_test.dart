@@ -417,5 +417,65 @@ void main() {
     test('the set is the four the standard puts beside the OSC', () {
       expect(controlStringOpeners.codeUnits, [0x50, 0x58, 0x5E, 0x5F]);
     });
+
+    test('no pattern opens a match on anything but ESC', () {
+      // Three more places live on this one assumption. The scanner looks for
+      // a single byte — `string.indexOf(ESC)` — and applies the pattern only
+      // where it finds one; the shortcuts in `has.dart` and `remove.dart`
+      // refuse a string carrying no ESC before the pattern is reached at
+      // all. Widen a pattern to some other opener and the parse does not
+      // change, because the scanner never offers it the place — so nothing
+      // but this notices, and the edit looks as though it did nothing.
+      const patterns = {
+        'csiPattern': csiPattern,
+        'oscPattern': oscPattern,
+        'escPattern': escPattern,
+        'sgrPattern': sgrPattern,
+        'controlStringPattern': controlStringPattern,
+      };
+      const bodies = ['31m', '[31m', ']0;t$ST', 'Ppay$ST', '7', '(B', '#8'];
+
+      for (final MapEntry(key: name, value: pattern) in patterns.entries) {
+        final re = RegExp(pattern);
+        for (var byte = 0x00; byte <= 0xFF; byte++) {
+          if (byte == 0x1B) {
+            continue;
+          }
+
+          for (final body in bodies) {
+            expect(
+              re.matchAsPrefix('${String.fromCharCode(byte)}$body'),
+              isNull,
+              reason: '$name matched '
+                  '0x${byte.toRadixString(16).toUpperCase()} + $body: the '
+                  'scanner searches for ESC and will never offer it here',
+            );
+          }
+        }
+      }
+    });
+
+    test('every ESC Fe pair has a name, so the fallback stays out of reach',
+        () {
+      // `show_escape_codes.dart` writes an opener's bytes as they came where
+      // it cannot name them. That arm is unreachable while every pair in the
+      // range has a name — which is what this asks — and an opener taken
+      // from outside the range would wake it.
+      for (var byte = 0x40; byte <= 0x5F; byte++) {
+        expect(
+          ControlFunctionsC1.byCode('$ESC${String.fromCharCode(byte)}'),
+          isNotNull,
+          reason: 'ESC 0x${byte.toRadixString(16).toUpperCase()}',
+        );
+      }
+
+      for (final unit in controlStringOpeners.codeUnits) {
+        expect(
+          ControlFunctionsC1.byCode('$ESC${String.fromCharCode(unit)}'),
+          isNotNull,
+          reason: 'opener 0x${unit.toRadixString(16).toUpperCase()}',
+        );
+      }
+    });
   });
 }
