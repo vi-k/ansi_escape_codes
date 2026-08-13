@@ -974,7 +974,15 @@ print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
 ```
 
 Where several of them stand in a row, the text goes in front of the whole run:
-a gap between two unfinished codes is no seam but the inside of the first.
+a gap between two unfinished codes is no seam but the inside of the first. A
+finished code ends the run and is passed along with what stands before it, so
+the run stood in front of is the one reaching the text rather than everything
+unfinished in the string:
+
+```dart
+print(Parser('aa\x1B]0;title\x1B(B').insertAfter(2, 'X'));
+// 'aa\x1B]0;title\x1B(BX'
+```
 
 The last bytes of such a sequence come back as text although a terminal reads
 them as part of it. The parameters of a `CSI` with no final byte are the case

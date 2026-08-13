@@ -804,11 +804,20 @@ final class _ParserBase<S extends State<S>> {
   /// position 5.
   ///
   /// The codes it goes behind are the finished ones. A sequence the parser
-  /// could not finish is not passed but stood in front of, and a run of them is
-  /// stood in front of whole.
+  /// could not finish is stood in front of rather than passed, and a run of
+  /// them is stood in front of whole.
   ///
   /// ```dart
   /// print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
+  /// ```
+  ///
+  /// A finished code ends the run, though, and what stands before it is
+  /// passed along with it — the run the seam is put in front of is the one
+  /// reaching the text, not everything unfinished in the string:
+  ///
+  /// ```dart
+  /// print(Parser('aa\x1B]0;title\x1B(B').insertAfter(2, 'X'));
+  /// // 'aa\x1B]0;title\x1B(BX'
   /// ```
   ///
   /// The refusal is about the seam this one would take, which is the place

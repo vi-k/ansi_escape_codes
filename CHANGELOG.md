@@ -251,7 +251,10 @@ Fixed:
   insertion into an `SOS` and a `CSI` with no final byte into an `ECH`. Both
   insertions now stand in front of such a sequence rather than inside it, and
   the tail is copied on as it came: no byte of the input is invented, which is
-  why no terminator is supplied here as it is for a slice.
+  why no terminator is supplied here as it is for a slice. A finished code
+  ends the run and is passed along with what stands before it — the run stood
+  in front of is the one reaching the text, not everything unfinished in the
+  string.
 
   A sequence still waiting for the byte that ends it hands the bytes it waits
   through back as text — the parameters of a truncated `CSI` are the case
