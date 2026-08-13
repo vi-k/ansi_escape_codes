@@ -1,5 +1,38 @@
 part of 'state.dart';
 
+/// One frame of a [Stack]'s history: what was pushed, and everything under it.
+///
+/// A push is one new frame pointing at the old top, and a pop is the frame
+/// under this one, so both cost a single small allocation and every version of
+/// a stack shares the whole of its own tail with the versions it came from.
+///
+/// Lists were the obvious thing and were the wrong thing. A [Stack] is
+/// immutable, so a push had to copy the list it grew — twice, once to build it
+/// and once to seal it — which made a run of n pushes cost n² words of copying
+/// and, because a parse keeps every state it passed, kept n² of them alive at
+/// once. A string of 320 kB that switched colour without ever resetting took
+/// 15 s and 7.6 GB where a [Style] took 51 ms and nothing.
+///
+/// Nothing is lost by it: every one of the eight histories is only ever asked
+/// whether it is empty and what is on top, and only ever grows and shrinks at
+/// that same end.
+final class _Frame<T> {
+  const _Frame(this.value, this.under);
+
+  /// What this frame holds.
+  final T value;
+
+  /// The frame under this one, or null where this is the bottom of the stack.
+  final _Frame<T>? under;
+}
+
+/// A history handed to [Stack._copyWith].
+///
+/// A bare `_Frame<T>?` could not be a parameter there: null is what an empty
+/// history looks like, and `_copyWith` needs null to mean "leave this one
+/// alone". Wrapping it says which of the two is meant.
+typedef _Replace<T> = ({_Frame<T>? frames});
+
 /// Represents an active text style that tracks history via a stack.
 ///
 /// Unlike [Style] which keeps only the recently active properties, [Stack]
@@ -14,72 +47,72 @@ part of 'state.dart';
 /// Equality compares the visible surface only — see [State.==]: the
 /// history is what a stack does, not what it equals.
 final class Stack extends State<Stack> {
-  final List<IntensityStyle> _intensityStack;
+  final _Frame<IntensityStyle>? _intensity;
   final int _boldCounter;
   final int _dimCounter;
   final int _italicCounter;
-  final List<UnderlineStyle> _underlineStack;
-  final List<BlinkStyle> _blinkStack;
+  final _Frame<UnderlineStyle>? _underline;
+  final _Frame<BlinkStyle>? _blink;
   final int _inverseCounter;
   final int _invisibleCounter;
   final int _strikethroughCounter;
-  final List<FrameStyle> _frameStack;
+  final _Frame<FrameStyle>? _frame;
   final int _overlineCounter;
-  final List<ScriptStyle> _scriptStack;
-  final List<Color> _foregroundStack;
-  final List<Color> _backgroundStack;
-  final List<ExtendedColor> _underlineColorStack;
+  final _Frame<ScriptStyle>? _script;
+  final _Frame<Color>? _foreground;
+  final _Frame<Color>? _background;
+  final _Frame<ExtendedColor>? _underlineColor;
 
   const Stack._({
-    required List<IntensityStyle> intensityStack,
+    required _Frame<IntensityStyle>? intensity,
     required int boldCounter,
     required int dimCounter,
     required int italicCounter,
-    required List<UnderlineStyle> underlineStack,
-    required List<BlinkStyle> blinkStack,
+    required _Frame<UnderlineStyle>? underline,
+    required _Frame<BlinkStyle>? blink,
     required int inverseCounter,
     required int invisibleCounter,
     required int strikethroughCounter,
-    required List<FrameStyle> frameStack,
+    required _Frame<FrameStyle>? frame,
     required int overlineCounter,
-    required List<ScriptStyle> scriptStack,
-    required List<Color> foregroundStack,
-    required List<Color> backgroundStack,
-    required List<ExtendedColor> underlineColorStack,
-  })  : _intensityStack = intensityStack,
+    required _Frame<ScriptStyle>? script,
+    required _Frame<Color>? foreground,
+    required _Frame<Color>? background,
+    required _Frame<ExtendedColor>? underlineColor,
+  })  : _intensity = intensity,
         _boldCounter = boldCounter,
         _dimCounter = dimCounter,
         _italicCounter = italicCounter,
-        _underlineStack = underlineStack,
-        _blinkStack = blinkStack,
+        _underline = underline,
+        _blink = blink,
         _inverseCounter = inverseCounter,
         _invisibleCounter = invisibleCounter,
         _strikethroughCounter = strikethroughCounter,
-        _frameStack = frameStack,
+        _frame = frame,
         _overlineCounter = overlineCounter,
-        _scriptStack = scriptStack,
-        _foregroundStack = foregroundStack,
-        _backgroundStack = backgroundStack,
-        _underlineColorStack = underlineColorStack;
+        _script = script,
+        _foreground = foreground,
+        _background = background,
+        _underlineColor = underlineColor;
 
   /// The state a terminal is in before anything is written to it: its own
   /// colours, and nothing switched on.
   static const Stack terminalColors = Stack._(
-    intensityStack: [],
+    intensity: null,
     boldCounter: 0,
     dimCounter: 0,
     italicCounter: 0,
-    underlineStack: [],
-    blinkStack: [],
+    underline: null,
+    blink: null,
     inverseCounter: 0,
     invisibleCounter: 0,
     strikethroughCounter: 0,
-    frameStack: [],
+    frame: null,
     overlineCounter: 0,
-    scriptStack: [],
-    foregroundStack: [],
-    backgroundStack: [],
-    underlineColorStack: [],
+    script: null,
+    foreground: null,
+    background: null,
+    underlineColor: null,
   );
 
   @override
@@ -92,14 +125,10 @@ final class Stack extends State<Stack> {
   bool get isItalic => _italicCounter != 0;
 
   @override
-  bool get isUnderline =>
-      _underlineStack.isNotEmpty &&
-      _underlineStack.last == UnderlineStyle.singly;
+  bool get isUnderline => _underline?.value == UnderlineStyle.singly;
 
   @override
-  bool get isDoublyUnderline =>
-      _underlineStack.isNotEmpty &&
-      _underlineStack.last == UnderlineStyle.doubly;
+  bool get isDoublyUnderline => _underline?.value == UnderlineStyle.doubly;
 
   @override
   UnderlineStyle? get underlineStyle => isUnderline
@@ -109,12 +138,10 @@ final class Stack extends State<Stack> {
           : null;
 
   @override
-  bool get isBlink =>
-      _blinkStack.isNotEmpty && _blinkStack.last == BlinkStyle.slow;
+  bool get isBlink => _blink?.value == BlinkStyle.slow;
 
   @override
-  bool get isBlinkRapid =>
-      _blinkStack.isNotEmpty && _blinkStack.last == BlinkStyle.rapid;
+  bool get isBlinkRapid => _blink?.value == BlinkStyle.rapid;
 
   @override
   BlinkStyle? get blinkStyle => isBlink
@@ -133,12 +160,10 @@ final class Stack extends State<Stack> {
   bool get isStrikethrough => _strikethroughCounter != 0;
 
   @override
-  bool get isFrame =>
-      _frameStack.isNotEmpty && _frameStack.last == FrameStyle.frame;
+  bool get isFrame => _frame?.value == FrameStyle.frame;
 
   @override
-  bool get isEncircle =>
-      _frameStack.isNotEmpty && _frameStack.last == FrameStyle.encircle;
+  bool get isEncircle => _frame?.value == FrameStyle.encircle;
 
   @override
   FrameStyle? get frameStyle => isFrame
@@ -151,12 +176,10 @@ final class Stack extends State<Stack> {
   bool get isOverline => _overlineCounter != 0;
 
   @override
-  bool get isSuperscript =>
-      _scriptStack.isNotEmpty && _scriptStack.last == ScriptStyle.superscript;
+  bool get isSuperscript => _script?.value == ScriptStyle.superscript;
 
   @override
-  bool get isSubscript =>
-      _scriptStack.isNotEmpty && _scriptStack.last == ScriptStyle.subscript;
+  bool get isSubscript => _script?.value == ScriptStyle.subscript;
 
   @override
   ScriptStyle? get scriptStyle => isSuperscript
@@ -166,26 +189,23 @@ final class Stack extends State<Stack> {
           : null;
 
   @override
-  Color? get foregroundColor =>
-      _foregroundStack.isEmpty ? null : _foregroundStack.last;
+  Color? get foregroundColor => _foreground?.value;
 
   @override
-  Color? get backgroundColor =>
-      _backgroundStack.isEmpty ? null : _backgroundStack.last;
+  Color? get backgroundColor => _background?.value;
 
   @override
-  ExtendedColor? get underlineColorValue =>
-      _underlineColorStack.isEmpty ? null : _underlineColorStack.last;
+  ExtendedColor? get underlineColorValue => _underlineColor?.value;
 
   @override
   Stack get bold => _copyWith(
-        intensityStack: List.of(_intensityStack)..add(IntensityStyle.bold),
+        intensity: (frames: _Frame(IntensityStyle.bold, _intensity)),
         boldCounter: _boldCounter + 1,
       );
 
   @override
   Stack get dim => _copyWith(
-        intensityStack: List.of(_intensityStack)..add(IntensityStyle.dim),
+        intensity: (frames: _Frame(IntensityStyle.dim, _intensity)),
         dimCounter: _dimCounter + 1,
       );
 
@@ -194,22 +214,22 @@ final class Stack extends State<Stack> {
 
   @override
   Stack get underline => _copyWith(
-        underlineStack: List.of(_underlineStack)..add(UnderlineStyle.singly),
+        underline: (frames: _Frame(UnderlineStyle.singly, _underline)),
       );
 
   @override
   Stack get doublyUnderline => _copyWith(
-        underlineStack: List.of(_underlineStack)..add(UnderlineStyle.doubly),
+        underline: (frames: _Frame(UnderlineStyle.doubly, _underline)),
       );
 
   @override
   Stack get blink => _copyWith(
-        blinkStack: List.of(_blinkStack)..add(BlinkStyle.slow),
+        blink: (frames: _Frame(BlinkStyle.slow, _blink)),
       );
 
   @override
   Stack get blinkRapid => _copyWith(
-        blinkStack: List.of(_blinkStack)..add(BlinkStyle.rapid),
+        blink: (frames: _Frame(BlinkStyle.rapid, _blink)),
       );
 
   @override
@@ -224,12 +244,12 @@ final class Stack extends State<Stack> {
 
   @override
   Stack get frame => _copyWith(
-        frameStack: List.of(_frameStack)..add(FrameStyle.frame),
+        frame: (frames: _Frame(FrameStyle.frame, _frame)),
       );
 
   @override
   Stack get encircle => _copyWith(
-        frameStack: List.of(_frameStack)..add(FrameStyle.encircle),
+        frame: (frames: _Frame(FrameStyle.encircle, _frame)),
       );
 
   @override
@@ -237,30 +257,33 @@ final class Stack extends State<Stack> {
 
   @override
   Stack get superscript => _copyWith(
-        scriptStack: List.of(_scriptStack)..add(ScriptStyle.superscript),
+        script: (frames: _Frame(ScriptStyle.superscript, _script)),
       );
 
   @override
   Stack get subscript => _copyWith(
-        scriptStack: List.of(_scriptStack)..add(ScriptStyle.subscript),
+        script: (frames: _Frame(ScriptStyle.subscript, _script)),
       );
 
   @override
   Stack foreground(Color color) => _copyWith(
-        foregroundStack: List.of(_foregroundStack)
-          ..add(color.on(ColorTarget.foreground)),
+        foreground: (
+          frames: _Frame(color.on(ColorTarget.foreground), _foreground),
+        ),
       );
 
   @override
   Stack background(Color color) => _copyWith(
-        backgroundStack: List.of(_backgroundStack)
-          ..add(color.on(ColorTarget.background)),
+        background: (
+          frames: _Frame(color.on(ColorTarget.background), _background),
+        ),
       );
 
   @override
   Stack underlineColor(ExtendedColor color) => _copyWith(
-        underlineColorStack: List.of(_underlineColorStack)
-          ..add(color.on(ColorTarget.underline)),
+        underlineColor: (
+          frames: _Frame(color.on(ColorTarget.underline), _underlineColor),
+        ),
       );
 
   @override
@@ -268,18 +291,17 @@ final class Stack extends State<Stack> {
 
   @override
   Stack get resetBoldAndDim {
-    if (_intensityStack.isEmpty) {
+    final top = _intensity;
+    if (top == null) {
       return this;
     }
 
-    final list = List.of(_intensityStack);
-    final last = list.removeLast();
-
     return _copyWith(
-      intensityStack: list,
+      intensity: (frames: top.under),
       boldCounter:
-          last == IntensityStyle.bold ? _boldCounter - 1 : _boldCounter,
-      dimCounter: last == IntensityStyle.dim ? _dimCounter - 1 : _dimCounter,
+          top.value == IntensityStyle.bold ? _boldCounter - 1 : _boldCounter,
+      dimCounter:
+          top.value == IntensityStyle.dim ? _dimCounter - 1 : _dimCounter,
     );
   }
 
@@ -294,20 +316,22 @@ final class Stack extends State<Stack> {
 
   @override
   Stack get resetUnderline {
-    if (_underlineStack.isEmpty) {
+    final top = _underline;
+    if (top == null) {
       return this;
     }
 
-    return _copyWith(underlineStack: List.of(_underlineStack)..removeLast());
+    return _copyWith(underline: (frames: top.under));
   }
 
   @override
   Stack get resetBlink {
-    if (_blinkStack.isEmpty) {
+    final top = _blink;
+    if (top == null) {
       return this;
     }
 
-    return _copyWith(blinkStack: List.of(_blinkStack)..removeLast());
+    return _copyWith(blink: (frames: top.under));
   }
 
   @override
@@ -339,13 +363,12 @@ final class Stack extends State<Stack> {
 
   @override
   Stack get resetFrameAndEncircle {
-    if (_frameStack.isEmpty) {
+    final top = _frame;
+    if (top == null) {
       return this;
     }
 
-    return _copyWith(
-      frameStack: List.of(_frameStack)..removeLast(),
-    );
+    return _copyWith(frame: (frames: top.under));
   }
 
   @override
@@ -359,94 +382,85 @@ final class Stack extends State<Stack> {
 
   @override
   Stack get resetSuperAndSubscript {
-    if (_scriptStack.isEmpty) {
+    final top = _script;
+    if (top == null) {
       return this;
     }
 
-    return _copyWith(
-      scriptStack: List.of(_scriptStack)..removeLast(),
-    );
+    return _copyWith(script: (frames: top.under));
   }
 
   @override
   Stack get resetForeground {
-    if (_foregroundStack.isEmpty) {
+    final top = _foreground;
+    if (top == null) {
       return this;
     }
 
-    return _copyWith(
-      foregroundStack: List.of(_foregroundStack)..removeLast(),
-    );
+    return _copyWith(foreground: (frames: top.under));
   }
 
   @override
   Stack get resetBackground {
-    if (_backgroundStack.isEmpty) {
+    final top = _background;
+    if (top == null) {
       return this;
     }
 
-    return _copyWith(
-      backgroundStack: List.of(_backgroundStack)..removeLast(),
-    );
+    return _copyWith(background: (frames: top.under));
   }
 
   @override
   Stack get resetUnderlineColor {
-    if (_underlineColorStack.isEmpty) {
+    final top = _underlineColor;
+    if (top == null) {
       return this;
     }
 
-    return _copyWith(
-      underlineColorStack: List.of(_underlineColorStack)..removeLast(),
-    );
+    return _copyWith(underlineColor: (frames: top.under));
   }
 
+  /// This stack with the named parts replaced and the rest carried over.
+  ///
+  /// A history left out is passed on as it stands rather than copied: frames
+  /// are immutable and share their tails, so handing the same top to the new
+  /// stack hands it the whole history behind it and costs nothing. The
+  /// histories are wrapped in a [_Replace] because an empty one is null and
+  /// "leave this alone" has to be told apart from it.
   Stack _copyWith({
-    List<IntensityStyle>? intensityStack,
+    _Replace<IntensityStyle>? intensity,
     int? boldCounter,
     int? dimCounter,
     int? italicCounter,
-    List<UnderlineStyle>? underlineStack,
-    List<BlinkStyle>? blinkStack,
+    _Replace<UnderlineStyle>? underline,
+    _Replace<BlinkStyle>? blink,
     int? inverseCounter,
     int? invisibleCounter,
     int? strikethroughCounter,
-    List<FrameStyle>? frameStack,
+    _Replace<FrameStyle>? frame,
     int? overlineCounter,
-    List<ScriptStyle>? scriptStack,
-    List<Color>? foregroundStack,
-    List<Color>? backgroundStack,
-    List<ExtendedColor>? underlineColorStack,
+    _Replace<ScriptStyle>? script,
+    _Replace<Color>? foreground,
+    _Replace<Color>? background,
+    _Replace<ExtendedColor>? underlineColor,
   }) =>
       Stack._(
-        intensityStack: intensityStack == null
-            ? _intensityStack
-            : List.unmodifiable(intensityStack),
+        intensity: intensity == null ? _intensity : intensity.frames,
         boldCounter: boldCounter ?? _boldCounter,
         dimCounter: dimCounter ?? _dimCounter,
         italicCounter: italicCounter ?? _italicCounter,
-        underlineStack: underlineStack == null
-            ? _underlineStack
-            : List.unmodifiable(underlineStack),
-        blinkStack:
-            blinkStack == null ? _blinkStack : List.unmodifiable(blinkStack),
+        underline: underline == null ? _underline : underline.frames,
+        blink: blink == null ? _blink : blink.frames,
         inverseCounter: inverseCounter ?? _inverseCounter,
         invisibleCounter: invisibleCounter ?? _invisibleCounter,
         strikethroughCounter: strikethroughCounter ?? _strikethroughCounter,
-        frameStack:
-            frameStack == null ? _frameStack : List.unmodifiable(frameStack),
+        frame: frame == null ? _frame : frame.frames,
         overlineCounter: overlineCounter ?? _overlineCounter,
-        scriptStack:
-            scriptStack == null ? _scriptStack : List.unmodifiable(scriptStack),
-        foregroundStack: foregroundStack == null
-            ? _foregroundStack
-            : List.unmodifiable(foregroundStack),
-        backgroundStack: backgroundStack == null
-            ? _backgroundStack
-            : List.unmodifiable(backgroundStack),
-        underlineColorStack: underlineColorStack == null
-            ? _underlineColorStack
-            : List.unmodifiable(underlineColorStack),
+        script: script == null ? _script : script.frames,
+        foreground: foreground == null ? _foreground : foreground.frames,
+        background: background == null ? _background : background.frames,
+        underlineColor:
+            underlineColor == null ? _underlineColor : underlineColor.frames,
       );
 
   @override

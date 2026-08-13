@@ -104,6 +104,19 @@ Performance:
 - What has been read of a string is kept, instead of being read again by
   every question asked of it. Call `prepare` when there are many.
 - A control sequence is looked up in a map rather than by walking the list.
+- A `Stack` keeps its histories as frames with a shared tail rather than as
+  lists. Immutable lists had to be copied to be grown — twice, once to build
+  the new one and once to seal it — so a push cost the whole depth so far, and
+  a parse, which keeps every state it passed, kept every one of those copies
+  with it. Text that switches attributes without resetting them, which is what
+  `ls --color` and most syntax highlighters write, made that quadratic in time
+  and in memory both: 320 kB of it took 15 s and 7.6 GB through
+  `StackedParser`, where `Parser` took 51 ms and nothing above the floor. The
+  same string now takes 55 ms, level with `Parser`, and 2.5 MB of that shape
+  takes 299 ms. A push and a pop are one small allocation each, and every
+  version of a stack shares the whole of its own tail with the versions it
+  came from. Nothing a `Stack` answers has moved: its histories were only ever
+  asked what was on top and whether they were empty.
 
 Fixed:
 
