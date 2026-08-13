@@ -501,13 +501,7 @@ final class _ParserBase<S extends State<S>> {
       final entity = m.entity;
 
       if (entity is Text) {
-        walk
-          ..pieceStart = pos
-          // Same as entity.string.length, without reading the text: a Text
-          // piece is cut from exactly [m.start, m.end), so the length is
-          // there in the match already.
-          ..passed = pos + (m.end - m.start)
-          ..current = m;
+        walk.takePiece(m, pos);
       } else {
         walk.takeCode(m);
       }
@@ -1290,17 +1284,30 @@ final class _Walk<S extends State<S>> {
     lastCode = m;
   }
 
+  /// Takes in the piece of text [m], which begins at the plain text position
+  /// [plainStart].
+  ///
+  /// The one door a piece becomes [current] through. Two walks are driven
+  /// over the same matches — [nextPiece] steps to the next piece and stops
+  /// there, `substring` steps over every match itself, to write out what it
+  /// passes — and what a piece brings up to date is written here once for
+  /// both of them rather than twice.
+  void takePiece(Match<S> m, int plainStart) {
+    pieceStart = plainStart;
+    // Same as entity.string.length, without reading the text: a Text piece is
+    // cut from exactly [m.start, m.end), so the length is there in the match
+    // already.
+    passed = plainStart + (m.end - m.start);
+    current = m;
+  }
+
   /// Moves to the next [Text] piece; false at the end of the string.
   bool nextPiece() {
     while (iterator.moveNext()) {
       final m = iterator.current;
       final entity = m.entity;
       if (entity is Text) {
-        pieceStart = passed;
-        // Same as entity.string.length, without reading the text — see the
-        // matching comment in substring.
-        passed += m.end - m.start;
-        current = m;
+        takePiece(m, passed);
 
         return true;
       }
