@@ -486,6 +486,62 @@ void main() {
       expect(Parser(input).insertAfter(2, 'X'), 'aaX\x1B]pay\x1B');
     });
 
+    test('a slice does not let an insertion into the sequence it read past',
+        () {
+      // There is nothing behind the last piece of this input but codes, and
+      // the slice reads them all: the walk it leaves behind names a code that
+      // stands past the piece rather than the one in front of it. Read that
+      // way, the seam falls among the parameters of the truncated CSI, the
+      // marker becomes the final byte the CSI was waiting for, and the input
+      // comes back shorter than it went in.
+      const input = 'aa\x1B[31\x1B[31\x1BPpay\x1B';
+
+      for (final after in [true, false]) {
+        final parser = Parser(input)..substring(5, maxLength: 1);
+
+        expect(
+          () =>
+              after ? parser.insertAfter(5, '@') : parser.insertBefore(5, '@'),
+          throwsA(
+            isA<UnfinishedSequenceException>()
+                .having((e) => e.offset, 'offset', 6),
+          ),
+          reason: 'the same refusal a fresh parser gives, after: $after',
+        );
+      }
+    });
+
+    test('a spent walk does not lose the refusal a fresh one gives', () {
+      // Three ways to spend a walk on the same string: a slice of the whole
+      // of it reads to the end by definition, and stateAt or linkAt asked
+      // about the position behind the last piece of text walk the rest of the
+      // string looking for one more piece and find none.
+      const input = '\x1B[31\x1B]0;title';
+
+      for (final warm in <void Function(Parser)>[
+        (parser) => parser.substring(0),
+        (parser) => parser.stateAt(2),
+        (parser) => parser.linkAt(2),
+      ]) {
+        for (final after in [true, false]) {
+          final parser = Parser(input);
+          warm(parser);
+
+          expect(
+            () => after
+                ? parser.insertAfter(1, '@')
+                : parser.insertBefore(1, '@'),
+            throwsA(
+              isA<UnfinishedSequenceException>()
+                  .having((e) => e.offset, 'offset', 0),
+            ),
+            reason: 'text inside the parameters of a CSI that never got its '
+                'final byte, after: $after',
+          );
+        }
+      }
+    });
+
     test('a run at the end of the input is stepped over too', () {
       expect(Parser('aa\x1BPpay\x1B').insertAfter(2, 'X'), 'aaX\x1BPpay\x1B');
     });

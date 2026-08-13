@@ -501,13 +501,7 @@ final class _ParserBase<S extends State<S>> {
       final entity = m.entity;
 
       if (entity is Text) {
-        walk
-          ..pieceStart = pos
-          // Same as entity.string.length, without reading the text: a Text
-          // piece is cut from exactly [m.start, m.end), so the length is
-          // there in the match already.
-          ..passed = pos + (m.end - m.start)
-          ..current = m;
+        walk.takePiece(m, pos);
       } else {
         walk.takeCode(m);
       }
@@ -889,10 +883,15 @@ final class _ParserBase<S extends State<S>> {
 
     // A seam is looked for in the pieces of text and nowhere else, so a walk
     // that has run out of matches is picked up as readily as one standing in
-    // the middle of the string.
+    // the middle of the string — so long as what it knows of the codes still
+    // speaks of the place in front of its piece. Where it does not, the seam
+    // would be read off it silently: see [_Walk.codesStopAtPiece]. Such a
+    // walk is dropped and the string walked again, which is what a parser
+    // asked nothing before this does anyway.
     final _Walk<S> walk;
     var standing = false;
-    if (_walk case final resumable? when resumable.resumesAt(pos)) {
+    if (_walk case final resumable?
+        when resumable.codesStopAtPiece && resumable.resumesAt(pos)) {
       walk = resumable;
       standing = true;
     } else {
@@ -1168,12 +1167,14 @@ final class _Walk<S extends State<S>> {
   /// The last [Text] match handed out, or null before the first.
   Match<S>? current;
 
-  /// The last escape code standing in front of [current], where one does.
+  /// The last escape code the walk went past.
   ///
-  /// A walk picked up at [current] never sees what came before it, and
-  /// `substring` closes the slice on the last match it went past. That match
-  /// is this one, kept so that resuming answers as walking from the start
-  /// would.
+  /// Two things are read off it, and only one of them is true of every walk.
+  /// `substring` closes a slice on the last match it went past and picks the
+  /// slice up again on it — that is this one, wherever it stands. `_seamAt`
+  /// asks it what stands in front of [current], which holds only while the
+  /// walk has gone past nothing else: see [codesStopAtPiece], which says why
+  /// the difference cannot be seen without asking for it.
   Match<S>? lastCode;
 
   /// Where the run of unfinished codes that [lastCode] ends begins, or null
@@ -1250,6 +1251,35 @@ final class _Walk<S extends State<S>> {
 
   _Walk(this.iterator);
 
+  /// Whether what the walk knows of escape codes speaks of the place in front
+  /// of [current], rather than of somewhere it has since gone on to.
+  ///
+  /// [lastCode] and the fields of the run it ends are kept for two readers,
+  /// and only one of them is served by every walk. Two callers take a walk
+  /// past its piece: `substring` steps over the matches itself and reads on
+  /// past the piece it stops in — a slice of the whole string reads to the
+  /// end of them — and `stateAt` asked about the position behind the last
+  /// piece of text walks the rest of the string looking for one more.
+  ///
+  /// A seam read off such a walk is read off nothing. The guard in `_seamAt`
+  /// asks whether [lastCode] ends where the piece begins, and a code taken
+  /// past the piece begins at or after the end of it; matches tile the input,
+  /// so that equality cannot come out true. The guard does not fire, and the
+  /// insertion lands among bytes a terminal is still reading instead of being
+  /// refused.
+  ///
+  /// Asked here rather than kept in a field of its own on purpose. A field
+  /// would have to be cleared wherever a piece becomes current, and a
+  /// clearing forgotten there costs nothing but speed — the walk stops being
+  /// picked up at all — which no test of this package notices: measured by
+  /// mutation, the whole suite stays green with the clearing taken out.
+  bool get codesStopAtPiece {
+    final piece = current;
+    final code = lastCode;
+
+    return piece == null || code == null || code.end <= piece.start;
+  }
+
   /// Whether a question about the plain text position [pos] can be answered
   /// by reading on from [current] instead of from the start of the string.
   ///
@@ -1290,17 +1320,30 @@ final class _Walk<S extends State<S>> {
     lastCode = m;
   }
 
+  /// Takes in the piece of text [m], which begins at the plain text position
+  /// [plainStart].
+  ///
+  /// The one door a piece becomes [current] through. Two walks are driven
+  /// over the same matches — [nextPiece] steps to the next piece and stops
+  /// there, `substring` steps over every match itself, to write out what it
+  /// passes — and what a piece brings up to date is written here once for
+  /// both of them rather than twice.
+  void takePiece(Match<S> m, int plainStart) {
+    pieceStart = plainStart;
+    // Same as entity.string.length, without reading the text: a Text piece is
+    // cut from exactly [m.start, m.end), so the length is there in the match
+    // already.
+    passed = plainStart + (m.end - m.start);
+    current = m;
+  }
+
   /// Moves to the next [Text] piece; false at the end of the string.
   bool nextPiece() {
     while (iterator.moveNext()) {
       final m = iterator.current;
       final entity = m.entity;
       if (entity is Text) {
-        pieceStart = passed;
-        // Same as entity.string.length, without reading the text — see the
-        // matching comment in substring.
-        passed += m.end - m.start;
-        current = m;
+        takePiece(m, passed);
 
         return true;
       }
