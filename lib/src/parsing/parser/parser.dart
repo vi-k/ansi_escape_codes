@@ -997,10 +997,17 @@ final class _ParserBase<S extends State<S>> {
         throw UnfinishedSequenceException(pos: pos, offset: inside);
       }
 
+      // What is in force at the seam is what stood in front of the run, the
+      // way the branch above reads it: the piece of text reads what the run
+      // leaves behind, and a finished code between the two makes the
+      // difference visible. `??` on the link is not the same question — a
+      // seam standing in no link answers null, and null is an answer.
+      final before = walk.beforeRun;
+
       return (
         walk.unfinishedRunStart ?? code.start,
-        walk.current?.state ?? initialState,
-        walk.current?.link ?? initialLink,
+        before?.state ?? initialState,
+        before == null ? initialLink : before.link,
       );
     }
 
@@ -1232,14 +1239,13 @@ final class _Walk<S extends State<S>> {
   /// The state channel is quieter, all eleven unfinished forms leaving it
   /// alone, but it is read from here too rather than from two places at once.
   ///
-  /// Only the branch of `_seamAt` that stopped inside a piece of text reads
-  /// this. The branch for a walk that has run out — the string ending inside
-  /// the run — still reads its state and its link off the last piece, which
-  /// agrees with this while the run follows the piece directly and does not
-  /// where a finished code stands between the two. That disagreement is a
-  /// defect older than the field, it moves `finalState` and `finalLink`, and
-  /// it waits on the owner in `docs/handoff.md` rather than being quietly
-  /// fixed here.
+  /// Both branches of `_seamAt` read this: the one that stopped inside a
+  /// piece of text, and the one for a walk that has run out — the string
+  /// ending inside the run. They used to disagree, the second reading its
+  /// state and its link off the last piece, which is the same thing only
+  /// while the run follows the piece directly; a finished code standing
+  /// between the two made an insertion drop the style and the link the tail
+  /// stood in.
   Match<S>? beforeRun;
 
   /// Whether the iterator has run out.

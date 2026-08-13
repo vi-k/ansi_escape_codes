@@ -542,6 +542,31 @@ void main() {
       }
     });
 
+    test('a seam in front of a run carries the ambient of its own place', () {
+      // A finished code between the text and the run moves the seam past it,
+      // and what is in force there is what that code left behind rather than
+      // what the piece of text did. The tail must come back to it.
+      const styled = 'aa\x1B[31m\x1B]8;;http://u/\x1B[';
+
+      expect(
+        Parser(styled).insertAfter(2, '\x1B[32m@\x1B[0m'),
+        'aa\x1B[31m\x1B[32m@\x1B[0m\x1B[31m\x1B]8;;http://u/\x1B[',
+        reason: 'the red the finished SGR left is written back after the '
+            'insertion, the way insertBefore writes it back',
+      );
+
+      // The same on the link channel: the seam stands inside the terminated
+      // link, so an insertion that closes a link of its own owes the seam
+      // its link back.
+      const linked = 'aa\x1B]8;;http://o/\x1B\\\x1BPpay';
+
+      expect(
+        Parser(linked).insertAfter(2, '@\x1B]8;;\x1B\\'),
+        'aa\x1B]8;;http://o/\x1B\\@\x1B]8;;\x1B\\'
+        '\x1B]8;;http://o/\x1B\\\x1BPpay',
+      );
+    });
+
     test('a run at the end of the input is stepped over too', () {
       expect(Parser('aa\x1BPpay\x1B').insertAfter(2, 'X'), 'aaX\x1BPpay\x1B');
     });
