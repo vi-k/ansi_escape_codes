@@ -121,14 +121,14 @@ void main() {
     test('nothing, where the string closed one it inherited', () {
       final parser = Parser.debugInsideLink(
         'abc${linkClose}def',
-        const Link('http://outer/'),
+        Link('http://outer/'),
       );
 
       expect(parser.finalLink, isNull);
     });
 
     test('the inherited link, where the string never touched it', () {
-      final parser = Parser.debugInsideLink('abc', const Link('http://u/'));
+      final parser = Parser.debugInsideLink('abc', Link('http://u/'));
 
       expect(parser.finalLink?.url, 'http://u/');
     });

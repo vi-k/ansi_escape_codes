@@ -49,7 +49,7 @@ void main() {
     test('a close ends the link the string inherited', () {
       final parser = Parser.debugInsideLink(
         'abc${linkClose}def',
-        const Link('http://outer/'),
+        Link('http://outer/'),
       );
       final links = [for (final m in parser.matches) m.link?.url];
 
@@ -62,7 +62,7 @@ void main() {
     });
 
     test('a string that touches no link carries the seed to the end', () {
-      final parser = Parser.debugInsideLink('abc', const Link('http://u/'));
+      final parser = Parser.debugInsideLink('abc', Link('http://u/'));
 
       expect(parser.matches.last.link?.url, 'http://u/');
     });
@@ -108,7 +108,7 @@ void main() {
     test('and the beginning of a seeded string is the seed', () {
       final parser = Parser.debugInsideLink(
         '${opens('http://u/')}a${restoreCursor}b',
-        const Link('http://outer/'),
+        Link('http://outer/'),
       );
 
       expect(parser.linkAt(1)?.url, 'http://outer/');
@@ -117,7 +117,7 @@ void main() {
     test('but a save that put no link away gives no link back', () {
       final parser = Parser.debugInsideLink(
         '$linkClose${saveCursor}a${restoreCursor}b',
-        const Link('http://outer/'),
+        Link('http://outer/'),
       );
 
       expect(parser.linkAt(0), isNull, reason: 'the close ended the seed');

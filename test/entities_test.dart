@@ -8,18 +8,18 @@ void main() {
       expect(const SaveCursor().string, '${ESC}7');
       expect(const RestoreCursor().string, '${ESC}8');
       expect(
-        const Link('https://example.com').string,
+        Link('https://example.com').string,
         '${OSC}8;;https://example.com$ST',
       );
-      expect(const Link('').string, '${OSC}8;;$ST');
+      expect(Link('').string, '${OSC}8;;$ST');
     });
 
     test('are told apart from each other', () {
       expect(const SaveCursor(), isNot(const RestoreCursor()));
-      expect(const SaveCursor(), isNot(const Link('https://example.com')));
+      expect(const SaveCursor(), isNot(Link('https://example.com')));
       expect(
-        const Link('https://example.com'),
-        isNot(const Link('https://other.com')),
+        Link('https://example.com'),
+        isNot(Link('https://other.com')),
       );
     });
 
@@ -29,7 +29,7 @@ void main() {
         r"Text('a\nb')",
       );
       expect(
-        const Link('https://example.com').toString(),
+        Link('https://example.com').toString(),
         contains('https://example.com'),
       );
     });
@@ -58,8 +58,8 @@ void main() {
     });
 
     test('a link that closes says so, and one that opens says where', () {
-      expect(const Link('').id, 'linkClose');
-      expect(const Link('https://example.com').id, 'link(https://example.com)');
+      expect(Link('').id, 'linkClose');
+      expect(Link('https://example.com').id, 'link(https://example.com)');
     });
 
     test('a match says where it was found and in what state', () {
@@ -79,7 +79,7 @@ void main() {
 
     test('two that carry the same string are one to a Set', () {
       const same = [SaveCursor(), SaveCursor()];
-      const different = [Link('a'), Link('b')];
+      final different = [Link('a'), Link('b')];
 
       expect(same.toSet(), hasLength(1));
       expect(different.toSet(), hasLength(2));
@@ -121,7 +121,7 @@ void main() {
       expect(entityOf(restoreCursor), const RestoreCursor());
       expect(
         entityOf('${OSC}8;;https://example.com$ST'),
-        const Link('https://example.com'),
+        Link('https://example.com'),
       );
     });
   });

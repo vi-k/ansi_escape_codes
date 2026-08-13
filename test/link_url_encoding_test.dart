@@ -121,19 +121,37 @@ void main() {
     });
   });
 
-  group('Link, the entity:', () {
+  group('Link, the entity, encodes the address the same way:', () {
     test('an ordinary url is built as it always was', () {
       expect(
-        const Link('https://example.com').string,
+        Link('https://example.com').string,
         '${OSC}8;;https://example.com$ST',
       );
-      expect(const Link('').string, '${OSC}8;;$ST');
+      expect(Link('').string, '${OSC}8;;$ST');
     });
 
-    // A url carrying a control byte goes into `Link` unchecked, and the guard
-    // that would catch it is still an open question: a `const` constructor
-    // admits no function call and no `contains` in its assert, so the two
-    // ways left are dropping `const` or saying so in the dartdoc. Whichever
-    // is chosen wants its own test here.
+    test('a control byte is escaped rather than allowed to end the code', () {
+      expect(
+        Link('https://ok/\x1B\\\x1B[2J').string,
+        '${OSC}8;;https://ok/%1B\\%1B[2J$ST',
+      );
+      expect(
+        Parser(Link('https://ok/\x1B\\\x1B[2J').string).matches.length,
+        1,
+        reason: 'the whole of it is one code, not a code and a payload',
+      );
+    });
+
+    test('url reads back what a parse of string reads', () {
+      // An Entity compares by string, so a field that disagreed with the
+      // bytes would let two equal links answer differently.
+      final built = Link('https://ok/\x1B\\');
+      final parsed = Parser(built.string).matches.first.entity;
+
+      expect(parsed, isA<Link>());
+      expect((parsed as Link).url, built.url);
+      expect(built.url, r'https://ok/%1B\');
+      expect(parsed, built, reason: 'equal by the bytes they write');
+    });
   });
 }

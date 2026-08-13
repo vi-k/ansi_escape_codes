@@ -85,7 +85,7 @@ void main() {
     });
 
     test('a string that begins inside a link gives that one back', () {
-      final parser = Parser.debugInsideLink('abcd', const Link(outer));
+      final parser = Parser.debugInsideLink('abcd', Link(outer));
 
       expect(
         parser.insertBefore(0, '${opens(inner)}X$linkClose'),
@@ -274,7 +274,7 @@ void main() {
     test('a close in front of the run leaves the seam outside every link', () {
       final parser = Parser.debugInsideLink(
         'aa$linkClose$run',
-        const Link(outer),
+        Link(outer),
       );
 
       expect(
@@ -286,7 +286,7 @@ void main() {
     });
 
     test('a run at the head of the string reads what the parser began in', () {
-      final parser = Parser.debugInsideLink(run, const Link(outer));
+      final parser = Parser.debugInsideLink(run, Link(outer));
 
       expect(
         parser.insertAfter(0, '@$linkClose'),
@@ -296,8 +296,7 @@ void main() {
             'the insertion that closed it hands that one back',
       );
       expect(
-        Parser.debugInsideLink(run, const Link(outer))
-            .insertBefore(0, '@$linkClose'),
+        Parser.debugInsideLink(run, Link(outer)).insertBefore(0, '@$linkClose'),
         '@$linkClose${opens(outer)}$run',
         reason: 'insertBefore at nought answers off the same seed without '
             'walking at all, and the two cut at the same byte',

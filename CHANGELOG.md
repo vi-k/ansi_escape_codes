@@ -412,6 +412,13 @@ Removed — every name deprecated in an earlier release, and some that never wer
 
 Breaking changes:
 
+- `Link(url)` is no longer `const`. It percent-escapes a control byte in the
+  address, as `link` does and for the same reason, and a `const` initializer
+  admits neither a function call nor a `contains` — so the address could there
+  be neither encoded nor so much as checked. `const Link('…')` has to lose the
+  keyword; nothing else about it moves. `Link.url` reads back the encoded
+  address rather than the bytes handed in, so that it agrees with a parse of
+  `Link.string` and with the equality an `Entity` takes from those bytes.
 - The named control sequences print as themselves: `CursorUp(4)`,
   `CursorPos(3, 7)`, `EraseInPage(ErasePart.all)` where `Csi([CSI 4 CUU])` was
   written before. Nothing reads `toString` but a person and a golden test.

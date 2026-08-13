@@ -159,9 +159,29 @@ final class Link extends Osc {
   /// The parameters the sequence carried are not here; see the class doc.
   final String url;
 
-  /// The sequence that opens a link on [url], or closes one where [url] is
-  /// empty.
-  const Link(this.url) : super._('${OSC}8;;$url$ST');
+  /// The sequence that opens a link on [address], or closes one where
+  /// [address] is empty.
+  ///
+  /// A control byte in [address] is written as its percent-escape, the way
+  /// [link] writes one: the body of an `OSC 8` cannot carry an `ESC`, which
+  /// would end the sequence where it stands and hand the rest of the address
+  /// to the terminal as codes of its own. An address carrying none — which is
+  /// every address that is one — is kept byte for byte.
+  ///
+  /// [url] is the encoded form, not the bytes handed in, so that it is the
+  /// address the sequence actually points at and reading it back off a parse
+  /// of [string] gives the same answer. An [Entity] compares by [string], and
+  /// two links that write the same bytes would otherwise disagree on a field
+  /// while being equal.
+  ///
+  /// Not `const`, and it cannot be: a `const` initializer admits neither a
+  /// function call nor a `contains`, so a url could there be neither encoded
+  /// nor so much as checked.
+  factory Link(String address) {
+    final encoded = encodeControlBytes(address);
+
+    return Link._('${OSC}8;;$encoded$ST', encoded);
+  }
 
   const Link._(super.string, this.url) : super._();
 
