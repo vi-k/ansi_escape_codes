@@ -145,6 +145,15 @@ void main() {
 
       expect(result, contains('$reset$bold${_unknown}B'));
     });
+
+    test('an unfinished tail moves behind the opaque seam repair', () {
+      const input = '${_unknown}aa\x1B[31';
+
+      expect(
+        Parser(input).insertAfter(2, '${reset}X'),
+        '${_unknown}aa${reset}X$_unknown\x1B[31',
+      );
+    });
   });
 
   group('printers carry opaque rendition:', () {
