@@ -124,6 +124,11 @@ Performance:
 
 Fixed:
 
+- `ESC 7` / `ESC 8` lost their saved rendition, hyperlink and opaque SGR at
+  every printer line or sink-write boundary, and a restore with no preceding
+  save incorrectly used the previous chunk's seeded state. All four printers
+  now keep one non-consuming, replaceable cursor save slot for their session;
+  sink `prepare` rolls a probed slot back with its other carry.
 - `Style.call` read its inner ANSI through `Stack`, so a selective reset after
   two setters revealed the earlier inner value instead of returning to the
   caller's default style. Style wrappers now use the same terminal reset

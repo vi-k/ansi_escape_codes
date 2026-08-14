@@ -477,6 +477,12 @@ The printer itself will substitute the correct values where the state returns
 to default. The texts will remain clean, and you can change the default values
 or remove them altogether at any time.
 
+A printer also treats `ESC 7` / `ESC 8` as one session-wide cursor save slot.
+The saved rendition, hyperlink and opaque SGR state survive line boundaries
+(and write boundaries for a sink printer); another save replaces the slot, and
+a restore does not consume it. Before the first save, restore returns to the
+terminal defaults rather than to the state carried from the previous line.
+
 Additionally, Dart allows you to use zones to hide the use of the printer under
 the hood:
 

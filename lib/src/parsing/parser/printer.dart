@@ -12,6 +12,10 @@ part of 'parser.dart';
 /// line after opens it again, so a link a line break falls inside of goes on
 /// being one link.
 ///
+/// `ESC 7` and `ESC 8` use one save slot for the lifetime of the printer. The
+/// saved rendition, hyperlink and opaque SGR state cross line boundaries;
+/// another `ESC 7` replaces them, while `ESC 8` restores without consuming.
+///
 /// A control string a line leaves unterminated — an `OSC`, a `DCS`, an `SOS`,
 /// a `PM` or an `APC`, a window title as readily as a link opening — is given
 /// its terminator at the end of the line, and for the same reason: what is
@@ -45,6 +49,11 @@ final class Printer extends _PrintPrinterBase<Style> {
 /// A hyperlink is carried from one line to the next the way [Printer] carries
 /// it: links do not nest, so there is no stack of them to keep.
 ///
+/// `ESC 7` and `ESC 8` use one save slot for the lifetime of the printer. The
+/// saved stacked rendition, hyperlink and opaque SGR state cross line
+/// boundaries; another `ESC 7` replaces them, while `ESC 8` restores without
+/// consuming.
+///
 /// See also [runZonedStackedPrinter] for usage within a zone.
 final class StackedPrinter extends _PrintPrinterBase<Stack> {
   /// Creates a printer that processes ANSI escape codes, replaces the default
@@ -74,6 +83,11 @@ final class StackedPrinter extends _PrintPrinterBase<Stack> {
 /// place: a write the line goes on past owes nothing at its end, and the
 /// piece that really ends the line settles for whatever the writes before it
 /// left open.
+///
+/// `ESC 7` and `ESC 8` use one save slot for the lifetime of the printer. The
+/// saved rendition, hyperlink and opaque SGR state cross write and line
+/// boundaries; another `ESC 7` replaces them, while `ESC 8` restores without
+/// consuming.
 final class SinkPrinter extends _SinkPrinterBase<Style> {
   /// Creates a printer that processes ANSI escape codes and writes the output
   /// to a [StringSink].
@@ -99,6 +113,11 @@ final class SinkPrinter extends _SinkPrinterBase<Style> {
 ///
 /// A hyperlink is carried across writes, closed at the end of the line and
 /// opened again on the next, the way [SinkPrinter] does it.
+///
+/// `ESC 7` and `ESC 8` use one save slot for the lifetime of the printer. The
+/// saved stacked rendition, hyperlink and opaque SGR state cross write and
+/// line boundaries; another `ESC 7` replaces them, while `ESC 8` restores
+/// without consuming.
 final class StackedSinkPrinter extends _SinkPrinterBase<Stack> {
   /// Creates a printer that processes ANSI escape codes, writes the output to
   /// a [StringSink], and tracks the [Stack] of styles.
@@ -146,6 +165,10 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// line. It stays null on the [NoStyle] and disabled-code bypasses, where no
   /// parsing state is carried at all.
   _SgrResidual? _lastResidual;
+
+  /// The state, link and opaque rendition saved by the latest `ESC 7` in this
+  /// printer session, or `null` before the first save.
+  _CursorSave<S>? _savedCursor;
 
   /// Whether each line is followed by the same line with its codes named,
   /// which is how the tests read what was written.
@@ -257,6 +280,11 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// restore is rewritten; [Parser.substring] says the whole of what is
   /// accepted here.
   ///
+  /// Cursor saves belong to the printer session rather than one parse. A save
+  /// made on an earlier line is available to a restore here; before the first
+  /// save, a restore returns to the terminal defaults rather than to the state
+  /// inherited from the previous line.
+  ///
   /// A [SinkPrinter] and a [StackedSinkPrinter] are handed a piece rather
   /// than a line, and this only prepares it: nothing is written, and the link
   /// is left as it was — both what is open in the output and what is open in
@@ -321,6 +349,12 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       this.lastState ?? stateDefaults,
       initialLink: _ambientLink,
       initialResidual: _lastResidual,
+      initialCursorSave: _savedCursor,
+      restoreFallback: (
+        state: stateDefaults,
+        link: null,
+        residual: null,
+      ),
     );
     final buf = StringBuffer(reset);
 
@@ -449,6 +483,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     buf.write(tail);
     this.lastState = parser.finalState;
     _lastResidual = parser._finalResidual;
+    _savedCursor = parser._finalCursorSave;
 
     return buf.toString();
   }
@@ -555,6 +590,9 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   /// control string is carried the same way and left alone here for the same
   /// reason.
   ///
+  /// A probe also rolls its cursor save slot back with its rendition, link and
+  /// terminator carry.
+  ///
   /// [lastState] and its private residual are put back with the rest: the
   /// rendition branch a piece ends in is what the write after it is read
   /// from, and a piece that was only asked about is not one anything follows.
@@ -568,12 +606,14 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
     final keepOwesTerminator = _owesTerminator;
     final keepLastState = lastState;
     final keepLastResidual = _lastResidual;
+    final keepSavedCursor = _savedCursor;
     final prepared = super.prepare(line);
     _writtenLink = keepWrittenLink;
     _ambientLink = keepAmbientLink;
     _owesTerminator = keepOwesTerminator;
     lastState = keepLastState;
     _lastResidual = keepLastResidual;
+    _savedCursor = keepSavedCursor;
 
     return prepared;
   }

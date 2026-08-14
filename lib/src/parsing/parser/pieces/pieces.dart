@@ -8,6 +8,8 @@ part of '../parser.dart';
 final class Pieces<S extends State<S>> extends Iterable<Piece<S>> {
   final S _initialState;
   final _SgrResidual? _initialResidual;
+  final _CursorSave<S>? _initialCursorSave;
+  final _CursorSave<S> _restoreFallback;
 
   /// The link the string is read as starting inside, where there is one.
   final Link? _initialLink;
@@ -26,8 +28,12 @@ final class Pieces<S extends State<S>> extends Iterable<Piece<S>> {
     this._initialState, {
     Link? initialLink,
     _SgrResidual? initialResidual,
+    _CursorSave<S>? initialCursorSave,
+    required _CursorSave<S> restoreFallback,
   })  : _initialLink = initialLink,
-        _initialResidual = initialResidual;
+        _initialResidual = initialResidual,
+        _initialCursorSave = initialCursorSave,
+        _restoreFallback = restoreFallback;
 
   _PiecesResult<S> get _requireParsingResult {
     final parsingResult = _parsingResult;
@@ -58,5 +64,7 @@ final class Pieces<S extends State<S>> extends Iterable<Piece<S>> {
         _initialState,
         _initialLink,
         _initialResidual,
+        _initialCursorSave,
+        _restoreFallback,
       );
 }
