@@ -146,4 +146,44 @@ void main() {
       expect(result, contains('$reset$bold${_unknown}B'));
     });
   });
+
+  group('printers carry opaque rendition:', () {
+    test('all four concrete printers preserve and close unknown', () {
+      const input = '${_unknown}A';
+
+      expect(Printer().prepare(input), '$reset${_unknown}A$reset');
+      expect(StackedPrinter().prepare(input), '$reset${_unknown}A$reset');
+
+      final sink = StringBuffer();
+      SinkPrinter(sink).writeln(input);
+      expect(sink.toString(), '$reset${_unknown}A$reset\n');
+
+      final stackedSink = StringBuffer();
+      StackedSinkPrinter(stackedSink).writeln(input);
+      expect(stackedSink.toString(), '$reset${_unknown}A$reset\n');
+    });
+
+    test('the next line replays the logical tail after printer reset', () {
+      final printer = Printer();
+
+      expect(printer.prepare('${_unknown}A'), '$reset${_unknown}A$reset');
+      expect(printer.prepare('B'), '$reset${_unknown}B$reset');
+      expect(printer.prepare('${reset}C'), '${reset}C');
+      expect(printer.prepare('D'), '${reset}D');
+    });
+
+    test('default style is repaired after a known reset in residual', () {
+      final printer = StackedPrinter(defaultStyle: Styles.bold);
+      final output = printer.prepare('${_unknown}A${resetBoldAndDim}B');
+
+      expect(output, contains('$resetBoldAndDim$bold' 'B'));
+      expect(output, endsWith(reset));
+    });
+
+    test('NoStyle keeps the original bytes and no private carry', () {
+      final printer = Printer(defaultStyle: const NoStyle());
+      expect(printer.prepare('${_unknown}A'), '${_unknown}A');
+      expect(printer.prepare('B'), 'B');
+    });
+  });
 }

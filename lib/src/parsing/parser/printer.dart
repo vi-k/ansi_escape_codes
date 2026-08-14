@@ -129,6 +129,14 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   @visibleForTesting
   S? lastState;
 
+  /// The opaque rendition branch the last prepared line ended in.
+  ///
+  /// This is the private half of [lastState]: a printer resets the terminal at
+  /// every output boundary, then reconstructs both before writing the next
+  /// line. It stays null on the [NoStyle] and disabled-code bypasses, where no
+  /// parsing state is carried at all.
+  _SgrResidual? _lastResidual;
+
   /// Whether each line is followed by the same line with its codes named,
   /// which is how the tests read what was written.
   @visibleForTesting
@@ -292,6 +300,9 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     }
 
     var lastState = stateDefaults.toStyle();
+    _SgrResidual? writtenResidual;
+
+    Style project(Style state) => state.changeDefaultsTo(defaultStyle);
 
     // Read from where the line before ended, in the style as in the link: a
     // line that touches neither goes out as it came and hands both on.
@@ -299,6 +310,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       line,
       this.lastState ?? stateDefaults,
       initialLink: _ambientLink,
+      initialResidual: _lastResidual,
     );
     final buf = StringBuffer(reset);
 
@@ -317,7 +329,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       // the transition below instead of being passed on. Everything else —
       // the text, and the codes that move the cursor or clear the screen —
       // is the line's own and goes through as it came.
-      if (m.entity case Sgr()) {
+      if (_isStatefulSgr(m.entity)) {
         continue;
       }
 
@@ -352,7 +364,13 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       // The style is put on before the code that reads it: erasing and
       // scrolling take the background colour of the moment.
       final newState = m.state.changeDefaultsTo(defaultStyle);
-      final transit = lastState.transitTo(newState);
+      final transit = _renditionTransit(
+        from: lastState,
+        fromResidual: writtenResidual,
+        to: newState,
+        toResidual: m._residual,
+        project: project,
+      );
       final string = entity.string;
 
       if (heldOpening.isNotEmpty) {
@@ -378,6 +396,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
         buf.write(string);
       }
       lastState = newState;
+      writtenResidual = m._residual;
     }
 
     // The line is over. What follows the opening held back is the close
@@ -389,7 +408,13 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     // follows it — and is asked all the same, so that the guarantee is
     // checked and not assumed.
     final closingLink = endsLine && writtenLink != null ? linkClose : '';
-    final tail = lastState.transitTo(stateDefaults);
+    final tail = _renditionTransit(
+      from: lastState,
+      fromResidual: writtenResidual,
+      to: stateDefaults.toStyle(),
+      toResidual: null,
+      project: project,
+    );
     final following = _firstNotEmpty(closingLink, tail);
 
     buf.write(_terminatedOpening(heldOpening, following, closing: endsLine));
@@ -413,6 +438,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
 
     buf.write(tail);
     this.lastState = parser.finalState;
+    _lastResidual = parser.finalResidual;
 
     return buf.toString();
   }
