@@ -545,23 +545,25 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   /// control string is carried the same way and left alone here for the same
   /// reason.
   ///
-  /// [lastState] is the fourth of them and is put back with the rest: the
-  /// style a piece ends in is what the write after it is read from, and a
-  /// piece that was only asked about is not one anything follows. A printer
-  /// handed whole lines carries it, which is [_PrinterBase._prepare] doing
-  /// what a printed line needs; here the same assignment would colour the
-  /// next `write` by a piece the sink never saw.
+  /// [lastState] and its private residual are put back with the rest: the
+  /// rendition branch a piece ends in is what the write after it is read
+  /// from, and a piece that was only asked about is not one anything follows.
+  /// A printer handed whole lines carries it, which is
+  /// [_PrinterBase._prepare] doing what a printed line needs; here the same
+  /// assignment would colour the next `write` by a piece the sink never saw.
   @override
   String prepare(String line) {
     final keepWrittenLink = _writtenLink;
     final keepAmbientLink = _ambientLink;
     final keepOwesTerminator = _owesTerminator;
     final keepLastState = lastState;
+    final keepLastResidual = _lastResidual;
     final prepared = super.prepare(line);
     _writtenLink = keepWrittenLink;
     _ambientLink = keepAmbientLink;
     _owesTerminator = keepOwesTerminator;
     lastState = keepLastState;
+    _lastResidual = keepLastResidual;
 
     return prepared;
   }
