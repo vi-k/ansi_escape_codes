@@ -108,4 +108,42 @@ void main() {
       expect(Parser('\x1B[1 mAB').substring(1), 'B');
     });
   });
+
+  group('insertions compose residual branches:', () {
+    test('plain text inside an opaque ambient adds no repair', () {
+      const input = '${_unknown}AB';
+      expect(Parser(input).insertBefore(1, 'X'), '${_unknown}AXB');
+      expect(Parser(input).insertAfter(1, 'X'), '${_unknown}AXB');
+    });
+
+    test('a reset insertion replays the outer branch', () {
+      const input = '${_unknown}AB';
+      expect(
+        Parser(input).insertBefore(1, '${reset}X'),
+        '${_unknown}A${reset}X${_unknown}B',
+      );
+    });
+
+    test('an unknown insertion is reset before a clean tail', () {
+      expect(
+        Parser('AB').insertBefore(1, '${_unknown}X'),
+        'A${_unknown}X${reset}B',
+      );
+    });
+
+    test('a child branch returns to its opaque parent', () {
+      const input = '${_unknown}AB';
+      final result = Parser(input).insertBefore(1, '${bold}X');
+
+      expect(result, '${_unknown}A${bold}X$reset${_unknown}B');
+    });
+
+    test('Stack restores the visible parent frame', () {
+      const input = '$bold$bold${_unknown}AB';
+      final result =
+          StackedParser(input).insertBefore(1, '${resetBoldAndDim}X');
+
+      expect(result, contains('$reset$bold${_unknown}B'));
+    });
+  });
 }

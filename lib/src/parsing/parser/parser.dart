@@ -108,6 +108,13 @@ final class StackedParser extends _ParserBase<Stack> {
   StackedParser(String input) : super(input, Stack.terminalColors);
 }
 
+typedef _Seam<S extends State<S>> = ({
+  int cut,
+  S state,
+  Link? link,
+  _SgrResidual? residual,
+});
+
 final class _ParserBase<S extends State<S>> {
   /// The string being read, escape codes and all.
   final String input;
@@ -880,21 +887,30 @@ final class _ParserBase<S extends State<S>> {
   String insertAfter(int pos, String text) => _insert(pos, text, after: true);
 
   String _insert(int pos, String text, {required bool after}) {
-    final (cut, ambient, ambientLink) = _seamAt(pos, after: after);
+    final seam = _seamAt(pos, after: after);
 
-    // Read from the seam on both channels: the inserted text lands inside the
-    // state and inside the link that stand there, and what it leaves behind
-    // is what has to be put right for the tail.
-    final read = Pieces<S>._(text, ambient, initialLink: ambientLink)
-        ._requireParsingResult;
+    // Read from the complete seam: the inserted text lands inside the
+    // rendition branch and the link that stand there, and what it leaves
+    // behind is what has to be put right for the tail.
+    final read = Pieces<S>._(
+      text,
+      seam.state,
+      initialLink: seam.link,
+      initialResidual: seam.residual,
+    )._requireParsingResult;
 
-    final linkBack = _linkBack(seam: ambientLink, left: read.finalLink);
-    final transit = read.finalState.toStyle().transitTo(ambient);
-    final tail = input.substring(cut);
+    final linkBack = _linkBack(seam: seam.link, left: read.finalLink);
+    final transit = _renditionTransit(
+      from: read.finalState.toStyle(),
+      fromResidual: read.finalResidual,
+      to: seam.state.toStyle(),
+      toResidual: seam.residual,
+    );
+    final tail = input.substring(seam.cut);
     final following = _firstNotEmpty(linkBack, transit, tail);
     final insertion = _terminatedInsertion(text, read, following);
 
-    return '${input.substring(0, cut)}'
+    return '${input.substring(0, seam.cut)}'
         '$insertion$linkBack$transit$tail';
   }
 
@@ -965,16 +981,21 @@ final class _ParserBase<S extends State<S>> {
       left == seam ? '' : seam?._reopening ?? linkClose;
 
   /// The place in [input] an insertion at the plain text [pos] goes to, the
-  /// state it lands in, and the hyperlink it lands inside.
+  /// state and residual branch it lands in, and the hyperlink it lands inside.
   ///
   /// A seam is what lies between two neighbouring characters of the plain
   /// text: nothing at all, or the escape codes written between them. [after]
   /// chooses which end of it the insertion takes.
-  (int, S, Link?) _seamAt(int pos, {required bool after}) {
+  _Seam<S> _seamAt(int pos, {required bool after}) {
     RangeError.checkNotNegative(pos, 'pos');
 
     if (!after && pos == 0) {
-      return (0, initialState, initialLink);
+      return (
+        cut: 0,
+        state: initialState,
+        link: initialLink,
+        residual: initialResidual,
+      );
     }
 
     // A seam is looked for in the pieces of text and nowhere else, so a walk
@@ -1057,13 +1078,19 @@ final class _ParserBase<S extends State<S>> {
           final before = walk.beforeRun;
 
           return (
-            walk.unfinishedRunStart ?? code.start,
-            before?.state ?? initialState,
-            before == null ? initialLink : before.link,
+            cut: walk.unfinishedRunStart ?? code.start,
+            state: before?.state ?? initialState,
+            link: before == null ? initialLink : before.link,
+            residual: before == null ? initialResidual : before._residual,
           );
         }
 
-        return (cut, m.state, m.link);
+        return (
+          cut: cut,
+          state: m.state,
+          link: m.link,
+          residual: m._residual,
+        );
       }
     }
 
@@ -1101,13 +1128,19 @@ final class _ParserBase<S extends State<S>> {
       final before = walk.beforeRun;
 
       return (
-        walk.unfinishedRunStart ?? code.start,
-        before?.state ?? initialState,
-        before == null ? initialLink : before.link,
+        cut: walk.unfinishedRunStart ?? code.start,
+        state: before?.state ?? initialState,
+        link: before == null ? initialLink : before.link,
+        residual: before == null ? initialResidual : before._residual,
       );
     }
 
-    return (input.length, finalState, finalLink);
+    return (
+      cut: input.length,
+      state: finalState,
+      link: finalLink,
+      residual: finalResidual,
+    );
   }
 
   /// The string with [padding] written after it until the text is [width]
