@@ -37,6 +37,18 @@ void main() {
       );
     });
 
+    test('zero inside one operation is not a residual barrier', () {
+      const inputs = [
+        '$_unknown\x1B[38;2;0;1;2mA',
+        '$_unknown\x1B[4:0mA',
+        '$_unknown\x1B[999999999999999999999999;0mA',
+      ];
+
+      for (final input in inputs) {
+        expect(Parser(input).optimize(close: false), input, reason: input);
+      }
+    });
+
     test('an unsupported colour keeps its raw function and tail', () {
       expect(
         Parser('\x1B[38;7;1mA').optimize(close: false),
