@@ -664,6 +664,14 @@ void main() {
       );
     });
 
+    test('the ambient transition supplies the boundary too', () {
+      expect(
+        Parser('abcdef').insertBefore(3, '$fgRed\x1B]0;t'),
+        'abc$fgRed\x1B]0;t${reset}def',
+        reason: 'the reset starts with ESC and must not be preceded by ST',
+      );
+    });
+
     test('a close:false slice composes with insertion', () {
       final slice = Parser('hi\x1B]0;window title').substring(0, close: false);
       final result = Parser('abcdef').insertBefore(3, slice);
