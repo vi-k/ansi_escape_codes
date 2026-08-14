@@ -93,14 +93,7 @@ final class Sgr extends Csi {
               );
 
             case UNDERLINE:
-              if (!_parseSimpleFunction(
-                parsingState,
-                _underlineFunctionFromValues(values),
-              )) {
-                parsingState.commitFunction(
-                  SgrUnknownParamsFunction(values),
-                );
-              }
+              _parseUnderlineFunctionFromValues(parsingState, values);
 
             default:
               if (!_parseSimpleFunction(parsingState, firstValue)) {
@@ -117,16 +110,39 @@ final class Sgr extends Csi {
     return Sgr._(state.string, params, parsingState.functions);
   }
 
-  /// The function `4:n` stands for.
-  ///
-  /// The kinds this package does not tell apart — curly, dotted and dashed —
-  /// are read as a plain underline.
-  static int _underlineFunctionFromValues(List<int> values) =>
-      switch (values.length > 1 ? values[1] : 1) {
-        0 => NOT_UNDERLINE,
-        2 => DOUBLY_UNDERLINE,
-        _ => UNDERLINE,
-      };
+  static const _unknownUnderline = Object();
+
+  static void _parseUnderlineFunctionFromValues<S extends State<S>>(
+    _SgrParsingState<S> parsingState,
+    List<int> values,
+  ) {
+    final parsedStyle = switch (values.length > 1 ? values[1] : 1) {
+      0 => null,
+      1 => UnderlineStyle.singly,
+      2 => UnderlineStyle.doubly,
+      3 => UnderlineStyle.curly,
+      4 => UnderlineStyle.dotted,
+      5 => UnderlineStyle.dashed,
+      _ => _unknownUnderline,
+    };
+
+    if (identical(parsedStyle, _unknownUnderline)) {
+      parsingState.commitFunction(SgrUnknownParamsFunction(values));
+      return;
+    }
+
+    final style = parsedStyle as UnderlineStyle?;
+    parsingState
+      ..state = switch (style) {
+        null => parsingState.state.resetUnderline,
+        UnderlineStyle.singly => parsingState.state.underline,
+        UnderlineStyle.doubly => parsingState.state.doublyUnderline,
+        UnderlineStyle.curly => parsingState.state.curlyUnderline,
+        UnderlineStyle.dotted => parsingState.state.dottedUnderline,
+        UnderlineStyle.dashed => parsingState.state.dashedUnderline,
+      }
+      ..commitFunction(SgrUnderlineFunction(style));
+  }
 
   static bool _parseSimpleFunction<S extends State<S>>(
     _SgrParsingState<S> parsingState,
@@ -151,11 +167,23 @@ final class Sgr extends Csi {
         INVERSE => state.inverse,
         INVISIBLE => state.invisible,
         STRIKETHROUGH => state.strikethrough,
+        PRIMARY_FONT => state.resetFont,
+        ALT_FONT_1 => state.alternativeFont1,
+        ALT_FONT_2 => state.alternativeFont2,
+        ALT_FONT_3 => state.alternativeFont3,
+        ALT_FONT_4 => state.alternativeFont4,
+        ALT_FONT_5 => state.alternativeFont5,
+        ALT_FONT_6 => state.alternativeFont6,
+        ALT_FONT_7 => state.alternativeFont7,
+        ALT_FONT_8 => state.alternativeFont8,
+        ALT_FONT_9 => state.alternativeFont9,
+        FRAKTUR => state.fraktur,
         DOUBLY_UNDERLINE => state.doublyUnderline,
         NOT_BOLD_NOT_DIM => state.resetBoldAndDim,
-        NOT_ITALIC => state.resetItalic,
+        NOT_ITALIC => state.resetFontShape,
         NOT_UNDERLINE => state.resetUnderline,
         NOT_BLINK => state.resetBlink,
+        PROPORTIONAL_SPACING => state.proportionalSpacing,
         NOT_INVERSE => state.resetInverse,
         NOT_INVISIBLE => state.resetInvisible,
         NOT_STRIKETHROUGH => state.resetStrikethrough,
@@ -179,6 +207,7 @@ final class Sgr extends Csi {
         BG_WHITE => state.background(Color16.white),
         // 48 - BACKGROUND
         BG_DEFAULT => state.resetBackground,
+        NOT_PROPORTIONAL_SPACING => state.resetProportionalSpacing,
         FRAME => state.frame,
         ENCIRCLE => state.encircle,
         OVERLINE => state.overline,
@@ -186,6 +215,12 @@ final class Sgr extends Csi {
         NOT_OVERLINE => state.resetOverline,
         // 58 - UNDERLINE_COLOR
         UNDERLINE_COLOR_DEFAULT => state.resetUnderlineColor,
+        IDEOGRAM_UNDERLINE => state.ideogramUnderline,
+        IDEOGRAM_DOUBLY_UNDERLINE => state.ideogramDoublyUnderline,
+        IDEOGRAM_OVERLINE => state.ideogramOverline,
+        IDEOGRAM_DOUBLY_OVERLINE => state.ideogramDoublyOverline,
+        IDEOGRAM_STRESS => state.ideogramStress,
+        NOT_IDEOGRAM => state.resetIdeogram,
         SUPERSCRIPT => state.superscript,
         SUBSCRIPT => state.subscript,
         NOT_SUPER_NOT_SUBSCRIPT => state.resetSuperAndSubscript,
@@ -439,6 +474,35 @@ final class SgrSimpleFunction extends SgrFunctionWithCode {
 
   @override
   String toString() => code.id;
+}
+
+/// An underline function written with sub-parameters: `CSI 4:n m`.
+///
+/// Unlike [SgrSimpleFunction], this keeps the exact decorated underline kind
+/// carried by the second sub-parameter.
+final class SgrUnderlineFunction extends SgrFunctionWithCode {
+  /// The underline kind, or null when `4:0` resets the underline.
+  final UnderlineStyle? style;
+
+  /// The underline [style] carried by a `4:n` function.
+  SgrUnderlineFunction(this.style)
+      : super(
+          switch (style) {
+            null => ControlFunctionsSGR.resetUnderline,
+            UnderlineStyle.doubly => ControlFunctionsSGR.doublyUnderline,
+            _ => ControlFunctionsSGR.underline,
+          },
+        );
+
+  @override
+  String toString() => switch (style) {
+        null => 'resetUnderline',
+        UnderlineStyle.singly => 'underline',
+        UnderlineStyle.doubly => 'doublyUnderline',
+        UnderlineStyle.curly => 'curlyUnderline',
+        UnderlineStyle.dotted => 'dottedUnderline',
+        UnderlineStyle.dashed => 'dashedUnderline',
+      };
 }
 
 /// A function setting one of the three colours: the foreground, the

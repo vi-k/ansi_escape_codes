@@ -96,4 +96,48 @@ void main() {
     expect(stack.resetProportionalSpacing.isProportionalSpacing, isTrue);
     expect(stack.resetIdeogram.ideogramStyle, IdeogramStyle.underline);
   });
+
+  test('the parser maps every standard family', () {
+    final state = Parser(
+      '\x1B[13;20;4:4;26;63mtext',
+    ).finalState;
+
+    expect(state.fontSelection, FontSelection.alternative3);
+    expect(state.fontShape, FontShape.fraktur);
+    expect(state.underlineStyle, UnderlineStyle.dotted);
+    expect(state.isProportionalSpacing, isTrue);
+    expect(state.ideogramStyle, IdeogramStyle.doublyOverline);
+
+    final resetState = Parser(
+      '\x1B[13;20;4:4;26;63m\x1B[10;23;24;50;65m',
+    ).finalState;
+    expect(resetState, Style.terminalColors);
+  });
+
+  test('known functions survive every reverse output', () {
+    const input = '\x1B[11mA\x1B[10mB';
+    const canonical = '\x1B[11mA\x1B[0mB';
+
+    expect(Parser(input).optimize(close: false), canonical);
+    expect(Parser(input).substring(0, close: false), canonical);
+    expect(StackedParser(input).optimize(close: false), canonical);
+    expect(Printer().prepare(input), '\x1B[0m$canonical');
+
+    final reparsed = Parser(canonical);
+    expect(reparsed.stateAt(0).fontSelection, FontSelection.alternative1);
+    expect(reparsed.stateAt(1).fontSelection, FontSelection.primary);
+  });
+
+  test('extended underline keeps its exact semantic kind', () {
+    const input = '\x1B[4:3mA';
+    final function =
+        (Parser(input).pieces.first.entity as Sgr).functions.single;
+
+    expect(function, isA<SgrUnderlineFunction>());
+    expect(
+      (function as SgrUnderlineFunction).style,
+      UnderlineStyle.curly,
+    );
+    expect(Parser(input).optimize(close: false), input);
+  });
 }
