@@ -609,4 +609,78 @@ void main() {
       );
     });
   });
+
+  group('an unfinished sequence in the inserted text:', () {
+    const cases = <String, String>{
+      '\x1B]0;t': '\x1B]0;t$ST',
+      '\x1B': '\x1B$ST',
+      '\x1B[31': '\x1B[$ST' '31',
+      '\x1B(': '\x1B($ST',
+    };
+
+    for (final entry in cases.entries) {
+      test('${entry.key.ansiShowEscapeSequences()} keeps both plain sides', () {
+        for (final after in [false, true]) {
+          final parser = Parser('abcdef');
+          final result = after
+              ? parser.insertAfter(3, entry.key)
+              : parser.insertBefore(3, entry.key);
+
+          expect(result, 'abc${entry.value}def', reason: 'after: $after');
+          expect(
+            Parser(result).removeAll(),
+            switch (entry.key) {
+              '\x1B[31' => 'abc31def',
+              _ => 'abcdef',
+            },
+            reason: 'after: $after',
+          );
+        }
+      });
+    }
+
+    test('the end of the result is a closing boundary', () {
+      expect(
+        Parser('abc').insertBefore(3, '\x1B]0;t'),
+        'abc\x1B]0;t$ST',
+      );
+    });
+
+    test('an ESC already following supplies the boundary', () {
+      expect(
+        Parser('abc${fgRed}def$reset').insertBefore(3, '\x1B]0;t'),
+        'abc\x1B]0;t${fgRed}def$reset',
+        reason: 'the SGR starts with the ESC the OSC is waiting for',
+      );
+    });
+
+    test('the hyperlink repair supplies the boundary too', () {
+      const opening = '\x1B]8;;http://a/';
+
+      expect(
+        Parser('abcdef').insertBefore(3, opening),
+        'abc$opening${linkClose}def',
+        reason: 'linkClose starts with ESC and must not be preceded by ST',
+      );
+    });
+
+    test('a close:false slice composes with insertion', () {
+      final slice = Parser('hi\x1B]0;window title').substring(0, close: false);
+      final result = Parser('abcdef').insertBefore(3, slice);
+
+      expect(result, 'abchi\x1B]0;window title${ST}def');
+      expect(Parser(result).removeAll(), 'abchidef');
+    });
+
+    test('the stacked parser and string extension take the same path', () {
+      expect(
+        StackedParser('abcdef').insertAfter(3, '\x1B]0;t'),
+        'abc\x1B]0;t${ST}def',
+      );
+      expect(
+        'abcdef'.ansiInsertBefore(3, '\x1B]0;t'),
+        'abc\x1B]0;t${ST}def',
+      );
+    });
+  });
 }
