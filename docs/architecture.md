@@ -117,8 +117,13 @@ intermediate-байтами остаются только копируемыми
 Логический residual переносится между строками рядом с `lastState`, но
 выведенный residual каждый раз начинается с null: обязательный leading reset
 уже очистил терминал, и ветвь строится заново перед первым видимым куском.
-Это не переносит save-slot `ESC 7`/`ESC 8` через границу вызова: тот остаётся
-внутренним состоянием одного разбора.
+Cursor save-slot идёт четвёртым carry-каналом. Приватный `_CursorSave<S>`
+проходит через `_ParserBase` → `Pieces` → `_ParserIterator` → `_PiecesResult`;
+`_PrinterBase` передаёт итоговый nullable-slot следующему разбору. Initial
+state/link/residual текущего куска отделены от restore-fallback: обычный parser
+возвращается к своему seed, printer без предшествующего save — к terminal
+defaults без link и residual. Sink `prepare` откатывает slot вместе с прочими
+carry-полями.
 
 ## Семь мест, которые кусали
 
