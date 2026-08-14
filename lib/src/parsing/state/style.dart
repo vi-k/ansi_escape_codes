@@ -305,13 +305,19 @@ final class Style extends State<Style> {
   /// than left as it was. A hyperlink survives it too: a line closes the one
   /// it opened, the way a printed line does, and the line after opens it
   /// again, so a link a line break falls inside of stays one link.
+  ///
+  /// Escape codes in [text] keep their terminal meaning. A selective reset
+  /// returns that property to the terminal's default, which this style
+  /// replaces; it does not reveal an earlier value set inside [text]. Use
+  /// [StackedPrinter] when resets are meant to close nested style operations
+  /// one level at a time.
   String call(String text) {
     if (text.isEmpty) {
       return '';
     }
 
     final buf = StringBuffer();
-    final printer = StackedPrinter(defaultStyle: this);
+    final printer = Printer(defaultStyle: this);
 
     for (final (index, line) in text.split('\n').indexed) {
       if (index != 0) {
