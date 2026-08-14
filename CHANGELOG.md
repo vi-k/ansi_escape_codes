@@ -131,6 +131,11 @@ Fixed:
 - An insertion left a hyperlink open. `Link` carries no style, and the closing
   was worked out from the style alone, so text inserted with an unclosed
   `OSC 8` swallowed everything after it.
+- An unfinished escape sequence in the inserted text swallowed the original
+  tail: a truncated `OSC` consumed it whole, while a truncated `CSI` took its
+  first byte as the missing final byte. Insertions now preserve the same text
+  model as `optimize`, `substring` and the printers, without rewriting
+  completed escape codes.
 - `cursorDown` moved the cursor left, and the cursor functions built sequences
   out of any number, `-1` included.
 - `runZonedStackedPrinter` printed only the first line.
