@@ -2,6 +2,10 @@
 
 Added:
 
+- `State`, `Style`, `Stack` and `Styles` now model the standard primary and
+  nine alternative fonts, fraktur, curly/dotted/dashed underline,
+  proportional spacing and five ideogram renditions. Existing enum case
+  names and style APIs remain source-compatible.
 - `insertBefore` and `insertAfter` on `Parser` and `StackedParser`, with the
   `ansiInsertBefore` and `ansiInsertAfter` string extensions. Text put into a
   styled string takes the style of the place it lands in and gives it back, so
@@ -120,6 +124,11 @@ Performance:
 
 Fixed:
 
+- `optimize`, `substring`, insertions and all printers silently discarded an
+  ordinary SGR function that `State` did not model, and collapsed decorated
+  underline to a single line. Known standard functions now have typed state;
+  truly unknown SGR is carried by a private ordered residual channel through
+  cuts, branches and printer resets until a real `SGR 0` clears it.
 - `ESC 7` and `ESC 8` carried no style. A terminal saves the rendition along
   with the cursor and restores both, so `${fgRed}ESC7${fgBlue}ESC8` shows red
   where the parser said blue — and every question asked after it was answered

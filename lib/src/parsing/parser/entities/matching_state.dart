@@ -3,8 +3,9 @@ part of '../parser.dart';
 final class _MatchingState<S extends State<S>> {
   final RegExpMatch match;
   S state;
+  _SgrResidual? residual;
 
-  _MatchingState(this.match, this.state);
+  _MatchingState(this.match, this.state, this.residual);
 
   /// The whole matched text.
   ///

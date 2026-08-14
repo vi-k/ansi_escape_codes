@@ -3,6 +3,7 @@ part of '../parser.dart';
 final class _PiecesResult<S extends State<S>> {
   final List<Piece<S>> pieces;
   final S finalState;
+  final _SgrResidual? finalResidual;
 
   /// The link the string leaves open, or `null` where it leaves none.
   ///
@@ -14,6 +15,7 @@ final class _PiecesResult<S extends State<S>> {
   _PiecesResult._({
     required List<Piece<S>> pieces,
     required this.finalState,
+    required this.finalResidual,
     required this.finalLink,
   }) : pieces = UnmodifiableListView(pieces); // The list is complete once this
   // result exists: every iterator reaching the end sets `_parsingResult`, and

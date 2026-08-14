@@ -36,10 +36,15 @@ sealed class Csi extends EscapeCode {
       }
 
       return switch (function) {
-        ControlSequencesFunctions.SGR => Sgr._parse(state, params),
+        ControlSequencesFunctions.SGR => Sgr._parse(state, params, paramsList),
         _ => _named(state.string, function, params)
       };
     } on FormatException {
+      if (function == ControlSequencesFunctions.SGR) {
+        final before = state.state.toStyle();
+        final operation = _SgrOperation.opaque(state.string, before);
+        state.residual = _advanceSgrResidual(state.residual, before, operation);
+      }
       return CsiUnknown._(state.string);
     }
   }

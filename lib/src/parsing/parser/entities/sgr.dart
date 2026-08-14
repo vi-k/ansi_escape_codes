@@ -30,15 +30,20 @@ final class Sgr extends Csi {
   static Sgr _parse<S extends State<S>>(
     _MatchingState<S> state,
     List<CsiParam> params,
+    List<String> rawParams,
   ) {
-    final parsingState = _SgrParsingState(params, state.state);
+    final parsingState = _SgrParsingState(
+      params,
+      rawParams,
+      state.state,
+      state.residual,
+    );
 
     while (!parsingState.end) {
+      parsingState.beginOperation();
       switch (parsingState.currentParam) {
         case CsiParamDefault():
-          parsingState
-            ..state = parsingState.state.reset
-            ..commitFunction(const SgrDefaultFunction());
+          parsingState.commitFunction(const SgrDefaultFunction());
 
         case CsiParamNumber(:final value):
           switch (value) {
@@ -93,14 +98,7 @@ final class Sgr extends Csi {
               );
 
             case UNDERLINE:
-              if (!_parseSimpleFunction(
-                parsingState,
-                _underlineFunctionFromValues(values),
-              )) {
-                parsingState.commitFunction(
-                  SgrUnknownParamsFunction(values),
-                );
-              }
+              _parseUnderlineFunctionFromValues(parsingState, values);
 
             default:
               if (!_parseSimpleFunction(parsingState, firstValue)) {
@@ -112,21 +110,38 @@ final class Sgr extends Csi {
       }
     }
 
-    state.state = parsingState.state;
+    state
+      ..state = parsingState.state
+      ..residual = parsingState.residual;
 
     return Sgr._(state.string, params, parsingState.functions);
   }
 
-  /// The function `4:n` stands for.
-  ///
-  /// The kinds this package does not tell apart — curly, dotted and dashed —
-  /// are read as a plain underline.
-  static int _underlineFunctionFromValues(List<int> values) =>
-      switch (values.length > 1 ? values[1] : 1) {
-        0 => NOT_UNDERLINE,
-        2 => DOUBLY_UNDERLINE,
-        _ => UNDERLINE,
-      };
+  static const _unknownUnderline = Object();
+
+  static void _parseUnderlineFunctionFromValues<S extends State<S>>(
+    _SgrParsingState<S> parsingState,
+    List<int> values,
+  ) {
+    final parsedStyle = switch (values.length > 1 ? values[1] : 1) {
+      0 => null,
+      1 => UnderlineStyle.singly,
+      2 => UnderlineStyle.doubly,
+      3 => UnderlineStyle.curly,
+      4 => UnderlineStyle.dotted,
+      5 => UnderlineStyle.dashed,
+      _ => _unknownUnderline,
+    };
+
+    if (identical(parsedStyle, _unknownUnderline)) {
+      parsingState.commitFunction(SgrUnknownParamsFunction(values));
+      return;
+    }
+
+    parsingState.commitFunction(
+      SgrUnderlineFunction(parsedStyle as UnderlineStyle?),
+    );
+  }
 
   static bool _parseSimpleFunction<S extends State<S>>(
     _SgrParsingState<S> parsingState,
@@ -137,77 +152,7 @@ final class Sgr extends Csi {
       return false;
     }
 
-    final state = parsingState.state;
-
-    parsingState
-      ..state = switch (functionIndex) {
-        RESET => state.reset,
-        BOLD => state.bold,
-        DIM => state.dim,
-        ITALIC => state.italic,
-        UNDERLINE => state.underline,
-        BLINK => state.blink,
-        BLINK_RAPID => state.blinkRapid,
-        INVERSE => state.inverse,
-        INVISIBLE => state.invisible,
-        STRIKETHROUGH => state.strikethrough,
-        DOUBLY_UNDERLINE => state.doublyUnderline,
-        NOT_BOLD_NOT_DIM => state.resetBoldAndDim,
-        NOT_ITALIC => state.resetItalic,
-        NOT_UNDERLINE => state.resetUnderline,
-        NOT_BLINK => state.resetBlink,
-        NOT_INVERSE => state.resetInverse,
-        NOT_INVISIBLE => state.resetInvisible,
-        NOT_STRIKETHROUGH => state.resetStrikethrough,
-        FG_BLACK => state.foreground(Color16.black),
-        FG_RED => state.foreground(Color16.red),
-        FG_GREEN => state.foreground(Color16.green),
-        FG_YELLOW => state.foreground(Color16.yellow),
-        FG_BLUE => state.foreground(Color16.blue),
-        FG_MAGENTA => state.foreground(Color16.magenta),
-        FG_CYAN => state.foreground(Color16.cyan),
-        FG_WHITE => state.foreground(Color16.white),
-        // 38 - FOREGROUND
-        FG_DEFAULT => state.resetForeground,
-        BG_BLACK => state.background(Color16.black),
-        BG_RED => state.background(Color16.red),
-        BG_GREEN => state.background(Color16.green),
-        BG_YELLOW => state.background(Color16.yellow),
-        BG_BLUE => state.background(Color16.blue),
-        BG_MAGENTA => state.background(Color16.magenta),
-        BG_CYAN => state.background(Color16.cyan),
-        BG_WHITE => state.background(Color16.white),
-        // 48 - BACKGROUND
-        BG_DEFAULT => state.resetBackground,
-        FRAME => state.frame,
-        ENCIRCLE => state.encircle,
-        OVERLINE => state.overline,
-        NOT_FRAME_NOT_ENCIRCLE => state.resetFrameAndEncircle,
-        NOT_OVERLINE => state.resetOverline,
-        // 58 - UNDERLINE_COLOR
-        UNDERLINE_COLOR_DEFAULT => state.resetUnderlineColor,
-        SUPERSCRIPT => state.superscript,
-        SUBSCRIPT => state.subscript,
-        NOT_SUPER_NOT_SUBSCRIPT => state.resetSuperAndSubscript,
-        FG_HIGH_BLACK => state.foreground(Color16.highBlack),
-        FG_HIGH_RED => state.foreground(Color16.highRed),
-        FG_HIGH_GREEN => state.foreground(Color16.highGreen),
-        FG_HIGH_YELLOW => state.foreground(Color16.highYellow),
-        FG_HIGH_BLUE => state.foreground(Color16.highBlue),
-        FG_HIGH_MAGENTA => state.foreground(Color16.highMagenta),
-        FG_HIGH_CYAN => state.foreground(Color16.highCyan),
-        FG_HIGH_WHITE => state.foreground(Color16.highWhite),
-        BG_HIGH_BLACK => state.background(Color16.highBlack),
-        BG_HIGH_RED => state.background(Color16.highRed),
-        BG_HIGH_GREEN => state.background(Color16.highGreen),
-        BG_HIGH_YELLOW => state.background(Color16.highYellow),
-        BG_HIGH_BLUE => state.background(Color16.highBlue),
-        BG_HIGH_MAGENTA => state.background(Color16.highMagenta),
-        BG_HIGH_CYAN => state.background(Color16.highCyan),
-        BG_HIGH_WHITE => state.background(Color16.highWhite),
-        _ => state,
-      }
-      ..commitFunction(SgrSimpleFunction._of(code));
+    parsingState.commitFunction(SgrSimpleFunction._of(code));
 
     return true;
   }
@@ -269,15 +214,7 @@ final class Sgr extends Csi {
         SgrUnknownColorFunctionFromParams(code, parsingState.consumedParams()),
       );
     } else {
-      parsingState
-        ..state = switch (code) {
-          ControlFunctionsSGR.fg => parsingState.state.foreground(color),
-          ControlFunctionsSGR.bg => parsingState.state.background(color),
-          ControlFunctionsSGR.underlineColor =>
-            parsingState.state.underlineColor(color),
-          _ => parsingState.state,
-        }
-        ..commitFunction(SgrColorFunction(code, color));
+      parsingState.commitFunction(SgrColorFunction(code, color));
     }
   }
 
@@ -318,15 +255,7 @@ final class Sgr extends Csi {
         SgrUnknownColorFunctionFromValues(code, values.skip(1)),
       );
     } else {
-      parsingState
-        ..state = switch (code) {
-          ControlFunctionsSGR.fg => parsingState.state.foreground(color),
-          ControlFunctionsSGR.bg => parsingState.state.background(color),
-          ControlFunctionsSGR.underlineColor =>
-            parsingState.state.underlineColor(color),
-          _ => parsingState.state,
-        }
-        ..commitFunction(SgrColorFunction(code, color));
+      parsingState.commitFunction(SgrColorFunction(code, color));
     }
   }
 
@@ -355,14 +284,23 @@ final class Sgr extends Csi {
 
 final class _SgrParsingState<S extends State<S>> {
   final List<CsiParam> _params;
+  final List<String> _rawParams;
   final List<SgrFunction> functions = [];
 
   int _index;
   int? _savedIndex;
+  int _operationStart = 0;
+  late Style _operationBefore;
 
   S state;
+  _SgrResidual? residual;
 
-  _SgrParsingState(this._params, this.state) : _index = 0;
+  _SgrParsingState(
+    this._params,
+    this._rawParams,
+    this.state,
+    this.residual,
+  ) : _index = 0;
 
   bool get end => _index >= _params.length;
 
@@ -372,8 +310,24 @@ final class _SgrParsingState<S extends State<S>> {
 
   int get availableParamsCount => _params.length - _index - 1;
 
+  void beginOperation() {
+    _operationStart = _index;
+    _operationBefore = state.toStyle();
+  }
+
   void commitFunction(SgrFunction function) {
+    state = _applyKnownSgrFunction(state, function);
     functions.add(function);
+
+    final rawParameters =
+        _rawParams.sublist(_operationStart, _index + 1).join(';');
+    final operation = _SgrOperation(
+      string: '$CSI$rawParameters$SGR',
+      function: function,
+      state: state.toStyle(),
+    );
+    residual = _advanceSgrResidual(residual, _operationBefore, operation);
+
     _index++;
     _savedIndex = null;
   }
@@ -388,6 +342,118 @@ final class _SgrParsingState<S extends State<S>> {
         _index + 1,
       );
 }
+
+S _applyKnownSgrFunction<S extends State<S>>(
+  S state,
+  SgrFunction function,
+) =>
+    switch (function) {
+      SgrDefaultFunction() => state.reset,
+      SgrUnderlineFunction(:final style) => switch (style) {
+          null => state.resetUnderline,
+          UnderlineStyle.singly => state.underline,
+          UnderlineStyle.doubly => state.doublyUnderline,
+          UnderlineStyle.curly => state.curlyUnderline,
+          UnderlineStyle.dotted => state.dottedUnderline,
+          UnderlineStyle.dashed => state.dashedUnderline,
+        },
+      SgrColorFunction(:final code, :final color) => switch (code) {
+          ControlFunctionsSGR.fg => state.foreground(color),
+          ControlFunctionsSGR.bg => state.background(color),
+          ControlFunctionsSGR.underlineColor => state.underlineColor(color),
+          _ => state,
+        },
+      SgrSimpleFunction(:final code) => _applySimpleCode(state, code),
+      _ => state,
+    };
+
+S _applySimpleCode<S extends State<S>>(
+  S state,
+  ControlFunctionsSGR code,
+) =>
+    switch (code.index) {
+      RESET => state.reset,
+      BOLD => state.bold,
+      DIM => state.dim,
+      ITALIC => state.italic,
+      UNDERLINE => state.underline,
+      BLINK => state.blink,
+      BLINK_RAPID => state.blinkRapid,
+      INVERSE => state.inverse,
+      INVISIBLE => state.invisible,
+      STRIKETHROUGH => state.strikethrough,
+      PRIMARY_FONT => state.resetFont,
+      ALT_FONT_1 => state.alternativeFont1,
+      ALT_FONT_2 => state.alternativeFont2,
+      ALT_FONT_3 => state.alternativeFont3,
+      ALT_FONT_4 => state.alternativeFont4,
+      ALT_FONT_5 => state.alternativeFont5,
+      ALT_FONT_6 => state.alternativeFont6,
+      ALT_FONT_7 => state.alternativeFont7,
+      ALT_FONT_8 => state.alternativeFont8,
+      ALT_FONT_9 => state.alternativeFont9,
+      FRAKTUR => state.fraktur,
+      DOUBLY_UNDERLINE => state.doublyUnderline,
+      NOT_BOLD_NOT_DIM => state.resetBoldAndDim,
+      NOT_ITALIC => state.resetFontShape,
+      NOT_UNDERLINE => state.resetUnderline,
+      NOT_BLINK => state.resetBlink,
+      PROPORTIONAL_SPACING => state.proportionalSpacing,
+      NOT_INVERSE => state.resetInverse,
+      NOT_INVISIBLE => state.resetInvisible,
+      NOT_STRIKETHROUGH => state.resetStrikethrough,
+      FG_BLACK => state.foreground(Color16.black),
+      FG_RED => state.foreground(Color16.red),
+      FG_GREEN => state.foreground(Color16.green),
+      FG_YELLOW => state.foreground(Color16.yellow),
+      FG_BLUE => state.foreground(Color16.blue),
+      FG_MAGENTA => state.foreground(Color16.magenta),
+      FG_CYAN => state.foreground(Color16.cyan),
+      FG_WHITE => state.foreground(Color16.white),
+      FG_DEFAULT => state.resetForeground,
+      BG_BLACK => state.background(Color16.black),
+      BG_RED => state.background(Color16.red),
+      BG_GREEN => state.background(Color16.green),
+      BG_YELLOW => state.background(Color16.yellow),
+      BG_BLUE => state.background(Color16.blue),
+      BG_MAGENTA => state.background(Color16.magenta),
+      BG_CYAN => state.background(Color16.cyan),
+      BG_WHITE => state.background(Color16.white),
+      BG_DEFAULT => state.resetBackground,
+      NOT_PROPORTIONAL_SPACING => state.resetProportionalSpacing,
+      FRAME => state.frame,
+      ENCIRCLE => state.encircle,
+      OVERLINE => state.overline,
+      NOT_FRAME_NOT_ENCIRCLE => state.resetFrameAndEncircle,
+      NOT_OVERLINE => state.resetOverline,
+      UNDERLINE_COLOR_DEFAULT => state.resetUnderlineColor,
+      IDEOGRAM_UNDERLINE => state.ideogramUnderline,
+      IDEOGRAM_DOUBLY_UNDERLINE => state.ideogramDoublyUnderline,
+      IDEOGRAM_OVERLINE => state.ideogramOverline,
+      IDEOGRAM_DOUBLY_OVERLINE => state.ideogramDoublyOverline,
+      IDEOGRAM_STRESS => state.ideogramStress,
+      NOT_IDEOGRAM => state.resetIdeogram,
+      SUPERSCRIPT => state.superscript,
+      SUBSCRIPT => state.subscript,
+      NOT_SUPER_NOT_SUBSCRIPT => state.resetSuperAndSubscript,
+      FG_HIGH_BLACK => state.foreground(Color16.highBlack),
+      FG_HIGH_RED => state.foreground(Color16.highRed),
+      FG_HIGH_GREEN => state.foreground(Color16.highGreen),
+      FG_HIGH_YELLOW => state.foreground(Color16.highYellow),
+      FG_HIGH_BLUE => state.foreground(Color16.highBlue),
+      FG_HIGH_MAGENTA => state.foreground(Color16.highMagenta),
+      FG_HIGH_CYAN => state.foreground(Color16.highCyan),
+      FG_HIGH_WHITE => state.foreground(Color16.highWhite),
+      BG_HIGH_BLACK => state.background(Color16.highBlack),
+      BG_HIGH_RED => state.background(Color16.highRed),
+      BG_HIGH_GREEN => state.background(Color16.highGreen),
+      BG_HIGH_YELLOW => state.background(Color16.highYellow),
+      BG_HIGH_BLUE => state.background(Color16.highBlue),
+      BG_HIGH_MAGENTA => state.background(Color16.highMagenta),
+      BG_HIGH_CYAN => state.background(Color16.highCyan),
+      BG_HIGH_WHITE => state.background(Color16.highWhite),
+      _ => state,
+    };
 
 /// One of the functions an [Sgr] sequence carries.
 ///
@@ -439,6 +505,35 @@ final class SgrSimpleFunction extends SgrFunctionWithCode {
 
   @override
   String toString() => code.id;
+}
+
+/// An underline function written with sub-parameters: `CSI 4:n m`.
+///
+/// Unlike [SgrSimpleFunction], this keeps the exact decorated underline kind
+/// carried by the second sub-parameter.
+final class SgrUnderlineFunction extends SgrFunctionWithCode {
+  /// The underline kind, or null when `4:0` resets the underline.
+  final UnderlineStyle? style;
+
+  /// The underline [style] carried by a `4:n` function.
+  SgrUnderlineFunction(this.style)
+      : super(
+          switch (style) {
+            null => ControlFunctionsSGR.resetUnderline,
+            UnderlineStyle.doubly => ControlFunctionsSGR.doublyUnderline,
+            _ => ControlFunctionsSGR.underline,
+          },
+        );
+
+  @override
+  String toString() => switch (style) {
+        null => 'resetUnderline',
+        UnderlineStyle.singly => 'underline',
+        UnderlineStyle.doubly => 'doublyUnderline',
+        UnderlineStyle.curly => 'curlyUnderline',
+        UnderlineStyle.dotted => 'dottedUnderline',
+        UnderlineStyle.dashed => 'dashedUnderline',
+      };
 }
 
 /// A function setting one of the three colours: the foreground, the

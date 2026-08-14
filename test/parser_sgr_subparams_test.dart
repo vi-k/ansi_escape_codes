@@ -3,28 +3,40 @@ import 'package:test/test.dart';
 
 void main() {
   group('the underline sub-parameter:', () {
-    test('0 turns the underline off', () {
-      final state = Parser('$underline\x1B[4:0m').finalState;
+    test('0 through 5 keep their exact semantic kind', () {
+      const expected = <int, UnderlineStyle?>{
+        0: null,
+        1: UnderlineStyle.singly,
+        2: UnderlineStyle.doubly,
+        3: UnderlineStyle.curly,
+        4: UnderlineStyle.dotted,
+        5: UnderlineStyle.dashed,
+      };
 
-      expect(state.isUnderline, isFalse);
-      expect(state.isDoublyUnderline, isFalse);
-    });
+      for (final MapEntry(key: parameter, value: style) in expected.entries) {
+        final parser = Parser('\x1B[4:${parameter}m');
+        final function = (parser.pieces.single.entity as Sgr).functions.single;
 
-    test('2 is a double underline', () {
-      final state = Parser('\x1B[4:2m').finalState;
-
-      expect(state.isDoublyUnderline, isTrue);
-      expect(state.isUnderline, isFalse);
-    });
-
-    test('1 and the decorated kinds are an underline', () {
-      for (final style in [1, 3, 4, 5]) {
+        expect(function, isA<SgrUnderlineFunction>(), reason: '4:$parameter');
         expect(
-          Parser('\x1B[4:${style}m').finalState.isUnderline,
-          isTrue,
-          reason: '4:$style',
+          (function as SgrUnderlineFunction).style,
+          style,
+          reason: '4:$parameter',
         );
+        expect(parser.finalState.underlineStyle, style, reason: '4:$parameter');
       }
+    });
+
+    test('a kind beyond 5 stays unknown and does not change state', () {
+      final parser = Parser('\x1B[4:3m\x1B[4:6m');
+      final function = (parser.pieces.last.entity as Sgr).functions.single;
+
+      expect(function, isA<SgrUnknownParamsFunction>());
+      expect(
+        (function as SgrUnknownParamsFunction).numbers,
+        [4, 6],
+      );
+      expect(parser.finalState.underlineStyle, UnderlineStyle.curly);
     });
 
     test('an empty sub-parameter stands for the default value', () {

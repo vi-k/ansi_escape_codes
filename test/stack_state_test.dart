@@ -66,9 +66,12 @@ void main() {
     test('every reset code alone leaves the state at terminal colors', () {
       const resets = {
         'resetBoldAndDim': resetBoldAndDim,
+        'resetFont': primaryFont,
         'resetItalic': resetItalic,
+        'resetFontShape': resetFontShape,
         'resetUnderline': resetUnderline,
         'resetBlink': resetBlink,
+        'resetProportionalSpacing': resetProportionalSpacing,
         'resetInverse': resetInverse,
         'resetInvisible': resetInvisible,
         'resetStrikethrough': resetStrikethrough,
@@ -78,6 +81,7 @@ void main() {
         'resetFg': resetFg,
         'resetBg': resetBg,
         'resetUnderlineColor': resetUnderlineColor,
+        'resetIdeogram': resetIdeogram,
       };
 
       for (final MapEntry(key: name, value: code) in resets.entries) {

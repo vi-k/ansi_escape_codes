@@ -33,10 +33,19 @@ sealed class State<S extends State<S>> {
   /// Whether the text is dim.
   bool get isDim;
 
+  /// Which of the ten standard fonts is selected.
+  FontSelection get fontSelection;
+
+  /// Which slanted letter shape is active, or null for neither.
+  FontShape? get fontShape;
+
   /// Whether the text is italic.
   bool get isItalic;
 
-  /// Whether the text is underlined once.
+  /// Whether the text is fraktur (Gothic).
+  bool get isFraktur;
+
+  /// Whether the text has a single, curly, dotted or dashed underline.
   bool get isUnderline;
 
   /// Whether the text is underlined twice.
@@ -44,9 +53,21 @@ sealed class State<S extends State<S>> {
 
   /// Which underline the text carries, or null for none.
   ///
-  /// The two are one property to the terminal: underlining twice puts the
-  /// single underline out, not another line beside it.
+  /// The variants are one property to the terminal: selecting one puts the
+  /// previous underline out rather than adding another line beside it.
   UnderlineStyle? get underlineStyle;
+
+  /// Whether the text has a curly underline.
+  bool get isCurlyUnderline;
+
+  /// Whether the text has a dotted underline.
+  bool get isDottedUnderline;
+
+  /// Whether the text has a dashed underline.
+  bool get isDashedUnderline;
+
+  /// Whether proportional spacing is active.
+  bool get isProportionalSpacing;
 
   /// Whether the text blinks slowly.
   bool get isBlink;
@@ -77,6 +98,9 @@ sealed class State<S extends State<S>> {
 
   /// Whether the text is overlined.
   bool get isOverline;
+
+  /// Which ideogram rendition the text carries, or null for none.
+  IdeogramStyle? get ideogramStyle;
 
   /// Whether the text is raised.
   bool get isSuperscript;
@@ -115,14 +139,56 @@ sealed class State<S extends State<S>> {
   /// This state with dim added.
   S get dim;
 
+  /// This state with the first alternative font selected.
+  S get alternativeFont1;
+
+  /// This state with the second alternative font selected.
+  S get alternativeFont2;
+
+  /// This state with the third alternative font selected.
+  S get alternativeFont3;
+
+  /// This state with the fourth alternative font selected.
+  S get alternativeFont4;
+
+  /// This state with the fifth alternative font selected.
+  S get alternativeFont5;
+
+  /// This state with the sixth alternative font selected.
+  S get alternativeFont6;
+
+  /// This state with the seventh alternative font selected.
+  S get alternativeFont7;
+
+  /// This state with the eighth alternative font selected.
+  S get alternativeFont8;
+
+  /// This state with the ninth alternative font selected.
+  S get alternativeFont9;
+
   /// This state with italic added.
   S get italic;
+
+  /// This state with fraktur (Gothic) added.
+  S get fraktur;
 
   /// This state with a single underline added.
   S get underline;
 
   /// This state with a double underline added.
   S get doublyUnderline;
+
+  /// This state with a curly underline added.
+  S get curlyUnderline;
+
+  /// This state with a dotted underline added.
+  S get dottedUnderline;
+
+  /// This state with a dashed underline added.
+  S get dashedUnderline;
+
+  /// This state with proportional spacing added.
+  S get proportionalSpacing;
 
   /// This state with a slow blink added.
   S get blink;
@@ -148,6 +214,21 @@ sealed class State<S extends State<S>> {
   /// This state with a line above the text.
   S get overline;
 
+  /// This state with an ideogram underline or right side line.
+  S get ideogramUnderline;
+
+  /// This state with a double ideogram underline or right side line.
+  S get ideogramDoublyUnderline;
+
+  /// This state with an ideogram overline or left side line.
+  S get ideogramOverline;
+
+  /// This state with a double ideogram overline or left side line.
+  S get ideogramDoublyOverline;
+
+  /// This state with an ideogram stress mark.
+  S get ideogramStress;
+
   /// This state with the text raised.
   S get superscript;
 
@@ -170,11 +251,22 @@ sealed class State<S extends State<S>> {
   /// together.
   S get resetBoldAndDim;
 
-  /// This state with the italic taken off.
+  /// This state with the primary font restored.
+  S get resetFont;
+
+  /// This state with italic or fraktur taken off.
+  S get resetFontShape;
+
+  /// This state with the italic or fraktur taken off.
+  ///
+  /// This historical name is an alias of [resetFontShape].
   S get resetItalic;
 
-  /// This state with the underline taken off, single or double.
+  /// This state with every underline variant taken off.
   S get resetUnderline;
+
+  /// This state with proportional spacing taken off.
+  S get resetProportionalSpacing;
 
   /// This state with the blink taken off, slow or rapid.
   S get resetBlink;
@@ -194,6 +286,9 @@ sealed class State<S extends State<S>> {
 
   /// This state with the line above the text taken off.
   S get resetOverline;
+
+  /// This state with every ideogram rendition taken off.
+  S get resetIdeogram;
 
   /// This state with the text back on the line, raised or lowered.
   S get resetSuperAndSubscript;
@@ -245,7 +340,10 @@ sealed class State<S extends State<S>> {
     final otherForeground = other.foregroundColor;
     final otherBackground = other.backgroundColor;
     final otherUnderlineColor = other.underlineColorValue;
+    final otherFontSelection = other.fontSelection;
+    final otherFontShape = other.fontShape;
     final otherUnderlineStyle = other.underlineStyle;
+    final otherIdeogramStyle = other.ideogramStyle;
     final otherBlinkStyle = other.blinkStyle;
     final otherFrameStyle = other.frameStyle;
     final otherScriptStyle = other.scriptStyle;
@@ -261,16 +359,23 @@ sealed class State<S extends State<S>> {
                 otherUnderlineColor == null)
               59,
             if (isBold && !other.isBold || isDim && !other.isDim) 22,
-            if (isItalic && !other.isItalic) 23,
+            if (fontSelection != otherFontSelection &&
+                otherFontSelection == FontSelection.primary)
+              10,
+            if (fontShape != otherFontShape && otherFontShape == null) 23,
             if (underlineStyle != otherUnderlineStyle &&
                 otherUnderlineStyle == null)
               24,
+            if (isProportionalSpacing && !other.isProportionalSpacing) 50,
             if (blinkStyle != otherBlinkStyle && otherBlinkStyle == null) 25,
             if (isInverse && !other.isInverse) 27,
             if (isInvisible && !other.isInvisible) 28,
             if (isStrikethrough && !other.isStrikethrough) 29,
             if (frameStyle != otherFrameStyle && otherFrameStyle == null) 54,
             if (isOverline && !other.isOverline) 55,
+            if (ideogramStyle != otherIdeogramStyle &&
+                otherIdeogramStyle == null)
+              65,
             if (scriptStyle != otherScriptStyle && otherScriptStyle == null) 75,
           ];
 
@@ -296,46 +401,76 @@ sealed class State<S extends State<S>> {
     final jointIntensityReset =
         isBold && !other.isBold || isDim && !other.isDim;
 
-    final setParams = <int>[
+    final setParams = <String>[
       if (!skipSet) ...[
         if (foregroundColor != otherForeground && otherForeground is Color16)
-          _colorIndex(30, 90, otherForeground),
+          '${_colorIndex(30, 90, otherForeground)}',
         if (backgroundColor != otherBackground && otherBackground is Color16)
-          _colorIndex(40, 100, otherBackground),
+          '${_colorIndex(40, 100, otherBackground)}',
       ],
       if (jointIntensityReset) ...[
-        if (other.isBold) 1,
-        if (other.isDim) 2,
+        if (other.isBold) '1',
+        if (other.isDim) '2',
       ] else if (!skipSet) ...[
-        if (!isBold && other.isBold) 1,
-        if (!isDim && other.isDim) 2,
+        if (!isBold && other.isBold) '1',
+        if (!isDim && other.isDim) '2',
       ],
       if (!skipSet) ...[
-        if (!isItalic && other.isItalic) 3,
+        if (fontSelection != otherFontSelection &&
+            otherFontSelection != FontSelection.primary)
+          switch (otherFontSelection) {
+            FontSelection.primary => throw StateError('unreachable'),
+            FontSelection.alternative1 => '11',
+            FontSelection.alternative2 => '12',
+            FontSelection.alternative3 => '13',
+            FontSelection.alternative4 => '14',
+            FontSelection.alternative5 => '15',
+            FontSelection.alternative6 => '16',
+            FontSelection.alternative7 => '17',
+            FontSelection.alternative8 => '18',
+            FontSelection.alternative9 => '19',
+          },
+        if (fontShape != otherFontShape && otherFontShape != null)
+          switch (otherFontShape) {
+            FontShape.italic => '3',
+            FontShape.fraktur => '20',
+          },
         if (underlineStyle != otherUnderlineStyle &&
             otherUnderlineStyle != null)
           switch (otherUnderlineStyle) {
-            UnderlineStyle.singly => 4,
-            UnderlineStyle.doubly => 21,
+            UnderlineStyle.singly => '4',
+            UnderlineStyle.doubly => '21',
+            UnderlineStyle.curly => '4:3',
+            UnderlineStyle.dotted => '4:4',
+            UnderlineStyle.dashed => '4:5',
           },
+        if (!isProportionalSpacing && other.isProportionalSpacing) '26',
         if (blinkStyle != otherBlinkStyle && otherBlinkStyle != null)
           switch (otherBlinkStyle) {
-            BlinkStyle.slow => 5,
-            BlinkStyle.rapid => 6,
+            BlinkStyle.slow => '5',
+            BlinkStyle.rapid => '6',
           },
-        if (!isInverse && other.isInverse) 7,
-        if (!isInvisible && other.isInvisible) 8,
-        if (!isStrikethrough && other.isStrikethrough) 9,
+        if (!isInverse && other.isInverse) '7',
+        if (!isInvisible && other.isInvisible) '8',
+        if (!isStrikethrough && other.isStrikethrough) '9',
         if (frameStyle != otherFrameStyle && otherFrameStyle != null)
           switch (otherFrameStyle) {
-            FrameStyle.frame => 51,
-            FrameStyle.encircle => 52,
+            FrameStyle.frame => '51',
+            FrameStyle.encircle => '52',
           },
-        if (!isOverline && other.isOverline) 53,
+        if (!isOverline && other.isOverline) '53',
+        if (ideogramStyle != otherIdeogramStyle && otherIdeogramStyle != null)
+          switch (otherIdeogramStyle) {
+            IdeogramStyle.underline => '60',
+            IdeogramStyle.doublyUnderline => '61',
+            IdeogramStyle.overline => '62',
+            IdeogramStyle.doublyOverline => '63',
+            IdeogramStyle.stress => '64',
+          },
         if (scriptStyle != otherScriptStyle && otherScriptStyle != null)
           switch (otherScriptStyle) {
-            ScriptStyle.superscript => 73,
-            ScriptStyle.subscript => 74,
+            ScriptStyle.superscript => '73',
+            ScriptStyle.subscript => '74',
           },
       ],
     ];
@@ -358,13 +493,28 @@ sealed class State<S extends State<S>> {
   Style changeDefaultsTo(State other) => Style(
         bold: isBold || other.isBold,
         dim: isDim || other.isDim,
-        italic: isItalic || other.isItalic,
+        fontSelection: fontSelection == FontSelection.primary
+            ? other.fontSelection
+            : fontSelection,
+        italic: (fontShape ?? other.fontShape) == FontShape.italic,
+        fraktur: (fontShape ?? other.fontShape) == FontShape.fraktur,
         underline: underlineStyle == UnderlineStyle.singly ||
             underlineStyle == null &&
                 other.underlineStyle == UnderlineStyle.singly,
         doublyUnderline: underlineStyle == UnderlineStyle.doubly ||
             underlineStyle == null &&
                 other.underlineStyle == UnderlineStyle.doubly,
+        curlyUnderline: underlineStyle == UnderlineStyle.curly ||
+            underlineStyle == null &&
+                other.underlineStyle == UnderlineStyle.curly,
+        dottedUnderline: underlineStyle == UnderlineStyle.dotted ||
+            underlineStyle == null &&
+                other.underlineStyle == UnderlineStyle.dotted,
+        dashedUnderline: underlineStyle == UnderlineStyle.dashed ||
+            underlineStyle == null &&
+                other.underlineStyle == UnderlineStyle.dashed,
+        proportionalSpacing:
+            isProportionalSpacing || other.isProportionalSpacing,
         blink: blinkStyle == BlinkStyle.slow ||
             blinkStyle == null && other.blinkStyle == BlinkStyle.slow,
         blinkRapid: blinkStyle == BlinkStyle.rapid ||
@@ -377,6 +527,7 @@ sealed class State<S extends State<S>> {
         encircle: frameStyle == FrameStyle.encircle ||
             frameStyle == null && other.frameStyle == FrameStyle.encircle,
         overline: isOverline || other.isOverline,
+        ideogramStyle: ideogramStyle ?? other.ideogramStyle,
         superscript: scriptStyle == ScriptStyle.superscript ||
             scriptStyle == null && other.scriptStyle == ScriptStyle.superscript,
         subscript: scriptStyle == ScriptStyle.subscript ||
@@ -408,29 +559,28 @@ sealed class State<S extends State<S>> {
       };
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
         // A state that prints nothing is not the same as one that leaves the
         // terminal to its own colours, however alike their properties look.
         this is NoStyle,
         isBold,
         isDim,
-        isItalic,
-        isUnderline,
-        isDoublyUnderline,
-        isBlink,
-        isBlinkRapid,
+        fontSelection,
+        fontShape,
+        underlineStyle,
+        isProportionalSpacing,
+        blinkStyle,
         isInverse,
         isInvisible,
         isStrikethrough,
-        isFrame,
-        isEncircle,
+        frameStyle,
         isOverline,
-        isSuperscript,
-        isSubscript,
+        ideogramStyle,
+        scriptStyle,
         foregroundColor,
         backgroundColor,
         underlineColorValue,
-      );
+      ]);
 
   /// Equality is the visible surface: the properties and colours this
   /// state answers with, and whether it is a [NoStyle] — nothing else.
@@ -451,19 +601,18 @@ sealed class State<S extends State<S>> {
       (this is NoStyle) == (other is NoStyle) &&
       isBold == other.isBold &&
       isDim == other.isDim &&
-      isItalic == other.isItalic &&
-      isUnderline == other.isUnderline &&
-      isDoublyUnderline == other.isDoublyUnderline &&
-      isBlink == other.isBlink &&
-      isBlinkRapid == other.isBlinkRapid &&
+      fontSelection == other.fontSelection &&
+      fontShape == other.fontShape &&
+      underlineStyle == other.underlineStyle &&
+      isProportionalSpacing == other.isProportionalSpacing &&
+      blinkStyle == other.blinkStyle &&
       isInverse == other.isInverse &&
       isInvisible == other.isInvisible &&
       isStrikethrough == other.isStrikethrough &&
-      isFrame == other.isFrame &&
-      isEncircle == other.isEncircle &&
+      frameStyle == other.frameStyle &&
       isOverline == other.isOverline &&
-      isSuperscript == other.isSuperscript &&
-      isSubscript == other.isSubscript &&
+      ideogramStyle == other.ideogramStyle &&
+      scriptStyle == other.scriptStyle &&
       foregroundColor == other.foregroundColor &&
       backgroundColor == other.backgroundColor &&
       underlineColorValue == other.underlineColorValue;
@@ -476,9 +625,18 @@ sealed class State<S extends State<S>> {
     final values = [
       if (isBold) 'bold',
       if (isDim) 'dim',
-      if (isItalic) 'italic',
-      if (isUnderline) 'underline',
-      if (isDoublyUnderline) 'doublyUnderline',
+      if (fontSelection != FontSelection.primary)
+        'alternativeFont${fontSelection.index}',
+      if (fontShape != null) fontShape!.name,
+      if (underlineStyle != null)
+        switch (underlineStyle!) {
+          UnderlineStyle.singly => 'underline',
+          UnderlineStyle.doubly => 'doublyUnderline',
+          UnderlineStyle.curly => 'curlyUnderline',
+          UnderlineStyle.dotted => 'dottedUnderline',
+          UnderlineStyle.dashed => 'dashedUnderline',
+        },
+      if (isProportionalSpacing) 'proportionalSpacing',
       if (isBlink) 'blink',
       if (isBlinkRapid) 'blinkRapid',
       if (isInverse) 'inverse',
@@ -487,6 +645,7 @@ sealed class State<S extends State<S>> {
       if (isFrame) 'frame',
       if (isEncircle) 'encircle',
       if (isOverline) 'overline',
+      if (ideogramStyle != null) 'ideogram${_capitalized(ideogramStyle!.name)}',
       if (isSuperscript) 'superscript',
       if (isSubscript) 'subscript',
       if (foregroundColor != null) 'foreground: $foregroundColor',
@@ -496,6 +655,9 @@ sealed class State<S extends State<S>> {
 
     return values.join(', ');
   }
+
+  String _capitalized(String value) =>
+      '${value.substring(0, 1).toUpperCase()}${value.substring(1)}';
 
   @override
   String toString() => '$_objectTypeName(${toShortString()})';

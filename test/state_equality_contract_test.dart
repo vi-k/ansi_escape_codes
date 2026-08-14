@@ -51,5 +51,20 @@ void main() {
       expect(stack == style, isTrue);
       expect(stack.hashCode, style.hashCode);
     });
+
+    test('new rendition families compare across State implementations', () {
+      final stack = Stack.terminalColors.alternativeFont3.fraktur
+          .dottedUnderline.proportionalSpacing.ideogramDoublyOverline;
+      const style = Style(
+        fontSelection: FontSelection.alternative3,
+        fraktur: true,
+        dottedUnderline: true,
+        proportionalSpacing: true,
+        ideogramStyle: IdeogramStyle.doublyOverline,
+      );
+
+      expect(stack.toStyle(), style);
+      expect(stack.hashCode, style.hashCode);
+    });
   });
 }

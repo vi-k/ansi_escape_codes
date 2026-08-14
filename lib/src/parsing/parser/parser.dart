@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 
 import '../../ansi/c0.dart';
 import '../../ansi/c1.dart';
+import '../../ansi/csi.dart' show SGR;
 import '../../ansi/sgr.dart';
 import '../../extensions/remove.dart';
 import '../../extensions/show_control_codes.dart';
@@ -27,6 +28,7 @@ import '../state/state.dart';
 import 'unfinished_sequence_exception.dart';
 
 part 'printer.dart';
+part 'sgr_residual.dart';
 part 'entities/control_string.dart';
 part 'entities/csi.dart';
 part 'entities/entity.dart';
@@ -106,6 +108,13 @@ final class StackedParser extends _ParserBase<Stack> {
   StackedParser(String input) : super(input, Stack.terminalColors);
 }
 
+typedef _Seam<S extends State<S>> = ({
+  int cut,
+  S state,
+  Link? link,
+  _SgrResidual? residual,
+});
+
 final class _ParserBase<S extends State<S>> {
   /// The string being read, escape codes and all.
   final String input;
@@ -115,6 +124,7 @@ final class _ParserBase<S extends State<S>> {
   /// The terminal's own colours for a [Parser] and a [StackedParser]; a
   /// [Printer] reads each line from where the last one ended.
   final S initialState;
+  final _SgrResidual? _initialResidual;
 
   /// The link the string is read as starting inside, where there is one.
   ///
@@ -135,7 +145,12 @@ final class _ParserBase<S extends State<S>> {
   /// beginning every time, and cost the questions times the length of it.
   _Walk<S>? _walk;
 
-  _ParserBase(this.input, this.initialState, {this.initialLink});
+  _ParserBase(
+    this.input,
+    this.initialState, {
+    this.initialLink,
+    _SgrResidual? initialResidual,
+  }) : _initialResidual = initialResidual;
 
   String get _requirePlainString => _plainString ??= () {
         final buf = StringBuffer();
@@ -155,13 +170,20 @@ final class _ParserBase<S extends State<S>> {
   bool get isParsed => _pieces?.isParsed ?? false;
 
   /// The [Pieces] of the string.
-  Pieces<S> get pieces =>
-      _pieces ??= Pieces._(input, initialState, initialLink: initialLink);
+  Pieces<S> get pieces => _pieces ??= Pieces._(
+        input,
+        initialState,
+        initialLink: initialLink,
+        initialResidual: _initialResidual,
+      );
 
   /// The final [S] after processing the entire string.
   ///
   /// See also [stateAt].
   S get finalState => pieces._requireParsingResult.finalState;
+
+  _SgrResidual? get _finalResidual =>
+      pieces._requireParsingResult.finalResidual;
 
   /// The hyperlink the string leaves open, or `null` where it leaves none.
   ///
@@ -443,6 +465,7 @@ final class _ParserBase<S extends State<S>> {
 
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
+    var currentResidual = _initialResidual;
     Piece<S>? lastPiece;
 
     // The link the slice has open in what it has written; the link it would
@@ -538,7 +561,12 @@ final class _ParserBase<S extends State<S>> {
                 writtenLink = heldLink = link;
               }
 
-              final transit = currentState.transitTo(m.state);
+              final transit = _renditionTransit(
+                from: currentState,
+                fromResidual: currentResidual,
+                to: m.state.toStyle(),
+                toResidual: m._residual,
+              );
 
               // The link codes read after the opening are written straight
               // behind it, so they are the first of what follows it — and
@@ -577,12 +605,15 @@ final class _ParserBase<S extends State<S>> {
                 ..write(transit)
                 ..write(substring);
               currentState = m.state.toStyle();
+              currentResidual = m._residual;
               lastPiece = m;
             }
           }
 
         case EscapeCode():
-          if (entity is! Sgr && pos >= start && (end == null || pos <= end)) {
+          if (!_isStatefulSgr(entity) &&
+              pos >= start &&
+              (end == null || pos <= end)) {
             if (entity is Link) {
               // Held, and only where it changes what the slice has open: the
               // link the code leaves behind is what the slice is to be left
@@ -598,7 +629,12 @@ final class _ParserBase<S extends State<S>> {
               heldLinkCodes = '';
               writtenLink = heldLink;
 
-              final transit = currentState.transitTo(m.state);
+              final transit = _renditionTransit(
+                from: currentState,
+                fromResidual: currentResidual,
+                to: m.state.toStyle(),
+                toResidual: m._residual,
+              );
 
               // Ahead of the held link codes, which is where they were read
               // and so what follows the opening where there are any. Nothing
@@ -642,6 +678,7 @@ final class _ParserBase<S extends State<S>> {
                 buf.write(entity.string);
               }
               currentState = m.state.toStyle();
+              currentResidual = m._residual;
 
               // `ESC 8` carries the link the way it carries the rendition, so
               // a restore written out changes what the slice has open, and
@@ -667,8 +704,11 @@ final class _ParserBase<S extends State<S>> {
     }
 
     if (lastPiece != null) {
-      final tail = currentState.transitTo(
-        close ? initialState : lastPiece.state,
+      final tail = _renditionTransit(
+        from: currentState,
+        fromResidual: currentResidual,
+        to: close ? initialState.toStyle() : lastPiece.state.toStyle(),
+        toResidual: close ? _initialResidual : lastPiece._residual,
         skipSet: true,
       );
 
@@ -848,21 +888,30 @@ final class _ParserBase<S extends State<S>> {
   String insertAfter(int pos, String text) => _insert(pos, text, after: true);
 
   String _insert(int pos, String text, {required bool after}) {
-    final (cut, ambient, ambientLink) = _seamAt(pos, after: after);
+    final seam = _seamAt(pos, after: after);
 
-    // Read from the seam on both channels: the inserted text lands inside the
-    // state and inside the link that stand there, and what it leaves behind
-    // is what has to be put right for the tail.
-    final read = Pieces<S>._(text, ambient, initialLink: ambientLink)
-        ._requireParsingResult;
+    // Read from the complete seam: the inserted text lands inside the
+    // rendition branch and the link that stand there, and what it leaves
+    // behind is what has to be put right for the tail.
+    final read = Pieces<S>._(
+      text,
+      seam.state,
+      initialLink: seam.link,
+      initialResidual: seam.residual,
+    )._requireParsingResult;
 
-    final linkBack = _linkBack(seam: ambientLink, left: read.finalLink);
-    final transit = read.finalState.toStyle().transitTo(ambient);
-    final tail = input.substring(cut);
+    final linkBack = _linkBack(seam: seam.link, left: read.finalLink);
+    final transit = _renditionTransit(
+      from: read.finalState.toStyle(),
+      fromResidual: read.finalResidual,
+      to: seam.state.toStyle(),
+      toResidual: seam.residual,
+    );
+    final tail = input.substring(seam.cut);
     final following = _firstNotEmpty(linkBack, transit, tail);
     final insertion = _terminatedInsertion(text, read, following);
 
-    return '${input.substring(0, cut)}'
+    return '${input.substring(0, seam.cut)}'
         '$insertion$linkBack$transit$tail';
   }
 
@@ -933,16 +982,21 @@ final class _ParserBase<S extends State<S>> {
       left == seam ? '' : seam?._reopening ?? linkClose;
 
   /// The place in [input] an insertion at the plain text [pos] goes to, the
-  /// state it lands in, and the hyperlink it lands inside.
+  /// state and residual branch it lands in, and the hyperlink it lands inside.
   ///
   /// A seam is what lies between two neighbouring characters of the plain
   /// text: nothing at all, or the escape codes written between them. [after]
   /// chooses which end of it the insertion takes.
-  (int, S, Link?) _seamAt(int pos, {required bool after}) {
+  _Seam<S> _seamAt(int pos, {required bool after}) {
     RangeError.checkNotNegative(pos, 'pos');
 
     if (!after && pos == 0) {
-      return (0, initialState, initialLink);
+      return (
+        cut: 0,
+        state: initialState,
+        link: initialLink,
+        residual: _initialResidual,
+      );
     }
 
     // A seam is looked for in the pieces of text and nowhere else, so a walk
@@ -1025,13 +1079,19 @@ final class _ParserBase<S extends State<S>> {
           final before = walk.beforeRun;
 
           return (
-            walk.unfinishedRunStart ?? code.start,
-            before?.state ?? initialState,
-            before == null ? initialLink : before.link,
+            cut: walk.unfinishedRunStart ?? code.start,
+            state: before?.state ?? initialState,
+            link: before == null ? initialLink : before.link,
+            residual: before == null ? _initialResidual : before._residual,
           );
         }
 
-        return (cut, m.state, m.link);
+        return (
+          cut: cut,
+          state: m.state,
+          link: m.link,
+          residual: m._residual,
+        );
       }
     }
 
@@ -1069,13 +1129,19 @@ final class _ParserBase<S extends State<S>> {
       final before = walk.beforeRun;
 
       return (
-        walk.unfinishedRunStart ?? code.start,
-        before?.state ?? initialState,
-        before == null ? initialLink : before.link,
+        cut: walk.unfinishedRunStart ?? code.start,
+        state: before?.state ?? initialState,
+        link: before == null ? initialLink : before.link,
+        residual: before == null ? _initialResidual : before._residual,
       );
     }
 
-    return (input.length, finalState, finalLink);
+    return (
+      cut: input.length,
+      state: finalState,
+      link: finalLink,
+      residual: _finalResidual,
+    );
   }
 
   /// The string with [padding] written after it until the text is [width]
@@ -1137,6 +1203,7 @@ final class _ParserBase<S extends State<S>> {
   String optimize({bool close = true}) {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
+    var currentResidual = _initialResidual;
 
     // A control string the string never terminated — a window title no less
     // than a link opening, a `DCS` no less than an `OSC` — held back until what
@@ -1149,7 +1216,7 @@ final class _ParserBase<S extends State<S>> {
 
     for (final m in pieces) {
       final entity = m.entity;
-      if (entity is Sgr) {
+      if (_isStatefulSgr(entity)) {
         continue;
       }
 
@@ -1161,7 +1228,12 @@ final class _ParserBase<S extends State<S>> {
       if (entity is! Text || string.isNotEmpty) {
         // The styles collected so far are flushed first: erasing and
         // scrolling read the current background color.
-        final transit = currentState.transitTo(m.state);
+        final transit = _renditionTransit(
+          from: currentState,
+          fromResidual: currentResidual,
+          to: m.state.toStyle(),
+          toResidual: m._residual,
+        );
 
         if (heldOpening.isNotEmpty) {
           buf.write(
@@ -1187,6 +1259,7 @@ final class _ParserBase<S extends State<S>> {
       }
 
       currentState = m.state.toStyle();
+      currentResidual = m._residual;
     }
 
     // The string is over. What follows the opening held back is the close
@@ -1198,11 +1271,14 @@ final class _ParserBase<S extends State<S>> {
     // the guarantee is checked and not assumed.
     final lastPiece = pieces.lastOrNull;
     final closingLink = close && finalLink != null ? linkClose : '';
-    final tail = close
-        ? currentState.transitTo(initialState)
-        : lastPiece == null
-            ? ''
-            : currentState.transitTo(lastPiece.state);
+    final tail = lastPiece == null
+        ? ''
+        : _renditionTransit(
+            from: currentState,
+            fromResidual: currentResidual,
+            to: close ? initialState.toStyle() : lastPiece.state.toStyle(),
+            toResidual: close ? _initialResidual : lastPiece._residual,
+          );
     final following = _firstNotEmpty(closingLink, tail);
 
     buf

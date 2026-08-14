@@ -7,6 +7,7 @@ part of '../parser.dart';
 /// individual pieces found in the input string.
 final class Pieces<S extends State<S>> extends Iterable<Piece<S>> {
   final S _initialState;
+  final _SgrResidual? _initialResidual;
 
   /// The link the string is read as starting inside, where there is one.
   final Link? _initialLink;
@@ -20,8 +21,13 @@ final class Pieces<S extends State<S>> extends Iterable<Piece<S>> {
 
   _PiecesResult<S>? _parsingResult;
 
-  Pieces._(this._input, this._initialState, {Link? initialLink})
-      : _initialLink = initialLink;
+  Pieces._(
+    this._input,
+    this._initialState, {
+    Link? initialLink,
+    _SgrResidual? initialResidual,
+  })  : _initialLink = initialLink,
+        _initialResidual = initialResidual;
 
   _PiecesResult<S> get _requireParsingResult {
     final parsingResult = _parsingResult;
@@ -47,6 +53,10 @@ final class Pieces<S extends State<S>> extends Iterable<Piece<S>> {
   @visibleForTesting
   bool get isParsed => _parsingResult != null;
 
-  _ParserIterator<S> _createIterator() =>
-      _ParserIterator<S>._(this, _initialState, _initialLink);
+  _ParserIterator<S> _createIterator() => _ParserIterator<S>._(
+        this,
+        _initialState,
+        _initialLink,
+        _initialResidual,
+      );
 }

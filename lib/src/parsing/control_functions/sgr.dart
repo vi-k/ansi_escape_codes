@@ -37,38 +37,38 @@ enum ControlFunctionsSGR {
   /// See [sgr.strikethrough] and [sgr.STRIKETHROUGH].
   strikethrough, // 9
 
-  /// See [sgr.PRIMARY_FONT].
-  primaryFont(isUnused: true), // 10
+  /// See [sgr.primaryFont] and [sgr.PRIMARY_FONT].
+  primaryFont, // 10
 
-  /// See [sgr.ALT_FONT_1].
-  alternativeFont1(isUnused: true), // 11
+  /// See [sgr.alternativeFont1] and [sgr.ALT_FONT_1].
+  alternativeFont1, // 11
 
-  /// See [sgr.ALT_FONT_2].
-  alternativeFont2(isUnused: true), // 12
+  /// See [sgr.alternativeFont2] and [sgr.ALT_FONT_2].
+  alternativeFont2, // 12
 
-  /// See [sgr.ALT_FONT_3].
-  alternativeFont3(isUnused: true), // 13
+  /// See [sgr.alternativeFont3] and [sgr.ALT_FONT_3].
+  alternativeFont3, // 13
 
-  /// See [sgr.ALT_FONT_4].
-  alternativeFont4(isUnused: true), // 14
+  /// See [sgr.alternativeFont4] and [sgr.ALT_FONT_4].
+  alternativeFont4, // 14
 
-  /// See [sgr.ALT_FONT_5].
-  alternativeFont5(isUnused: true), // 15
+  /// See [sgr.alternativeFont5] and [sgr.ALT_FONT_5].
+  alternativeFont5, // 15
 
-  /// See [sgr.ALT_FONT_6].
-  alternativeFont6(isUnused: true), // 16
+  /// See [sgr.alternativeFont6] and [sgr.ALT_FONT_6].
+  alternativeFont6, // 16
 
-  /// See [sgr.ALT_FONT_7].
-  alternativeFont7(isUnused: true), // 17
+  /// See [sgr.alternativeFont7] and [sgr.ALT_FONT_7].
+  alternativeFont7, // 17
 
-  /// See [sgr.ALT_FONT_8].
-  alternativeFont8(isUnused: true), // 18
+  /// See [sgr.alternativeFont8] and [sgr.ALT_FONT_8].
+  alternativeFont8, // 18
 
-  /// See [sgr.ALT_FONT_9].
-  alternativeFont9(isUnused: true), // 19
+  /// See [sgr.alternativeFont9] and [sgr.ALT_FONT_9].
+  alternativeFont9, // 19
 
-  /// See [sgr.FRAKTUR].
-  fraktur(isUnused: true), // 20
+  /// See [sgr.fraktur] and [sgr.FRAKTUR].
+  fraktur, // 20
 
   /// See [sgr.doublyUnderline] and [sgr.DOUBLY_UNDERLINE].
   doublyUnderline, // 21
@@ -85,9 +85,8 @@ enum ControlFunctionsSGR {
   /// See [sgr.resetBlink] and [sgr.NOT_BLINK].
   resetBlink, // 25
 
-  /// Reserved for proportional spacing as specified in CCITT Recommendation
-  /// T.61.
-  reserved_26(isUnused: true), // 26
+  /// See [sgr.proportionalSpacing] and [sgr.PROPORTIONAL_SPACING].
+  reserved_26(id: 'proportionalSpacing'), // 26
 
   /// See [sgr.resetInverse] and [sgr.NOT_INVERSE].
   resetInverse, // 27
@@ -158,9 +157,9 @@ enum ControlFunctionsSGR {
   /// See [sgr.resetBg] and [sgr.BG_DEFAULT].
   resetBg, // 49
 
-  /// Reserved for cancelling the effect of the rendering aspect established
-  /// by parameter value 26.
-  reserved_50(isUnused: true), // 50
+  /// See [sgr.resetProportionalSpacing] and
+  /// [sgr.NOT_PROPORTIONAL_SPACING].
+  reserved_50(id: 'resetProportionalSpacing'), // 50
 
   /// See [sgr.frame] and [sgr.FRAME].
   frame, // 51
@@ -190,24 +189,25 @@ enum ControlFunctionsSGR {
   /// See [sgr.resetUnderlineColor] and [sgr.UNDERLINE_COLOR_DEFAULT].
   resetUnderlineColor, // 59
 
-  /// Ideogram underline or right side line.
-  reserved_60(isUnused: true), // 60
+  /// See [sgr.ideogramUnderline] and [sgr.IDEOGRAM_UNDERLINE].
+  reserved_60(id: 'ideogramUnderline'), // 60
 
-  /// Ideogram double underline or double line on the right side.
-  reserved_61(isUnused: true), // 61
+  /// See [sgr.ideogramDoublyUnderline] and
+  /// [sgr.IDEOGRAM_DOUBLY_UNDERLINE].
+  reserved_61(id: 'ideogramDoublyUnderline'), // 61
 
-  /// Ideogram overline or left side line.
-  reserved_62(isUnused: true), // 62
+  /// See [sgr.ideogramOverline] and [sgr.IDEOGRAM_OVERLINE].
+  reserved_62(id: 'ideogramOverline'), // 62
 
-  /// Ideogram double overline or double line on the left side.
-  reserved_63(isUnused: true), // 63
+  /// See [sgr.ideogramDoublyOverline] and
+  /// [sgr.IDEOGRAM_DOUBLY_OVERLINE].
+  reserved_63(id: 'ideogramDoublyOverline'), // 63
 
-  /// Ideogram stress marking.
-  reserved_64(isUnused: true), // 64
+  /// See [sgr.ideogramStress] and [sgr.IDEOGRAM_STRESS].
+  reserved_64(id: 'ideogramStress'), // 64
 
-  /// Cancels the effect of the rendition aspects established by parameter
-  /// values 60 to 64.
-  reserved_65(isUnused: true), // 65
+  /// See [sgr.resetIdeogram] and [sgr.NOT_IDEOGRAM].
+  reserved_65(id: 'resetIdeogram'), // 65
 
   /// Reserved.
   reserved_66(isUnused: true), // 66

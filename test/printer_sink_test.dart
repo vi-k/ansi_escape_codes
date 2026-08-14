@@ -88,6 +88,25 @@ void main() {
       );
     });
 
+    test('leaves opaque rendition where it was', () {
+      const unknown = '\x1B[99m';
+      final buf = StringBuffer();
+      final printer = SinkPrinter(buf);
+
+      expect(
+        printer.prepare('${unknown}asked about'),
+        '$reset${unknown}asked about$reset',
+      );
+
+      printer.write('written');
+
+      expect(
+        buf.toString(),
+        '${reset}written',
+        reason: 'the unseen piece must not seed the next real write',
+      );
+    });
+
     test('while a line prepared by a printer is carried, as it always was', () {
       final printer = Printer();
 

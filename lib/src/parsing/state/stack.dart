@@ -13,7 +13,7 @@ part of 'state.dart';
 /// once. A string of 320 kB that switched colour without ever resetting took
 /// 15 s and 7.6 GB where a [Style] took 51 ms and nothing.
 ///
-/// Nothing is lost by it: every one of the eight histories is only ever asked
+/// Nothing is lost by it: every history is only ever asked
 /// whether it is empty and what is on top, and only ever grows and shrinks at
 /// that same end.
 final class _Frame<T> {
@@ -50,14 +50,17 @@ final class Stack extends State<Stack> {
   final _Frame<IntensityStyle>? _intensity;
   final int _boldCounter;
   final int _dimCounter;
-  final int _italicCounter;
+  final _Frame<FontSelection>? _font;
+  final _Frame<FontShape>? _fontShape;
   final _Frame<UnderlineStyle>? _underline;
+  final int _proportionalSpacingCounter;
   final _Frame<BlinkStyle>? _blink;
   final int _inverseCounter;
   final int _invisibleCounter;
   final int _strikethroughCounter;
   final _Frame<FrameStyle>? _frame;
   final int _overlineCounter;
+  final _Frame<IdeogramStyle>? _ideogram;
   final _Frame<ScriptStyle>? _script;
   final _Frame<Color>? _foreground;
   final _Frame<Color>? _background;
@@ -67,14 +70,17 @@ final class Stack extends State<Stack> {
     required _Frame<IntensityStyle>? intensity,
     required int boldCounter,
     required int dimCounter,
-    required int italicCounter,
+    required _Frame<FontSelection>? font,
+    required _Frame<FontShape>? fontShape,
     required _Frame<UnderlineStyle>? underline,
+    required int proportionalSpacingCounter,
     required _Frame<BlinkStyle>? blink,
     required int inverseCounter,
     required int invisibleCounter,
     required int strikethroughCounter,
     required _Frame<FrameStyle>? frame,
     required int overlineCounter,
+    required _Frame<IdeogramStyle>? ideogram,
     required _Frame<ScriptStyle>? script,
     required _Frame<Color>? foreground,
     required _Frame<Color>? background,
@@ -82,14 +88,17 @@ final class Stack extends State<Stack> {
   })  : _intensity = intensity,
         _boldCounter = boldCounter,
         _dimCounter = dimCounter,
-        _italicCounter = italicCounter,
+        _font = font,
+        _fontShape = fontShape,
         _underline = underline,
+        _proportionalSpacingCounter = proportionalSpacingCounter,
         _blink = blink,
         _inverseCounter = inverseCounter,
         _invisibleCounter = invisibleCounter,
         _strikethroughCounter = strikethroughCounter,
         _frame = frame,
         _overlineCounter = overlineCounter,
+        _ideogram = ideogram,
         _script = script,
         _foreground = foreground,
         _background = background,
@@ -101,14 +110,17 @@ final class Stack extends State<Stack> {
     intensity: null,
     boldCounter: 0,
     dimCounter: 0,
-    italicCounter: 0,
+    font: null,
+    fontShape: null,
     underline: null,
+    proportionalSpacingCounter: 0,
     blink: null,
     inverseCounter: 0,
     invisibleCounter: 0,
     strikethroughCounter: 0,
     frame: null,
     overlineCounter: 0,
+    ideogram: null,
     script: null,
     foreground: null,
     background: null,
@@ -122,20 +134,44 @@ final class Stack extends State<Stack> {
   bool get isDim => _dimCounter != 0;
 
   @override
-  bool get isItalic => _italicCounter != 0;
+  FontSelection get fontSelection => _font?.value ?? FontSelection.primary;
 
   @override
-  bool get isUnderline => _underline?.value == UnderlineStyle.singly;
+  FontShape? get fontShape => _fontShape?.value;
 
   @override
-  bool get isDoublyUnderline => _underline?.value == UnderlineStyle.doubly;
+  bool get isItalic => fontShape == FontShape.italic;
 
   @override
-  UnderlineStyle? get underlineStyle => isUnderline
-      ? UnderlineStyle.singly
-      : isDoublyUnderline
-          ? UnderlineStyle.doubly
-          : null;
+  bool get isFraktur => fontShape == FontShape.fraktur;
+
+  @override
+  bool get isUnderline => switch (underlineStyle) {
+        UnderlineStyle.singly ||
+        UnderlineStyle.curly ||
+        UnderlineStyle.dotted ||
+        UnderlineStyle.dashed =>
+          true,
+        UnderlineStyle.doubly || null => false,
+      };
+
+  @override
+  bool get isDoublyUnderline => underlineStyle == UnderlineStyle.doubly;
+
+  @override
+  bool get isCurlyUnderline => underlineStyle == UnderlineStyle.curly;
+
+  @override
+  bool get isDottedUnderline => underlineStyle == UnderlineStyle.dotted;
+
+  @override
+  bool get isDashedUnderline => underlineStyle == UnderlineStyle.dashed;
+
+  @override
+  UnderlineStyle? get underlineStyle => _underline?.value;
+
+  @override
+  bool get isProportionalSpacing => _proportionalSpacingCounter != 0;
 
   @override
   bool get isBlink => _blink?.value == BlinkStyle.slow;
@@ -176,6 +212,9 @@ final class Stack extends State<Stack> {
   bool get isOverline => _overlineCounter != 0;
 
   @override
+  IdeogramStyle? get ideogramStyle => _ideogram?.value;
+
+  @override
   bool get isSuperscript => _script?.value == ScriptStyle.superscript;
 
   @override
@@ -210,16 +249,56 @@ final class Stack extends State<Stack> {
       );
 
   @override
-  Stack get italic => _copyWith(italicCounter: _italicCounter + 1);
+  Stack get alternativeFont1 => _setFont(FontSelection.alternative1);
 
   @override
-  Stack get underline => _copyWith(
-        underline: (frames: _Frame(UnderlineStyle.singly, _underline)),
-      );
+  Stack get alternativeFont2 => _setFont(FontSelection.alternative2);
 
   @override
-  Stack get doublyUnderline => _copyWith(
-        underline: (frames: _Frame(UnderlineStyle.doubly, _underline)),
+  Stack get alternativeFont3 => _setFont(FontSelection.alternative3);
+
+  @override
+  Stack get alternativeFont4 => _setFont(FontSelection.alternative4);
+
+  @override
+  Stack get alternativeFont5 => _setFont(FontSelection.alternative5);
+
+  @override
+  Stack get alternativeFont6 => _setFont(FontSelection.alternative6);
+
+  @override
+  Stack get alternativeFont7 => _setFont(FontSelection.alternative7);
+
+  @override
+  Stack get alternativeFont8 => _setFont(FontSelection.alternative8);
+
+  @override
+  Stack get alternativeFont9 => _setFont(FontSelection.alternative9);
+
+  @override
+  Stack get italic => _setFontShape(FontShape.italic);
+
+  @override
+  Stack get fraktur => _setFontShape(FontShape.fraktur);
+
+  @override
+  Stack get underline => _setUnderline(UnderlineStyle.singly);
+
+  @override
+  Stack get doublyUnderline => _setUnderline(UnderlineStyle.doubly);
+
+  @override
+  Stack get curlyUnderline => _setUnderline(UnderlineStyle.curly);
+
+  @override
+  Stack get dottedUnderline => _setUnderline(UnderlineStyle.dotted);
+
+  @override
+  Stack get dashedUnderline => _setUnderline(UnderlineStyle.dashed);
+
+  @override
+  Stack get proportionalSpacing => _copyWith(
+        proportionalSpacingCounter: _proportionalSpacingCounter + 1,
       );
 
   @override
@@ -256,6 +335,23 @@ final class Stack extends State<Stack> {
   Stack get overline => _copyWith(overlineCounter: _overlineCounter + 1);
 
   @override
+  Stack get ideogramUnderline => _setIdeogram(IdeogramStyle.underline);
+
+  @override
+  Stack get ideogramDoublyUnderline =>
+      _setIdeogram(IdeogramStyle.doublyUnderline);
+
+  @override
+  Stack get ideogramOverline => _setIdeogram(IdeogramStyle.overline);
+
+  @override
+  Stack get ideogramDoublyOverline =>
+      _setIdeogram(IdeogramStyle.doublyOverline);
+
+  @override
+  Stack get ideogramStress => _setIdeogram(IdeogramStyle.stress);
+
+  @override
   Stack get superscript => _copyWith(
         script: (frames: _Frame(ScriptStyle.superscript, _script)),
       );
@@ -286,6 +382,22 @@ final class Stack extends State<Stack> {
         ),
       );
 
+  Stack _setFont(FontSelection font) => _copyWith(
+        font: (frames: _Frame(font, _font)),
+      );
+
+  Stack _setFontShape(FontShape shape) => _copyWith(
+        fontShape: (frames: _Frame(shape, _fontShape)),
+      );
+
+  Stack _setUnderline(UnderlineStyle style) => _copyWith(
+        underline: (frames: _Frame(style, _underline)),
+      );
+
+  Stack _setIdeogram(IdeogramStyle style) => _copyWith(
+        ideogram: (frames: _Frame(style, _ideogram)),
+      );
+
   @override
   Stack get reset => terminalColors;
 
@@ -306,13 +418,27 @@ final class Stack extends State<Stack> {
   }
 
   @override
-  Stack get resetItalic {
-    if (_italicCounter == 0) {
+  Stack get resetFont {
+    final top = _font;
+    if (top == null) {
       return this;
     }
 
-    return _copyWith(italicCounter: _italicCounter - 1);
+    return _copyWith(font: (frames: top.under));
   }
+
+  @override
+  Stack get resetFontShape {
+    final top = _fontShape;
+    if (top == null) {
+      return this;
+    }
+
+    return _copyWith(fontShape: (frames: top.under));
+  }
+
+  @override
+  Stack get resetItalic => resetFontShape;
 
   @override
   Stack get resetUnderline {
@@ -322,6 +448,17 @@ final class Stack extends State<Stack> {
     }
 
     return _copyWith(underline: (frames: top.under));
+  }
+
+  @override
+  Stack get resetProportionalSpacing {
+    if (_proportionalSpacingCounter == 0) {
+      return this;
+    }
+
+    return _copyWith(
+      proportionalSpacingCounter: _proportionalSpacingCounter - 1,
+    );
   }
 
   @override
@@ -381,6 +518,16 @@ final class Stack extends State<Stack> {
   }
 
   @override
+  Stack get resetIdeogram {
+    final top = _ideogram;
+    if (top == null) {
+      return this;
+    }
+
+    return _copyWith(ideogram: (frames: top.under));
+  }
+
+  @override
   Stack get resetSuperAndSubscript {
     final top = _script;
     if (top == null) {
@@ -431,14 +578,17 @@ final class Stack extends State<Stack> {
     _Replace<IntensityStyle>? intensity,
     int? boldCounter,
     int? dimCounter,
-    int? italicCounter,
+    _Replace<FontSelection>? font,
+    _Replace<FontShape>? fontShape,
     _Replace<UnderlineStyle>? underline,
+    int? proportionalSpacingCounter,
     _Replace<BlinkStyle>? blink,
     int? inverseCounter,
     int? invisibleCounter,
     int? strikethroughCounter,
     _Replace<FrameStyle>? frame,
     int? overlineCounter,
+    _Replace<IdeogramStyle>? ideogram,
     _Replace<ScriptStyle>? script,
     _Replace<Color>? foreground,
     _Replace<Color>? background,
@@ -448,14 +598,18 @@ final class Stack extends State<Stack> {
         intensity: intensity == null ? _intensity : intensity.frames,
         boldCounter: boldCounter ?? _boldCounter,
         dimCounter: dimCounter ?? _dimCounter,
-        italicCounter: italicCounter ?? _italicCounter,
+        font: font == null ? _font : font.frames,
+        fontShape: fontShape == null ? _fontShape : fontShape.frames,
         underline: underline == null ? _underline : underline.frames,
+        proportionalSpacingCounter:
+            proportionalSpacingCounter ?? _proportionalSpacingCounter,
         blink: blink == null ? _blink : blink.frames,
         inverseCounter: inverseCounter ?? _inverseCounter,
         invisibleCounter: invisibleCounter ?? _invisibleCounter,
         strikethroughCounter: strikethroughCounter ?? _strikethroughCounter,
         frame: frame == null ? _frame : frame.frames,
         overlineCounter: overlineCounter ?? _overlineCounter,
+        ideogram: ideogram == null ? _ideogram : ideogram.frames,
         script: script == null ? _script : script.frames,
         foreground: foreground == null ? _foreground : foreground.frames,
         background: background == null ? _background : background.frames,
@@ -467,9 +621,15 @@ final class Stack extends State<Stack> {
   Style toStyle() => Style(
         bold: isBold,
         dim: isDim,
+        fontSelection: fontSelection,
         italic: isItalic,
-        underline: isUnderline,
+        fraktur: isFraktur,
+        underline: underlineStyle == UnderlineStyle.singly,
         doublyUnderline: isDoublyUnderline,
+        curlyUnderline: isCurlyUnderline,
+        dottedUnderline: isDottedUnderline,
+        dashedUnderline: isDashedUnderline,
+        proportionalSpacing: isProportionalSpacing,
         blink: isBlink,
         blinkRapid: isBlinkRapid,
         inverse: isInverse,
@@ -478,6 +638,7 @@ final class Stack extends State<Stack> {
         frame: isFrame,
         encircle: isEncircle,
         overline: isOverline,
+        ideogramStyle: ideogramStyle,
         superscript: isSuperscript,
         subscript: isSubscript,
         foreground: foregroundColor,
