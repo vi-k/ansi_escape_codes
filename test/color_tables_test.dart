@@ -21,21 +21,53 @@ void main() {
   group('Styles:', () {
     final styles = reflectClass(Styles);
 
-    test('holds the 15 properties and the 256 colours thrice, nothing else',
+    test('holds the 34 properties and the 256 colours thrice, nothing else',
         () {
       final consts = styles.declarations.values
           .whereType<VariableMirror>()
           .where((d) => d.isStatic && d.isConst);
-      expect(consts, hasLength(783));
+      expect(consts, hasLength(802));
     });
 
     test('each property style carries its own property', () {
       const expected = {
         'bold': Style(bold: true),
         'dim': Style(dim: true),
+        'alternativeFont1': Style(
+          fontSelection: FontSelection.alternative1,
+        ),
+        'alternativeFont2': Style(
+          fontSelection: FontSelection.alternative2,
+        ),
+        'alternativeFont3': Style(
+          fontSelection: FontSelection.alternative3,
+        ),
+        'alternativeFont4': Style(
+          fontSelection: FontSelection.alternative4,
+        ),
+        'alternativeFont5': Style(
+          fontSelection: FontSelection.alternative5,
+        ),
+        'alternativeFont6': Style(
+          fontSelection: FontSelection.alternative6,
+        ),
+        'alternativeFont7': Style(
+          fontSelection: FontSelection.alternative7,
+        ),
+        'alternativeFont8': Style(
+          fontSelection: FontSelection.alternative8,
+        ),
+        'alternativeFont9': Style(
+          fontSelection: FontSelection.alternative9,
+        ),
         'italic': Style(italic: true),
+        'fraktur': Style(fraktur: true),
         'underline': Style(underline: true),
         'doublyUnderline': Style(doublyUnderline: true),
+        'curlyUnderline': Style(curlyUnderline: true),
+        'dottedUnderline': Style(dottedUnderline: true),
+        'dashedUnderline': Style(dashedUnderline: true),
+        'proportionalSpacing': Style(proportionalSpacing: true),
         'blink': Style(blink: true),
         'blinkRapid': Style(blinkRapid: true),
         'inverse': Style(inverse: true),
@@ -44,6 +76,19 @@ void main() {
         'frame': Style(frame: true),
         'encircle': Style(encircle: true),
         'overline': Style(overline: true),
+        'ideogramUnderline': Style(
+          ideogramStyle: IdeogramStyle.underline,
+        ),
+        'ideogramDoublyUnderline': Style(
+          ideogramStyle: IdeogramStyle.doublyUnderline,
+        ),
+        'ideogramOverline': Style(
+          ideogramStyle: IdeogramStyle.overline,
+        ),
+        'ideogramDoublyOverline': Style(
+          ideogramStyle: IdeogramStyle.doublyOverline,
+        ),
+        'ideogramStress': Style(ideogramStyle: IdeogramStyle.stress),
         'superscript': Style(superscript: true),
         'subscript': Style(subscript: true),
       };

@@ -6,7 +6,7 @@ part of 'state.dart';
 
 /// Every style that carries one thing, named and constant.
 ///
-/// The fifteen properties — `Styles.bold`, `Styles.italic` — and the
+/// The named rendition properties — `Styles.bold`, `Styles.italic` — and the
 /// 256-colour table three times over: `Styles.red` for the colour of the
 /// text, `Styles.bgRed` for the colour behind it, `Styles.underlineRed` for
 /// the colour of the underline. The names are those of [Color256], and the
@@ -37,9 +37,32 @@ part of 'state.dart';
 abstract final class Styles {
   static const Style bold = Style(bold: true);
   static const Style dim = Style(dim: true);
+  static const Style alternativeFont1 =
+      Style(fontSelection: FontSelection.alternative1);
+  static const Style alternativeFont2 =
+      Style(fontSelection: FontSelection.alternative2);
+  static const Style alternativeFont3 =
+      Style(fontSelection: FontSelection.alternative3);
+  static const Style alternativeFont4 =
+      Style(fontSelection: FontSelection.alternative4);
+  static const Style alternativeFont5 =
+      Style(fontSelection: FontSelection.alternative5);
+  static const Style alternativeFont6 =
+      Style(fontSelection: FontSelection.alternative6);
+  static const Style alternativeFont7 =
+      Style(fontSelection: FontSelection.alternative7);
+  static const Style alternativeFont8 =
+      Style(fontSelection: FontSelection.alternative8);
+  static const Style alternativeFont9 =
+      Style(fontSelection: FontSelection.alternative9);
   static const Style italic = Style(italic: true);
+  static const Style fraktur = Style(fraktur: true);
   static const Style underline = Style(underline: true);
   static const Style doublyUnderline = Style(doublyUnderline: true);
+  static const Style curlyUnderline = Style(curlyUnderline: true);
+  static const Style dottedUnderline = Style(dottedUnderline: true);
+  static const Style dashedUnderline = Style(dashedUnderline: true);
+  static const Style proportionalSpacing = Style(proportionalSpacing: true);
   static const Style blink = Style(blink: true);
   static const Style blinkRapid = Style(blinkRapid: true);
   static const Style inverse = Style(inverse: true);
@@ -48,6 +71,16 @@ abstract final class Styles {
   static const Style frame = Style(frame: true);
   static const Style encircle = Style(encircle: true);
   static const Style overline = Style(overline: true);
+  static const Style ideogramUnderline =
+      Style(ideogramStyle: IdeogramStyle.underline);
+  static const Style ideogramDoublyUnderline =
+      Style(ideogramStyle: IdeogramStyle.doublyUnderline);
+  static const Style ideogramOverline =
+      Style(ideogramStyle: IdeogramStyle.overline);
+  static const Style ideogramDoublyOverline =
+      Style(ideogramStyle: IdeogramStyle.doublyOverline);
+  static const Style ideogramStress =
+      Style(ideogramStyle: IdeogramStyle.stress);
   static const Style superscript = Style(superscript: true);
   static const Style subscript = Style(subscript: true);
 

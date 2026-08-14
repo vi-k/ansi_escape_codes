@@ -75,6 +75,21 @@ void main() {
           Styles.underline,
           '\x1B[4m',
         ),
+        'a curly underline replaces the single one': (
+          Styles.underline,
+          Styles.curlyUnderline,
+          '\x1B[4:3m',
+        ),
+        'a dotted underline replaces the curly one': (
+          Styles.curlyUnderline,
+          Styles.dottedUnderline,
+          '\x1B[4:4m',
+        ),
+        'a dashed underline replaces the dotted one': (
+          Styles.dottedUnderline,
+          Styles.dashedUnderline,
+          '\x1B[4:5m',
+        ),
         'one blink replaces the other': (
           Styles.blink,
           Styles.blinkRapid,
