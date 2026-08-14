@@ -73,4 +73,39 @@ void main() {
       expect(Parser(output).optimize(close: false), output);
     });
   });
+
+  group('substring restores opaque state:', () {
+    test('the opener may stand before the slice', () {
+      const input = '$fgRed${_unknown}A${bold}B';
+
+      expect(
+        Parser(input).substring(1, maxLength: 1),
+        '$fgRed$_unknown${bold}B$reset',
+      );
+      expect(
+        Parser(input).substring(1, maxLength: 1, close: false),
+        '$fgRed$_unknown${bold}B',
+      );
+    });
+
+    test('overflow is replayed when the slice starts later', () {
+      expect(
+        Parser('${_overflow}AB').substring(1),
+        '${_overflow}B$reset',
+      );
+    });
+
+    test('a restored branch is reconstructed before later text', () {
+      const input = '${_unknown}A\x1B7${bold}B\x1B8C';
+      final slice = Parser(input).substring(0, close: false);
+
+      expect(slice, contains('$reset$_unknown\x1B8C'));
+      expect(Parser(slice).optimize(close: false), slice);
+    });
+
+    test('ordinary private CSI before the cut is not replayed', () {
+      expect(Parser('\x1B[?99mAB').substring(1), 'B');
+      expect(Parser('\x1B[1 mAB').substring(1), 'B');
+    });
+  });
 }

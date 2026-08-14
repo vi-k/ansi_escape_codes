@@ -457,6 +457,7 @@ final class _ParserBase<S extends State<S>> {
 
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
+    var currentResidual = initialResidual;
     Piece<S>? lastPiece;
 
     // The link the slice has open in what it has written; the link it would
@@ -552,7 +553,12 @@ final class _ParserBase<S extends State<S>> {
                 writtenLink = heldLink = link;
               }
 
-              final transit = currentState.transitTo(m.state);
+              final transit = _renditionTransit(
+                from: currentState,
+                fromResidual: currentResidual,
+                to: m.state.toStyle(),
+                toResidual: m._residual,
+              );
 
               // The link codes read after the opening are written straight
               // behind it, so they are the first of what follows it — and
@@ -591,12 +597,15 @@ final class _ParserBase<S extends State<S>> {
                 ..write(transit)
                 ..write(substring);
               currentState = m.state.toStyle();
+              currentResidual = m._residual;
               lastPiece = m;
             }
           }
 
         case EscapeCode():
-          if (entity is! Sgr && pos >= start && (end == null || pos <= end)) {
+          if (!_isStatefulSgr(entity) &&
+              pos >= start &&
+              (end == null || pos <= end)) {
             if (entity is Link) {
               // Held, and only where it changes what the slice has open: the
               // link the code leaves behind is what the slice is to be left
@@ -612,7 +621,12 @@ final class _ParserBase<S extends State<S>> {
               heldLinkCodes = '';
               writtenLink = heldLink;
 
-              final transit = currentState.transitTo(m.state);
+              final transit = _renditionTransit(
+                from: currentState,
+                fromResidual: currentResidual,
+                to: m.state.toStyle(),
+                toResidual: m._residual,
+              );
 
               // Ahead of the held link codes, which is where they were read
               // and so what follows the opening where there are any. Nothing
@@ -656,6 +670,7 @@ final class _ParserBase<S extends State<S>> {
                 buf.write(entity.string);
               }
               currentState = m.state.toStyle();
+              currentResidual = m._residual;
 
               // `ESC 8` carries the link the way it carries the rendition, so
               // a restore written out changes what the slice has open, and
@@ -681,8 +696,11 @@ final class _ParserBase<S extends State<S>> {
     }
 
     if (lastPiece != null) {
-      final tail = currentState.transitTo(
-        close ? initialState : lastPiece.state,
+      final tail = _renditionTransit(
+        from: currentState,
+        fromResidual: currentResidual,
+        to: close ? initialState.toStyle() : lastPiece.state.toStyle(),
+        toResidual: close ? initialResidual : lastPiece._residual,
         skipSet: true,
       );
 
