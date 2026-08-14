@@ -347,12 +347,27 @@ print(cursorUpN(4)); // Not constant!
 
 ### Styles
 
-`Styles` holds every style that carries one thing, and there are 783 of them:
-the fifteen properties — `Styles.bold`, `Styles.italic` — and the 256-colour
+`Styles` holds every style that carries one thing, and there are 802 of them:
+the 34 properties — `Styles.bold`, `Styles.italic` — and the 256-colour
 table three times over, `Styles.red` for the colour of the text, `Styles.bgRed`
 for the colour behind it, `Styles.underlineRed` for the colour of the
 underline. Being constants, a style can be held in one:
 `const error = Styles.red`.
+
+The state model also keeps the standard font selection, italic/fraktur shape,
+five underline variants, proportional spacing and five ideogram renditions.
+They compose like the existing properties:
+
+```dart
+final heading = Styles.alternativeFont1.fraktur.curlyUnderline;
+```
+
+Reverse operations preserve an ordinary `CSI ... m` function even when the
+package cannot name its effect. Once such a function is active, later SGR
+operations are replayed in order through cuts, insertions and printer line
+boundaries until `SGR 0` clears the opaque rendition. Private CSI and CSI with
+intermediate bytes are copied where they occur but are not treated as
+replayable SGR state.
 
 A chain builds on them — `Styles.red.bold.bgYellow` — and the colors the table
 does not name are passed as values:

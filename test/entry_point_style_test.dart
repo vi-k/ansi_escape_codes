@@ -22,6 +22,17 @@ void main() {
     expect(const NoStyle(), isA<Style>());
     expect(Color256.red, isA<Color>());
 
+    const style = Style(
+      fontSelection: FontSelection.alternative1,
+      fraktur: true,
+      curlyUnderline: true,
+      proportionalSpacing: true,
+      ideogramStyle: IdeogramStyle.stress,
+    );
+
+    expect(style.fontShape, FontShape.fraktur);
+    expect(Styles.dashedUnderline.underlineStyle, UnderlineStyle.dashed);
+
     expect(
       const UnfinishedSequenceException(pos: 0, offset: 0),
       isA<Exception>(),

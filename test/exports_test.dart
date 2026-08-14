@@ -8,5 +8,16 @@ void main() {
 
     final csi = Parser(cursorUp).pieces.first.entity as CsiCommon;
     expect(csi.controlSequence, ControlSequencesFunctions.CUU);
+
+    const style = Style(
+      fontSelection: FontSelection.alternative1,
+      fraktur: true,
+      curlyUnderline: true,
+      proportionalSpacing: true,
+      ideogramStyle: IdeogramStyle.stress,
+    );
+
+    expect(style.fontShape, FontShape.fraktur);
+    expect(Styles.dashedUnderline.underlineStyle, UnderlineStyle.dashed);
   });
 }
