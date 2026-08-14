@@ -144,6 +144,82 @@ void main() {
     });
   });
 
+  group('Style.call follows terminal resets:', () {
+    const foreground = '${fgGreen}a${fgYellow}b${resetFg}c';
+
+    test('matches an ordinary Printer with the same default style', () {
+      final styled = Styles.red(foreground);
+      final printed = Printer(defaultStyle: Styles.red).prepare(foreground);
+
+      expect(styled, printed);
+      expect(
+        styled,
+        '$reset${fgGreen}a${fgYellow}b${fg256Red}c$reset',
+      );
+      expect(Parser(styled).stateAt(2).foregroundColor, Color256.red);
+    });
+
+    final cases = <(String, String, void Function(Style))>[
+      (
+        'background',
+        '${bgGreen}a${bgYellow}b${resetBg}c',
+        (state) => expect(state.backgroundColor, isNull),
+      ),
+      (
+        'counter',
+        '${inverse}a${inverse}b${resetInverse}c',
+        (state) => expect(state.isInverse, isFalse),
+      ),
+      (
+        'exclusive enum',
+        '${underline}a${doublyUnderline}b${resetUnderline}c',
+        (state) => expect(state.underlineStyle, isNull),
+      ),
+      (
+        'extended color',
+        '${underline256(1)}a'
+            '${underline256(2)}b${resetUnderlineColor}c',
+        (state) => expect(state.underlineColorValue, isNull),
+      ),
+      (
+        'font',
+        '${alternativeFont1}a${alternativeFont2}b${primaryFont}c',
+        (state) => expect(state.fontSelection, FontSelection.primary),
+      ),
+    ];
+
+    for (final (name, input, check) in cases) {
+      test('$name reset does not expose the previous inner value', () {
+        final state = Parser(Styles.red(input)).stateAt(2);
+
+        expect(
+          state.foregroundColor,
+          Color256.red,
+          reason: input.ansiShowControlFunctions(),
+        );
+        check(state);
+      });
+    }
+
+    test('keeps nested Styles byte-for-byte', () {
+      expect(
+        Styles.red('abc${Styles.green('green')}def'),
+        '$reset${fg256Red}abc${fg256Green}green${fg256Red}def$reset',
+      );
+    });
+
+    test('explicit stacked APIs keep their pop contract', () {
+      expect(
+        StackedParser(foreground).stateAt(2).foregroundColor,
+        Color16.green,
+      );
+
+      final output =
+          StackedPrinter(defaultStyle: Styles.red).prepare(foreground);
+      expect(Parser(output).stateAt(2).foregroundColor, Color16.green);
+    });
+  });
+
   test('runZonedStackedPrinter accepts unbalanced input', () {
     final output = interceptZonedPrint(() {
       runZonedStackedPrinter(

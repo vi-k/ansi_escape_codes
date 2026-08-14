@@ -37,6 +37,11 @@ final class Printer extends _PrintPrinterBase<Style> {
 /// [Stack]. This is useful for complex formatting where styles might be
 /// applied and reverted hierarchically across multiple print statements.
 ///
+/// Choosing this printer chooses that hierarchical interpretation: a
+/// selective reset closes one stacked operation instead of clearing the
+/// terminal property. Use [Printer] for arbitrary ANSI whose terminal
+/// meaning must be preserved.
+///
 /// A hyperlink is carried from one line to the next the way [Printer] carries
 /// it: links do not nest, so there is no stack of them to keep.
 ///
@@ -86,6 +91,11 @@ final class SinkPrinter extends _SinkPrinterBase<Style> {
 /// Similar to [SinkPrinter], but it tracks the full history of applied styles
 /// using a [Stack], which allows for nested style applications and reversions
 /// across multiple write operations.
+///
+/// Choosing this printer chooses that hierarchical interpretation: a
+/// selective reset closes one stacked operation instead of clearing the
+/// terminal property. Use [SinkPrinter] for arbitrary ANSI whose terminal
+/// meaning must be preserved.
 ///
 /// A hyperlink is carried across writes, closed at the end of the line and
 /// opened again on the next, the way [SinkPrinter] does it.
@@ -671,6 +681,9 @@ R runZonedPrinter<R>(
 
 /// Runs the given function in a zone where all print statements are processed
 /// by the stacked printer.
+///
+/// The zone uses [StackedPrinter]'s hierarchical reset interpretation. Use
+/// [runZonedPrinter] where printed ANSI must keep terminal reset semantics.
 ///
 /// See [runZonedPrinter] for [output], which must not be `print` itself.
 R runZonedStackedPrinter<R>(

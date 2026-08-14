@@ -40,6 +40,15 @@ typedef _Replace<T> = ({_Frame<T>? frames});
 /// items are pushed onto the history stack. When a reset is called, the last
 /// value is popped, reverting the property to its previous state.
 ///
+/// This is deliberately a hierarchical interpretation, not a model of the
+/// state a terminal reaches from arbitrary ANSI. A terminal's selective reset
+/// clears the property to its default; a [Stack] reads the same code as one
+/// pop. Use [Style] and [Parser] when the terminal's visible state is the
+/// answer, and this type when resets close nested style operations.
+///
+/// A full reset is not a selective close: it clears every history at once and
+/// returns [Stack.terminalColors].
+///
 /// A reset of a property that was never applied does nothing: text may come
 /// from anywhere and close an attribute it has not opened, so such resets are
 /// ignored rather than treated as an error.

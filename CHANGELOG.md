@@ -124,6 +124,11 @@ Performance:
 
 Fixed:
 
+- `Style.call` read its inner ANSI through `Stack`, so a selective reset after
+  two setters revealed the earlier inner value instead of returning to the
+  caller's default style. Style wrappers now use the same terminal reset
+  semantics as `Printer`; the explicitly selected `Stack` and `Stacked*` APIs
+  keep their hierarchical pop contract.
 - `optimize`, `substring`, insertions and all printers silently discarded an
   ordinary SGR function that `State` did not model, and collapsed decorated
   underline to a single line. Known standard functions now have typed state;

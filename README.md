@@ -561,6 +561,13 @@ Escape codes allow you to do simple text decoration. But a slightly more
 complex design requires much more effort. One example is given above, when you
 need a default style different from the one provided by the terminal.
 
+This is an explicit hierarchical interpretation, not a model of the state a
+terminal reaches from arbitrary ANSI. A terminal's selective reset clears a
+property to its default; `StackedPrinter` reads the same code as one pop. Use
+`Printer` when the terminal meaning of the input must be preserved, and use
+`StackedPrinter` when resets close nested style operations such as the
+template below.
+
 Imagine that you have a template for text into which you will insert other
 text, that is sent to you externally. But the person who sends you this text
 decides to highlight it:
@@ -783,6 +790,10 @@ at each point, `StackedParser` keeps the history of how it got there, so that a
 terminal's own. The difference is the one between
 [Printer and StackedPrinter](#stackedprinter), and the state it hands out is a
 `Stack` instead of a `Style`.
+
+That difference is semantic, not only additional bookkeeping. Use `Parser`
+to ask what a terminal shows for arbitrary ANSI; choose `StackedParser` only
+when its resets are meant to close the most recently applied style level.
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
