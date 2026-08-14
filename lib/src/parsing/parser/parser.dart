@@ -103,6 +103,10 @@ final class Parser extends _ParserBase<Style> {
 /// [Style], [StackedParser] tracks the full history of applied styles using a
 /// [Stack]. This is useful for complex formatting where styles might be
 /// applied and reverted hierarchically.
+///
+/// This is an opt-in interpretation for hierarchically composed input. A
+/// selective reset pops one value, so the reported state may differ from what
+/// a terminal shows for the same bytes. Use [Parser] for terminal semantics.
 final class StackedParser extends _ParserBase<Stack> {
   /// Creates a [StackedParser] for the given [input] string.
   StackedParser(String input) : super(input, Stack.terminalColors);
