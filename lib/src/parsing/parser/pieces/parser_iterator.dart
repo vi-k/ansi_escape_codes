@@ -4,6 +4,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
   final Pieces<S> _parent;
   final S _initialState;
   final Link? _initialLink;
+  final _SgrResidual? _initialResidual;
 
   RegExpMatch? _next;
 
@@ -13,17 +14,22 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
   int _pos = 0;
   Piece<S>? _current;
 
-  /// The state and the link [SaveCursor] put away, for [RestoreCursor] to
-  /// bring back.
+  /// The state, the link and the residual [SaveCursor] put away, for
+  /// [RestoreCursor] to bring back.
   ///
   /// `ESC 7` saves the rendition along with the cursor, and `ESC 8` restores
   /// both, so a reader that ignored them would report a style the terminal is
   /// no longer showing. The link travels in the same bundle: a terminal keeps
   /// the hyperlink among the attributes it saves, so what is restored is
   /// clickable again exactly where it was.
-  ({S state, Link? link})? _saved;
+  ({S state, Link? link, _SgrResidual? residual})? _saved;
 
-  _ParserIterator._(this._parent, this._initialState, this._initialLink);
+  _ParserIterator._(
+    this._parent,
+    this._initialState,
+    this._initialLink,
+    this._initialResidual,
+  );
 
   /// Current piece.
   @override
@@ -42,6 +48,12 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
     return current == null ? _initialLink : current.link;
   }
 
+  _SgrResidual? get currentResidual {
+    final current = _current;
+
+    return current == null ? _initialResidual : current._residual;
+  }
+
   @override
   bool moveNext() {
     final parsed = _parent._parsed;
@@ -57,7 +69,11 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
       // for the restore that may still be ahead — the whole bundle of it, or
       // the second walk would answer where the first one did not.
       if (piece.entity is SaveCursor) {
-        _saved = (state: piece.state, link: piece.link);
+        _saved = (
+          state: piece.state,
+          link: piece.link,
+          residual: piece._residual,
+        );
       }
 
       _index++;
@@ -77,6 +93,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
       _parent._parsingResult ??= _PiecesResult<S>._(
         pieces: parsed,
         finalState: currentState,
+        finalResidual: currentResidual,
         finalLink: currentLink,
       );
 
@@ -152,6 +169,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
     return Piece<S>._(
       state: currentState,
       link: currentLink,
+      residual: currentResidual,
       entity: Text._(_parent._input, start, end),
       start: start,
       end: end,
@@ -159,7 +177,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
   }
 
   Piece<S> _escapeCode(RegExpMatch m) {
-    final matchingState = _MatchingState(m, currentState);
+    final matchingState = _MatchingState(m, currentState, currentResidual);
     final entity = EscapeCode._parse(matchingState);
 
     // A link does not nest and carries no style, so it rides beside the
@@ -173,7 +191,11 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
 
     switch (entity) {
       case SaveCursor():
-        _saved = (state: matchingState.state, link: link);
+        _saved = (
+          state: matchingState.state,
+          link: link,
+          residual: matchingState.residual,
+        );
       case RestoreCursor():
         // With nothing saved the terminal goes back to its defaults, which
         // for a parser is the state and the link it was started in.
@@ -187,10 +209,14 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
         // nullable and cannot say the second `null`.
         final saved = _saved;
         if (saved == null) {
-          matchingState.state = _initialState;
+          matchingState
+            ..state = _initialState
+            ..residual = _initialResidual;
           link = _initialLink;
         } else {
-          matchingState.state = saved.state;
+          matchingState
+            ..state = saved.state
+            ..residual = saved.residual;
           link = saved.link;
         }
       default:
@@ -201,6 +227,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
     return Piece<S>._(
       state: matchingState.state,
       link: link,
+      residual: matchingState.residual,
       entity: entity,
       start: m.start,
       end: m.end,

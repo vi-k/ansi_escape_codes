@@ -22,6 +22,8 @@ final class Piece<S extends State<S>> {
   /// whatever was open.
   final Link? link;
 
+  final _SgrResidual? _residual;
+
   /// Where the piece starts in the original string, escape codes counted.
   final int start;
 
@@ -31,10 +33,11 @@ final class Piece<S extends State<S>> {
   Piece._({
     required this.state,
     required this.link,
+    required _SgrResidual? residual,
     required this.entity,
     required this.start,
     required this.end,
-  });
+  }) : _residual = residual;
 
   @override
   String toString() => '${Piece<S>}('

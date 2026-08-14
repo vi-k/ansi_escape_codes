@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 
 import '../../ansi/c0.dart';
 import '../../ansi/c1.dart';
+import '../../ansi/csi.dart' show SGR;
 import '../../ansi/sgr.dart';
 import '../../extensions/remove.dart';
 import '../../extensions/show_control_codes.dart';
@@ -27,6 +28,7 @@ import '../state/state.dart';
 import 'unfinished_sequence_exception.dart';
 
 part 'printer.dart';
+part 'sgr_residual.dart';
 part 'entities/control_string.dart';
 part 'entities/csi.dart';
 part 'entities/entity.dart';
@@ -115,6 +117,7 @@ final class _ParserBase<S extends State<S>> {
   /// The terminal's own colours for a [Parser] and a [StackedParser]; a
   /// [Printer] reads each line from where the last one ended.
   final S initialState;
+  final _SgrResidual? initialResidual;
 
   /// The link the string is read as starting inside, where there is one.
   ///
@@ -135,7 +138,12 @@ final class _ParserBase<S extends State<S>> {
   /// beginning every time, and cost the questions times the length of it.
   _Walk<S>? _walk;
 
-  _ParserBase(this.input, this.initialState, {this.initialLink});
+  _ParserBase(
+    this.input,
+    this.initialState, {
+    this.initialLink,
+    this.initialResidual,
+  });
 
   String get _requirePlainString => _plainString ??= () {
         final buf = StringBuffer();
@@ -155,13 +163,19 @@ final class _ParserBase<S extends State<S>> {
   bool get isParsed => _pieces?.isParsed ?? false;
 
   /// The [Pieces] of the string.
-  Pieces<S> get pieces =>
-      _pieces ??= Pieces._(input, initialState, initialLink: initialLink);
+  Pieces<S> get pieces => _pieces ??= Pieces._(
+        input,
+        initialState,
+        initialLink: initialLink,
+        initialResidual: initialResidual,
+      );
 
   /// The final [S] after processing the entire string.
   ///
   /// See also [stateAt].
   S get finalState => pieces._requireParsingResult.finalState;
+
+  _SgrResidual? get finalResidual => pieces._requireParsingResult.finalResidual;
 
   /// The hyperlink the string leaves open, or `null` where it leaves none.
   ///
@@ -1137,6 +1151,7 @@ final class _ParserBase<S extends State<S>> {
   String optimize({bool close = true}) {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
+    var currentResidual = initialResidual;
 
     // A control string the string never terminated — a window title no less
     // than a link opening, a `DCS` no less than an `OSC` — held back until what
@@ -1149,7 +1164,7 @@ final class _ParserBase<S extends State<S>> {
 
     for (final m in pieces) {
       final entity = m.entity;
-      if (entity is Sgr) {
+      if (_isStatefulSgr(entity)) {
         continue;
       }
 
@@ -1161,7 +1176,12 @@ final class _ParserBase<S extends State<S>> {
       if (entity is! Text || string.isNotEmpty) {
         // The styles collected so far are flushed first: erasing and
         // scrolling read the current background color.
-        final transit = currentState.transitTo(m.state);
+        final transit = _renditionTransit(
+          from: currentState,
+          fromResidual: currentResidual,
+          to: m.state.toStyle(),
+          toResidual: m._residual,
+        );
 
         if (heldOpening.isNotEmpty) {
           buf.write(
@@ -1187,6 +1207,7 @@ final class _ParserBase<S extends State<S>> {
       }
 
       currentState = m.state.toStyle();
+      currentResidual = m._residual;
     }
 
     // The string is over. What follows the opening held back is the close
@@ -1198,11 +1219,14 @@ final class _ParserBase<S extends State<S>> {
     // the guarantee is checked and not assumed.
     final lastPiece = pieces.lastOrNull;
     final closingLink = close && finalLink != null ? linkClose : '';
-    final tail = close
-        ? currentState.transitTo(initialState)
-        : lastPiece == null
-            ? ''
-            : currentState.transitTo(lastPiece.state);
+    final tail = lastPiece == null
+        ? ''
+        : _renditionTransit(
+            from: currentState,
+            fromResidual: currentResidual,
+            to: close ? initialState.toStyle() : lastPiece.state.toStyle(),
+            toResidual: close ? initialResidual : lastPiece._residual,
+          );
     final following = _firstNotEmpty(closingLink, tail);
 
     buf
