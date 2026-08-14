@@ -14,5 +14,8 @@ doc/api/
 # What Claude Code keeps in the working tree.
 .claude/
 
+# Isolated agent worktrees.
+.worktrees/
+
 # What `dart test --coverage` writes.
 coverage/
