@@ -147,6 +147,10 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// parsing state is carried at all.
   _SgrResidual? _lastResidual;
 
+  /// The state, link and opaque rendition saved by the latest `ESC 7` in this
+  /// printer session, or `null` before the first save.
+  _CursorSave<S>? _savedCursor;
+
   /// Whether each line is followed by the same line with its codes named,
   /// which is how the tests read what was written.
   @visibleForTesting
@@ -321,6 +325,12 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       this.lastState ?? stateDefaults,
       initialLink: _ambientLink,
       initialResidual: _lastResidual,
+      initialCursorSave: _savedCursor,
+      restoreFallback: (
+        state: stateDefaults,
+        link: null,
+        residual: null,
+      ),
     );
     final buf = StringBuffer(reset);
 
@@ -449,6 +459,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     buf.write(tail);
     this.lastState = parser.finalState;
     _lastResidual = parser._finalResidual;
+    _savedCursor = parser._finalCursorSave;
 
     return buf.toString();
   }
@@ -568,12 +579,14 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
     final keepOwesTerminator = _owesTerminator;
     final keepLastState = lastState;
     final keepLastResidual = _lastResidual;
+    final keepSavedCursor = _savedCursor;
     final prepared = super.prepare(line);
     _writtenLink = keepWrittenLink;
     _ambientLink = keepAmbientLink;
     _owesTerminator = keepOwesTerminator;
     lastState = keepLastState;
     _lastResidual = keepLastResidual;
+    _savedCursor = keepSavedCursor;
 
     return prepared;
   }

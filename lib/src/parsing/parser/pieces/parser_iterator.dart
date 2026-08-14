@@ -5,6 +5,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
   final S _initialState;
   final Link? _initialLink;
   final _SgrResidual? _initialResidual;
+  final _CursorSave<S> _restoreFallback;
 
   RegExpMatch? _next;
 
@@ -22,14 +23,16 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
   /// no longer showing. The link travels in the same bundle: a terminal keeps
   /// the hyperlink among the attributes it saves, so what is restored is
   /// clickable again exactly where it was.
-  ({S state, Link? link, _SgrResidual? residual})? _saved;
+  _CursorSave<S>? _saved;
 
   _ParserIterator._(
     this._parent,
     this._initialState,
     this._initialLink,
     this._initialResidual,
-  );
+    _CursorSave<S>? initialCursorSave,
+    this._restoreFallback,
+  ) : _saved = initialCursorSave;
 
   /// Current piece.
   @override
@@ -95,6 +98,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
         finalState: currentState,
         finalResidual: currentResidual,
         finalLink: currentLink,
+        finalCursorSave: _saved,
       );
 
       return false;
@@ -207,18 +211,11 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
         // close, which is the very pair [currentLink] is written to keep
         // apart. The state escapes the question only because `S` is not
         // nullable and cannot say the second `null`.
-        final saved = _saved;
-        if (saved == null) {
-          matchingState
-            ..state = _initialState
-            ..residual = _initialResidual;
-          link = _initialLink;
-        } else {
-          matchingState
-            ..state = saved.state
-            ..residual = saved.residual;
-          link = saved.link;
-        }
+        final saved = _saved ?? _restoreFallback;
+        matchingState
+          ..state = saved.state
+          ..residual = saved.residual;
+        link = saved.link;
       default:
     }
 

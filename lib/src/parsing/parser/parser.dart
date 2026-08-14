@@ -119,6 +119,12 @@ typedef _Seam<S extends State<S>> = ({
   _SgrResidual? residual,
 });
 
+typedef _CursorSave<S extends State<S>> = ({
+  S state,
+  Link? link,
+  _SgrResidual? residual,
+});
+
 final class _ParserBase<S extends State<S>> {
   /// The string being read, escape codes and all.
   final String input;
@@ -129,6 +135,8 @@ final class _ParserBase<S extends State<S>> {
   /// [Printer] reads each line from where the last one ended.
   final S initialState;
   final _SgrResidual? _initialResidual;
+  final _CursorSave<S>? _initialCursorSave;
+  final _CursorSave<S> _restoreFallback;
 
   /// The link the string is read as starting inside, where there is one.
   ///
@@ -154,7 +162,16 @@ final class _ParserBase<S extends State<S>> {
     this.initialState, {
     this.initialLink,
     _SgrResidual? initialResidual,
-  }) : _initialResidual = initialResidual;
+    _CursorSave<S>? initialCursorSave,
+    _CursorSave<S>? restoreFallback,
+  })  : _initialResidual = initialResidual,
+        _initialCursorSave = initialCursorSave,
+        _restoreFallback = restoreFallback ??
+            (
+              state: initialState,
+              link: initialLink,
+              residual: initialResidual,
+            );
 
   String get _requirePlainString => _plainString ??= () {
         final buf = StringBuffer();
@@ -179,6 +196,8 @@ final class _ParserBase<S extends State<S>> {
         initialState,
         initialLink: initialLink,
         initialResidual: _initialResidual,
+        initialCursorSave: _initialCursorSave,
+        restoreFallback: _restoreFallback,
       );
 
   /// The final [S] after processing the entire string.
@@ -188,6 +207,9 @@ final class _ParserBase<S extends State<S>> {
 
   _SgrResidual? get _finalResidual =>
       pieces._requireParsingResult.finalResidual;
+
+  _CursorSave<S>? get _finalCursorSave =>
+      pieces._requireParsingResult.finalCursorSave;
 
   /// The hyperlink the string leaves open, or `null` where it leaves none.
   ///
@@ -902,6 +924,11 @@ final class _ParserBase<S extends State<S>> {
       seam.state,
       initialLink: seam.link,
       initialResidual: seam.residual,
+      restoreFallback: (
+        state: seam.state,
+        link: seam.link,
+        residual: seam.residual,
+      ),
     )._requireParsingResult;
 
     final linkBack = _linkBack(seam: seam.link, left: read.finalLink);

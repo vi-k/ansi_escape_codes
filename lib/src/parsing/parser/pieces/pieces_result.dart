@@ -4,6 +4,7 @@ final class _PiecesResult<S extends State<S>> {
   final List<Piece<S>> pieces;
   final S finalState;
   final _SgrResidual? finalResidual;
+  final _CursorSave<S>? finalCursorSave;
 
   /// The link the string leaves open, or `null` where it leaves none.
   ///
@@ -17,6 +18,7 @@ final class _PiecesResult<S extends State<S>> {
     required this.finalState,
     required this.finalResidual,
     required this.finalLink,
+    required this.finalCursorSave,
   }) : pieces = UnmodifiableListView(pieces); // The list is complete once this
   // result exists: every iterator reaching the end sets `_parsingResult`, and
   // any later iterator can only append when its index equals the parsed length.
@@ -28,5 +30,6 @@ final class _PiecesResult<S extends State<S>> {
       'pieces: $pieces'
       ', finalState: $finalState'
       ', finalLink: $finalLink'
+      ', finalCursorSave: $finalCursorSave'
       ')';
 }

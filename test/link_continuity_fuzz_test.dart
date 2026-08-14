@@ -471,9 +471,7 @@ void main() {
     });
   });
 
-  // What the printed documents above are not asked about, said once and out
-  // loud, so that the narrowing is a decision and not a silence.
-  group("a restore reaching across a line break is the printer's own limit:",
+  group('a restore reaching across a line break keeps the printer in sync:',
       () {
     test('the style goes the same way, so this is not the link channel', () {
       const source = '${fgRed}A\n${restoreCursor}B\nC';
@@ -488,10 +486,10 @@ void main() {
       );
       expect(
         Parser(lines.join('\n')).stateAt(4),
-        Parser('${fgRed}C').stateAt(0),
-        reason: 'the printed lines make it red: what a save put away is not '
-            'carried from one line to the next, so a restore that reaches '
-            'across a break gives back the line before it instead',
+        Parser('C').stateAt(0),
+        reason:
+            'with no save the restore fallback is the terminal default, not '
+            'the state seeded from the line before it',
       );
     });
 
@@ -509,11 +507,10 @@ void main() {
         reason: 'the string restores what nothing saved, which is no link',
       );
       expect(
-        Parser(lines.join('\n')).linkAt(2)?.url,
-        'http://u/',
-        reason: 'and the printed lines give back the link the line before '
-            'left open — the same limit, on the other channel, which is why '
-            'the fuzz puts a save and its restore in one line',
+        Parser(lines.join('\n')).linkAt(2),
+        isNull,
+        reason: 'with no save the restore fallback has no link, even when the '
+            'line was seeded inside the link carried from the line before it',
       );
     });
   });
