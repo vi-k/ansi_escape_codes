@@ -66,9 +66,12 @@ void main() {
         'reset'
         ';reset;bold;dim;italic;underline'
         ';blink;blinkRapid;inverse;invisible;strikethrough'
-        ';10;11;12;13;14;15;16;17;18;19;20'
+        ';primaryFont;alternativeFont1;alternativeFont2;alternativeFont3'
+        ';alternativeFont4;alternativeFont5;alternativeFont6'
+        ';alternativeFont7;alternativeFont8;alternativeFont9;fraktur'
         ';doublyUnderline;resetBoldAndDim;resetItalic;resetUnderline'
-        ';resetBlink;26;resetInverse;resetInvisible;resetStrikethrough'
+        ';resetBlink;proportionalSpacing;resetInverse;resetInvisible'
+        ';resetStrikethrough'
         // fg...
         ';fgBlack;fgRed;fgGreen;fgYellow;fgBlue;fgMagenta;fgCyan;fgWhite'
         ';fg256White;fgRgb(0,128,255)'
@@ -81,7 +84,7 @@ void main() {
         // ... invalid values.
         ';bg256?256;bgRgb?0:128:256;bgRgb?0:128;bg?3:0:128:255'
         ';resetBg'
-        ';50'
+        ';resetProportionalSpacing'
         ';frame;encircle;overline;resetFrameAndEncircle;resetOverline'
         ';56;57'
         // underline...
@@ -90,7 +93,9 @@ void main() {
         ';underline256?256;underlineRgb?0:128:256;underlineRgb?0:128'
         ';underline?3:0:128:255'
         ';resetUnderlineColor'
-        ';60;61;62;63;64;65;66;67;68;69;70;71;72'
+        ';ideogramUnderline;ideogramDoublyUnderline;ideogramOverline'
+        ';ideogramDoublyOverline;ideogramStress;resetIdeogram'
+        ';66;67;68;69;70;71;72'
         ';superscript;subscript;resetSuperAndSubscript'
         ';76;77;78;79;80;81;82;83;84;85;86;87;88;89'
         // fgHigh...
@@ -107,6 +112,39 @@ void main() {
       for (final code in ControlFunctionsSGR.values) {
         expect(entity.contains(code), !code.isUnused);
       }
+    });
+
+    test('the newly modelled functions have public strings', () {
+      expect(primaryFont, '\x1B[10m');
+      expect(alternativeFont1, '\x1B[11m');
+      expect(alternativeFont9, '\x1B[19m');
+      expect(fraktur, '\x1B[20m');
+      expect(resetFontShape, resetItalic);
+      expect(curlyUnderline, '\x1B[4:3m');
+      expect(dottedUnderline, '\x1B[4:4m');
+      expect(dashedUnderline, '\x1B[4:5m');
+      expect(proportionalSpacing, '\x1B[26m');
+      expect(resetProportionalSpacing, '\x1B[50m');
+      expect(ideogramUnderline, '\x1B[60m');
+      expect(ideogramDoublyUnderline, '\x1B[61m');
+      expect(ideogramOverline, '\x1B[62m');
+      expect(ideogramDoublyOverline, '\x1B[63m');
+      expect(ideogramStress, '\x1B[64m');
+      expect(resetIdeogram, '\x1B[65m');
+    });
+
+    test('historical enum names keep their positions', () {
+      expect(ControlFunctionsSGR.values[26].name, 'reserved_26');
+      expect(ControlFunctionsSGR.values[50].name, 'reserved_50');
+      expect(ControlFunctionsSGR.values[60].name, 'reserved_60');
+      expect(ControlFunctionsSGR.values[65].name, 'reserved_65');
+      expect(ControlFunctionsSGR.values[26].id, 'proportionalSpacing');
+      expect(
+        ControlFunctionsSGR.values[50].id,
+        'resetProportionalSpacing',
+      );
+      expect(ControlFunctionsSGR.values[60].id, 'ideogramUnderline');
+      expect(ControlFunctionsSGR.values[65].id, 'resetIdeogram');
     });
 
     test('stateAt', () {

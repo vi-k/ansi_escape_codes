@@ -109,7 +109,7 @@ const int NOT_BOLD_NOT_DIM = 22;
 /// See also [ITALIC].
 const int NOT_ITALIC = 23;
 
-/// Not underline (neither singly nor doubly).
+/// Not underlined in any style.
 ///
 /// See also [UNDERLINE] and [DOUBLY_UNDERLINE].
 const int NOT_UNDERLINE = 24;
@@ -118,6 +118,11 @@ const int NOT_UNDERLINE = 24;
 ///
 /// See also [BLINK] and [BLINK_RAPID].
 const int NOT_BLINK = 25;
+
+/// Proportional spacing.
+///
+/// See also [NOT_PROPORTIONAL_SPACING].
+const int PROPORTIONAL_SPACING = 26;
 
 /// Positive (not inverse).
 ///
@@ -194,6 +199,11 @@ const int BACKGROUND = 48;
 /// Default background color (implementation-defined).
 const int BG_DEFAULT = 49;
 
+/// Not proportional spacing.
+///
+/// See also [PROPORTIONAL_SPACING].
+const int NOT_PROPORTIONAL_SPACING = 50;
+
 /// Framed.
 ///
 /// See also [NOT_FRAME_NOT_ENCIRCLE].
@@ -224,6 +234,37 @@ const int UNDERLINE_COLOR = 58;
 
 /// Default underline color.
 const int UNDERLINE_COLOR_DEFAULT = 59;
+
+/// Ideogram underline or right side line.
+///
+/// See also [NOT_IDEOGRAM].
+const int IDEOGRAM_UNDERLINE = 60;
+
+/// Ideogram double underline or double line on the right side.
+///
+/// See also [NOT_IDEOGRAM].
+const int IDEOGRAM_DOUBLY_UNDERLINE = 61;
+
+/// Ideogram overline or left side line.
+///
+/// See also [NOT_IDEOGRAM].
+const int IDEOGRAM_OVERLINE = 62;
+
+/// Ideogram double overline or double line on the left side.
+///
+/// See also [NOT_IDEOGRAM].
+const int IDEOGRAM_DOUBLY_OVERLINE = 63;
+
+/// Ideogram stress marking.
+///
+/// See also [NOT_IDEOGRAM].
+const int IDEOGRAM_STRESS = 64;
+
+/// Cancels every ideogram rendition established by parameters 60 to 64.
+///
+/// See also [IDEOGRAM_UNDERLINE], [IDEOGRAM_DOUBLY_UNDERLINE],
+/// [IDEOGRAM_OVERLINE], [IDEOGRAM_DOUBLY_OVERLINE] and [IDEOGRAM_STRESS].
+const int NOT_IDEOGRAM = 65;
 
 /// Superscripted.
 ///

@@ -80,6 +80,56 @@ const String dim = '$CSI$DIM$SGR';
 /// See also [bold] and [dim].
 const String resetBoldAndDim = '$CSI$NOT_BOLD_NOT_DIM$SGR';
 
+/// Select the primary (default) font.
+///
+/// See [PRIMARY_FONT].
+const String primaryFont = '$CSI$PRIMARY_FONT$SGR';
+
+/// Select the first alternative font.
+///
+/// See [ALT_FONT_1].
+const String alternativeFont1 = '$CSI$ALT_FONT_1$SGR';
+
+/// Select the second alternative font.
+///
+/// See [ALT_FONT_2].
+const String alternativeFont2 = '$CSI$ALT_FONT_2$SGR';
+
+/// Select the third alternative font.
+///
+/// See [ALT_FONT_3].
+const String alternativeFont3 = '$CSI$ALT_FONT_3$SGR';
+
+/// Select the fourth alternative font.
+///
+/// See [ALT_FONT_4].
+const String alternativeFont4 = '$CSI$ALT_FONT_4$SGR';
+
+/// Select the fifth alternative font.
+///
+/// See [ALT_FONT_5].
+const String alternativeFont5 = '$CSI$ALT_FONT_5$SGR';
+
+/// Select the sixth alternative font.
+///
+/// See [ALT_FONT_6].
+const String alternativeFont6 = '$CSI$ALT_FONT_6$SGR';
+
+/// Select the seventh alternative font.
+///
+/// See [ALT_FONT_7].
+const String alternativeFont7 = '$CSI$ALT_FONT_7$SGR';
+
+/// Select the eighth alternative font.
+///
+/// See [ALT_FONT_8].
+const String alternativeFont8 = '$CSI$ALT_FONT_8$SGR';
+
+/// Select the ninth alternative font.
+///
+/// See [ALT_FONT_9].
+const String alternativeFont9 = '$CSI$ALT_FONT_9$SGR';
+
 /// Italic.
 ///
 /// See [ITALIC].
@@ -97,12 +147,25 @@ const String resetBoldAndDim = '$CSI$NOT_BOLD_NOT_DIM$SGR';
 /// See also [resetItalic].
 const String italic = '$CSI$ITALIC$SGR';
 
+/// Fraktur (Gothic).
+///
+/// See [FRAKTUR].
+///
+/// See also [italic] and [resetFontShape].
+const String fraktur = '$CSI$FRAKTUR$SGR';
+
 /// Not italic, not fraktur.
 ///
 /// See [NOT_ITALIC].
 ///
-/// See also [italic].
+/// See also [italic], [fraktur] and [resetFontShape].
 const String resetItalic = '$CSI$NOT_ITALIC$SGR';
+
+/// Not italic, not fraktur.
+///
+/// This is the family-reset name for the same function as [resetItalic].
+/// See [NOT_ITALIC].
+const String resetFontShape = resetItalic;
 
 /// Underline.
 ///
@@ -121,7 +184,8 @@ const String resetItalic = '$CSI$NOT_ITALIC$SGR';
 /// Colors:
 /// - +-vscode (only rgb colors)
 ///
-/// See also [resetUnderline] and [doublyUnderline].
+/// See also [resetUnderline], [doublyUnderline], [curlyUnderline],
+/// [dottedUnderline] and [dashedUnderline].
 const String underline = '$CSI$UNDERLINE$SGR';
 
 /// Doubly underline.
@@ -145,14 +209,37 @@ const String underline = '$CSI$UNDERLINE$SGR';
 /// Colors:
 /// - +-vscode (only rgb colors)
 ///
-/// See also [resetUnderline] and [underline].
+/// See also [resetUnderline], [underline], [curlyUnderline], [dottedUnderline]
+/// and [dashedUnderline].
 const String doublyUnderline = '$CSI$DOUBLY_UNDERLINE$SGR';
 
-/// Not underline (neither singly nor doubly).
+/// Curly underline.
+///
+/// See [UNDERLINE].
+///
+/// See also [resetUnderline].
+const String curlyUnderline = '$CSI$UNDERLINE:3$SGR';
+
+/// Dotted underline.
+///
+/// See [UNDERLINE].
+///
+/// See also [resetUnderline].
+const String dottedUnderline = '$CSI$UNDERLINE:4$SGR';
+
+/// Dashed underline.
+///
+/// See [UNDERLINE].
+///
+/// See also [resetUnderline].
+const String dashedUnderline = '$CSI$UNDERLINE:5$SGR';
+
+/// Not underlined in any style.
 ///
 /// See [NOT_UNDERLINE].
 ///
-/// See also [underline] and [doublyUnderline].
+/// See also [underline], [doublyUnderline], [curlyUnderline],
+/// [dottedUnderline] and [dashedUnderline].
 const String resetUnderline = '$CSI$NOT_UNDERLINE$SGR';
 
 /// Blink.
@@ -195,6 +282,20 @@ const String blinkRapid = '$CSI$BLINK_RAPID$SGR';
 ///
 /// See also [blink] and [blinkRapid].
 const String resetBlink = '$CSI$NOT_BLINK$SGR';
+
+/// Proportional spacing.
+///
+/// See [PROPORTIONAL_SPACING].
+///
+/// See also [resetProportionalSpacing].
+const String proportionalSpacing = '$CSI$PROPORTIONAL_SPACING$SGR';
+
+/// Not proportional spacing.
+///
+/// See [NOT_PROPORTIONAL_SPACING].
+///
+/// See also [proportionalSpacing].
+const String resetProportionalSpacing = '$CSI$NOT_PROPORTIONAL_SPACING$SGR';
 
 /// Inverse.
 ///
@@ -352,6 +453,46 @@ const String overline = '$CSI$OVERLINE$SGR';
 ///
 /// See also [overline].
 const String resetOverline = '$CSI$NOT_OVERLINE$SGR';
+
+/// Ideogram underline or right side line.
+///
+/// See [IDEOGRAM_UNDERLINE].
+///
+/// See also [resetIdeogram].
+const String ideogramUnderline = '$CSI$IDEOGRAM_UNDERLINE$SGR';
+
+/// Ideogram double underline or double line on the right side.
+///
+/// See [IDEOGRAM_DOUBLY_UNDERLINE].
+///
+/// See also [resetIdeogram].
+const String ideogramDoublyUnderline = '$CSI$IDEOGRAM_DOUBLY_UNDERLINE$SGR';
+
+/// Ideogram overline or left side line.
+///
+/// See [IDEOGRAM_OVERLINE].
+///
+/// See also [resetIdeogram].
+const String ideogramOverline = '$CSI$IDEOGRAM_OVERLINE$SGR';
+
+/// Ideogram double overline or double line on the left side.
+///
+/// See [IDEOGRAM_DOUBLY_OVERLINE].
+///
+/// See also [resetIdeogram].
+const String ideogramDoublyOverline = '$CSI$IDEOGRAM_DOUBLY_OVERLINE$SGR';
+
+/// Ideogram stress marking.
+///
+/// See [IDEOGRAM_STRESS].
+///
+/// See also [resetIdeogram].
+const String ideogramStress = '$CSI$IDEOGRAM_STRESS$SGR';
+
+/// Cancel every ideogram rendition established by parameters 60 to 64.
+///
+/// See [NOT_IDEOGRAM].
+const String resetIdeogram = '$CSI$NOT_IDEOGRAM$SGR';
 
 /// Superscripted.
 ///
