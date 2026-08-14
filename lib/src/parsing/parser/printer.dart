@@ -438,7 +438,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
 
     buf.write(tail);
     this.lastState = parser.finalState;
-    _lastResidual = parser.finalResidual;
+    _lastResidual = parser._finalResidual;
 
     return buf.toString();
   }

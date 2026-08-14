@@ -124,7 +124,7 @@ final class _ParserBase<S extends State<S>> {
   /// The terminal's own colours for a [Parser] and a [StackedParser]; a
   /// [Printer] reads each line from where the last one ended.
   final S initialState;
-  final _SgrResidual? initialResidual;
+  final _SgrResidual? _initialResidual;
 
   /// The link the string is read as starting inside, where there is one.
   ///
@@ -149,8 +149,8 @@ final class _ParserBase<S extends State<S>> {
     this.input,
     this.initialState, {
     this.initialLink,
-    this.initialResidual,
-  });
+    _SgrResidual? initialResidual,
+  }) : _initialResidual = initialResidual;
 
   String get _requirePlainString => _plainString ??= () {
         final buf = StringBuffer();
@@ -174,7 +174,7 @@ final class _ParserBase<S extends State<S>> {
         input,
         initialState,
         initialLink: initialLink,
-        initialResidual: initialResidual,
+        initialResidual: _initialResidual,
       );
 
   /// The final [S] after processing the entire string.
@@ -182,7 +182,8 @@ final class _ParserBase<S extends State<S>> {
   /// See also [stateAt].
   S get finalState => pieces._requireParsingResult.finalState;
 
-  _SgrResidual? get finalResidual => pieces._requireParsingResult.finalResidual;
+  _SgrResidual? get _finalResidual =>
+      pieces._requireParsingResult.finalResidual;
 
   /// The hyperlink the string leaves open, or `null` where it leaves none.
   ///
@@ -464,7 +465,7 @@ final class _ParserBase<S extends State<S>> {
 
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
-    var currentResidual = initialResidual;
+    var currentResidual = _initialResidual;
     Piece<S>? lastPiece;
 
     // The link the slice has open in what it has written; the link it would
@@ -707,7 +708,7 @@ final class _ParserBase<S extends State<S>> {
         from: currentState,
         fromResidual: currentResidual,
         to: close ? initialState.toStyle() : lastPiece.state.toStyle(),
-        toResidual: close ? initialResidual : lastPiece._residual,
+        toResidual: close ? _initialResidual : lastPiece._residual,
         skipSet: true,
       );
 
@@ -994,7 +995,7 @@ final class _ParserBase<S extends State<S>> {
         cut: 0,
         state: initialState,
         link: initialLink,
-        residual: initialResidual,
+        residual: _initialResidual,
       );
     }
 
@@ -1081,7 +1082,7 @@ final class _ParserBase<S extends State<S>> {
             cut: walk.unfinishedRunStart ?? code.start,
             state: before?.state ?? initialState,
             link: before == null ? initialLink : before.link,
-            residual: before == null ? initialResidual : before._residual,
+            residual: before == null ? _initialResidual : before._residual,
           );
         }
 
@@ -1131,7 +1132,7 @@ final class _ParserBase<S extends State<S>> {
         cut: walk.unfinishedRunStart ?? code.start,
         state: before?.state ?? initialState,
         link: before == null ? initialLink : before.link,
-        residual: before == null ? initialResidual : before._residual,
+        residual: before == null ? _initialResidual : before._residual,
       );
     }
 
@@ -1139,7 +1140,7 @@ final class _ParserBase<S extends State<S>> {
       cut: input.length,
       state: finalState,
       link: finalLink,
-      residual: finalResidual,
+      residual: _finalResidual,
     );
   }
 
@@ -1202,7 +1203,7 @@ final class _ParserBase<S extends State<S>> {
   String optimize({bool close = true}) {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
-    var currentResidual = initialResidual;
+    var currentResidual = _initialResidual;
 
     // A control string the string never terminated — a window title no less
     // than a link opening, a `DCS` no less than an `OSC` — held back until what
@@ -1276,7 +1277,7 @@ final class _ParserBase<S extends State<S>> {
             from: currentState,
             fromResidual: currentResidual,
             to: close ? initialState.toStyle() : lastPiece.state.toStyle(),
-            toResidual: close ? initialResidual : lastPiece._residual,
+            toResidual: close ? _initialResidual : lastPiece._residual,
           );
     final following = _firstNotEmpty(closingLink, tail);
 
