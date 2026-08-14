@@ -735,6 +735,12 @@ final class _ParserBase<S extends State<S>> {
   /// back: the style it opens of its own is closed after it, so the string
   /// that follows keeps the look it had.
   ///
+  /// If the inserted text itself ends inside an escape sequence the parser
+  /// could not finish, the sequence is terminated before text follows it and
+  /// at the end of the result. This is the other side of the unfinished-input
+  /// rule below: that rule keeps the insertion out of the input's sequence;
+  /// this one keeps the input's tail out of the insertion's sequence.
+  ///
   /// A hyperlink is given back the same way. Links do not nest — the sequence
   /// that closes one closes them all — so text with a link of its own,
   /// inserted inside a link that was already open, is followed by that outer
@@ -850,11 +856,59 @@ final class _ParserBase<S extends State<S>> {
     final read = Pieces<S>._(text, ambient, initialLink: ambientLink)
         ._requireParsingResult;
 
+    final linkBack = _linkBack(seam: ambientLink, left: read.finalLink);
+    final transit = read.finalState.toStyle().transitTo(ambient);
+    final tail = input.substring(cut);
+    final following = _firstNotEmpty(linkBack, transit, tail);
+    final insertion = _terminatedInsertion(text, read, following);
+
     return '${input.substring(0, cut)}'
-        '$text'
-        '${_linkBack(seam: ambientLink, left: read.finalLink)}'
-        '${read.finalState.toStyle().transitTo(ambient)}'
-        '${input.substring(cut)}';
+        '$insertion$linkBack$transit$tail';
+  }
+
+  /// [text] copied byte for byte, save for the `ST` an unfinished sequence
+  /// needs before text or at the closed edge of the insertion result.
+  ///
+  /// The argument has already been parsed for its final state and link. Its
+  /// pieces are reused here: a second parse would answer the same question
+  /// and make every insertion pay for it twice. The fast path returns [text]
+  /// itself where no sequence needs holding, so ordinary insertions allocate
+  /// no extra copy.
+  String _terminatedInsertion(
+    String text,
+    _PiecesResult<S> read,
+    String following,
+  ) {
+    if (!read.pieces.any((piece) => _unfinished(piece.entity))) {
+      return text;
+    }
+
+    final buf = StringBuffer();
+    var heldOpening = '';
+
+    for (final piece in read.pieces) {
+      final entity = piece.entity;
+      final string = entity.string;
+
+      if (heldOpening.isNotEmpty) {
+        buf.write(
+          _terminatedOpening(heldOpening, string, closing: false),
+        );
+        heldOpening = '';
+      }
+
+      if (_unfinished(entity)) {
+        heldOpening = string;
+      } else {
+        buf.write(string);
+      }
+    }
+
+    buf.write(
+      _terminatedOpening(heldOpening, following, closing: true),
+    );
+
+    return buf.toString();
   }
 
   /// The link code that gives the seam its hyperlink back after the inserted

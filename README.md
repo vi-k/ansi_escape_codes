@@ -955,6 +955,12 @@ print(Parser(inserted).showControlFunctions());
 // [fgRed]Hello [fgGreen]brave [fgRed]world[reset]
 ```
 
+If the inserted text itself ends inside an escape sequence the parser could
+not finish, the sequence is terminated before the original tail follows it.
+This is the other side of the unfinished-input rule below: that rule keeps the
+insertion out of the input's sequence; this one keeps the input's tail out of
+the insertion's sequence.
+
 The position is counted in the string without escape codes, as everywhere else
 in `Parser`. The two methods part ways only when escape codes stand at that
 very position: one goes in front of them, the other behind:

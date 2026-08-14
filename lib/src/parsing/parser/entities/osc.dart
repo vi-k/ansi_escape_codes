@@ -102,9 +102,10 @@ String _terminatedIfTextFollows(String codes, String following) =>
 /// [closing] says what an empty [following] means. Inside a string it means
 /// nothing follows the opening at all, so there is nothing to be swallowed
 /// and the bytes go out as they came. At the edge of an output that closes —
-/// [Parser.substring] or [Parser.optimize] with `close: true`, a printed line
-/// — it means the next thing written is whatever the caller prints after, and
-/// the terminator is owed for the reason the hyperlink close is.
+/// [Parser.substring] or [Parser.optimize] with `close: true`, an insertion
+/// result, a printed line — it means the next thing written is whatever the
+/// caller prints after, and the terminator is owed for the reason the
+/// hyperlink close is.
 String _terminatedOpening(
   String opening,
   String following, {
