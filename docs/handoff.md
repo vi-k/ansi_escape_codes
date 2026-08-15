@@ -21,9 +21,9 @@ worktree на ветке `fix/verification-guards`. Финальный whole-bra
 ## Точная точка рестарта
 
 - Рабочее дерево: `.worktrees/fix-verification-guards`, ветка
-  `fix/verification-guards`, `HEAD e658130` (`docs: record verification guard
-  restart state`). Implementation base — `c2d6c3c`; дерево чистое. Локальный
-  `main` — `623d1c6`,
+  `fix/verification-guards`, с чистым деревом. Implementation base —
+  `c2d6c3c`; последующие commits этого worktree — только документация
+  рестарта. Локальный `main` — `623d1c6`,
   `origin/main` — `c6eda18`.
 - Реализационные commits: M6 `5e4238c`, M7 `1ddb072`, M8 `53d9c36`,
   anchors `2c53313`, complexity `08ffedd`, lint `95c3a4d`, документация
@@ -124,7 +124,7 @@ stable-only, прогрев, попарно чередуемые small/large з�
 
 ## Чему верить в этом документе
 
-Этот файл — стартовый handoff и отражает состояние на `HEAD e658130` в
-worktree `fix/verification-guards`; внутренний `.superpowers/.../progress.md`
+Этот файл — стартовый handoff и отражает состояние worktree
+`fix/verification-guards`; внутренний `.superpowers/.../progress.md`
 может содержать более подробный ledger, но не заменяет этот документ. Если
 handoff расходится с кодом, тестами или git, правы они.
