@@ -1,198 +1,119 @@
 # Handoff — состояние пакета и что делать дальше
 
-ansi_escape_codes, 2026-08-15. Передача контекста после закрытия H8.
+ansi_escape_codes, 2026-08-15. Безопасная точка рестарта перед планированием
+волны verification guards.
 
-**Коротко:** H8 закрыт и влит в `main` merge-коммитом `2db4abd`.
-Все четыре принтера теперь несут один session-wide save-slot `ESC 7` / `ESC 8`
-через строки и writes: state, hyperlink и opaque SGR восстанавливаются вместе,
-restore без save возвращает terminal defaults, а sink `prepare()` не оставляет
-пробного slot. Цельнострочные parser-контракты и публичный API не менялись.
-Две task-review и whole-branch review прошли без находок; локальные ворота,
-feature CI и main CI зелёные. Версию, тег и публикацию не трогали.
+**Коротко:** H8 остаётся закрыт, влит и проверен. Владелец выбрал одну новую
+волну для M6, M7, M8 и кластера M13/L12, устно утвердил её дизайн, а
+утверждённая спека записана commit `200d8ec`. Реализация, worktree, TDD-план и
+правки production/tool/CI ещё не начались. По обязательному
+`superpowers:brainstorming` review-gate следующий заход сначала ждёт явного
+подтверждения владельцем **написанной** спеки; только затем пишется план и
+стартуют сабагенты.
 
-**Где что лежит:** `AGENTS.md` — правила работы; этот файл — текущая точка
-входа; `docs/records/2026-08-15[1]-printer-cursor-save-design.md` — принятая
-спека H8; `docs/records/2026-08-15[2]-printer-cursor-save-plan.md` —
-исполненный TDD-план; `docs/records/2026-08-15[3]-pre-h8-handoff.md` —
-состояние перед планом и реализацией; `docs/architecture.md` — устройство
-кода; `docs/backlog.md` — список владельца, агенты в него не пишут.
+**Где что лежит:** `AGENTS.md` — правила; этот файл — текущая точка входа;
+`docs/records/2026-08-15[4]-verification-guards-design.md` — принятая спека
+новой волны, ожидающая финального просмотра владельцем;
+`docs/records/2026-08-15[5]-pre-verification-guards-handoff.md` — архив
+закрытого H8; `docs/architecture.md` — устройство кода;
+`docs/backlog.md` — список владельца, агенты в него не пишут.
 
-## Состояние репозитория
+## Точная точка рестарта
 
-- `main` влит и запушен на `2db4abd`; перед этим feature HEAD `69333e8`
-  запушен как `origin/fix/printer-cursor-save`. Созданный worktree и локальная
-  feature-ветка удалены после зелёного merge-result test; remote feature branch
-  не удалялась.
-- Смысловой код H8 — `6185964`, публичная документация — `69333e8`.
-  Подготовительные документы: спека `d34b58a`, pre-H8 handoff `3787952`,
-  план `bf0a9ec`; `.worktrees/` исключён коммитом `85e697e`.
-- Feature CI зелёный: run `31838360546` на `69333e8`, jobs `94889641110`
-  (`build (3.6.0)`, 1m51s) и `94889641224` (`build (stable)`, 2m34s).
-- CI merge-коммита на `main` зелёный: run `31838655400` на `2db4abd`, jobs
-  `94890549278` (`build (3.6.0)`, 1m43s) и `94890549410`
-  (`build (stable)`, 2m25s).
-- Финальные локальные ворота сняты на feature HEAD `69333e8`, чьё дерево
-  совпадает с merge-результатом: format — 145 файлов, 0 изменений; analyze —
-  0 замечаний; 5 entry points замкнуты; generator round-trip не изменил
-  `lib/`; **884 теста**; memory guard — **262.2 байта на match** при полосе
-  159…332; dartdoc — 0 предупреждений и 0 ошибок; publish dry-run —
-  0 предупреждений. После merge все 884 теста запущены ещё раз и прошли.
-- Stable CI прошёл memory guard, coverage floor 75% и publishability; SDK
-  3.6.0 прошёл свой предусмотренный workflow-набор. Оба run оставили только
-  внешние annotations о переводе Node.js 20 actions на Node.js 24; к H8 они не
-  относятся и jobs не красят.
-- H8 выполнен через `superpowers:subagent-driven-development`: свежий
-  implementer на каждую из двух задач, отдельный spec+quality reviewer после
-  каждой и самый сильный whole-branch reviewer. Все три review-gate прошли без
-  Critical, Important или Minor findings; fix rounds не понадобились.
-- Версия в `pubspec.yaml` — **4.0.0**, на pub.dev — 3.1.2. Версию не бампали,
-  тег не ставили, пакет не публиковали.
+- Локальный `main` содержит `200d8ec docs: specify verification guard
+  hardening` поверх закрытого H8. Этот commit добавляет только спеку;
+  `lib/`, `tool/`, `test/`, workflow и package metadata не менялись.
+- До restart-handoff commit ветка была на один commit впереди `origin/main`;
+  этот handoff должен быть закоммичен и отправлен вместе со спекой. После
+  push сверять `HEAD` с `origin/main`, не полагаться на эту строку.
+- Полная база после H8: 884 теста; format — 0 изменений; analyze — 0
+  замечаний; 5 entry points замкнуты; generator round-trip не изменил `lib/`;
+  memory guard — 262.2 bytes/match в полосе 159…332; dartdoc и publish
+  dry-run — 0 предупреждений. H8 feature CI `31838360546` и main CI
+  `31838655400` зелёные на SDK 3.6.0 и stable.
+- В рабочем дереве есть неотслеживаемый `.DS_Store`. Это не часть волны и не
+  агентская правка: не добавлять, не удалять и не включать в commit без нового
+  решения владельца.
 
-## Что сделано в H8
+## Выбранная волна: verification guards
 
-### Один private slot через parser pipeline
+### M6 — public namespace snapshot
 
-- Внутренний `_CursorSave<S>` хранит `state`, `link` и `_SgrResidual?`.
-  Nullable весь record: `null` означает «save ещё не было», а настоящий save
-  с `link: null` или `residual: null` остаётся снимком и побеждает fallback.
-- Record проходит через `_ParserBase` → `Pieces` → `_ParserIterator` →
-  `_PiecesResult`. Итоговый slot доступен только private printer pipeline;
-  публичных parameters, getters, constructors и exports не появилось.
-- Каждый iterator начинает с принесённого slot; replay кэшированного
-  `SaveCursor` переснимает все три канала, а final result публикуется только
-  после полного чтения. `ESC 8` выбирает slot или fallback и не потребляет его;
-  следующий `ESC 7` заменяет снимок целиком.
-- У обычных `Parser`/`StackedParser` restore-fallback по-прежнему равен их
-  initial state/link/residual. Прямой разбор вставки получает тот же seam
-  fallback и не наследует printer slot.
+`check_entry_points.dart` сохраняет прежний closure-walk публичных сигнатур и
+получает второй, независимый oracle: точный JSON snapshot имён, экспортируемых
+каждой из пяти точек входа. Обычный запуск ловит missing, unexpected и
+несовпадение самого множества `lib/*.dart`; явный `--update-snapshot` нужен
+только для принятого API-diff и не используется в CI.
 
-### Session carry четырёх принтеров
+На живой базе namespace counts: `ansi.dart` 510, зонтичный entry point 1037,
+`extensions.dart` 8, `style.dart` 91, `utils.dart` 2. Мутация удаления
+`has.dart` export должна красить специальное ворото и называть
+`StringHasEscapeCodesExtension`.
 
-- `_PrinterBase._savedCursor` передаёт final slot следующему разбору рядом с
-  `lastState`, `_lastResidual` и `_ambientLink`. Initial state текущего куска
-  остаётся перенесённым state, но missing-save fallback принтера всегда
-  `(stateDefaults, null, null)`.
-- `Printer`, `StackedPrinter`, `SinkPrinter` и `StackedSinkPrinter` сохраняют
-  slot через строки, newline и отдельные writes. Stacked-варианты несут полный
-  `Stack` со всеми lower frames, а не foreground-проекцию.
-- `SinkPrinter.prepare()` и `StackedSinkPrinter.prepare()` откатывают пробный
-  slot вместе с прежними carry-полями. `write`, `writeAll`, `writeCharCode` и
-  `writeln` обновляют одну сессию по реально записанным кускам.
-- Пустой кусок, `NoStyle` и `ansiCodesEnabled: false` остаются ранними bypass:
-  первый не меняет slot, `NoStyle` оставляет raw-байты терминалу, disabled ANSI
-  удаляет cursor-коды и не создаёт private carry.
-- Raw `ESC 7`/`ESC 8`, cursor coordinates, hyperlink-reopening placement,
-  terminal/stacked reset-граница H7 и residual-модель H6 не менялись.
+### M7 — generator registry preflight
 
-### Доказательства и документация
+Генератор сначала сравнивает registry восьми известных путей с рекурсивно
+обнаруженными marker-файлами в `lib/`. Лишняя, отсутствующая, повторная либо
+непарная marker-зона завершает процесс до первой записи. Успешный запуск
+пишет и сообщает ровно восемь зон; повторный запуск идемпотентен.
 
-- Новый `test/printer_cursor_save_test.dart` поднял корпус с 865 до 884 тестов.
-  Он держит cross-save и no-save на четырёх surfaces, следующий кусок после
-  restore, repeated restore, overwrite, полный Stack, saved link, saved-null
-  link, opaque residual, оба sink rollback, `writeAll`/`writeCharCode`, пустой
-  кусок и bypass-режимы.
-- Два прежних accepted-limit теста в `link_continuity_fuzz_test.dart`
-  развёрнуты в зелёные no-save регрессии state и link.
-- До production-кода новые контракты были красными на известных симптомах.
-  После фикса проверены пять точных обратных мутаций: потеря initial slot,
-  смешение fallback с seed, отсутствие sink rollback, потребление slot на
-  restore, исключение link и residual из снимка. Каждая вернула свой тест в
-  красное; восстановленная реализация прошла общий targeted-набор из 81 теста.
-- Dartdoc четырёх принтеров и `prepare`, README EN/RU, CHANGELOG и architecture
-  описывают session lifetime, replace/non-consuming contract, terminal
-  fallback и sink rollback. Структура и примеры двух README синхронны.
+### M8 — coverage рукописного кода
 
-## Коммиты H8
+Workflow сохраняет полный `lcov.info` для artifact и строит отдельный
+`lcov.gated.info` с `--ignore-files=**/style_colors.dart`. Новый floor —
+95.0% и применяется только ко второму файлу. Живой probe дал 79.646%
+(`2387/2997`) полного и 95.976% (`2385/2485`) filtered coverage. Нулевой
+знаменатель остаётся красным.
 
-| слой | коммит |
-|---|---|
-| принятая спека | `d34b58a` |
-| handoff перед планом | `3787952` |
-| исполняемый план | `bf0a9ec` |
-| безопасный каталог worktree | `85e697e` |
-| private carry и 19 регрессий | `6185964` |
-| публичная документация | `69333e8` |
-| merge в `main` | `2db4abd` |
+### M13/L12 — complexity отдельно от общего test process
 
-## Найдено волнами
+Детерминированные semantic anchors остаются в обычном тестовом корпусе:
+parse, slicing, Stack и insert доказывают точный результат и объём работы.
+Wall-clock ratios уезжают в отдельный `benchmark/complexity_guard.dart`:
+stable-only, прогрев, попарно чередуемые small/large замеры, медиана 5–7 пар,
+достаточно большие batches и калибровка на живом коде с обратными мутациями.
+Он не объединяется с cold `memory_guard.dart`.
 
-Полная исходная опись —
-`docs/records/2026-08-13[5]-independent-review.md`. Клетки «сейчас» в том
-отчёте исторические; закрытия сверяются с этим handoff и git.
+Номера порогов, corpus sizes и counts ещё не выбраны: план обязан получить их
+пробником и объяснить красные обратные мутации, а не вывести рассуждением.
 
-### Закрыто, High
+## Следующий безопасный шаг
 
-| находка | закрытие |
-|---|---|
-| H3: управляющие байты из URL проходили в терминал | `835b792`, `f7ba4c1` |
-| C1: `Stack` был квадратичен | `6a0a60d` |
-| H2: незавершённый код из входа глотал текст четырёх выходов | `cbec9d0` |
-| H10: сужение `Stack.underlineColor` не было отмечено breaking | `5b05f05` |
-| H5: открытый срез терял выжившую половину парного сброса | `a63cc4d` |
-| H9: `Match` перекрывал `dart:core.Match` | `a7978a4` |
-| H4: незавершённый код из вставки глотал исходный хвост | `2ea6c77`, merge `d86e75e` |
-| H6: немоделируемые SGR исчезали из обратных выходов | feature `4fdd576`, merge `a7d708c` |
-| H7: `Style.call` смешивал terminal reset и pop-семантику | feature `418736b`, merge `bbbb210` |
-| **H8: printer терял `ESC 7`/`ESC 8` slot на границе разбора** | feature `69333e8`, merge `2db4abd` |
+1. Владелец просматривает и подтверждает
+   `docs/records/2026-08-15[4]-verification-guards-design.md` либо задаёт
+   правки. Это единственный блокер; новых решений не нужно.
+2. После подтверждения применить `superpowers:writing-plans`, записать
+   `docs/records/2026-08-15[6]-verification-guards-plan.md`, провести
+   plan self-review и закоммитить его.
+3. До первой правки создать изолированный `fix/verification-guards` worktree,
+   снять baseline и выполнить пять задач: M6, M7, M8, semantic anchors,
+   standalone complexity guard. Задачи 4 и 5 последовательны; остальные
+   получают свежих implementer/reviewer сабагентов без пересечения workflow
+   и документационных файлов.
+4. После всех task-review — whole-branch review, локальные ворота с новым
+   complexity guard, feature CI на SDK 3.6.0/stable, `git merge --no-ff`,
+   push `main`, main CI и новый handoff.
 
-### Открыто, Medium и ниже
+## Чего не делать
 
-- **M6:** `check_entry_points.dart` сам не ловит удалённый `export`; часть
-  поверхности страхуют analyze и тесты entry points.
-- **M7:** `generate.dart` не замечает новую незарегистрированную зону
-  `BEGIN`/`END`.
-- **M8:** порог покрытия сильно зависит от генерируемого
-  `style_colors.dart`, а комментарий workflow несёт старые числа.
-- **M13/L12:** временные стражи чувствительны к загрузке машины; наблюдались
-  неповторяемые красные прогоны под параллельной нагрузкой.
-
-Новых находок H8-review и реализация не добавили.
-
-## Что делать дальше
-
-1. Владелец выбирает следующую волну из оставшихся M6, M7, M8, M13/L12 либо
-   отдельно решает вопрос публикации 4.0.0.
-2. Новый backlog-заход снова начинается с brainstorming → спека → план;
-   собственные находки агента идут сюда, не в `docs/backlog.md`.
-3. Публикацию 4.0.0 и тег не делать без нового прямого решения владельца.
-
-## Чего не переоткрывать
-
-- H8 использует один session-wide, replaceable и non-consuming slot на
-  printer. Restore без save — terminal defaults, не carry предыдущего куска;
-  обычный цельнострочный parser сохраняет seeded fallback.
-- Cursor slot несёт state, link и residual одним record, но hyperlink остаётся
-  отдельным каналом рядом со `State`, не внутри него. `SGR 0` не закрывает
-  link и не очищает cursor slot.
-- Sink `prepare` — проба без side effects; реальный write обновляет slot.
-  `NoStyle` доверяет raw-байты терминалу, disabled ANSI удаляет их.
-- H7 закрыт выбранной границей: обычные `Style`/`Parser`/`Printer`/
-  `SinkPrinter` моделируют терминал, явно названные `Stack`/`Stacked*` —
-  иерархический pop.
-- `insertAfter` на unfinished seam, открытый `substring`, 8-битные C1,
-  инвариант придержанных opening/link-кодов и потолок скорости `substring`
-  закрыты прежними решениями.
-- Публичного residual или cursor-save API нет; расширять его без новой спеки и
-  решения владельца нельзя.
+- Не публиковать 4.0.0, не ставить тег и не бампать версию.
+- Не менять публичный API, `lib/`, SDK-floor `^3.6.0` или marker text этой
+  волной.
+- Не брать другие Medium/Low находки и не заводить пункты в
+  `docs/backlog.md`.
+- Не подменять обязательный review written spec устным одобрением дизайна.
+- Не стирать или добавлять `.DS_Store` без воли владельца.
 
 ## Последние волны
 
 | волна | спека / план / архив | merge |
 |---|---|---|
-| Прогретый обход отвечает как свежий | `2026-08-13[1]`, `[2]` | `0f0080b` |
-| Закрытие находок перед публикацией | `2026-08-13[3]`, `[4]` | `206a937` |
-| Независимое ревью и разбор находок | `2026-08-13[5]`, `[6]`, `[7]` | `d0723e0` |
-| `Match` → `Piece` (H9) | `2026-08-13[8]`, `[9]` | `f1a927d` |
-| Незавершённый код во вставке (H4) | `2026-08-14[1]`, `[2]`, `[3]` | `d86e75e` |
-| Typed и opaque SGR (H6) | `2026-08-14[4]`, `[5]`, `[6]`, `[9]` | `a7d708c` |
 | Terminal и stacked reset (H7) | `2026-08-14[7]`, `[8]`, `[10]` | `bbbb210` |
-| **Межстрочный cursor save (H8)** | `2026-08-15[1]`, `[2]`, `[3]` | `2db4abd` |
+| Межстрочный cursor save (H8) | `2026-08-15[1]`, `[2]`, `[3]` | `2db4abd` |
+| **Verification guards (M6, M7, M8, M13/L12)** | спека `[4]`, архив `[5]`; план ждёт review written spec | ещё не начат |
 
 ## Чему верить в этом документе
 
-Документ обновлён после merge `2db4abd`, повторного полного тестового корпуса,
-push `main` и зелёного CI `31838655400`. Локальные ворота относятся к feature
-HEAD `69333e8`, дерево которого совпадает с merge-результатом; после merge
-отдельно повторены все 884 теста. Feature CI `31838360546` и main CI
-`31838655400` оба зелёные на SDK 3.6.0 и stable. Если handoff расходится с
-кодом, тестами или git, правы они.
+Документ написан после commit `200d8ec` и перед реализацией новой волны. Он
+намеренно не называет будущие performance thresholds, task commits и CI runs.
+Если handoff расходится с кодом, тестами или git, правы они.
