@@ -129,7 +129,10 @@ jobs:
                 exit 1
               }
               pct = 100 * hit / found
-              printf "coverage of hand-written lib/: %.1f%% (%d of %d lines), floor %.1f%%\n",
+              # Three decimals, not one: the boundary is where this gate
+              # does its work, and %.1f prints the same "95.0%" for the
+              # run that passes and the run just under it that does not.
+              printf "coverage of hand-written lib/: %.3f%% (%d of %d lines), floor %.1f%%\n",
                   pct, hit, found, floor
               if (pct < floor) {
                 print "the coverage has fallen through the floor"
