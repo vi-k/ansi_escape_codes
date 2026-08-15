@@ -63,6 +63,15 @@ Added:
   without the tables of constants — the smaller imports are for a smaller
   namespace, not for reaching something the main one lacks.
 
+Verification:
+
+- Entry-point signature closure is now backed by an exact exported-namespace
+  snapshot; the generator preflights its eight registered marker zones before
+  writing any generated file.
+- Stable CI gates 95.0% hand-written `lib/` coverage while retaining the full
+  coverage artifact, and runs a separate warmed complexity guard. The ordinary
+  test suite remains timer-free.
+
 Performance:
 
 - The scanner finds the next escape code by `indexOf` rather than by the
