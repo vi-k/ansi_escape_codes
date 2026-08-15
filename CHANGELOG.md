@@ -66,8 +66,10 @@ Added:
 Verification:
 
 - Entry-point signature closure is now backed by an exact exported-namespace
-  snapshot; the generator preflights its eight registered marker zones before
-  writing any generated file.
+  snapshot, and neither is asked anything until `lib/` has been swept for
+  analysis errors and warnings: a library that fails to analyse still has an
+  element model, only a smaller one. The generator preflights its eight
+  registered marker zones before writing any generated file.
 - Stable CI gates 95.0% hand-written `lib/` coverage while retaining the full
   coverage artifact, and runs a separate warmed complexity guard. The ordinary
   complexity assertions in `test/performance_guards_test.dart` remain
