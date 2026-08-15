@@ -48,6 +48,21 @@ void main() {
         '}\n',
       );
     });
+
+    test('normalizes a native path against a slash-keyed snapshot', () {
+      final diagnostic = compareEntryPointSnapshot(
+        {
+          'lib/extensions.dart': {'StringHasEscapeCodesExtension'},
+        },
+        {
+          'lib${Platform.pathSeparator}extensions.dart': {
+            'StringHasEscapeCodesExtension',
+          },
+        },
+      );
+
+      expect(diagnostic, isNull);
+    });
   });
 
   group('entry point checker', () {
@@ -101,6 +116,22 @@ void main() {
       expect(await snapshot.readAsString(), 'kept as it was\n');
     });
 
+    test('does not update a snapshot when analysis reports an error', () async {
+      await fixture.appendTo(
+        'lib/extensions.dart',
+        '\nconst undefinedSnapshotName = missingSnapshotName;\n',
+      );
+      final snapshot = File('${fixture.root.path}/tool/entry_point_names.json');
+      final before = await snapshot.readAsBytes();
+
+      final result = await fixture.run(['--update-snapshot']);
+
+      expect(result.exitCode, isNonZero);
+      expect(result.stderr, contains('lib/extensions.dart'));
+      expect(result.stderr, contains("Undefined name 'missingSnapshotName'"));
+      expect(await snapshot.readAsBytes(), before);
+    });
+
     test('rejects unknown arguments with usage', () async {
       final result = await fixture.run(['--unexpected']);
 
@@ -140,6 +171,9 @@ class _CheckerFixture {
     expect(before, contains(export));
     await file.writeAsString(before.replaceFirst(export, ''));
   }
+
+  Future<void> appendTo(String path, String text) =>
+      File('${root.path}/$path').writeAsString(text, mode: FileMode.append);
 
   Future<ProcessResult> run([List<String> arguments = const []]) => Process.run(
         Platform.resolvedExecutable,

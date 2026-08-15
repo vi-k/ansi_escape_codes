@@ -93,6 +93,15 @@ Future<int> runEntryPointCheck(
       return 2;
     }
     final relative = _relative(root, entryPoint);
+    final diagnostics = [
+      for (final unit in resolved.units) ...unit.errors,
+    ];
+    if (diagnostics.isNotEmpty) {
+      for (final diagnostic in diagnostics) {
+        stderr.writeln('$relative: ${diagnostic.message}');
+      }
+      return 2;
+    }
     namesByEntryPoint[relative] =
         resolved.element2.exportNamespace.definedNames2.keys.toSet();
     failures.addAll(

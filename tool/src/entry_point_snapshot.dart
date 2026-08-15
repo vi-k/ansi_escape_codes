@@ -8,8 +8,10 @@ String? compareEntryPointSnapshot(
   NamesByEntryPoint expected,
   NamesByEntryPoint actual,
 ) {
-  final expectedPaths = expected.keys.toSet();
-  final actualPaths = actual.keys.toSet();
+  final normalizedExpected = _normalizePaths(expected);
+  final normalizedActual = _normalizePaths(actual);
+  final expectedPaths = normalizedExpected.keys.toSet();
+  final actualPaths = normalizedActual.keys.toSet();
   final missingPaths = (expectedPaths.difference(actualPaths).toList()..sort());
   final unexpectedPaths =
       (actualPaths.difference(expectedPaths).toList()..sort());
@@ -18,20 +20,24 @@ String? compareEntryPointSnapshot(
   if (missingPaths.isNotEmpty) {
     diagnostics.add('missing entry points:');
     for (final path in missingPaths) {
-      diagnostics.add('  $path (expected ${expected[path]!.length} names)');
+      diagnostics.add(
+        '  $path (expected ${normalizedExpected[path]!.length} names)',
+      );
     }
   }
   if (unexpectedPaths.isNotEmpty) {
     diagnostics.add('unexpected entry points:');
     for (final path in unexpectedPaths) {
-      diagnostics.add('  $path (actual ${actual[path]!.length} names)');
+      diagnostics.add(
+        '  $path (actual ${normalizedActual[path]!.length} names)',
+      );
     }
   }
 
   for (final path in (expectedPaths.intersection(actualPaths).toList()
     ..sort())) {
-    final expectedNames = expected[path]!;
-    final actualNames = actual[path]!;
+    final expectedNames = normalizedExpected[path]!;
+    final actualNames = normalizedActual[path]!;
     final missingNames =
         (expectedNames.difference(actualNames).toList()..sort());
     final unexpectedNames =
@@ -58,9 +64,20 @@ String? compareEntryPointSnapshot(
 /// Encodes [names] as a stable, readable JSON snapshot.
 String encodeEntryPointSnapshot(NamesByEntryPoint names) {
   final sorted = <String, List<String>>{};
-  for (final path in (names.keys.toList()..sort())) {
-    sorted[path] = names[path]!.toList()..sort();
+  final normalizedNames = _normalizePaths(names);
+  for (final path in (normalizedNames.keys.toList()..sort())) {
+    sorted[path] = normalizedNames[path]!.toList()..sort();
   }
 
   return '${const JsonEncoder.withIndent('  ').convert(sorted)}\n';
+}
+
+NamesByEntryPoint _normalizePaths(NamesByEntryPoint names) {
+  final normalized = <String, Set<String>>{};
+  for (final entry in names.entries) {
+    normalized
+        .putIfAbsent(entry.key.replaceAll(r'\', '/'), () => <String>{})
+        .addAll(entry.value);
+  }
+  return normalized;
 }
