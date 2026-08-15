@@ -12,9 +12,7 @@ String _fnv1a32(Iterable<String> strings) {
   }
 
   for (final string in strings) {
-    for (final codeUnit in string.codeUnits) {
-      mix(codeUnit);
-    }
+    string.codeUnits.forEach(mix);
     mix(0xff);
   }
 
