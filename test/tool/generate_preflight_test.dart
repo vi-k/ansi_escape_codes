@@ -141,11 +141,12 @@ void main() {
       final result = await fixture.run();
 
       expect(result.exitCode, isNonZero);
+      const shape = '$unpaired: expected exactly one BEGIN before one END '
+          '(found 2 BEGIN and 1 END)';
       expect(
         (result.stderr as String).trimRight().split('\n'),
         [
-          '$unpaired: expected exactly one BEGIN before one END '
-              '(found 2 BEGIN and 1 END)',
+          shape,
           'missing registered file: $deleted',
           'missing registered marker file: $deleted',
         ],
