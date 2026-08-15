@@ -71,6 +71,13 @@ jobs:
         # would be a way to go red without anything being wrong.
         run: dart run benchmark/memory_guard.dart
 
+      - name: Check parser operations keep their expected complexity
+        if: matrix.sdk == 'stable'
+        # Wall-clock ratios need their own warmed process. The stable SDK
+        # only: benchmark/complexity_guard.dart carries the calibrated corpus,
+        # paired medians and bands, which do not describe a different Dart.
+        run: dart run benchmark/complexity_guard.dart
+
       - name: Check the docs build
         run: dart doc --dry-run
 
