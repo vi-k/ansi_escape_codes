@@ -1,8 +1,12 @@
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:test/test.dart';
 
-/// Returns the FNV-1a-32 digest of [strings], separating every string with
-/// `0xff` so distinct result lists cannot hash as one concatenated string.
+/// Returns the FNV-1a-32 digest of [strings], mixing `0xff` after each one
+/// so that where one result ends and the next begins is part of the digest.
+///
+/// It mixes UTF-16 code units, not bytes, so the separator is only as
+/// unambiguous as the corpus: a string holding U+00FF could imitate it.
+/// Every corpus here is ASCII with `ESC`, which cannot.
 String _fnv1a32(Iterable<String> strings) {
   var hash = 0x811c9dc5;
 
@@ -38,25 +42,38 @@ void main() {
     });
 
     test('slicing walks every styled line and closes each result', () {
-      const line = '\x1B[1m\x1B[31mtag\x1B[22m\x1B[39m '
-          'a sentence of ordinary words to slice';
+      // Every line carries its own number, so the digest is positional: a
+      // walk that answers each of the 400 questions from the wrong offset
+      // changes it. A corpus of identical lines could not tell the
+      // difference, and a substring pinned to offset 0 passed under one.
+      String line(int i) => '\x1B[1m\x1B[31mtag\x1B[22m\x1B[39m '
+          'a sentence of ordinary words to slice, no. '
+          '${i.toString().padLeft(3, '0')}';
       const first = '\x1B[31;1mtag\x1B[0m '
-          'a sentence of ordinary words to slice';
+          'a sentence of ordinary words to slice, no. 000';
+      const last = '\x1B[31;1mtag\x1B[0m '
+          'a sentence of ordinary words to slice, no. 399';
       const lines = 400;
-      final page = List.filled(lines, line).join('\n');
+      final page = [for (var i = 0; i < lines; i++) line(i)].join('\n');
       final parser = Parser(page)..prepare();
-      final width = Parser(line).length;
+      final width = Parser(line(0)).length;
       final slices = [
         for (var i = 0; i < lines; i++)
           parser.substring(i * (width + 1), maxLength: width),
       ];
 
-      expect(width, 41);
+      expect(width, 50);
       expect(slices, hasLength(400));
+      expect(
+        slices.toSet(),
+        hasLength(400),
+        reason: 'each slice must be able to disagree with every other',
+      );
       expect(slices.first, first);
-      expect(slices.first.length, 52);
-      expect(slices.last.length, 52);
-      expect(_fnv1a32(slices), '39ef6bc5');
+      expect(slices.last, last);
+      expect(slices.first.length, 61);
+      expect(slices.last.length, 61);
+      expect(_fnv1a32(slices), 'b8dc6f45');
     });
 
     test('a stack retains every foreground frame to pop', () {
