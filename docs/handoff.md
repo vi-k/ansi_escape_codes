@@ -1,39 +1,53 @@
 # Handoff — состояние пакета и что делать дальше
 
-ansi_escape_codes, 2026-08-15. Безопасная точка рестарта перед планированием
-волны verification guards.
+ansi_escape_codes, 2026-08-15. Точка рестарта незавершённой волны
+verification guards.
 
-**Коротко:** H8 остаётся закрыт, влит и проверен. Владелец выбрал одну новую
-волну для M6, M7, M8 и кластера M13/L12, устно утвердил её дизайн, а
-утверждённая спека записана commit `200d8ec`. Реализация, worktree, TDD-план и
-правки production/tool/CI ещё не начались. По обязательному
-`superpowers:brainstorming` review-gate следующий заход сначала ждёт явного
-подтверждения владельцем **написанной** спеки; только затем пишется план и
-стартуют сабагенты.
+**Коротко:** реализация M6, M7, M8 и кластера M13/L12 выполнена в отдельном
+worktree на ветке `fix/verification-guards`. Финальный whole-branch review
+остановлен: `tool/check_entry_points.dart` всё ещё не доказывает отсутствие
+ошибки анализатора в экспортируемом `lib/src/...`-файле, поэтому режим
+`--update-snapshot` может перезаписать snapshot после такой ошибки. Ветка не
+отправлялась, CI не запускался, merge в `main` не делался. Для нового раунда
+нужна явная воля владельца; до неё код не менять.
 
 **Где что лежит:** `AGENTS.md` — правила; этот файл — текущая точка входа;
-`docs/records/2026-08-15[4]-verification-guards-design.md` — принятая спека
-новой волны, ожидающая финального просмотра владельцем;
+`docs/records/2026-08-15[4]-verification-guards-design.md` — спека
+волны; `docs/records/2026-08-15[6]-verification-guards-plan.md` — её план;
 `docs/records/2026-08-15[5]-pre-verification-guards-handoff.md` — архив
 закрытого H8; `docs/architecture.md` — устройство кода;
 `docs/backlog.md` — список владельца, агенты в него не пишут.
 
 ## Точная точка рестарта
 
-- Локальный `main` содержит `200d8ec docs: specify verification guard
-  hardening` поверх закрытого H8. Этот commit добавляет только спеку;
-  `lib/`, `tool/`, `test/`, workflow и package metadata не менялись.
-- До restart-handoff commit ветка была на один commit впереди `origin/main`;
-  этот handoff должен быть закоммичен и отправлен вместе со спекой. После
-  push сверять `HEAD` с `origin/main`, не полагаться на эту строку.
-- Полная база после H8: 884 теста; format — 0 изменений; analyze — 0
-  замечаний; 5 entry points замкнуты; generator round-trip не изменил `lib/`;
-  memory guard — 262.2 bytes/match в полосе 159…332; dartdoc и publish
-  dry-run — 0 предупреждений. H8 feature CI `31838360546` и main CI
-  `31838655400` зелёные на SDK 3.6.0 и stable.
+- Рабочее дерево: `.worktrees/fix-verification-guards`, ветка
+  `fix/verification-guards`, `HEAD e658130` (`docs: record verification guard
+  restart state`). Implementation base — `c2d6c3c`; дерево чистое. Локальный
+  `main` — `623d1c6`,
+  `origin/main` — `c6eda18`.
+- Реализационные commits: M6 `5e4238c`, M7 `1ddb072`, M8 `53d9c36`,
+  anchors `2c53313`, complexity `08ffedd`, lint `95c3a4d`, документация
+  `2f278a3`/`293cd35`, финальная правка путей и прямого entry-point fixture
+  `c2d6c3c`.
+- До последнего review локальные ворота были сняты: 900 тестов, format,
+  entry-point check, generator round-trip, memory guard, complexity guard,
+  dartdoc и publish dry-run (0 предупреждений). Это не заменяет feature CI:
+  ветка не push-нута и на SDK 3.6.0 не проверена.
+- Блокер подтверждён повторно whole-branch reviewer: тест проверяет ошибку,
+  добавленную прямо в `lib/extensions.dart`, но не ошибку в подключённом
+  `lib/src/extensions/has.dart`; analyzer diagnostic может остаться
+  необнаруженным до записи snapshot. Предыдущий допустимый финальный fix-wave
+  исчерпан, поэтому следующий patch требует решения владельца.
 - В рабочем дереве есть неотслеживаемый `.DS_Store`. Это не часть волны и не
   агентская правка: не добавлять, не удалять и не включать в commit без нового
   решения владельца.
+
+## Правило ведения состояния
+
+Актуальная точка старта, блокеры и следующий разрешённый шаг ведутся в этом
+`docs/handoff.md`. `.superpowers/.../progress.md` — только внутренний ledger
+исполнения плана и не источник состояния для нового захода; после каждого
+существенного изменения handoff обновляется первым.
 
 ## Выбранная волна: verification guards
 
@@ -74,25 +88,21 @@ stable-only, прогрев, попарно чередуемые small/large з�
 достаточно большие batches и калибровка на живом коде с обратными мутациями.
 Он не объединяется с cold `memory_guard.dart`.
 
-Номера порогов, corpus sizes и counts ещё не выбраны: план обязан получить их
-пробником и объяснить красные обратные мутации, а не вывести рассуждением.
+Пороговые значения, corpus sizes и counts выбраны пробником и зафиксированы в
+`benchmark/complexity_guard.dart`; их не следует менять, чтобы замаскировать
+красную мутацию.
 
 ## Следующий безопасный шаг
 
-1. Владелец просматривает и подтверждает
-   `docs/records/2026-08-15[4]-verification-guards-design.md` либо задаёт
-   правки. Это единственный блокер; новых решений не нужно.
-2. После подтверждения применить `superpowers:writing-plans`, записать
-   `docs/records/2026-08-15[6]-verification-guards-plan.md`, провести
-   plan self-review и закоммитить его.
-3. До первой правки создать изолированный `fix/verification-guards` worktree,
-   снять baseline и выполнить пять задач: M6, M7, M8, semantic anchors,
-   standalone complexity guard. Задачи 4 и 5 последовательны; остальные
-   получают свежих implementer/reviewer сабагентов без пересечения workflow
-   и документационных файлов.
-4. После всех task-review — whole-branch review, локальные ворота с новым
-   complexity guard, feature CI на SDK 3.6.0/stable, `git merge --no-ff`,
-   push `main`, main CI и новый handoff.
+1. Владелец решает, разрешать ли ещё один implementation/review round для
+   blocker выше. Без этого не менять `tool/check_entry_points.dart` или его
+   тесты и не переписывать историю.
+2. Если round разрешён, сначала добавить regression на ошибку в экспортируемом
+   `lib/src/...`-файле и доказать, что snapshot bytes не меняются; затем
+   повторить whole-branch review и локальные ворота.
+3. Только после зелёного review: push feature branch, дождаться CI на SDK
+   3.6.0/stable, затем обычный `git merge --no-ff` в `main`, push `main` и
+   записать новый handoff.
 
 ## Чего не делать
 
@@ -110,10 +120,11 @@ stable-only, прогрев, попарно чередуемые small/large з�
 |---|---|---|
 | Terminal и stacked reset (H7) | `2026-08-14[7]`, `[8]`, `[10]` | `bbbb210` |
 | Межстрочный cursor save (H8) | `2026-08-15[1]`, `[2]`, `[3]` | `2db4abd` |
-| **Verification guards (M6, M7, M8, M13/L12)** | спека `[4]`, архив `[5]`; план ждёт review written spec | ещё не начат |
+| **Verification guards (M6, M7, M8, M13/L12)** | спека `[4]`, план `[6]`; реализация в `fix/verification-guards` | blocked before push |
 
 ## Чему верить в этом документе
 
-Документ написан после commit `200d8ec` и перед реализацией новой волны. Он
-намеренно не называет будущие performance thresholds, task commits и CI runs.
-Если handoff расходится с кодом, тестами или git, правы они.
+Этот файл — стартовый handoff и отражает состояние на `HEAD e658130` в
+worktree `fix/verification-guards`; внутренний `.superpowers/.../progress.md`
+может содержать более подробный ledger, но не заменяет этот документ. Если
+handoff расходится с кодом, тестами или git, правы они.
