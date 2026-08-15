@@ -88,31 +88,48 @@ jobs:
         if: matrix.sdk == 'stable'
         run: dart test --coverage=coverage
 
-      - name: Check the coverage holds its floor
+      - name: Format coverage reports
         if: matrix.sdk == 'stable'
-        # The floor sits under the current figure rather than at it: the
-        # generated style_colors.dart is covered at 0.4% by design and pulls
-        # lib/ as a whole down from 97.5% to 76.0%.
         run: |
           dart run coverage:format_coverage \
             --lcov --in=coverage --out=coverage/lcov.info --report-on=lib
-          awk -F: -v floor=75.0 '
+          dart run coverage:format_coverage \
+            --lcov --in=coverage --out=coverage/lcov.gated.info --report-on=lib --ignore-files='**/style_colors.dart'
+
+      - name: Check hand-written lib coverage holds its floor
+        if: matrix.sdk == 'stable'
+        # style_colors.dart is generated code. Keep it in the full artifact
+        # for diagnosis, but permanently exclude it from this hand-written
+        # coverage gate.
+        run: |
+          awk -F: -v floor=95.0 '
             /^LF:/ { found += $2 }
             /^LH:/ { hit += $2 }
+            /^DA:/ {
+              lineFound++
+              split($2, line, ",")
+              if (line[2] != 0) {
+                lineHit++
+              }
+            }
             END {
               if (found == 0) {
                 print "the report counted no lines at all"
                 exit 1
               }
+              if (found != lineFound || hit != lineHit) {
+                print "the report summaries do not match its line records"
+                exit 1
+              }
               pct = 100 * hit / found
-              printf "coverage of lib/: %.1f%% (%d of %d lines), floor %.1f%%\n",
+              printf "coverage of hand-written lib/: %.1f%% (%d of %d lines), floor %.1f%%\n",
                   pct, hit, found, floor
               if (pct < floor) {
                 print "the coverage has fallen through the floor"
                 exit 1
               }
             }
-          ' coverage/lcov.info
+          ' coverage/lcov.gated.info
 
       - name: Upload coverage
         if: always() && matrix.sdk == 'stable'
