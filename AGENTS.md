@@ -69,8 +69,9 @@ dart pub publish --dry-run   # ожидается 0 предупреждений
   на конкретных машинах; актуальные числа — в `docs/handoff.md`.
   **`complexity_guard.dart`** отдельно держит wall-clock complexity: это
   прогретый standalone process с попарными медианами, только для stable SDK.
-  Обычный `dart test` timer-free; нулевой аргумент complexity guard проверяется
-  самостоятельным запуском, а не test scheduler.
+  Complexity assertions в `test/performance_guards_test.dart` детерминированы
+  и timer-free; нулевой аргумент complexity guard проверяется самостоятельным
+  запуском, а не test scheduler.
 - CI (`.github/workflows/dart.yml`) гоняет то же на SDK `3.6.0` и `stable`,
   а memory и complexity guards — только на stable. Coverage artifact содержит
   весь `lib/`, но floor 95.0% применяется к отдельному report без

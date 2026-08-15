@@ -288,11 +288,11 @@ carry-полями.
    `style_colors.dart`. Floor 95.0% читается только из второго report'а и
    проверяет, что LCOV summaries согласованы с line records; нулевой знаменатель
    красный.
-4. **Complexity.** Детерминированные semantic anchors живут в обычном
-   timer-free `dart test`. Wall-clock ratios вынесены в прогретый
-   `benchmark/complexity_guard.dart`: standalone zero-argument process с
-   alternating paired medians, только для stable CI. Поэтому matrix SDK 3.6.0
-   и test scheduler не решают environment-calibrated timing bands.
+4. **Complexity.** Детерминированные, timer-free complexity assertions живут
+   в `test/performance_guards_test.dart`. Wall-clock ratios вынесены в
+   прогретый `benchmark/complexity_guard.dart`: standalone zero-argument
+   process с alternating paired medians, только для stable CI. Поэтому matrix
+   SDK 3.6.0 и test scheduler не решают environment-calibrated timing bands.
 
 ## Где читать дальше
 

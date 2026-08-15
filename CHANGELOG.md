@@ -70,7 +70,8 @@ Verification:
   writing any generated file.
 - Stable CI gates 95.0% hand-written `lib/` coverage while retaining the full
   coverage artifact, and runs a separate warmed complexity guard. The ordinary
-  test suite remains timer-free.
+  complexity assertions in `test/performance_guards_test.dart` remain
+  deterministic and timer-free.
 
 Performance:
 
