@@ -15,10 +15,10 @@ ansi_escape_codes, 2026-08-16. Волна verification guards закрыта и 
 
 ## Состояние
 
-- `main` — `6b2d1cb`, совпадает с `origin/main`. Ветка
-  `fix/verification-guards` влита и остаётся на remote; worktree
-  `.worktrees/fix-verification-guards` не удалён. И то, и другое можно
-  убирать — они больше ничего не держат.
+- Работа идёт прямо в `main`, других веток и worktree'ев нет: ветка
+  волны удалена локально и на remote, worktree убран. На remote остались
+  две ветки dependabot и влитая `fix/printer-cursor-save` — последнюю
+  можно удалять, она ничего не держит.
 - Версия `4.0.0` не опубликована и не бампалась, тега нет.
 
 ### Ворота на `6b2d1cb`
@@ -95,8 +95,8 @@ ansi_escape_codes, 2026-08-16. Волна verification guards закрыта и 
    publish. Требует явного слова: тег и `dart pub publish` без него не делают.
 2. **Волна по complexity guard** — пункты 1–5 выше. Работа не косметическая:
    после переделки нужна последовательная перекалибровка, а не один прогон.
-3. **Уборка** — удалить влитую ветку на remote и worktree
-   `.worktrees/fix-verification-guards`.
+3. **Уборка остатков** — на remote лежит влитая `fix/printer-cursor-save`
+   и две ветки dependabot. Ничего не держат, но и не мешают.
 
 ## Чего не делать без слова владельца
 
