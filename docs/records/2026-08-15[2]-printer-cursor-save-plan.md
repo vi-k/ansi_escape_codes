@@ -7,8 +7,8 @@
 > **Что это:** план H8 по спеке `2026-08-15[1]` — перенос save-slot `ESC 7` /
 > `ESC 8` через строки и writes во всех принтерах.
 > **Связанные записи:** `2026-08-15[1]-printer-cursor-save-design.md`,
-> `2026-08-15[3]-pre-h8-handoff.md`,
-> `2026-08-15[5]-pre-verification-guards-handoff.md`.
+> `2026-08-15[3]-pre-h8-report.md`,
+> `2026-08-15[5]-pre-verification-guards-report.md`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or

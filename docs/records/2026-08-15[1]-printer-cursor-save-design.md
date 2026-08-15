@@ -6,8 +6,8 @@
 > **Что это:** спека H8 — единый межстрочный save-slot `ESC 7` / `ESC 8` во
 > всех четырёх принтерах.
 > **Связанные записи:** `2026-08-15[2]-printer-cursor-save-plan.md`,
-> `2026-08-15[3]-pre-h8-handoff.md`,
-> `2026-08-15[5]-pre-verification-guards-handoff.md`.
+> `2026-08-15[3]-pre-h8-report.md`,
+> `2026-08-15[5]-pre-verification-guards-report.md`.
 
 ## Что сломано
 

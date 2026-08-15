@@ -8,7 +8,7 @@
 > **Что это:** TDD-план H4 — `_insert` придерживает незавершённый код
 > вставки и выпускает его перед следующим куском.
 > **Связанные записи:** `2026-08-14[1]-inserted-unfinished-code-design.md`,
-> `2026-08-14[3]-pre-h4-handoff.md`.
+> `2026-08-14[3]-pre-h4-report.md`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or

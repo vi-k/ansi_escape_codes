@@ -8,11 +8,13 @@
 > запускался, merge не делался» уже неверно. Раздел «Найдено волнами»
 > **остаётся действующим**: перечисленные там находки не закрыты и перенесены
 > в новый `docs/handoff.md`.
+> Жанр записи 2026-08-16 сменён с `handoff` на `report`: ротированный
+> handoff по содержанию — отчёт о работе. Прежнее имя — `2026-08-16[1]-post-verification-guards-handoff.md`.
 > **Что это:** переданный в новую сессию снимок пакета сразу после реализации
 > и ревью волны verification guards.
 > **Связанные записи:** `2026-08-15[4]-verification-guards-design.md`,
 > `2026-08-15[6]-verification-guards-plan.md`,
-> `2026-08-15[5]-pre-verification-guards-handoff.md`.
+> `2026-08-15[5]-pre-verification-guards-report.md`.
 
 ansi_escape_codes, 2026-08-15. Волна verification guards реализована,
 отревьюена и починена; ждёт push, feature CI и мержа.

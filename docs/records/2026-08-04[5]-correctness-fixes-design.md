@@ -8,7 +8,7 @@
 > **Что это:** дизайн четырёх фиксов корректности (H1, H2, M1, M8) по
 > находкам ревью `2026-08-04[1]`.
 > **Связанные записи:** `2026-08-04[1]-pre-4.0.0-project-review.md`,
-> `2026-08-04[4]-correctness-fixes-handoff.md`,
+> `2026-08-04[4]-correctness-fixes-report.md`,
 > `2026-08-04[6]-correctness-fixes-plan.md`,
 > `2026-08-05[9]-review-verification-report.md`,
 > `2026-08-05[10]-verification-fixes-plan.md`.

@@ -6,9 +6,9 @@
 > писалась против `main` @ `887a2f5`.
 > **Что это:** спека волны verification guards — M6, M7, M8 и кластер
 > M13/L12 одной волной, четырьмя независимыми механизмами.
-> **Связанные записи:** `2026-08-15[5]-pre-verification-guards-handoff.md`,
+> **Связанные записи:** `2026-08-15[5]-pre-verification-guards-report.md`,
 > `2026-08-15[6]-verification-guards-plan.md`,
-> `2026-08-16[1]-post-verification-guards-handoff.md`.
+> `2026-08-16[1]-post-verification-guards-report.md`.
 
 ## Цель волны
 

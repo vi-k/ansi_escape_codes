@@ -2,13 +2,13 @@
 
 > **Состояние на 2026-08-16:** исполнен и влит — `4277fd6` и `418736b`
 > слиты в `main` мержем `bbbb210`, H7 закрыт. Поправка рестарта
-> отработала: архив Task 4 лежит как `2026-08-14[10]-pre-h7-handoff.md`,
+> отработала: архив Task 4 лежит как `2026-08-14[10]-pre-h7-report.md`,
 > номер `[9]` занял handoff перед планированием.
 > **Что это:** TDD-план H7 — перевод `Style.call` на обычный `Printer` и
 > документирование двух reset-моделей.
 > **Связанные записи:** `2026-08-14[7]-stack-reset-semantics-design.md`,
-> `2026-08-14[9]-pre-h7-planning-handoff.md`,
-> `2026-08-14[10]-pre-h7-handoff.md`.
+> `2026-08-14[9]-pre-h7-planning-report.md`,
+> `2026-08-14[10]-pre-h7-report.md`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or

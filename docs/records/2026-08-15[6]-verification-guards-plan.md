@@ -9,8 +9,8 @@
 > **Что это:** план волны verification guards по спеке `2026-08-15[4]` — M6,
 > M7, M8 и кластер M13/L12.
 > **Связанные записи:** `2026-08-15[4]-verification-guards-design.md`,
-> `2026-08-15[5]-pre-verification-guards-handoff.md`,
-> `2026-08-16[1]-post-verification-guards-handoff.md`.
+> `2026-08-15[5]-pre-verification-guards-report.md`,
+> `2026-08-16[1]-post-verification-guards-report.md`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
 

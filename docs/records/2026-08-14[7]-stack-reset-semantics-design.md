@@ -7,8 +7,8 @@
 > **Что это:** спека H7 — граница между терминальной reset-семантикой
 > `Style` и стековой моделью `Stack`.
 > **Связанные записи:** `2026-08-14[8]-stack-reset-semantics-plan.md`,
-> `2026-08-14[9]-pre-h7-planning-handoff.md`,
-> `2026-08-14[10]-pre-h7-handoff.md`.
+> `2026-08-14[9]-pre-h7-planning-report.md`,
+> `2026-08-14[10]-pre-h7-report.md`.
 
 ## Что сломано
 

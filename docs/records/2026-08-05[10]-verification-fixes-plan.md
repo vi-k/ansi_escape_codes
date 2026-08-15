@@ -8,7 +8,7 @@
 > **Что это:** план из семи задач-коммитов, закрывающих находки
 > верификационного отчёта `2026-08-05[9]`.
 > **Связанные записи:** `2026-08-04[1]-pre-4.0.0-project-review.md`,
-> `2026-08-05[8]-review-verification-handoff.md`,
+> `2026-08-05[8]-pre-review-verification-report.md`,
 > `2026-08-05[9]-review-verification-report.md`,
 > `2026-08-11[1]-backlog-tail-design.md`.
 

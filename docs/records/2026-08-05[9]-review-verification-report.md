@@ -5,11 +5,11 @@
 > непрерывности ссылки `5623e12`. Числа замеров и «366 тестов» — ревизии
 > `85d4a0e`, сегодняшние ворота см. в `docs/handoff.md`. В прозе старые
 > пути: записи живут в `docs/records/`, `TODO.md` стал `docs/backlog.md`, а
-> упомянутый `docs/2026-08-05[8]-handoff-review-verification.md` сегодня
-> называется `2026-08-05[8]-review-verification-handoff.md`.
+> упомянутый `docs/2026-08-05[8]-pre-review-verification-report.md` сегодня
+> называется `2026-08-05[8]-pre-review-verification-report.md`.
 > **Что это:** отчёт пяти независимых верификаторов о том, что реально
 > закрылось из ревью `2026-08-04[1]`.
-> **Связанные записи:** `2026-08-05[8]-review-verification-handoff.md`,
+> **Связанные записи:** `2026-08-05[8]-pre-review-verification-report.md`,
 > `2026-08-05[10]-verification-fixes-plan.md`,
 > `2026-08-04[1]-pre-4.0.0-project-review.md`.
 

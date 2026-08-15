@@ -13,7 +13,7 @@
 > **Что это:** полное независимое ревью пакета в семь заходов — десять
 > находок Critical/High плюс список Medium и Low.
 > **Связанные записи:** `2026-08-13[6]-unfinished-code-reemission-design.md`,
-> `2026-08-13[7]-post-review-findings-handoff.md`,
+> `2026-08-13[7]-post-review-findings-report.md`,
 > `2026-08-13[8]-match-rename-design.md`,
 > `2026-08-13[9]-match-rename-plan.md`,
 > `2026-08-14[1]-inserted-unfinished-code-design.md`,

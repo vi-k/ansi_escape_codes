@@ -9,7 +9,7 @@
 > **Что это:** TDD-план H6 — типизация всех стандартных SGR плюс сквозной
 > перенос неизвестных (residual) через выходы пакета и `ESC 7/8`.
 > **Связанные записи:** `2026-08-14[4]-unmodelled-sgr-design.md`,
-> `2026-08-14[6]-pre-h6-handoff.md`.
+> `2026-08-14[6]-pre-h6-report.md`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
