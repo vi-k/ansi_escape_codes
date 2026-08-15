@@ -29,6 +29,7 @@ library;
 // be five ignores for one decision, and the decision is the file's.
 // ignore_for_file: experimental_member_use
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
@@ -36,19 +37,37 @@ import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 
+import 'src/entry_point_snapshot.dart';
+
 /// What separates the parts of a path here. Spelled out rather than
 /// assumed to be `/`: the analyzer hands back paths in the platform's
 /// own shape, and a prefix test that never matches would let every entry
 /// point through as if it were closed.
 final _sep = Platform.pathSeparator;
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
+  exitCode = await runEntryPointCheck(args, root: _packageRoot());
+}
+
+/// Runs the entry-point namespace and signature-closure checks under [root].
+Future<int> runEntryPointCheck(
+  List<String> args, {
+  required String root,
+}) async {
+  if (args.isNotEmpty &&
+      (args.length != 1 || args.single != '--update-snapshot')) {
+    stderr.writeln(
+      'Usage: dart run tool/check_entry_points.dart [--update-snapshot]',
+    );
+    return 64;
+  }
+
+  final updateSnapshot = args.isNotEmpty;
   final stopwatch = Stopwatch()..start();
-  final root = _packageRoot();
   final libDir = Directory('$root${_sep}lib');
   if (!libDir.existsSync()) {
     stderr.writeln('no lib/ under $root');
-    exit(2);
+    return 2;
   }
 
   final entryPoints = libDir
@@ -60,49 +79,108 @@ Future<void> main() async {
     ..sort();
   if (entryPoints.isEmpty) {
     stderr.writeln('no entry points under ${libDir.path}');
-    exit(2);
+    return 2;
   }
 
   final collection = AnalysisContextCollection(includedPaths: [libDir.path]);
   final failures = <_Failure>[];
+  final namesByEntryPoint = <String, Set<String>>{};
   for (final entryPoint in entryPoints) {
     final session = collection.contextFor(entryPoint).currentSession;
     final resolved = await session.getResolvedLibrary(entryPoint);
     if (resolved is! ResolvedLibraryResult) {
       stderr.writeln('${_relative(root, entryPoint)}: $resolved');
-      exit(2);
+      return 2;
     }
+    final relative = _relative(root, entryPoint);
+    namesByEntryPoint[relative] =
+        resolved.element2.exportNamespace.definedNames2.keys.toSet();
     failures.addAll(
       _Closure(
         root: root,
         libPath: libDir.path,
-        entryPoint: _relative(root, entryPoint),
+        entryPoint: relative,
         library: resolved.element2,
       ).check(),
     );
   }
 
-  stopwatch.stop();
-  final seconds = (stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1);
-  if (failures.isEmpty) {
-    print('${entryPoints.length} entry points, closed (${seconds}s)');
-    return;
+  String? snapshotFailure;
+  if (!updateSnapshot) {
+    final snapshot = File('$root${_sep}tool${_sep}entry_point_names.json');
+    try {
+      snapshotFailure = compareEntryPointSnapshot(
+        _decodeEntryPointSnapshot(await snapshot.readAsString()),
+        namesByEntryPoint,
+      );
+    } on FileSystemException catch (error) {
+      stderr.writeln('cannot read ${snapshot.path}: $error');
+      return 2;
+    } on FormatException catch (error) {
+      stderr.writeln('invalid ${snapshot.path}: $error');
+      return 2;
+    }
   }
 
+  stopwatch.stop();
+  final seconds = (stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1);
+  if (snapshotFailure != null) {
+    stderr.writeln(snapshotFailure);
+  }
   for (final failure in failures) {
     stderr.writeln('${failure.entryPoint}: ${failure.missing}');
     for (final site in failure.sites) {
       stderr.writeln('  $site');
     }
   }
-  final count = failures.length;
-  stderr
-    ..writeln()
-    ..writeln(
-      '$count ${count == 1 ? 'name is' : 'names are'} reached by a public '
-      'signature and left unexported (${seconds}s)',
+  if (failures.isNotEmpty) {
+    final count = failures.length;
+    stderr
+      ..writeln()
+      ..writeln(
+        '$count ${count == 1 ? 'name is' : 'names are'} reached by a public '
+        'signature and left unexported (${seconds}s)',
+      );
+  }
+  if (snapshotFailure != null || failures.isNotEmpty) {
+    return 1;
+  }
+
+  if (updateSnapshot) {
+    await File('$root${_sep}tool${_sep}entry_point_names.json').writeAsString(
+      encodeEntryPointSnapshot(namesByEntryPoint),
     );
-  exit(1);
+  }
+  final publicNames = namesByEntryPoint.values.fold<int>(
+    0,
+    (total, names) => total + names.length,
+  );
+  print('${entryPoints.length} entry points, $publicNames public names, '
+      'closed (${seconds}s)');
+  return 0;
+}
+
+NamesByEntryPoint _decodeEntryPointSnapshot(String source) {
+  final decoded = jsonDecode(source);
+  if (decoded is! Map) {
+    throw const FormatException('expected an object');
+  }
+
+  final namesByEntryPoint = <String, Set<String>>{};
+  for (final entry in decoded.entries) {
+    if (entry.key is! String || entry.value is! List) {
+      throw const FormatException('expected paths and lists of names');
+    }
+    final names = <String>{};
+    for (final name in entry.value as List) {
+      if (name is! String) {
+        throw const FormatException('expected every name to be a string');
+      }
+      names.add(name);
+    }
+    namesByEntryPoint[entry.key as String] = names;
+  }
+  return namesByEntryPoint;
 }
 
 /// One declaration of this package that an entry point reaches without
