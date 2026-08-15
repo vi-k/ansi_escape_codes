@@ -58,25 +58,125 @@ const _readySections = {
 
 void main() {
   final names = _names();
+  final registry = _registry();
 
-  _replace('lib/src/ansi/colors.dart', _ansiIndexes(names));
-  _replace(
-    'lib/src/ready_to_use/sgr/colors256/fg256.dart',
-    _readyToUse(names, prefix: 'fg256', word: 'Foreground'),
-  );
-  _replace(
-    'lib/src/ready_to_use/sgr/colors256/bg256.dart',
-    _readyToUse(names, prefix: 'bg256', word: 'Background'),
-  );
-  _replace(
-    'lib/src/ready_to_use/sgr/colors256/underline256.dart',
-    _readyToUse(names, prefix: 'underline256', word: 'Underline'),
-  );
-  _replace('lib/src/parsing/colors/color_indexes.dart', _enumValues(names));
-  _replace('lib/src/parsing/colors/color_256.dart', _statics(names));
-  _replace('lib/src/parsing/state/styles.dart', _styles(names));
-  _replace('lib/src/parsing/state/style_colors.dart', _getters(names));
+  if (!_preflight(registry)) {
+    exitCode = 1;
+    return;
+  }
+
+  for (final entry in registry) {
+    _replace(entry.path, entry.emit(names));
+  }
+  stdout.writeln('generated ${registry.length} zones');
 }
+
+List<({String path, List<String> Function(List<_Name>) emit})> _registry() => [
+      (path: 'lib/src/ansi/colors.dart', emit: _ansiIndexes),
+      (
+        path: 'lib/src/ready_to_use/sgr/colors256/fg256.dart',
+        emit: (names) =>
+            _readyToUse(names, prefix: 'fg256', word: 'Foreground'),
+      ),
+      (
+        path: 'lib/src/ready_to_use/sgr/colors256/bg256.dart',
+        emit: (names) =>
+            _readyToUse(names, prefix: 'bg256', word: 'Background'),
+      ),
+      (
+        path: 'lib/src/ready_to_use/sgr/colors256/underline256.dart',
+        emit: (names) =>
+            _readyToUse(names, prefix: 'underline256', word: 'Underline'),
+      ),
+      (path: 'lib/src/parsing/colors/color_indexes.dart', emit: _enumValues),
+      (path: 'lib/src/parsing/colors/color_256.dart', emit: _statics),
+      (path: 'lib/src/parsing/state/styles.dart', emit: _styles),
+      (path: 'lib/src/parsing/state/style_colors.dart', emit: _getters),
+    ];
+
+bool _preflight(
+  List<({String path, List<String> Function(List<_Name>) emit})> registry,
+) {
+  final root = _packageRoot();
+  final registered = <String>{};
+  final errors = <String>[];
+
+  for (final entry in registry) {
+    if (!registered.add(entry.path)) {
+      errors.add('duplicate registered path: ${entry.path}');
+    }
+    if (!_fileAt(root, entry.path).existsSync()) {
+      errors.add('missing registered file: ${entry.path}');
+    }
+  }
+
+  final discovered = <String>{};
+  final lib = Directory('${root.path}${Platform.pathSeparator}lib');
+  if (lib.existsSync()) {
+    for (final entity in lib.listSync(recursive: true, followLinks: false)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) {
+        continue;
+      }
+
+      final lines = entity.readAsLinesSync();
+      final begins = <int>[];
+      final ends = <int>[];
+      for (final (index, line) in lines.indexed) {
+        if (line.trim() == _begin) {
+          begins.add(index);
+        }
+        if (line.trim() == _end) {
+          ends.add(index);
+        }
+      }
+
+      if (begins.isEmpty && ends.isEmpty) {
+        continue;
+      }
+
+      final path = _relativeTo(root, entity);
+      discovered.add(path);
+      if (begins.length != 1 ||
+          ends.length != 1 ||
+          begins.isEmpty ||
+          ends.isEmpty ||
+          begins.first >= ends.first) {
+        errors.add(
+          '$path: expected exactly one BEGIN before one END '
+          '(found ${begins.length} BEGIN and ${ends.length} END)',
+        );
+      }
+    }
+  }
+
+  final missingMarkers = registered.difference(discovered).toList()..sort();
+  final unexpectedMarkers = discovered.difference(registered).toList()..sort();
+  errors
+    ..addAll(
+      missingMarkers.map((path) => 'missing registered marker file: $path'),
+    )
+    ..addAll(
+      unexpectedMarkers.map((path) => 'unexpected marker file: $path'),
+    );
+
+  if (errors.isEmpty) {
+    return true;
+  }
+
+  errors
+    ..sort()
+    ..forEach(stderr.writeln);
+  return false;
+}
+
+Directory _packageRoot() => File.fromUri(Platform.script).parent.parent;
+
+File _fileAt(Directory root, String path) =>
+    File('${root.path}${Platform.pathSeparator}$path');
+
+String _relativeTo(Directory root, File file) => file.path
+    .substring(root.path.length + 1)
+    .replaceAll(Platform.pathSeparator, '/');
 
 /// One colour of the table: its place and the pieces its names are
 /// built from.
@@ -307,17 +407,12 @@ List<String> _getters(List<_Name> names) => [
     ];
 
 void _replace(String path, List<String> zone) {
-  final file = File(path);
+  final file = _fileAt(_packageRoot(), path);
   final lines = file.readAsLinesSync();
 
-  // The first BEGIN and the first END: one pair per file is what is meant.
+  // Preflight has already established the one valid marker pair.
   final begin = lines.indexWhere((l) => l.trim() == _begin);
   final end = lines.indexWhere((l) => l.trim() == _end);
-
-  if (begin < 0 || end < 0 || end < begin) {
-    stderr.writeln('$path: BEGIN/END markers missing or unpaired');
-    exit(1);
-  }
 
   file.writeAsStringSync(
     [...lines.take(begin + 1), ...zone, ...lines.skip(end), ''].join('\n'),
