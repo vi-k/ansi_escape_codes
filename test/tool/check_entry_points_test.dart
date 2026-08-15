@@ -149,6 +149,25 @@ void main() {
       expect(await snapshot.readAsBytes(), before);
     });
 
+    test('does not update a snapshot when a shown name does not exist',
+        () async {
+      await fixture.replaceIn(
+        'lib/extensions.dart',
+        "export 'src/extensions/has.dart';",
+        "export 'src/extensions/has.dart' "
+            'show StringHasEscapeCodesExtensionn;',
+      );
+      final snapshot = File('${fixture.root.path}/tool/entry_point_names.json');
+      final before = await snapshot.readAsBytes();
+
+      final result = await fixture.run(['--update-snapshot']);
+
+      expect(result.exitCode, isNonZero);
+      expect(result.stderr, contains('lib/extensions.dart'));
+      expect(result.stderr, contains('StringHasEscapeCodesExtensionn'));
+      expect(await snapshot.readAsBytes(), before);
+    });
+
     test('rejects unknown arguments with usage', () async {
       final result = await fixture.run(['--unexpected']);
 
@@ -177,6 +196,14 @@ class _CheckerFixture {
     final target = File('${root.path}/.dart_tool/package_config.json');
     await target.parent.create(recursive: true);
     await packageConfig.copy(target.path);
+    // Without these two the analyser reads the copy as loose files rather
+    // than as a package's own lib/, and answers with diagnostics the real
+    // package never has -- five INVALID_INTERNAL_ANNOTATION warnings among
+    // them. A fixture that disagrees with the tree it stands for cannot say
+    // anything about a severity the checker does or does not act on.
+    await File('pubspec.yaml').copy('${root.path}/pubspec.yaml');
+    await File('analysis_options.yaml')
+        .copy('${root.path}/analysis_options.yaml');
     return fixture;
   }
 
@@ -187,6 +214,13 @@ class _CheckerFixture {
     final before = await file.readAsString();
     expect(before, contains(export));
     await file.writeAsString(before.replaceFirst(export, ''));
+  }
+
+  Future<void> replaceIn(String path, String from, String to) async {
+    final file = File('${root.path}/$path');
+    final before = await file.readAsString();
+    expect(before, contains(from));
+    await file.writeAsString(before.replaceFirst(from, to));
   }
 
   Future<void> appendTo(String path, String text) =>

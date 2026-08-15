@@ -177,12 +177,15 @@ Future<int> runEntryPointCheck(
 /// is a unit of its own, not one of theirs, so the whole directory is
 /// swept before either oracle is asked anything.
 ///
-/// Errors only. Warnings, lints and infos leave the element model intact,
-/// and this is not the script that judges them: `dart analyze
-/// --fatal-infos` is, under the package's own analysis options. The two
-/// do not see the same list — the API reports deprecations the command
-/// hides — and a guard that failed on those would go red on a package
-/// every other gate calls clean.
+/// Errors and warnings, not infos. The line is drawn where a diagnostic
+/// stops changing what the namespace holds: a mistyped name in a `show`
+/// combinator is only a warning, and it deletes the name it meant to let
+/// through, which is the very failure this sweep exists to catch. Infos
+/// are the other side of it — `dart analyze --fatal-infos`, under the
+/// package's own analysis options, is the gate that judges those, and it
+/// does not see the same list this API does: the deprecations it hides
+/// would make a stricter guard go red on a package every other gate
+/// calls clean.
 Future<bool> _analysesWithoutError(
   AnalysisContextCollection collection,
   String root,
@@ -207,7 +210,7 @@ Future<bool> _analysesWithoutError(
       continue;
     }
     for (final diagnostic in errors.errors) {
-      if (diagnostic.errorCode.errorSeverity != ErrorSeverity.ERROR) {
+      if (diagnostic.errorCode.errorSeverity == ErrorSeverity.INFO) {
         continue;
       }
       stderr.writeln('$relative: ${diagnostic.message}');
