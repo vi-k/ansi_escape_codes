@@ -1,14 +1,15 @@
-/// Proves every entry point of the package is closed under its own
-/// public signatures.
+/// Holds every entry point of the package to two independent answers: it
+/// is closed under its own public signatures, and it exports exactly the
+/// names it exported last time.
 ///
 /// An entry point is a library directly under `lib/`, and what it lets
-/// through is its export namespace. The rule this script mechanises: if a
-/// public signature reachable from that namespace names a declaration of
-/// this package — as a return type, a parameter type, a type argument, a
-/// type-parameter bound, or the type an extension extends — then that
-/// declaration has to stand in the same namespace. Otherwise the entry
-/// point hands out a shape whose name it never exported, and the caller
-/// can hold the value but cannot write the type.
+/// through is its export namespace. The rule the first answer mechanises:
+/// if a public signature reachable from that namespace names a
+/// declaration of this package — as a return type, a parameter type, a
+/// type argument, a type-parameter bound, or the type an extension
+/// extends — then that declaration has to stand in the same namespace.
+/// Otherwise the entry point hands out a shape whose name it never
+/// exported, and the caller can hold the value but cannot write the type.
 ///
 ///     dart run tool/check_entry_points.dart
 ///
@@ -22,6 +23,19 @@
 /// missing from it: the parameter `{Set<ControlFunctionsC0> exclude}`
 /// stood in `lib/extensions.dart` with the enum unexported, and every
 /// test of that entry point passed.
+///
+/// The second answer is the one the walk cannot give. A name that no
+/// remaining signature reaches leaves the walk with nothing to say, so
+/// each namespace is also compared against `tool/entry_point_names.json`,
+/// name for name, entry point for entry point.
+///
+///     dart run tool/check_entry_points.dart --update-snapshot
+///
+/// That flag rewrites the file, and it is for an accepted API diff and
+/// nothing else — it is never passed in CI, and it writes only once both
+/// answers are in. Before either is asked, [_analysesWithoutError] sweeps
+/// `lib/` whole: an element model is what both of them read, and a
+/// library that fails to analyse still has one.
 library;
 
 // The element model this walks is the analyzer's second one, and every

@@ -31,7 +31,7 @@
 Dart-пакет для разбора и печати строк с ANSI-escape-кодами. Публичных
 входов пять: `lib/ansi_escape_codes.dart`, `lib/ansi.dart`,
 `lib/extensions.dart`, `lib/style.dart`, `lib/utils.dart`; исходники — в
-`lib/src/`, тесты — в `test/` (52 файла), бенчмарки — в `benchmark/`,
+`lib/src/`, тесты — в `test/` (68 файлов), бенчмарки — в `benchmark/`,
 инструменты — в `tool/`, примеры — в `example/`.
 
 **Как оно устроено внутри — `docs/architecture.md`**: конвейер разбора,
@@ -66,12 +66,18 @@ dart pub publish --dry-run   # ожидается 0 предупреждений
   и точный JSON-snapshot namespace каждого entry point. Обычный запуск ловит
   missing и unexpected имена, а также изменение самого множества `lib/*.dart`;
   `--update-snapshot` допустим только при принятом API-diff и в CI не идёт.
+  До обоих оракулов инструмент рекурсивно читает все `*.dart` под `lib/` и
+  падает на любой диагностике анализатора уровня error или warning: у
+  библиотеки, которая не анализируется, модель элементов всё равно есть,
+  только меньшая, и без этого свипа `--update-snapshot` записал бы усечённый
+  namespace как истину. Info он пропускает намеренно — analyzer API отдаёт
+  депрекации, которых `dart analyze --fatal-infos` не показывает.
 - **`generate.dart`** до первой записи сверяет registry восьми генерируемых
   зон с marker-файлами, найденными рекурсивно в `lib/`. Лишняя, пропущенная,
   повторная или непарная marker-зона красит preflight атомарно.
 - **`memory_guard.dart`** держит удержание памяти в полосе, откалиброванной
   на конкретных машинах; актуальные числа — в `docs/handoff.md`.
-  **`complexity_guard.dart`** отдельно держит wall-clock complexity: это
+- **`complexity_guard.dart`** отдельно держит wall-clock complexity: это
   прогретый standalone process с попарными медианами, только для stable SDK.
   Complexity assertions в `test/performance_guards_test.dart` детерминированы
   и timer-free; нулевой аргумент complexity guard проверяется самостоятельным

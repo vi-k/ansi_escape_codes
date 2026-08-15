@@ -48,10 +48,16 @@ jobs:
       - name: Analyze project source
         run: dart analyze --fatal-infos
 
-      - name: Check every entry point exports the names its signatures use
+      - name: Check every entry point analyses, closes and matches its snapshot
         # A hand-written list of exports cannot notice what is missing
         # from it; this walks the export namespace of each lib/*.dart and
-        # answers every declaration its public signatures reach.
+        # answers every declaration its public signatures reach, then holds
+        # each namespace against tool/entry_point_names.json. Both read an
+        # element model, so the whole of lib/ is swept for analysis errors
+        # and warnings first: a library that fails to analyse still has a
+        # model, only a smaller one, and a smaller one reads as an entry
+        # point that exports fewer names. --update-snapshot is never passed
+        # here; it is for an accepted API diff, by hand.
         run: dart run tool/check_entry_points.dart
 
       - name: Check the generated tables are in step with the generator
