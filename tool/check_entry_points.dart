@@ -36,6 +36,7 @@ import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:analyzer/error/error.dart';
 
 import 'src/entry_point_snapshot.dart';
 
@@ -83,6 +84,10 @@ Future<int> runEntryPointCheck(
   }
 
   final collection = AnalysisContextCollection(includedPaths: [libDir.path]);
+  if (!await _analysesWithoutError(collection, root, libDir)) {
+    return 2;
+  }
+
   final failures = <_Failure>[];
   final namesByEntryPoint = <String, Set<String>>{};
   for (final entryPoint in entryPoints) {
@@ -93,15 +98,6 @@ Future<int> runEntryPointCheck(
       return 2;
     }
     final relative = _relative(root, entryPoint);
-    final diagnostics = [
-      for (final unit in resolved.units) ...unit.errors,
-    ];
-    if (diagnostics.isNotEmpty) {
-      for (final diagnostic in diagnostics) {
-        stderr.writeln('$relative: ${diagnostic.message}');
-      }
-      return 2;
-    }
     namesByEntryPoint[relative] =
         resolved.element2.exportNamespace.definedNames2.keys.toSet();
     failures.addAll(
@@ -167,6 +163,58 @@ Future<int> runEntryPointCheck(
   print('${entryPoints.length} entry points, $publicNames public names, '
       'closed (${seconds}s)');
   return 0;
+}
+
+/// Prints every analysis error under [libDir], answering whether it found
+/// none.
+///
+/// Both oracles of this script read an element model, and a library that
+/// fails to analyse still has one — a smaller one, missing whatever the
+/// analyser could not resolve. A broken `lib/src/...` library therefore
+/// reads as an entry point that simply exports fewer names, and
+/// `--update-snapshot` would write that down as the new truth. The
+/// resolved entry points cannot see it on their own: an exported library
+/// is a unit of its own, not one of theirs, so the whole directory is
+/// swept before either oracle is asked anything.
+///
+/// Errors only. Warnings, lints and infos leave the element model intact,
+/// and this is not the script that judges them: `dart analyze
+/// --fatal-infos` is, under the package's own analysis options. The two
+/// do not see the same list — the API reports deprecations the command
+/// hides — and a guard that failed on those would go red on a package
+/// every other gate calls clean.
+Future<bool> _analysesWithoutError(
+  AnalysisContextCollection collection,
+  String root,
+  Directory libDir,
+) async {
+  final sources = libDir
+      .listSync(recursive: true)
+      .whereType<File>()
+      .map((file) => file.path)
+      .where((path) => path.endsWith('.dart'))
+      .toList()
+    ..sort();
+
+  var clean = true;
+  for (final source in sources) {
+    final relative = _relative(root, source);
+    final errors =
+        await collection.contextFor(source).currentSession.getErrors(source);
+    if (errors is! ErrorsResult) {
+      stderr.writeln('$relative: $errors');
+      clean = false;
+      continue;
+    }
+    for (final diagnostic in errors.errors) {
+      if (diagnostic.errorCode.errorSeverity != ErrorSeverity.ERROR) {
+        continue;
+      }
+      stderr.writeln('$relative: ${diagnostic.message}');
+      clean = false;
+    }
+  }
+  return clean;
 }
 
 NamesByEntryPoint _decodeEntryPointSnapshot(String source) {

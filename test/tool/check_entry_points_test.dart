@@ -132,6 +132,23 @@ void main() {
       expect(await snapshot.readAsBytes(), before);
     });
 
+    test('does not update a snapshot when an exported source fails analysis',
+        () async {
+      await fixture.appendTo(
+        'lib/src/extensions/has.dart',
+        '\nconst _brokenSourceName = missingSourceName;\n',
+      );
+      final snapshot = File('${fixture.root.path}/tool/entry_point_names.json');
+      final before = await snapshot.readAsBytes();
+
+      final result = await fixture.run(['--update-snapshot']);
+
+      expect(result.exitCode, isNonZero);
+      expect(result.stderr, contains('lib/src/extensions/has.dart'));
+      expect(result.stderr, contains("Undefined name 'missingSourceName'"));
+      expect(await snapshot.readAsBytes(), before);
+    });
+
     test('rejects unknown arguments with usage', () async {
       final result = await fixture.run(['--unexpected']);
 
