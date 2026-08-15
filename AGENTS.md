@@ -17,6 +17,10 @@
    отработавшие handoff'ы. У каждой в шапке сказано, чем волна кончилась и
    чему в её тексте не верить.
 
+`.superpowers/.../progress.md` — только внутренний ledger исполнения
+текущего SDD-плана. Он не заменяет `docs/handoff.md`: точка рестарта,
+блокеры и актуальный следующий шаг всегда записываются в handoff.
+
 **Код, тесты и git старше любого из этих документов.** Они писались по
 итогам сессий и местами устаревают; если документ расходится с
 репозиторием — прав репозиторий. Обратное тоже верно: не переписывать
@@ -27,7 +31,7 @@
 Dart-пакет для разбора и печати строк с ANSI-escape-кодами. Публичных
 входов пять: `lib/ansi_escape_codes.dart`, `lib/ansi.dart`,
 `lib/extensions.dart`, `lib/style.dart`, `lib/utils.dart`; исходники — в
-`lib/src/`, тесты — в `test/` (52 файла), бенчмарки — в `benchmark/`,
+`lib/src/`, тесты — в `test/` (68 файлов), бенчмарки — в `benchmark/`,
 инструменты — в `tool/`, примеры — в `example/`.
 
 **Как оно устроено внутри — `docs/architecture.md`**: конвейер разбора,
@@ -50,6 +54,7 @@ dart run tool/check_entry_points.dart
 dart run tool/generate.dart && git diff --exit-code -- lib/
 dart test
 dart run benchmark/memory_guard.dart
+dart run benchmark/complexity_guard.dart
 dart doc --dry-run
 dart pub publish --dry-run   # ожидается 0 предупреждений
 ```
@@ -57,12 +62,30 @@ dart pub publish --dry-run   # ожидается 0 предупреждений
 - **Таблицы цветов генерируются.** Зона между маркерами `BEGIN`/`END` в
   `lib/` — вывод `tool/generate.dart`; править её руками нельзя, ворота
   это ловят. Менять надо генератор.
-- **`check_entry_points.dart`** проверяет, что каждый вход экспортирует
-  все имена, до которых дотягиваются его публичные сигнатуры.
+- **`check_entry_points.dart`** проверяет и замкнутость публичных сигнатур,
+  и точный JSON-snapshot namespace каждого entry point. Обычный запуск ловит
+  missing и unexpected имена, а также изменение самого множества `lib/*.dart`;
+  `--update-snapshot` допустим только при принятом API-diff и в CI не идёт.
+  До обоих оракулов инструмент рекурсивно читает все `*.dart` под `lib/` и
+  падает на любой диагностике анализатора уровня error или warning: у
+  библиотеки, которая не анализируется, модель элементов всё равно есть,
+  только меньшая, и без этого свипа `--update-snapshot` записал бы усечённый
+  namespace как истину. Info он пропускает намеренно — analyzer API отдаёт
+  депрекации, которых `dart analyze --fatal-infos` не показывает.
+- **`generate.dart`** до первой записи сверяет registry восьми генерируемых
+  зон с marker-файлами, найденными рекурсивно в `lib/`. Лишняя, пропущенная,
+  повторная или непарная marker-зона красит preflight атомарно.
 - **`memory_guard.dart`** держит удержание памяти в полосе, откалиброванной
   на конкретных машинах; актуальные числа — в `docs/handoff.md`.
+- **`complexity_guard.dart`** отдельно держит wall-clock complexity: это
+  прогретый standalone process с попарными медианами, только для stable SDK.
+  Complexity assertions в `test/performance_guards_test.dart` детерминированы
+  и timer-free; нулевой аргумент complexity guard проверяется самостоятельным
+  запуском, а не test scheduler.
 - CI (`.github/workflows/dart.yml`) гоняет то же на SDK `3.6.0` и `stable`,
-  плюс порог покрытия `lib/` — 75%.
+  а memory и complexity guards — только на stable. Coverage artifact содержит
+  весь `lib/`, но floor 95.0% применяется к отдельному report без
+  генерируемого `style_colors.dart`.
 
 ## Как здесь принято работать
 

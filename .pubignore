@@ -13,11 +13,11 @@
 # the package to weigh them against each other, so it needs the repository
 # too, while the benchmark it runs on each side stands on its own.
 #
-# benchmark/memory_guard.dart is left out for a nearer reason: it fails when a
-# reading falls outside a band calibrated on the machine that wrote it down,
-# so away from this repository's CI it would be an opinion rather than a
-# measurement. The benchmark beside it is the one that says something
-# anywhere.
+# benchmark/memory_guard.dart and benchmark/complexity_guard.dart are left out
+# for a nearer reason: they fail when environment-calibrated readings fall
+# outside their bands, so away from this repository's CI they would be opinions
+# rather than measurements. The general benchmarks beside them are the ones
+# that say something anywhere.
 #
 # AGENTS.md and CLAUDE.md are the same kind of paper as docs/: they tell an
 # agent how work is conducted here, which is nothing to whoever installs the
@@ -38,5 +38,6 @@ README.ru.md
 doc/api/
 benchmark/compare.dart
 benchmark/memory_guard.dart
+benchmark/complexity_guard.dart
 tool/
 coverage/

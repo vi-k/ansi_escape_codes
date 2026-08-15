@@ -1,14 +1,15 @@
-/// Proves every entry point of the package is closed under its own
-/// public signatures.
+/// Holds every entry point of the package to two independent answers: it
+/// is closed under its own public signatures, and it exports exactly the
+/// names it exported last time.
 ///
 /// An entry point is a library directly under `lib/`, and what it lets
-/// through is its export namespace. The rule this script mechanises: if a
-/// public signature reachable from that namespace names a declaration of
-/// this package — as a return type, a parameter type, a type argument, a
-/// type-parameter bound, or the type an extension extends — then that
-/// declaration has to stand in the same namespace. Otherwise the entry
-/// point hands out a shape whose name it never exported, and the caller
-/// can hold the value but cannot write the type.
+/// through is its export namespace. The rule the first answer mechanises:
+/// if a public signature reachable from that namespace names a
+/// declaration of this package — as a return type, a parameter type, a
+/// type argument, a type-parameter bound, or the type an extension
+/// extends — then that declaration has to stand in the same namespace.
+/// Otherwise the entry point hands out a shape whose name it never
+/// exported, and the caller can hold the value but cannot write the type.
 ///
 ///     dart run tool/check_entry_points.dart
 ///
@@ -22,6 +23,19 @@
 /// missing from it: the parameter `{Set<ControlFunctionsC0> exclude}`
 /// stood in `lib/extensions.dart` with the enum unexported, and every
 /// test of that entry point passed.
+///
+/// The second answer is the one the walk cannot give. A name that no
+/// remaining signature reaches leaves the walk with nothing to say, so
+/// each namespace is also compared against `tool/entry_point_names.json`,
+/// name for name, entry point for entry point.
+///
+///     dart run tool/check_entry_points.dart --update-snapshot
+///
+/// That flag rewrites the file, and it is for an accepted API diff and
+/// nothing else — it is never passed in CI, and it writes only once both
+/// answers are in. Before either is asked, [_analysesWithoutError] sweeps
+/// `lib/` whole: an element model is what both of them read, and a
+/// library that fails to analyse still has one.
 library;
 
 // The element model this walks is the analyzer's second one, and every
@@ -29,12 +43,16 @@ library;
 // be five ignores for one decision, and the decision is the file's.
 // ignore_for_file: experimental_member_use
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:analyzer/error/error.dart';
+
+import 'src/entry_point_snapshot.dart';
 
 /// What separates the parts of a path here. Spelled out rather than
 /// assumed to be `/`: the analyzer hands back paths in the platform's
@@ -42,13 +60,29 @@ import 'package:analyzer/dart/element/type.dart';
 /// point through as if it were closed.
 final _sep = Platform.pathSeparator;
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
+  exitCode = await runEntryPointCheck(args, root: _packageRoot());
+}
+
+/// Runs the entry-point namespace and signature-closure checks under [root].
+Future<int> runEntryPointCheck(
+  List<String> args, {
+  required String root,
+}) async {
+  if (args.isNotEmpty &&
+      (args.length != 1 || args.single != '--update-snapshot')) {
+    stderr.writeln(
+      'Usage: dart run tool/check_entry_points.dart [--update-snapshot]',
+    );
+    return 64;
+  }
+
+  final updateSnapshot = args.isNotEmpty;
   final stopwatch = Stopwatch()..start();
-  final root = _packageRoot();
   final libDir = Directory('$root${_sep}lib');
   if (!libDir.existsSync()) {
     stderr.writeln('no lib/ under $root');
-    exit(2);
+    return 2;
   }
 
   final entryPoints = libDir
@@ -60,49 +94,167 @@ Future<void> main() async {
     ..sort();
   if (entryPoints.isEmpty) {
     stderr.writeln('no entry points under ${libDir.path}');
-    exit(2);
+    return 2;
   }
 
   final collection = AnalysisContextCollection(includedPaths: [libDir.path]);
+  if (!await _analysesWithoutError(collection, root, libDir)) {
+    return 2;
+  }
+
   final failures = <_Failure>[];
+  final namesByEntryPoint = <String, Set<String>>{};
   for (final entryPoint in entryPoints) {
     final session = collection.contextFor(entryPoint).currentSession;
     final resolved = await session.getResolvedLibrary(entryPoint);
     if (resolved is! ResolvedLibraryResult) {
       stderr.writeln('${_relative(root, entryPoint)}: $resolved');
-      exit(2);
+      return 2;
     }
+    final relative = _relative(root, entryPoint);
+    namesByEntryPoint[relative] =
+        resolved.element2.exportNamespace.definedNames2.keys.toSet();
     failures.addAll(
       _Closure(
         root: root,
         libPath: libDir.path,
-        entryPoint: _relative(root, entryPoint),
+        entryPoint: relative,
         library: resolved.element2,
       ).check(),
     );
   }
 
-  stopwatch.stop();
-  final seconds = (stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1);
-  if (failures.isEmpty) {
-    print('${entryPoints.length} entry points, closed (${seconds}s)');
-    return;
+  String? snapshotFailure;
+  if (!updateSnapshot) {
+    final snapshot = File('$root${_sep}tool${_sep}entry_point_names.json');
+    try {
+      snapshotFailure = compareEntryPointSnapshot(
+        _decodeEntryPointSnapshot(await snapshot.readAsString()),
+        namesByEntryPoint,
+      );
+    } on FileSystemException catch (error) {
+      stderr.writeln('cannot read ${snapshot.path}: $error');
+      return 2;
+    } on FormatException catch (error) {
+      stderr.writeln('invalid ${snapshot.path}: $error');
+      return 2;
+    }
   }
 
+  stopwatch.stop();
+  final seconds = (stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1);
+  if (snapshotFailure != null) {
+    stderr.writeln(snapshotFailure);
+  }
   for (final failure in failures) {
     stderr.writeln('${failure.entryPoint}: ${failure.missing}');
     for (final site in failure.sites) {
       stderr.writeln('  $site');
     }
   }
-  final count = failures.length;
-  stderr
-    ..writeln()
-    ..writeln(
-      '$count ${count == 1 ? 'name is' : 'names are'} reached by a public '
-      'signature and left unexported (${seconds}s)',
+  if (failures.isNotEmpty) {
+    final count = failures.length;
+    stderr
+      ..writeln()
+      ..writeln(
+        '$count ${count == 1 ? 'name is' : 'names are'} reached by a public '
+        'signature and left unexported (${seconds}s)',
+      );
+  }
+  if (snapshotFailure != null || failures.isNotEmpty) {
+    return 1;
+  }
+
+  if (updateSnapshot) {
+    await File('$root${_sep}tool${_sep}entry_point_names.json').writeAsString(
+      encodeEntryPointSnapshot(namesByEntryPoint),
     );
-  exit(1);
+  }
+  final publicNames = namesByEntryPoint.values.fold<int>(
+    0,
+    (total, names) => total + names.length,
+  );
+  print('${entryPoints.length} entry points, $publicNames public names, '
+      'closed (${seconds}s)');
+  return 0;
+}
+
+/// Prints every analysis error under [libDir], answering whether it found
+/// none.
+///
+/// Both oracles of this script read an element model, and a library that
+/// fails to analyse still has one — a smaller one, missing whatever the
+/// analyser could not resolve. A broken `lib/src/...` library therefore
+/// reads as an entry point that simply exports fewer names, and
+/// `--update-snapshot` would write that down as the new truth. The
+/// resolved entry points cannot see it on their own: an exported library
+/// is a unit of its own, not one of theirs, so the whole directory is
+/// swept before either oracle is asked anything.
+///
+/// Errors and warnings, not infos. The line is drawn where a diagnostic
+/// stops changing what the namespace holds: a mistyped name in a `show`
+/// combinator is only a warning, and it deletes the name it meant to let
+/// through, which is the very failure this sweep exists to catch. Infos
+/// are the other side of it — `dart analyze --fatal-infos`, under the
+/// package's own analysis options, is the gate that judges those, and it
+/// does not see the same list this API does: the deprecations it hides
+/// would make a stricter guard go red on a package every other gate
+/// calls clean.
+Future<bool> _analysesWithoutError(
+  AnalysisContextCollection collection,
+  String root,
+  Directory libDir,
+) async {
+  final sources = libDir
+      .listSync(recursive: true)
+      .whereType<File>()
+      .map((file) => file.path)
+      .where((path) => path.endsWith('.dart'))
+      .toList()
+    ..sort();
+
+  var clean = true;
+  for (final source in sources) {
+    final relative = _relative(root, source);
+    final errors =
+        await collection.contextFor(source).currentSession.getErrors(source);
+    if (errors is! ErrorsResult) {
+      stderr.writeln('$relative: $errors');
+      clean = false;
+      continue;
+    }
+    for (final diagnostic in errors.errors) {
+      if (diagnostic.errorCode.errorSeverity == ErrorSeverity.INFO) {
+        continue;
+      }
+      stderr.writeln('$relative: ${diagnostic.message}');
+      clean = false;
+    }
+  }
+  return clean;
+}
+
+NamesByEntryPoint _decodeEntryPointSnapshot(String source) {
+  final decoded = jsonDecode(source);
+  if (decoded is! Map) {
+    throw const FormatException('expected an object');
+  }
+
+  final namesByEntryPoint = <String, Set<String>>{};
+  for (final entry in decoded.entries) {
+    if (entry.key is! String || entry.value is! List) {
+      throw const FormatException('expected paths and lists of names');
+    }
+    final names = <String>{};
+    for (final name in entry.value as List) {
+      if (name is! String) {
+        throw const FormatException('expected every name to be a string');
+      }
+      names.add(name);
+    }
+    namesByEntryPoint[entry.key as String] = names;
+  }
+  return namesByEntryPoint;
 }
 
 /// One declaration of this package that an entry point reaches without

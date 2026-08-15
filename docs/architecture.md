@@ -102,7 +102,11 @@ intermediate-байтами остаются только копируемыми
 Публичных входов пять: `ansi_escape_codes.dart`, `ansi.dart`,
 `extensions.dart`, `style.dart`, `utils.dart`.
 `tool/check_entry_points.dart` следит, чтобы каждый экспортировал все
-имена, до которых дотягиваются его публичные сигнатуры.
+имена, до которых дотягиваются его публичные сигнатуры. Отдельный exact
+snapshot их export namespaces не даёт closure-walk'у быть единственным
+oracle: обычный запуск называет missing/unexpected имена и новый или
+пропавший `lib/*.dart`; `--update-snapshot` — осознанное принятие API-diff,
+не путь CI.
 
 Печать устроена парой: `Printer` и `StackedPrinter` получают строку
 целиком, `SinkPrinter` и `StackedSinkPrinter` — по куску за раз. Отсюда
@@ -263,6 +267,45 @@ carry-полями.
    **Перечень полным никто не доказывал.** Это то, что нашлось, а не
    чек-лист, по которому можно отчитаться: расширяя разбор, ищите седьмое
    место, а не сверяйтесь с этим списком.
+
+## Независимые verification guards
+
+Четыре guard'а смотрят на разные свойства и не подменяют друг друга.
+
+1. **Public namespace snapshot.** `tool/check_entry_points.dart` сначала
+   сохраняет прежний обход публичных сигнатур, затем сравнивает точные множества
+   экспортируемых имён пяти entry point'ов с
+   `tool/entry_point_names.json`. Closure-walk ловит тип, до которого нельзя
+   дотянуться из сигнатуры; snapshot ловит изменение surface даже без такой
+   сигнатуры.
+
+   Оба оракула читают модель элементов, а у библиотеки, которая не
+   анализируется, модель тоже есть — только меньшая. Поэтому до них обоих
+   идёт свип: все `*.dart` под `lib/` рекурсивно, падение на любой
+   диагностике уровня error или warning. Экспортируемая библиотека — отдельный
+   unit, её ошибку resolved entry point не видит, а сломанный `lib/src/...`
+   читается просто как entry point, экспортирующий меньше имён; в этом
+   состоянии `--update-snapshot` записал бы усечённый namespace как истину.
+   Граница проходит между warning и info не для красоты: опечатка в `show`
+   — это warning, и она удаляет из namespace ровно то имя, которое
+   собиралась пропустить. Info не берётся потому, что analyzer API и
+   `dart analyze --fatal-infos` в этом месте расходятся: первый отдаёт
+   депрекации SDK, которых второй не показывает.
+2. **Generator registry preflight.** `tool/generate.dart` хранит registry
+   ровно восьми путей, рекурсивно находит в `lib/` зоны между `BEGIN`/`END` и
+   сравнивает их до первой записи. Лишний, отсутствующий, повторный или
+   непарный marker не оставляет частично переписанный `lib/`; успешный запуск
+   пишет восемь зон.
+3. **Hand-written coverage.** Stable CI форматирует полный `lcov.info` для
+   artifact и отдельный `lcov.gated.info`, где исключён генерируемый
+   `style_colors.dart`. Floor 95.0% читается только из второго report'а и
+   проверяет, что LCOV summaries согласованы с line records; нулевой знаменатель
+   красный.
+4. **Complexity.** Детерминированные, timer-free complexity assertions живут
+   в `test/performance_guards_test.dart`. Wall-clock ratios вынесены в
+   прогретый `benchmark/complexity_guard.dart`: standalone zero-argument
+   process с alternating paired medians, только для stable CI. Поэтому matrix
+   SDK 3.6.0 и test scheduler не решают environment-calibrated timing bands.
 
 ## Где читать дальше
 
