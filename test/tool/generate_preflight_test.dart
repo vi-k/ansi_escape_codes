@@ -56,12 +56,28 @@ void main() {
       );
     });
 
+    test('rejects a registered file that carries no markers before writing',
+        () async {
+      // The only state this diagnostic alone catches: the file is where the
+      // registry says, so the existence check passes, and nothing else looks
+      // at whether it still holds a zone to write into.
+      const bare = 'lib/src/parsing/colors/color_256.dart';
+      await fixture.write(bare, 'before\nbetween\nafter\n');
+      final before = await fixture.bytes(_registryPaths);
+
+      final result = await fixture.run();
+
+      expect(result.exitCode, isNonZero);
+      expect(result.stderr, contains('missing registered marker file: $bare'));
+      await fixture.expectBytes(_registryPaths, before);
+    });
+
     for (final markerCase in [
-      ('BEGIN-only', 'before\n$_begin\nbetween\nafter\n'),
-      ('END-only', 'before\n$_end\nafter\n'),
-      ('duplicate BEGIN', 'before\n$_begin\n$_begin\n$_end\nafter\n'),
-      ('duplicate END', 'before\n$_begin\n$_end\n$_end\nafter\n'),
-      ('END before BEGIN', 'before\n$_end\n$_begin\nafter\n'),
+      ('BEGIN-only', 'before\n$_begin\nbetween\nafter\n', 1, 0),
+      ('END-only', 'before\n$_end\nafter\n', 0, 1),
+      ('duplicate BEGIN', 'before\n$_begin\n$_begin\n$_end\nafter\n', 2, 1),
+      ('duplicate END', 'before\n$_begin\n$_end\n$_end\nafter\n', 1, 2),
+      ('END before BEGIN', 'before\n$_end\n$_begin\nafter\n', 1, 1),
     ]) {
       test('rejects ${markerCase.$1} before writing', () async {
         const path = 'lib/src/ansi/colors.dart';
@@ -71,10 +87,70 @@ void main() {
         final result = await fixture.run();
 
         expect(result.exitCode, isNonZero);
-        expect(result.stderr, contains(path));
+        // The exact text, not merely a nonzero exit: an unhandled exception
+        // also exits nonzero and names the file in its stack trace.
+        expect(
+          result.stderr,
+          contains(
+            '$path: expected exactly one BEGIN before one END '
+            '(found ${markerCase.$3} BEGIN and ${markerCase.$4} END)',
+          ),
+        );
         await fixture.expectBytes(_registryPaths, before);
       });
     }
+
+    test('accepts markers that differ only by surrounding whitespace',
+        () async {
+      const path = 'lib/src/ansi/colors.dart';
+      await fixture.write(
+        path,
+        'before\n    $_begin\nbetween\n\t$_end\nafter\n',
+      );
+
+      final result = await fixture.run();
+
+      expect(result.exitCode, 0);
+      expect(result.stdout, 'generated 8 zones\n');
+    });
+
+    test('ignores a marked file that is not Dart source', () async {
+      await fixture.write(
+        'lib/src/notes.txt',
+        'before\n$_begin\nbetween\n$_end\nafter\n',
+      );
+
+      final result = await fixture.run();
+
+      expect(result.exitCode, 0);
+      expect(result.stdout, 'generated 8 zones\n');
+    });
+
+    test('sorts its diagnostics rather than reporting them as found', () async {
+      // Insertion order is registry first, then discovery, then the set
+      // differences; sorted order interleaves them. The two disagree here,
+      // so the assertion below fails if the sort is dropped.
+      const deleted = 'lib/src/ansi/colors.dart';
+      const unpaired = 'lib/src/parsing/state/styles.dart';
+      await fixture.deleteFile(deleted);
+      await fixture.write(
+        unpaired,
+        'before\n$_begin\n$_begin\n$_end\nafter\n',
+      );
+
+      final result = await fixture.run();
+
+      expect(result.exitCode, isNonZero);
+      expect(
+        (result.stderr as String).trimRight().split('\n'),
+        [
+          '$unpaired: expected exactly one BEGIN before one END '
+              '(found 2 BEGIN and 1 END)',
+          'missing registered file: $deleted',
+          'missing registered marker file: $deleted',
+        ],
+      );
+    });
 
     test('writes all registered zones once and is idempotent', () async {
       final first = await fixture.run();
