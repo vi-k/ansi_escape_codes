@@ -1,11 +1,16 @@
 # План: замыкание verification-ворот перед публикацией
 
-> **Состояние документа**
->
-> - **Тип:** план по принятой спеке 2026-08-15[4]
-> - **Статус:** готов к исполнению; production-, tool- и CI-правки ещё не начаты
-> - **Актуальность:** написан против main @ c6eda18, содержащего спеку 200d8ec и restart-handoff
-> - **Чему не верить:** baseline и calibration ниже — не будущие результаты ворот или CI. Финальный handoff записывает только фактические прогоны.
+> **Состояние на 2026-08-16:** исполнен целиком — через рестарт после блокера
+> и починки по ревью — и влит в `main` мержем `6b2d1cb` при зелёных feature
+> CI `31902380497` и main CI `31902669556` на SDK `3.6.0` и `stable`; писался
+> против `main` @ `c6eda18`. Baseline и calibration в тексте — снятые до
+> работы пробники, а не результаты ворот и CI; фактические прогоны записаны в
+> `2026-08-16[1]`.
+> **Что это:** план волны verification guards по спеке `2026-08-15[4]` — M6,
+> M7, M8 и кластер M13/L12.
+> **Связанные записи:** `2026-08-15[4]-verification-guards-design.md`,
+> `2026-08-15[5]-pre-verification-guards-handoff.md`,
+> `2026-08-16[1]-post-verification-guards-handoff.md`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
 

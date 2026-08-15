@@ -1,15 +1,13 @@
 # План: волна по бэклогу — TODO минус дизайн-заход
 
-> **Состояние документа**
->
-> - **Тип:** план волны по бэклогу, 2026-08-05
-> - **Статус:** выполнен, влит в `main` мержем `7a7a550`; закрыл весь
->   тогдашний `TODO.md`, кроме N5
-> - **Актуальность:** N5 закрыта следующей волной — дизайн `2026-08-07[1]`,
->   мерж `5623e12`
-> - **Пути:** ссылки в тексте старые — записи с тех пор лежат в
->   `docs/records/`, `TODO.md` стал `docs/backlog.md`, текущий handoff —
->   `docs/handoff.md`
+> **Состояние на 2026-08-16:** доведён и влит в `main` мержем `7a7a550` —
+> закрыл весь тогдашний `TODO.md`, кроме находки N5; её закрыла следующая
+> волна (дизайн `2026-08-07[1]`, мерж `5623e12`). В прозе старые пути:
+> записи живут в `docs/records/`, `TODO.md` стал `docs/backlog.md`.
+> **Что это:** план волны, разбирающей тогдашний `TODO.md` по
+> задачам-коммитам, кроме пункта, требовавшего отдельного дизайна.
+> **Связанные записи:** `2026-08-05[9]-review-verification-report.md`
+> (источник номеров находок), `2026-08-07[1]-link-continuity-design.md`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

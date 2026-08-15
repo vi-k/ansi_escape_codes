@@ -1,15 +1,16 @@
 # План: фиксы по итогам верификации ревью
 
-> **Состояние документа**
->
-> - **Тип:** план, 2026-08-05; закрывает находки отчёта `2026-08-05[9]`
-> - **Статус:** выполнен, влит в `main` мержем `56c8244`
-> - **Осторожно:** волна оставила долг: `_SinkPrinterBase.prepare` возвращает
->   на место обе ссылочные переменные, но `lastState` оставляет сдвинутым.
->   Пункт до сих пор открыт — `docs/backlog.md`
-> - **Пути:** ссылки в тексте старые — записи с тех пор лежат в
->   `docs/records/`, `TODO.md` стал `docs/backlog.md`, текущий handoff —
->   `docs/handoff.md`
+> **Состояние на 2026-08-16:** выполнен и влит в `main` мержем `56c8244`.
+> Долг, который волна оставила (`_SinkPrinterBase.prepare` не возвращал
+> на место `lastState`), закрыт 2026-08-11 коммитом `96e630e` в волне
+> бэклога, мерж `73d725d` — предупреждению прежней шапки об открытом
+> пункте верить больше не надо, в `docs/backlog.md` его нет.
+> **Что это:** план из семи задач-коммитов, закрывающих находки
+> верификационного отчёта `2026-08-05[9]`.
+> **Связанные записи:** `2026-08-04[1]-pre-4.0.0-project-review.md`,
+> `2026-08-05[8]-review-verification-handoff.md`,
+> `2026-08-05[9]-review-verification-report.md`,
+> `2026-08-11[1]-backlog-tail-design.md`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
