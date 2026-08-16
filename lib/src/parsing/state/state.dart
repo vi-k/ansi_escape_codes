@@ -384,13 +384,13 @@ sealed class State<S extends State<S>> {
         : <String>[
             if (foregroundColor != otherForeground &&
                 otherForeground is ExtendedColor)
-              _color(30, 90, otherForeground),
+              _color(30, otherForeground),
             if (backgroundColor != otherBackground &&
                 otherBackground is ExtendedColor)
-              _color(40, 100, otherBackground),
+              _color(40, otherBackground),
             if (underlineColorValue != otherUnderlineColor &&
                 otherUnderlineColor != null)
-              _color(50, 0, otherUnderlineColor),
+              _color(50, otherUnderlineColor),
           ].join();
 
     // `CSI 22` takes bold and dim off together, so where one of the pair goes
@@ -551,8 +551,7 @@ sealed class State<S extends State<S>> {
         null => offset + 9,
       };
 
-  String _color(int offset, int highOffset, ExtendedColor color) =>
-      switch (color) {
+  String _color(int offset, ExtendedColor color) => switch (color) {
         Color256(:final index) => '$CSI${offset + 8};$COLOR_256;$index$SGR',
         ColorRgb(:final r, :final g, :final b) =>
           '$CSI${offset + 8};$COLOR_RGB;$r;$g;$b$SGR',
