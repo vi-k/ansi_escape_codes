@@ -25,12 +25,27 @@ void main() {
       );
     });
 
-    test('moves the cursor instead of writing over the line', () {
-      final stdout = _FakeStdout(terminalColumns: 20);
+    test('sets a stop after each distance in the list', () {
+      final stdout = _FakeStdout(terminalColumns: 24);
 
-      tabs(tabs: [4, 4], stdout: stdout);
+      tabs(tabs: [8, 4, 4], stdout: stdout);
 
-      expect(stdout.written, isNot(contains(' ')));
+      expect(
+        stdout.written,
+        '\r${CSI}3$TBC'
+        '${cursorRightN(8)}$HTS'
+        '${cursorRightN(4)}$HTS'
+        '${cursorRightN(4)}$HTS'
+        '\r',
+        reason: 'the stops land in columns 9, 13 and 17, and no stop is set '
+            'in the first column — which is where the list differs from '
+            'defaultTab',
+      );
+      expect(
+        stdout.written,
+        isNot(contains(' ')),
+        reason: 'the cursor is moved rather than written over',
+      );
     });
 
     test('without arguments it only clears the stops', () {
