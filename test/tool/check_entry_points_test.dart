@@ -1,3 +1,18 @@
+// This file is the slow one: every case here stands up an analyser session
+// and walks the export namespace of each entry point. Seven of them take
+// about seven seconds apiece — 45 seconds for the file, and 77% of the
+// suite — against a per-case default of 30. Four times over is thin margin
+// when the slowdown would not come from the code: the runner the CI uses
+// has two cores where the machines this was measured on have more. It is
+// the only place in the suite that can go red intermittently with nothing
+// changed.
+//
+// Raised here rather than in a dart_test.yaml on purpose: a package-wide
+// timeout would loosen the net for the other thousand tests, and the next
+// one to start hanging would hang longer before anybody noticed.
+@Timeout(Duration(seconds: 90))
+library;
+
 import 'dart:io';
 
 import 'package:test/test.dart';
