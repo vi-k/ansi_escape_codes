@@ -489,6 +489,17 @@ final class _ParserBase<S extends State<S>> {
   /// past the end of the plain text — the position after the last character is
   /// a slice of nothing rather than a refusal. A [maxLength] reaching past the
   /// end is the rest of the string, however far past it reaches.
+  ///
+  /// An `SGR` this package cannot read — a parameter it has no name for, a
+  /// number too large to be one — is kept as it came and written again
+  /// wherever the output starts fresh, since nothing here can say what it did
+  /// or how to undo it. Every `SGR` behind it joins it, because it may have
+  /// set the same property, and only a full reset lets the chain go. A slice
+  /// opens with the whole of it, so a document carrying one such sequence and
+  /// no `SGR 0` after it pays for that sequence in every slice cut from it:
+  /// at 3200 lines, one eleven-byte sequence at the head turned 57.6 KB of
+  /// input into 25.7 MB of slices. An `SGR 0` anywhere in the text ends the
+  /// chain, and the cost with it.
   String substring(
     int start, {
     int? maxLength,
@@ -1251,6 +1262,11 @@ final class _ParserBase<S extends State<S>> {
   /// sequence as the string's did. With `close: true` the terminator is written
   /// at the end as well, though nothing follows it there, for the reason the
   /// link is closed there. See [substring], which says the whole of it.
+  ///
+  /// An `SGR` this package cannot read is kept and written again rather than
+  /// rewritten, and every `SGR` behind it with it, until a full reset. Where
+  /// one is in the string, this shortens much less than it otherwise would;
+  /// [substring], which pays it once a slice, says what that costs.
   String optimize({bool close = true}) {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
