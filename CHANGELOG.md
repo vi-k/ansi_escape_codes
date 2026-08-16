@@ -499,6 +499,15 @@ Renamed:
   would reintroduce the shadowing this removes. A test holds the name open
   from the outside: it uses `dart:core.Match` beside a single import of this
   package, and stops compiling if the name is ever taken back.
+- `rgb` and `gray` are `rgb256` and `gray256`. Both answer with an index into
+  the 256-colour table --- the 6×6×6 cube and the 24-step grey ramp, taking
+  0..5 and 0..23 --- and stood one name away from `fgRgb` and its pair, which
+  take a truecolour triple of 0..255 and write it into the sequence itself.
+  `fg256(rgb(255, 0, 0))` is the mistake the old names invited, and it throws
+  rather than showing the wrong colour, but the new names say which of the two
+  kinds of red is being asked for. They are also two very general words to
+  have been taking out of a caller's namespace. `Color256.rgb` and
+  `Color256.gray` keep their names: a named constructor says whose they are.
 - The hyperlink entity is `OscLink`, not `Link`. `Link` shadowed `dart:io.Link`
   --- a symbolic link --- and shadowed it the silent way `Match` used to shadow
   `dart:core.Match`: an explicit import outranks the implicit one, so a
