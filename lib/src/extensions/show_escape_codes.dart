@@ -7,6 +7,29 @@ import '../parsing/patterns/patterns.dart';
 /// Showing the escape sequences in a string instead of sending them.
 extension StringShowEscapeCodesExtension on String {
   /// Show escape sequences.
+  ///
+  /// A sequence is rendered as its parts with delimiters around them, and
+  /// every delimiter is one of the parameters here. The order is fixed:
+  ///
+  ///     open codeOpen NAME codeClose paramsOpen PARAMS paramsClose
+  ///         finalOpen FINAL finalClose close
+  ///
+  /// A sequence carrying no parameters is rendered without that group, its
+  /// two delimiters with it. With the defaults — brackets outside, a space
+  /// before the parameters and another before the final byte, nothing else —
+  /// a bold red run and a hyperlink read as:
+  ///
+  ///     [CSI 1;31 SGR]red[OSC 8;;https://a ST]link[OSC 8;; ST]
+  ///
+  /// [open] and [close] stand around the whole sequence; [codeOpen] and
+  /// [codeClose] around the introducer's name, `CSI` or `OSC`; [paramsOpen]
+  /// and [paramsClose] around the parameters; [finalOpen] and [finalClose]
+  /// around the name of the final byte, `SGR` or `ST`. Each pair moves only
+  /// its own part, so `paramsOpen: '(', paramsClose: ')'` gives
+  /// `[CSI(1;31) SGR]` and leaves the rest as it was.
+  ///
+  /// For the control codes themselves rather than the sequences they open,
+  /// see `ansiShowControlCodes`.
   String ansiShowEscapeSequences({
     String open = '[',
     String codeOpen = '',
