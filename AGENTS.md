@@ -72,6 +72,7 @@ dart analyze --fatal-infos
 dart run tool/check_entry_points.dart
 dart run tool/generate.dart && git diff --exit-code -- lib/
 dart test
+dart run tool/check_coverage.dart   # когда coverage собран; в CI всегда
 dart run benchmark/memory_guard.dart
 dart run benchmark/complexity_guard.dart
 dart doc --dry-run
@@ -94,6 +95,15 @@ dart pub publish --dry-run   # ожидается 0 предупреждений
 - **`generate.dart`** до первой записи сверяет registry восьми генерируемых
   зон с marker-файлами, найденными рекурсивно в `lib/`. Лишняя, пропущенная,
   повторная или непарная marker-зона красит preflight атомарно.
+- **`check_coverage.dart`** держит собранный отчёт к трём ответам: отчёт
+  собран в этом дереве, его `LF`/`LH` сходятся с записями `DA`, и пол
+  95.0 % по gated-отчёту. Третий — про то, что `format_coverage` строит
+  отчёт из hitmap VM: библиотека, которую не загрузил ни один тест, не даёт
+  записи вовсе, и пол её не видит — поэтому множество файлов сверяется по
+  **полному** отчёту. Файлы без исполняемых строк перечислены в инструменте
+  константой, и она самоистекающая: как только в таком файле заводится код,
+  ворота требуют убрать его из списка. Инструменту нужен собранный отчёт,
+  поэтому локально он идёт после `dart test --coverage`, а в CI — всегда.
 - **`memory_guard.dart`** держит удержание памяти в полосе, откалиброванной
   на конкретных машинах; актуальные числа — в `docs/handoff.md`.
 - **`complexity_guard.dart`** отдельно держит wall-clock complexity: это

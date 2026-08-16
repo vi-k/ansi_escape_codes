@@ -117,11 +117,14 @@ jobs:
           dart run coverage:format_coverage \
             --lcov --in=coverage --out=coverage/lcov.gated.info --report-on=lib --ignore-files='**/style_colors.dart'
 
-      - name: Check hand-written lib coverage holds its floor
+      - name: Check the coverage report holds its floor and its files
         if: matrix.sdk == 'stable'
-        # style_colors.dart is generated code. Keep it in the full artifact
-        # for diagnosis, but permanently exclude it from this hand-written
-        # coverage gate.
+        # Two answers over the two reports the step above wrote. The floor
+        # is measured over the gated report, which leaves out the generated
+        # style_colors.dart; the file set is measured over the full one,
+        # because a file excluded from the floor still has to be there at
+        # all. format_coverage builds from the hitmap of the run, so a
+        # library nothing loaded leaves no record and no floor can see it.
         run: dart run tool/check_coverage.dart
 
       - name: Upload coverage

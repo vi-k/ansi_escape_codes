@@ -123,6 +123,110 @@ String? checkCoverageFloor(List<LcovFile> files, double floor) {
       'floor ${floor.toStringAsFixed(1)}%';
 }
 
+/// Holds every path in [files] to having sat under [root], returning a
+/// diagnostic when one did not.
+///
+/// [parseLcov] makes a path relative only when it starts with the root it
+/// is given, and leaves it alone otherwise. That is the right thing to do
+/// there — it has no business rewriting a path it does not recognise — but
+/// it means a report collected somewhere else arrives as a set of absolute
+/// paths, and the file-set answers below would then disagree with the tree
+/// about every file in it, twice over. The cause is worth one line rather
+/// than a hundred consequences.
+String? checkReportRoot(List<LcovFile> files, {required String root}) {
+  final strays = files
+      .map((file) => file.path)
+      .where((path) => path.startsWith('/') || _driveLetter.hasMatch(path))
+      .toList()
+    ..sort();
+  if (strays.isEmpty) {
+    return null;
+  }
+
+  final header = 'the report was collected somewhere other than $root, '
+      'so ${strays.length} of its paths cannot be read as this tree:';
+
+  return [
+    header,
+    for (final path in strays.take(3)) '  $path',
+    if (strays.length > 3) '  ... and ${strays.length - 3} more',
+  ].join('\n');
+}
+
+/// The files under `lib/` that hold no executable line, and so leave no
+/// record in a coverage report however thoroughly they are used.
+///
+/// A file appears in the report if and only if it has a line to execute:
+/// neither `part of` nor living under `lib/src/` changes that — 20 of the
+/// 21 part files in this package are reported, and the one that is not is
+/// the one holding only constants.
+///
+/// Three kinds sit here, and sorting interleaves them, so they are named
+/// once rather than as headings the sort would scatter: the five entry
+/// points directly under `lib/`, which hold `export` directives and
+/// nothing else; the `lib/src/ansi/` names, which are `const String`; and
+/// the ready-made sequences and styles, which are `const` again — one of
+/// them, `styles.dart`, a part file.
+///
+/// Kept sorted, and held by [checkReportedFiles] to still being absent:
+/// the moment one of these grows a line of code it starts being reported,
+/// and an exemption nobody revisits would be the same blind spot this
+/// gate exists to close.
+const librariesWithoutExecutableLines = <String>[
+  'lib/ansi.dart',
+  'lib/ansi_escape_codes.dart',
+  'lib/extensions.dart',
+  'lib/src/ansi/c0.dart',
+  'lib/src/ansi/c1.dart',
+  'lib/src/ansi/colors.dart',
+  'lib/src/ansi/csi.dart',
+  'lib/src/ansi/esc_fs.dart',
+  'lib/src/ansi/sgr.dart',
+  'lib/src/parsing/state/styles.dart',
+  'lib/src/ready_to_use/esc.dart',
+  'lib/src/ready_to_use/sgr/sgr.dart',
+  'lib/src/ready_to_use/sgr/standard_colors/standard_colors.dart',
+  'lib/style.dart',
+  'lib/utils.dart',
+];
+
+/// Holds the report's file set against the tree, returning a diagnostic
+/// when they disagree.
+///
+/// `format_coverage --report-on=lib` builds its report from the hitmap of
+/// the run, so a library no test ever loaded leaves no record at all. It
+/// does not read as nought per cent — it reads as absent, and a floor
+/// measured over what is present cannot see it. Three answers close that:
+/// everything reported is on disk, everything on disk is reported or
+/// exempted, and everything exempted is on disk and still unreported.
+String? checkReportedFiles({
+  required Iterable<String> reported,
+  required Iterable<String> onDisk,
+  required Iterable<String> exempt,
+}) {
+  final reportedSet = reported.toSet();
+  final onDiskSet = onDisk.toSet();
+  final exemptSet = exempt.toSet();
+  final diagnostics = <String>[];
+
+  for (final path in reportedSet.difference(onDiskSet)) {
+    diagnostics.add('reported but not on disk: $path');
+  }
+  for (final path in onDiskSet.difference(reportedSet).difference(exemptSet)) {
+    diagnostics.add('on disk but absent from the report: $path');
+  }
+  for (final path in exemptSet.difference(onDiskSet)) {
+    diagnostics.add('exempted but not on disk: $path');
+  }
+  for (final path in exemptSet.intersection(reportedSet)) {
+    diagnostics.add('exempted but present in the report: $path');
+  }
+
+  return diagnostics.isEmpty ? null : (diagnostics..sort()).join('\n');
+}
+
+final _driveLetter = RegExp('^[A-Za-z]:');
+
 String _normalize(String path) {
   final slashed = path.replaceAll(r'\', '/');
 
