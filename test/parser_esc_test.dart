@@ -2,7 +2,77 @@ import 'package:ansi_escape_codes/ansi.dart';
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:test/test.dart';
 
+/// `0x20` and `0x2F` name themselves rather than being written as bytes: the
+/// two ends of the intermediate range are the whole point of the group below,
+/// and a test that says `String.fromCharCode(0x20)` where it means the first
+/// of them reads as an arbitrary number.
+const _firstIntermediate = 0x20; // SP
+const _lastIntermediate = 0x2F; // /
+
 void main() {
+  group('the ends of the intermediate range:', () {
+    // Both of these survived a mutation with the whole suite green: the
+    // corpus ran through the middle of the range and never touched either
+    // end. Narrowing `>= 0x20` or `<= 0x2F` makes the parser call `ESC SP`
+    // or `ESC /` finished, and then `insertAfter` writes the caller's text
+    // where the sequence's own final byte would go --- the terminal swallows
+    // it and does whatever the sequence then spells --- while `substring`
+    // stops supplying the terminator and lets the slice run into whatever
+    // is printed after it.
+    for (var byte = _firstIntermediate; byte <= _lastIntermediate; byte++) {
+      final code = '$ESC${String.fromCharCode(byte)}';
+      final name = '0x${byte.toRadixString(16).padLeft(2, '0')}';
+
+      test('ESC on $name is a sequence still waiting for its ending', () {
+        expect(
+          Parser('a$code').substring(0),
+          'a$code$ST',
+          reason: '$name: a slice ends it, or it reads what follows the '
+              'slice as its own',
+        );
+        expect(
+          Parser('a$code').insertAfter(1, 'X'),
+          'aX$code',
+          reason: '$name: there is no place behind it to insert at — the '
+              'byte that would end it has not been written',
+        );
+        expect(Parser('a$code').insertBefore(1, 'X'), 'aX$code', reason: name);
+      });
+    }
+
+    for (final byte in [0x30, 0x31, 0x37, 0x63, 0x7E]) {
+      final code = '$ESC${String.fromCharCode(byte)}';
+      final name = '0x${byte.toRadixString(16).padLeft(2, '0')}';
+
+      test('ESC on $name is a sequence that has ended', () {
+        expect(
+          Parser('a$code').substring(0),
+          'a$code',
+          reason: '$name: nothing is owed at the end of the slice',
+        );
+        expect(
+          Parser('a$code').insertAfter(1, 'X'),
+          'a${code}X',
+          reason: '$name: the place behind it is a place to insert at',
+        );
+        expect(Parser('a$code').insertBefore(1, 'X'), 'aX$code', reason: name);
+      });
+    }
+
+    test('and a byte below the range leaves the ESC bare', () {
+      // `0x1F` cannot be part of any escape sequence, so the `ESC` stands
+      // alone and unfinished and the byte behind it is text: the slice ends
+      // the `ESC` in front of that text rather than carrying the byte along
+      // with it.
+      const input = 'a$ESC\x1F';
+
+      expect(Parser(input).removeAll(), 'a\x1F');
+      expect(Parser(input).substring(0), 'a$ESC$ST\x1F');
+      expect(Parser(input).insertAfter(1, 'X'), 'aX$ESC\x1F');
+      expect(Parser(input).insertBefore(1, 'X'), 'aX$ESC\x1F');
+    });
+  });
+
   group('ESC sequences with intermediate bytes:', () {
     test('are consumed whole', () {
       const sequences = {
