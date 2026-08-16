@@ -153,6 +153,12 @@ Performance:
 
 Fixed:
 
+- `ansiHasSgr` and `ansiRemoveSgr` disagreed with the parser about the same
+  sequences: `'\x1B[1<m'.ansiHasSgr` was false while the parser read it as a
+  rendition, and `ansiRemoveSgr` left behind what `ansiRemoveEscapeCodes` took
+  out. They read `sgrPattern`, whose parameter class excluded `<`, `=`, `>`
+  and `?` everywhere rather than only in the first place, where alone they
+  make a sequence private use. The pattern now says what the parser says.
 - An `SGR` carrying a private byte past the first --- `CSI 1 < m`, `CSI 99 ; < m`
   --- was written to the terminal twice. Only the first byte of a parameter
   string makes a sequence private use, so these are ordinary `CSI ... m` whose

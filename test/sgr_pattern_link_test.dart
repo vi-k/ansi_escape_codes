@@ -41,4 +41,38 @@ void main() {
       }
     }
   });
+
+  test('a private byte makes a sequence private in the first place only', () {
+    // A parameter string beginning `<`, `=`, `>` or `?` is private use, and
+    // the whole sequence with it. One of those bytes anywhere else is a
+    // parameter byte the standard leaves undefined — the sequence is still
+    // an ordinary `CSI ... m`, and the parser reads it as one, putting it in
+    // the rendition branch with the numbers it cannot read.
+    //
+    // The pattern used to disagree, and the extensions read the pattern: the
+    // same sequence was an SGR to the parser and not one to `ansiHasSgr`.
+    const privateFirst = ['\x1B[?5m', '\x1B[>4;1m', '\x1B[<35;10;2m'];
+    const ordinary = ['\x1B[1<m', '\x1B[99;<m', '\x1B[31;>m', '\x1B[1=m'];
+
+    for (final code in privateFirst) {
+      expect('${code}A'.ansiHasSgr, isFalse, reason: code);
+      expect('${code}A'.ansiRemoveSgr(), '${code}A', reason: code);
+      expect(
+        Parser('${code}AB').substring(1),
+        'B',
+        reason: '$code is a code to copy, not a rendition to replay',
+      );
+    }
+
+    for (final code in ordinary) {
+      expect('${code}A'.ansiHasSgr, isTrue, reason: code);
+      expect('${code}A'.ansiRemoveSgr(), 'A', reason: code);
+      expect(
+        Parser('${code}AB').substring(1),
+        '${code}B$reset',
+        reason: '$code travels in the rendition branch, so a slice that '
+            'begins past it opens it again',
+      );
+    }
+  });
 }
