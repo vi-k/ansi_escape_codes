@@ -284,7 +284,12 @@ final class _ParserBase<S extends State<S>> {
   /// than walking the string again. Asking about position after position — as
   /// laying text out does — costs one walk in all, not one each.
   ///
-  /// Going back is allowed and starts the walk over.
+  /// Going back is allowed and starts the walk over, and starting over costs
+  /// the walk to [pos] again. A pass that only moves forward is therefore
+  /// linear in the string however many questions it asks, and one that moves
+  /// backward — laying a log out from its last line up — is quadratic:
+  /// walking the whole string once and reading the answers off is the way to
+  /// ask it that way.
   ///
   /// See also [finalState].
   S stateAt(int pos) => _pieceAt(pos)?.state ?? finalState;
@@ -468,7 +473,11 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// A slice beginning exactly where a piece begins walks afresh: the escape
   /// codes standing in front of that piece belong to the slice, and the walk
-  /// is already past them. Going back walks afresh as well.
+  /// is already past them. Going back walks afresh as well, and pays for the
+  /// whole walk again: cutting a document into lines from the top down is
+  /// linear in it, and cutting the same document from the bottom up is
+  /// quadratic. [prepare] does not change that — what is kept is the parse,
+  /// and the walk is what is started over.
   ///
   /// See [prepare] for reading the whole string at once instead.
   ///
