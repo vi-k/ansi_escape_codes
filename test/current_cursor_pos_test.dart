@@ -13,8 +13,27 @@ void main() {
 
       expect(await currentCursorPos(stdout, stdin), (12, 34));
       expect(stdout.written, '${CSI}6$DSR');
-      expect(stdin.echoMode, isTrue);
-      expect(stdin.lineMode, isTrue);
+      expect(stdin.echoModeLeft, isTrue);
+      expect(stdin.lineModeLeft, isTrue);
+    });
+
+    test('puts the terminal back before it lets the input go', () async {
+      final stdin = _FakeStdin(Stream.value('${CSI}12;34R'.codeUnits));
+
+      expect(await currentCursorPos(_FakeStdout(), stdin), (12, 34));
+      expect(
+        stdin.log,
+        [
+          'echoMode=false',
+          'lineMode=false',
+          'lineMode=true',
+          'echoMode=true',
+          'cancel',
+        ],
+        reason: 'cancelling closes the descriptor the modes are set through, '
+            'so a restore behind it never lands',
+      );
+      expect(stdin.closed, isTrue, reason: 'and the input is let go of');
     });
 
     test('reads a reply that arrives in pieces', () async {
@@ -89,7 +108,7 @@ void main() {
         currentCursorPos(_FakeStdout(), stdin),
         throwsA(isA<UnsupportedError>()),
       );
-      expect(stdin.echoMode, isTrue, reason: 'and puts the terminal back');
+      expect(stdin.echoModeLeft, isTrue, reason: 'and puts the terminal back');
     });
 
     test('refuses an answer carrying something that is not a number', () async {
@@ -118,7 +137,7 @@ void main() {
         currentCursorPos(_FakeStdout(), stdin),
         throwsA(isA<UnsupportedError>()),
       );
-      expect(stdin.lineMode, isTrue, reason: 'and puts the terminal back');
+      expect(stdin.lineModeLeft, isTrue, reason: 'and puts the terminal back');
     });
 
     test('refuses when the input fails', () async {
@@ -145,22 +164,78 @@ void main() {
         throwsA(isA<UnsupportedError>()),
       );
 
-      expect(stdin.echoMode, isTrue);
-      expect(stdin.lineMode, isTrue);
+      expect(stdin.echoModeLeft, isTrue);
+      expect(stdin.lineModeLeft, isTrue);
     });
   });
 }
 
+/// A [Stdin] that closes the way the real one does.
+///
+/// Cancelling a subscription to the real `stdin` closes the descriptor under
+/// it, and every mode access after that throws. A fake that lets the modes be
+/// put back after the cancel proves nothing about the terminal the caller is
+/// left with, so this one closes on cancel and throws thereafter.
+///
+/// [log] records the writes and the cancel in the order they happened, which
+/// is the whole of what has to be right here: the modes have to go back while
+/// the descriptor is still open.
 final class _FakeStdin implements Stdin {
   _FakeStdin(this._stream);
 
   final Stream<List<int>> _stream;
 
-  @override
-  bool echoMode = true;
+  final List<String> log = [];
+
+  bool _closed = false;
+  bool _echoMode = true;
+  bool _lineMode = true;
+
+  /// Whether the subscription taken over this input has been cancelled.
+  bool get closed => _closed;
+
+  /// The value [echoMode] was last set to, readable after the close.
+  bool get echoModeLeft => _echoMode;
+
+  /// The value [lineMode] was last set to, readable after the close.
+  bool get lineModeLeft => _lineMode;
 
   @override
-  bool lineMode = true;
+  bool get echoMode {
+    _open('getting terminal echo mode');
+
+    return _echoMode;
+  }
+
+  @override
+  set echoMode(bool value) {
+    _open('setting terminal echo mode');
+    _echoMode = value;
+    log.add('echoMode=$value');
+  }
+
+  @override
+  bool get lineMode {
+    _open('getting terminal line mode');
+
+    return _lineMode;
+  }
+
+  @override
+  set lineMode(bool value) {
+    _open('setting terminal line mode');
+    _lineMode = value;
+    log.add('lineMode=$value');
+  }
+
+  void _open(String what) {
+    if (_closed) {
+      throw StdinException(
+        'Error $what',
+        const OSError('Bad file descriptor', 9),
+      );
+    }
+  }
 
   @override
   Stream<List<int>> asBroadcastStream({
@@ -176,15 +251,56 @@ final class _FakeStdin implements Stdin {
     void Function()? onDone,
     bool? cancelOnError,
   }) =>
-      _stream.listen(
-        onData,
-        onError: onError,
-        onDone: onDone,
-        cancelOnError: cancelOnError,
+      _ClosingSubscription(
+        _stream.listen(
+          onData,
+          onError: onError,
+          onDone: onDone,
+          cancelOnError: cancelOnError,
+        ),
+        this,
       );
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// The subscription [_FakeStdin] hands out: cancelling it closes the input.
+final class _ClosingSubscription<T> implements StreamSubscription<T> {
+  _ClosingSubscription(this._inner, this._stdin);
+
+  final StreamSubscription<T> _inner;
+  final _FakeStdin _stdin;
+
+  @override
+  Future<void> cancel() {
+    _stdin
+      .._closed = true
+      ..log.add('cancel');
+
+    return _inner.cancel();
+  }
+
+  @override
+  Future<E> asFuture<E>([E? futureValue]) => _inner.asFuture(futureValue);
+
+  @override
+  bool get isPaused => _inner.isPaused;
+
+  @override
+  void onData(void Function(T data)? handleData) => _inner.onData(handleData);
+
+  @override
+  void onDone(void Function()? handleDone) => _inner.onDone(handleDone);
+
+  @override
+  void onError(Function? handleError) => _inner.onError(handleError);
+
+  @override
+  void pause([Future<void>? resumeSignal]) => _inner.pause(resumeSignal);
+
+  @override
+  void resume() => _inner.resume();
 }
 
 final class _FakeStdout implements Stdout {

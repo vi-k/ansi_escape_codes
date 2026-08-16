@@ -32,6 +32,7 @@ Future<(int, int)> currentCursorPos(
     final keepLineMode = stdin.lineMode;
     var echoModeOff = false;
     var lineModeOff = false;
+    StreamSubscription<List<int>>? subscription;
 
     try {
       stdin.echoMode = false;
@@ -41,23 +42,36 @@ Future<(int, int)> currentCursorPos(
 
       report = await _readReport(
         input ?? stdin,
+        (taken) => subscription = taken,
         () => stdout.write('${CSI}6$DSR'),
         timeout,
       );
     } finally {
+      // The modes go back before the input is let go of, and that order is
+      // the whole of it: cancelling a subscription to the real stdin closes
+      // the descriptor the modes are set through, so a restore written
+      // behind the cancel throws instead of landing. The caller would be
+      // left at a terminal with no echo and told that the terminal cannot
+      // report its cursor — while it just had.
+      //
       // Line mode first, mirroring the way they were turned off: Windows
       // lets echo come back only once line mode is on. Nested, so a throw
       // restoring one does not keep the other from being restored, and
       // only what actually changed is put back — a stdin that refused a
-      // change is not asked to undo it.
+      // change is not asked to undo it. The cancel is nested outside both,
+      // so the input is let go of even where a restore throws.
       try {
-        if (lineModeOff) {
-          stdin.lineMode = keepLineMode;
+        try {
+          if (lineModeOff) {
+            stdin.lineMode = keepLineMode;
+          }
+        } finally {
+          if (echoModeOff) {
+            stdin.echoMode = keepEchoMode;
+          }
         }
       } finally {
-        if (echoModeOff) {
-          stdin.echoMode = keepEchoMode;
-        }
+        await subscription?.cancel();
       }
     }
   } on Object catch (_, stacktrace) {
@@ -102,42 +116,46 @@ Future<(int, int)> currentCursorPos(
 
 /// Asks for the report and waits for it, passing over anything else that
 /// arrives — typed characters, and the sequences a pressed key sends.
+///
+/// The subscription is handed to [taking] as soon as it is taken, and letting
+/// it go is the caller's to do rather than this function's: cancelling it
+/// closes the real stdin, and that has to happen behind the caller putting the
+/// terminal modes back, not in front of it.
 Future<List<int>> _readReport(
   Stream<List<int>> input,
+  void Function(StreamSubscription<List<int>> subscription) taking,
   void Function() request,
   Duration timeout,
-) async {
+) {
   final completer = Completer<List<int>>();
   final buf = <int>[];
 
-  final subscription = input.listen(
-    (chunk) {
-      buf.addAll(chunk);
+  taking(
+    input.listen(
+      (chunk) {
+        buf.addAll(chunk);
 
-      final report = _extractReport(buf);
-      if (report != null && !completer.isCompleted) {
-        completer.complete(report);
-      }
-    },
-    onError: (Object error, StackTrace stackTrace) {
-      if (!completer.isCompleted) {
-        completer.completeError(error, stackTrace);
-      }
-    },
-    onDone: () {
-      if (!completer.isCompleted) {
-        completer.completeError(StateError('The input is closed'));
-      }
-    },
+        final report = _extractReport(buf);
+        if (report != null && !completer.isCompleted) {
+          completer.complete(report);
+        }
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        if (!completer.isCompleted) {
+          completer.completeError(error, stackTrace);
+        }
+      },
+      onDone: () {
+        if (!completer.isCompleted) {
+          completer.completeError(StateError('The input is closed'));
+        }
+      },
+    ),
   );
 
-  try {
-    request();
+  request();
 
-    return await completer.future.timeout(timeout);
-  } finally {
-    await subscription.cancel();
-  }
+  return completer.future.timeout(timeout);
 }
 
 /// The Cursor Position Report inside [buf], once all of it has arrived.
