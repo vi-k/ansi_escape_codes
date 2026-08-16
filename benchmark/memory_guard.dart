@@ -54,7 +54,7 @@
 //
 // This is the second calibration. The first, taken on 2026-08-05 over the
 // same corpus on the same machine, read 229.6 to 230.4, and what moved it was
-// deliberate: every `Piece` now carries a `Link?`, the field a slice and a
+// deliberate: every `Piece` now carries a `OscLink?`, the field a slice and a
 // printed string reopen a hyperlink from, the way they already reopen a
 // style. What the field costs and what the reading rose by are not the same
 // number, and the difference is the point. The field is one reference on each

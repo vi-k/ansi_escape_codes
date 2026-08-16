@@ -29,7 +29,6 @@ final class Printer extends _PrintPrinterBase<Style> {
     super.defaultStyle = Style.terminalColors,
     super.output,
     super.ansiCodesEnabled = true,
-    @visibleForTesting super.debugForTest,
   }) : super(stateDefaults: Style.terminalColors);
 }
 
@@ -62,7 +61,6 @@ final class StackedPrinter extends _PrintPrinterBase<Stack> {
     super.defaultStyle = Style.terminalColors,
     super.output,
     super.ansiCodesEnabled = true,
-    @visibleForTesting super.debugForTest,
   }) : super(stateDefaults: Stack.terminalColors);
 }
 
@@ -103,7 +101,6 @@ final class SinkPrinter extends _SinkPrinterBase<Style> {
     super.sink, {
     super.defaultStyle = Style.terminalColors,
     super.ansiCodesEnabled = true,
-    @visibleForTesting super.debugForTest,
   }) : super(stateDefaults: Style.terminalColors);
 }
 
@@ -133,7 +130,6 @@ final class StackedSinkPrinter extends _SinkPrinterBase<Stack> {
     super.sink, {
     super.defaultStyle = Style.terminalColors,
     super.ansiCodesEnabled = true,
-    @visibleForTesting super.debugForTest,
   }) : super(stateDefaults: Stack.terminalColors);
 }
 
@@ -178,17 +174,11 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// printer session, or `null` before the first save.
   _CursorSave<S>? _savedCursor;
 
-  /// Whether each line is followed by the same line with its codes named,
-  /// which is how the tests read what was written.
-  @visibleForTesting
-  bool debugForTest;
-
   _PrinterBase({
     required this.stateDefaults,
     required this.defaultStyle,
     required this.ansiCodesEnabled,
-    bool? debugForTest,
-  }) : debugForTest = debugForTest ?? false;
+  });
 
   /// Prints the given object to the output.
   void print(Object? object) => writeln(object);
@@ -227,7 +217,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// whether the opening has to be written again. It is null again by the time
   /// a whole line has been prepared, and only carries anything between the
   /// writes that make up one line.
-  Link? _writtenLink;
+  OscLink? _writtenLink;
 
   /// The hyperlink open in the text, whether or not it is open in the output,
   /// or null where none is.
@@ -240,7 +230,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   ///
   /// It survives the close at the end of the line and dies where the text
   /// itself closes the link.
-  Link? _ambientLink;
+  OscLink? _ambientLink;
 
   /// Whether what has been written of the current line ends in a control
   /// string that never got its terminator, with nothing behind it to end it.
@@ -411,7 +401,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       // that opens one and does not close it would make everything printed
       // after it part of the link, so the close is written where the line
       // ends — the way a slice closes the link it opened.
-      if (m.entity case Link()) {
+      if (m.entity case OscLink()) {
         writtenLink = m.link;
       }
 
@@ -424,7 +414,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       //
       // An opening the line before never terminated is terminated here: the
       // text of this line follows it now, and would otherwise be read as part
-      // of the url — see [Link._reopening].
+      // of the url — see [OscLink._reopening].
       final entity = m.entity;
 
       var reopening = '';
@@ -542,7 +532,6 @@ final class _PrintPrinterBase<S extends State<S>> extends _PrinterBase<S> {
     required super.defaultStyle,
     void Function(String line)? output,
     required super.ansiCodesEnabled,
-    super.debugForTest,
   }) : _output = output ?? Zone.current.print;
 
   /// A line is buffered whole and handed to [prepare] whole, so a link it
@@ -603,11 +592,7 @@ final class _PrintPrinterBase<S extends State<S>> extends _PrinterBase<S> {
     _lineBuf.clear();
 
     for (final line in buf.split('\n')) {
-      final output = prepare(line);
-      _output(output);
-      if (debugForTest) {
-        _output(Parser(output).showControlFunctions());
-      }
+      _output(prepare(line));
     }
   }
 }
@@ -634,7 +619,6 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
     required super.stateDefaults,
     required super.defaultStyle,
     required super.ansiCodesEnabled,
-    super.debugForTest,
   });
 
   /// A write goes to the sink as it comes, and one line may be composed of
@@ -824,11 +808,7 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
 
   /// Writes the given line to the sink.
   void _writeLine(String line, {required bool endsLine}) {
-    final output = _prepare(line, endsLine: endsLine);
-    sink.write(output);
-    if (debugForTest) {
-      sink.write(Parser(output).showControlFunctions());
-    }
+    sink.write(_prepare(line, endsLine: endsLine));
   }
 }
 
@@ -844,7 +824,6 @@ R runZonedPrinter<R>(
   Style defaultStyle = Style.terminalColors,
   void Function(String s)? output,
   bool ansiCodesEnabled = true,
-  @visibleForTesting bool debugForTest = false,
 }) {
   Printer? printer;
 
@@ -856,7 +835,6 @@ R runZonedPrinter<R>(
           defaultStyle: defaultStyle,
           output: output ?? (line) => parent.print(zone, line),
           ansiCodesEnabled: ansiCodesEnabled,
-          debugForTest: debugForTest,
         ))
             .print(line);
       },
@@ -876,7 +854,6 @@ R runZonedStackedPrinter<R>(
   Style defaultStyle = Style.terminalColors,
   void Function(String s)? output,
   bool ansiCodesEnabled = true,
-  @visibleForTesting bool debugForTest = false,
 }) {
   StackedPrinter? printer;
 
@@ -888,7 +865,6 @@ R runZonedStackedPrinter<R>(
           defaultStyle: defaultStyle,
           output: output ?? (line) => parent.print(zone, line),
           ansiCodesEnabled: ansiCodesEnabled,
-          debugForTest: debugForTest,
         ))
             .print(line);
       },

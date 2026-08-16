@@ -54,14 +54,19 @@ Added:
 - The control function types the API returns — `ControlFunctionsSGR`,
   `ControlSequencesFunctions` and the rest — are exported from the main entry
   point.
-- `ansi_escape_codes.dart` brings the `String` extensions and the two terminal
-  utilities as well, so it is now what its name says: one import for all of it
-  but the raw byte tables of `ansi.dart`, which stand apart as they always
-  did — the ready-to-use strings are built from them, and neither import
-  brings the other. `extensions.dart` and `utils.dart` still bring the
-  extensions and the utilities alone, as `style.dart` brings the parser
-  without the tables of constants — the smaller imports are for a smaller
-  namespace, not for reaching something the main one lacks.
+- `ansi_escape_codes.dart` brings the `String` extensions as well, so it is
+  one import for all the string work: the ready-to-use strings, the styles,
+  the parser, the state, the control function tables and the extensions. Two
+  things stand outside it. `ansi.dart` always did — the ready-to-use strings
+  are built from its raw byte tables, and neither import brings the other. And
+  `utils.dart` does, because `tabs` and `currentCursorPos` talk to a terminal
+  in person through `dart:io`, and nothing else in the package touches a
+  platform library: bringing them in through the umbrella would tag the whole
+  package native-only for the sake of two names, and take the web and
+  WebAssembly away from the thousand that run anywhere. A test walks the
+  directives of each entry point and holds that line. `extensions.dart` and
+  `style.dart` still bring their smaller namespaces, which is what they are
+  for — not for reaching something the main import lacks.
 
 Verification:
 
@@ -191,7 +196,7 @@ Fixed:
   clickable again exactly where the save was, and a save made where no link was
   open puts that away as readily — the restore leaves no link behind it, rather
   than the one the string was started inside.
-- An insertion left a hyperlink open. `Link` carries no style, and the closing
+- An insertion left a hyperlink open. `OscLink` carries no style, and the closing
   was worked out from the style alone, so text inserted with an unclosed
   `OSC 8` swallowed everything after it.
 - An unfinished escape sequence in the inserted text swallowed the original
@@ -242,7 +247,7 @@ Fixed:
   other four, so a `DCS` whose body happens to end in one is unterminated still
   — and one left unterminated is held back and given its terminator the way an
   unterminated `OSC` is.
-- `SaveCursor`, `RestoreCursor` and `Link` carried a `reset` as their text, so
+- `SaveCursor`, `RestoreCursor` and `OscLink` carried a `reset` as their text, so
   all three were equal to one another — an `Entity` compares by what it is
   written with — and none of them equalled the same entity read back by the
   parser.
@@ -494,6 +499,22 @@ Renamed:
   would reintroduce the shadowing this removes. A test holds the name open
   from the outside: it uses `dart:core.Match` beside a single import of this
   package, and stops compiling if the name is ever taken back.
+- `rgb` and `gray` are `rgb256` and `gray256`. Both answer with an index into
+  the 256-colour table --- the 6×6×6 cube and the 24-step grey ramp, taking
+  0..5 and 0..23 --- and stood one name away from `fgRgb` and its pair, which
+  take a truecolour triple of 0..255 and write it into the sequence itself.
+  `fg256(rgb(255, 0, 0))` is the mistake the old names invited, and it throws
+  rather than showing the wrong colour, but the new names say which of the two
+  kinds of red is being asked for. They are also two very general words to
+  have been taking out of a caller's namespace. `Color256.rgb` and
+  `Color256.gray` keep their names: a named constructor says whose they are.
+- The hyperlink entity is `OscLink`, not `Link`. `Link` shadowed `dart:io.Link`
+  --- a symbolic link --- and shadowed it the silent way `Match` used to shadow
+  `dart:core.Match`: an explicit import outranks the implicit one, so a
+  command-line tool, which almost always imports `dart:io`, got two errors that
+  named no package. The new name says which sequence it is, the way `EscCommon`
+  and `CsiCommon` do. A test holds `dart:io.Link` open from the outside and
+  stops compiling if the name is ever taken back.
 - `RESERVED` to `RESERVED_5F`, named after its byte rather than claiming a word
   that plain in the namespace this package exports.
 - `toStringAsEscapeSquences` to `toStringAsEscapeSequences`, which was missing
@@ -548,13 +569,14 @@ Breaking changes:
   `Color256.red`, whose index is the same colour, is what it becomes. The
   Fixed list below mentions the change as part of the bug it belongs to; it
   is named here because the compiler will name it first.
-- `Link(url)` is no longer `const`. It percent-escapes a control byte in the
-  address, as `link` does and for the same reason, and a `const` initializer
-  admits neither a function call nor a `contains` — so the address could there
-  be neither encoded nor so much as checked. `const Link('…')` has to lose the
-  keyword; nothing else about it moves. `Link.url` reads back the encoded
+- `OscLink(url)` — `Link(url)` before the rename above — is no longer `const`.
+  It percent-escapes a control byte in the address, as `link` does and for the
+  same reason, and a `const` initializer admits neither a function call nor a
+  `contains` — so the address could there be neither encoded nor so much as
+  checked. A `const Link('…')` has to lose the keyword along with the name;
+  nothing else about it moves. `OscLink.url` reads back the encoded
   address rather than the bytes handed in, so that it agrees with a parse of
-  `Link.string` and with the equality an `Entity` takes from those bytes.
+  `OscLink.string` and with the equality an `Entity` takes from those bytes.
 - The named control sequences print as themselves: `CursorUp(4)`,
   `CursorPos(3, 7)`, `EraseInPage(ErasePart.all)` where `Csi([CSI 4 CUU])` was
   written before. Nothing reads `toString` but a person and a golden test.

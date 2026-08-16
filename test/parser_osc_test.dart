@@ -11,8 +11,8 @@ void main() {
           .first
           .entity;
 
-      expect(entity, isA<Link>());
-      expect((entity as Link).url, url);
+      expect(entity, isA<OscLink>());
+      expect((entity as OscLink).url, url);
     });
 
     test('linkBel writes the older form, closed by a BEL', () {

@@ -189,17 +189,28 @@ Each entry point brings a different part of the package:
 
 | Import | Names | What it brings |
 |:---|---:|:---|
-| `ansi_escape_codes.dart` | ~1000 | all of it: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state, the control function tables, the `String` extensions and the two terminal utilities |
+| `ansi_escape_codes.dart` | ~1000 | all the string work: the ready-to-use strings (`fgRed`, `cursorUp`), the styles, the parser, the state, the control function tables and the `String` extensions |
 | `ansi.dart` | ~500 | the bytes the standard names: `CSI`, `CUU`, `BOLD`, `RESERVED_5F`. The only one that is not part of the first — the ready-to-use strings are built from these, and neither brings the other |
 | `style.dart` | 82 | the styles, the state and the parser with its control function tables, without the tables of ready-to-use strings |
 | `extensions.dart` | 8 | the `String` extensions, with the two enums their signatures name and the exception the two insertions throw |
 | `utils.dart` | 2 | `tabs` and `currentCursorPos` alone |
 
-The bottom three are parts of the first, and are there for the times a smaller
-namespace is worth an import of its own — a program that only reads escape
-codes has no use for the 900 constants that write them. The styles and the
-parser live in the same library, so `style.dart` brings both: writing a style
-and reading one back are the two halves of the same surface.
+`style.dart` and `extensions.dart` are parts of the first, and are there for
+the times a smaller namespace is worth an import of its own — a program that
+only reads escape codes has no use for the 900 constants that write them. The
+styles and the parser live in the same library, so `style.dart` brings both:
+writing a style and reading one back are the two halves of the same surface.
+
+`utils.dart` stands apart for a different reason. Its two functions talk to a
+terminal in person, through `dart:io`, and nothing else here does: the rest is
+string work that runs wherever Dart does, the web and WebAssembly included.
+Bringing them in through the umbrella would have made the whole package
+native-only for the sake of two names, so they are asked for by name:
+
+```dart
+import 'package:ansi_escape_codes/ansi_escape_codes.dart';
+import 'package:ansi_escape_codes/utils.dart';
+```
 
 One import is usually enough:
 
@@ -1393,7 +1404,13 @@ about.
 
 ## Utilities
 
-Two things a terminal will only tell or take in person, both in `utils.dart`.
+Two things a terminal will only tell or take in person, both in `utils.dart`
+— which is asked for by name, since it is the one entry point that reaches
+`dart:io`:
+
+```dart
+import 'package:ansi_escape_codes/utils.dart';
+```
 
 `tabs` sets the tabulation stops. The stops that were there are always cleared
 first, so a call without arguments leaves the terminal with none — it does not

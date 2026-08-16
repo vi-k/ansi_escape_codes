@@ -12,7 +12,7 @@ final class Pieces<S extends State<S>> extends Iterable<Piece<S>> {
   final _CursorSave<S> _restoreFallback;
 
   /// The link the string is read as starting inside, where there is one.
-  final Link? _initialLink;
+  final OscLink? _initialLink;
 
   final String _input;
 
@@ -26,7 +26,7 @@ final class Pieces<S extends State<S>> extends Iterable<Piece<S>> {
   Pieces._(
     this._input,
     this._initialState, {
-    Link? initialLink,
+    OscLink? initialLink,
     _SgrResidual? initialResidual,
     _CursorSave<S>? initialCursorSave,
     required _CursorSave<S> restoreFallback,

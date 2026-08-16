@@ -8,18 +8,18 @@ void main() {
       expect(const SaveCursor().string, '${ESC}7');
       expect(const RestoreCursor().string, '${ESC}8');
       expect(
-        Link('https://example.com').string,
+        OscLink('https://example.com').string,
         '${OSC}8;;https://example.com$ST',
       );
-      expect(Link('').string, '${OSC}8;;$ST');
+      expect(OscLink('').string, '${OSC}8;;$ST');
     });
 
     test('are told apart from each other', () {
       expect(const SaveCursor(), isNot(const RestoreCursor()));
-      expect(const SaveCursor(), isNot(Link('https://example.com')));
+      expect(const SaveCursor(), isNot(OscLink('https://example.com')));
       expect(
-        Link('https://example.com'),
-        isNot(Link('https://other.com')),
+        OscLink('https://example.com'),
+        isNot(OscLink('https://other.com')),
       );
     });
 
@@ -29,7 +29,7 @@ void main() {
         r"Text('a\nb')",
       );
       expect(
-        Link('https://example.com').toString(),
+        OscLink('https://example.com').toString(),
         contains('https://example.com'),
       );
     });
@@ -58,8 +58,8 @@ void main() {
     });
 
     test('a link that closes says so, and one that opens says where', () {
-      expect(Link('').id, 'linkClose');
-      expect(Link('https://example.com').id, 'link(https://example.com)');
+      expect(OscLink('').id, 'linkClose');
+      expect(OscLink('https://example.com').id, 'link(https://example.com)');
     });
 
     test('a piece says where it was found and in what state', () {
@@ -79,7 +79,7 @@ void main() {
 
     test('two that carry the same string are one to a Set', () {
       const same = [SaveCursor(), SaveCursor()];
-      final different = [Link('a'), Link('b')];
+      final different = [OscLink('a'), OscLink('b')];
 
       expect(same.toSet(), hasLength(1));
       expect(different.toSet(), hasLength(2));
@@ -121,7 +121,7 @@ void main() {
       expect(entityOf(restoreCursor), const RestoreCursor());
       expect(
         entityOf('${OSC}8;;https://example.com$ST'),
-        Link('https://example.com'),
+        OscLink('https://example.com'),
       );
     });
   });

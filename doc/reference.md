@@ -348,11 +348,11 @@ print('${fg256(YELLOW)} Yellow text $resetFg'); // Not constant!
 You can also use functions to get the color index:
 
 ```dart
-int rgb(int r, int g, int b); // r,g,b are numbers from 0 to 5
-int gray(int level); // level is number from 0 to 23
+int rgb256(int r, int g, int b); // r,g,b are numbers from 0 to 5
+int gray256(int level); // level is number from 0 to 23
 
-print('${fg256(rgb(5, 5, 0))}');
-print('${fg256(gray(16))}');
+print('${fg256(rgb256(5, 5, 0))}');
+print('${fg256(gray256(16))}');
 ```
 
 And use next functions to set the color from 256-color table by index:
@@ -374,7 +374,7 @@ print('$CSI$FOREGROUND;$COLOR_256;$RGB_550$SGR Yellow text $CSI$FG_DEFAULT$SGR')
 print('$fg256Open$RGB_550$fg256Close Yellow text $resetFg');
 print('$fg256Rgb550 Yellow text $resetFg');
 print('${fg256(RGB_550)} Yellow text $resetFg'); // Not constant!
-print('${fg256(rgb(5, 5, 0))} Yellow text $resetFg'); // Not constant!
+print('${fg256(rgb256(5, 5, 0))} Yellow text $resetFg'); // Not constant!
 ```
 
 

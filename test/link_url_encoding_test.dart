@@ -26,7 +26,7 @@ void main() {
 
       expect(
         parser.pieces.map((m) => m.entity.runtimeType.toString()).toList(),
-        ['Link', 'Text', 'Link'],
+        ['OscLink', 'Text', 'OscLink'],
         reason: 'an opening, the text and a close — no third code in between',
       );
       expect(parser.removeAll(), 'click me');
@@ -48,7 +48,7 @@ void main() {
 
       expect(
         parser.pieces.map((m) => m.entity.runtimeType.toString()).toList(),
-        ['Link', 'Text', 'Link'],
+        ['OscLink', 'Text', 'OscLink'],
       );
       expect(parser.removeAll(), r'https://ok.example%1B\%1B[2J');
     });
@@ -121,22 +121,22 @@ void main() {
     });
   });
 
-  group('Link, the entity, encodes the address the same way:', () {
+  group('OscLink, the entity, encodes the address the same way:', () {
     test('an ordinary url is built as it always was', () {
       expect(
-        Link('https://example.com').string,
+        OscLink('https://example.com').string,
         '${OSC}8;;https://example.com$ST',
       );
-      expect(Link('').string, '${OSC}8;;$ST');
+      expect(OscLink('').string, '${OSC}8;;$ST');
     });
 
     test('a control byte is escaped rather than allowed to end the code', () {
       expect(
-        Link('https://ok/\x1B\\\x1B[2J').string,
+        OscLink('https://ok/\x1B\\\x1B[2J').string,
         '${OSC}8;;https://ok/%1B\\%1B[2J$ST',
       );
       expect(
-        Parser(Link('https://ok/\x1B\\\x1B[2J').string).pieces.length,
+        Parser(OscLink('https://ok/\x1B\\\x1B[2J').string).pieces.length,
         1,
         reason: 'the whole of it is one code, not a code and a payload',
       );
@@ -145,11 +145,11 @@ void main() {
     test('url reads back what a parse of string reads', () {
       // An Entity compares by string, so a field that disagreed with the
       // bytes would let two equal links answer differently.
-      final built = Link('https://ok/\x1B\\');
+      final built = OscLink('https://ok/\x1B\\');
       final parsed = Parser(built.string).pieces.first.entity;
 
-      expect(parsed, isA<Link>());
-      expect((parsed as Link).url, built.url);
+      expect(parsed, isA<OscLink>());
+      expect((parsed as OscLink).url, built.url);
       expect(built.url, r'https://ok/%1B\');
       expect(parsed, built, reason: 'equal by the bytes they write');
     });
