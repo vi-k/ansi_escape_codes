@@ -242,6 +242,60 @@ double _measurePair(int Function() body, int logicalRuns) {
   return stopwatch.elapsedMicroseconds / logicalRuns;
 }
 
+/// The median of the per-pair ratios of [second] to [first], with the
+/// extremes the pairs reached.
+///
+/// The pairing is the whole point. Each ratio divides two samples measured
+/// beside each other, so a burst of scheduler noise that lands inside one
+/// pair moves that pair's ratio and leaves the rest alone. Taking a median
+/// of each side on its own and dividing lets the two medians come from
+/// different pairs — from different moments — and reports their ratio as
+/// though it were one measurement.
+///
+/// The extremes are returned rather than printed away: a wide spread is
+/// what a loaded machine looks like, and a reader deserves to tell that
+/// apart from a moved median, which is what a regression looks like.
+// Only test/tool/complexity_guard_ratio_test.dart calls this today, and the
+// lint counts callers inside this executable library alone.
+// ignore: unreachable_from_main
+PairedRatios pairedRatios(List<double> first, List<double> second) {
+  if (first.length != second.length) {
+    throw ArgumentError(
+      'the sides differ in length: ${first.length} and ${second.length}',
+    );
+  }
+  if (first.isEmpty) {
+    throw ArgumentError('there are no pairs to compare');
+  }
+  if (first.length.isEven) {
+    throw ArgumentError(
+      'an even number of pairs has no single median: ${first.length}',
+    );
+  }
+
+  final ratios = <double>[];
+  for (var i = 0; i < first.length; i++) {
+    if (first[i] <= 0 || second[i] <= 0) {
+      throw ArgumentError(
+        'pair $i holds a sample the timer could not resolve: '
+        '${first[i]} and ${second[i]}',
+      );
+    }
+    ratios.add(second[i] / first[i]);
+  }
+  ratios.sort();
+
+  return (
+    median: ratios[ratios.length ~/ 2],
+    min: ratios.first,
+    max: ratios.last,
+  );
+}
+
+/// What a scenario's pairs said: the median ratio and the extremes.
+// ignore: unreachable_from_main
+typedef PairedRatios = ({double median, double min, double max});
+
 String _parsePage(int lines) =>
     List.filled(lines, '\x1B[31m$_plainLine\x1B[0m').join('\n');
 
