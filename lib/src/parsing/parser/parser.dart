@@ -284,7 +284,12 @@ final class _ParserBase<S extends State<S>> {
   /// than walking the string again. Asking about position after position — as
   /// laying text out does — costs one walk in all, not one each.
   ///
-  /// Going back is allowed and starts the walk over.
+  /// Going back is allowed and starts the walk over, and starting over costs
+  /// the walk to [pos] again. A pass that only moves forward is therefore
+  /// linear in the string however many questions it asks, and one that moves
+  /// backward — laying a log out from its last line up — is quadratic:
+  /// walking the whole string once and reading the answers off is the way to
+  /// ask it that way.
   ///
   /// See also [finalState].
   S stateAt(int pos) => _pieceAt(pos)?.state ?? finalState;
@@ -468,13 +473,33 @@ final class _ParserBase<S extends State<S>> {
   ///
   /// A slice beginning exactly where a piece begins walks afresh: the escape
   /// codes standing in front of that piece belong to the slice, and the walk
-  /// is already past them. Going back walks afresh as well.
+  /// is already past them. Going back walks afresh as well, and pays for the
+  /// whole walk again: cutting a document into lines from the top down is
+  /// linear in it, and cutting the same document from the bottom up is
+  /// quadratic. [prepare] does not change that — what is kept is the parse,
+  /// and the walk is what is started over.
   ///
   /// See [prepare] for reading the whole string at once instead.
   ///
   /// [start] and [maxLength] count UTF-16 code units, as [length] does. A
   /// cut can land inside a surrogate pair and split it, as [String.substring]
   /// can.
+  ///
+  /// A negative [start] or [maxLength] is a [RangeError], and so is a [start]
+  /// past the end of the plain text — the position after the last character is
+  /// a slice of nothing rather than a refusal. A [maxLength] reaching past the
+  /// end is the rest of the string, however far past it reaches.
+  ///
+  /// An `SGR` this package cannot read — a parameter it has no name for, a
+  /// number too large to be one — is kept as it came and written again
+  /// wherever the output starts fresh, since nothing here can say what it did
+  /// or how to undo it. Every `SGR` behind it joins it, because it may have
+  /// set the same property, and only a full reset lets the chain go. A slice
+  /// opens with the whole of it, so a document carrying one such sequence and
+  /// no `SGR 0` after it pays for that sequence in every slice cut from it:
+  /// at 3200 lines, one eleven-byte sequence at the head turned 57.6 KB of
+  /// input into 25.7 MB of slices. An `SGR 0` anywhere in the text ends the
+  /// chain, and the cost with it.
   String substring(
     int start, {
     int? maxLength,
@@ -483,11 +508,17 @@ final class _ParserBase<S extends State<S>> {
     if (start < 0) {
       throw RangeError.range(start, 0, null, 'start');
     }
-
-    final end = maxLength == null ? null : start + maxLength;
-    if (end != null && start > end) {
-      throw RangeError.range(end, start, null, 'end');
+    if (maxLength != null && maxLength < 0) {
+      throw RangeError.range(maxLength, 0, null, 'maxLength');
     }
+
+    // A length reaching past the end of the string is the rest of it, and
+    // that is what it stays where no sum can hold it: added on, a large
+    // enough one takes the total round through the negatives, and a slice
+    // asking for everything was refused for appearing to ask for less than
+    // nothing.
+    final sum = maxLength == null ? null : start + maxLength;
+    final end = sum == null || sum < start ? null : sum;
 
     final buf = StringBuffer();
     var currentState = initialState.toStyle();
@@ -1231,6 +1262,11 @@ final class _ParserBase<S extends State<S>> {
   /// sequence as the string's did. With `close: true` the terminator is written
   /// at the end as well, though nothing follows it there, for the reason the
   /// link is closed there. See [substring], which says the whole of it.
+  ///
+  /// An `SGR` this package cannot read is kept and written again rather than
+  /// rewritten, and every `SGR` behind it with it, until a full reset. Where
+  /// one is in the string, this shortens much less than it otherwise would;
+  /// [substring], which pays it once a slice, says what that costs.
   String optimize({bool close = true}) {
     final buf = StringBuffer();
     var currentState = initialState.toStyle();

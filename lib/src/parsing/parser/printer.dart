@@ -16,6 +16,12 @@ part of 'parser.dart';
 /// saved rendition, hyperlink and opaque SGR state cross line boundaries;
 /// another `ESC 7` replaces them, while `ESC 8` restores without consuming.
 ///
+/// A line opens with whatever opaque rendition the lines before it left
+/// standing — an `SGR` this package cannot read, and every `SGR` behind it,
+/// until a full reset lets the chain go. Where a stream carries one and never
+/// resets, every line after it pays for it; [Parser.substring] says what that
+/// costs and where it stops.
+///
 /// A control string a line leaves unterminated — an `OSC`, a `DCS`, an `SOS`,
 /// a `PM` or an `APC`, a window title as readily as a link opening — is given
 /// its terminator at the end of the line, and for the same reason: what is
