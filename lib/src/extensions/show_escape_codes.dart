@@ -73,13 +73,15 @@ extension StringShowEscapeCodesExtension on String {
           ..write(paramsOpen)
           ..write(params)
           ..write(paramsClose)
-          ..write(finalOpen)
+          // `finalOpen` goes with the name and not in front of the place one
+          // would have been: a string that never got a terminator has nothing
+          // to separate from what comes before it.
           ..write(
             switch (terminator) {
-              BEL => ControlFunctionsC0.BEL.name,
+              BEL => '$finalOpen${ControlFunctionsC0.BEL.name}',
               // The string was never terminated.
               null => '',
-              _ => ControlFunctionsC1.ST.name,
+              _ => '$finalOpen${ControlFunctionsC1.ST.name}',
             },
           )
           ..write(finalClose)
@@ -111,10 +113,13 @@ extension StringShowEscapeCodesExtension on String {
           ..write(paramsOpen)
           ..write(params)
           ..write(paramsClose)
-          ..write(finalOpen)
           // A `BEL` ends none of these, so `ST` is the only terminator there
-          // is to name; nothing names a string that never got one.
-          ..write(terminator == null ? '' : ControlFunctionsC1.ST.name)
+          // is to name; nothing names a string that never got one, and
+          // `finalOpen` goes with the name rather than in front of the place
+          // one would have been.
+          ..write(
+            terminator == null ? '' : '$finalOpen${ControlFunctionsC1.ST.name}',
+          )
           ..write(finalClose)
           ..write(close);
 
