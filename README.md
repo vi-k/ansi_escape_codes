@@ -662,6 +662,22 @@ That is the switch for output that is not a terminal. `NoStyle` is a different
 thing: it stops the printer from putting a style of its own around the text,
 but the codes the text carries still go through.
 
+A write may stop in the middle of a sequence — a chunk taken off a stream
+falls where it falls — and what it cannot finish waits for the write that
+does, so the same bytes read the same however the writes fall across them.
+`flush` says that no such write is coming:
+
+```dart
+final buf = StringBuffer();
+final printer = SinkPrinter(buf)..write('a\x1B]0;title');
+
+print(buf.length); // 5 — the title is still waiting to be finished
+printer.flush(); // it goes out terminated, and no newline with it
+```
+
+`Printer` and `StackedPrinter` hold a line until a `writeln` ends it, and
+`flush` lets go of that too.
+
 ### A default style for everything printed
 
 You cannot set default colors for the entire terminal. However, Dart allows you

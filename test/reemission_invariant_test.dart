@@ -40,11 +40,16 @@ void main() {
         );
 
         final sink = StringBuffer();
-        SinkPrinter(sink).write(input);
+        SinkPrinter(sink)
+          ..write(input)
+          ..flush();
         expect(
           Parser(sink.toString()).removeAll(),
           want,
-          reason: 'a sink shows what a line printer shows',
+          reason: 'a sink shows what a line printer shows, once it has let go '
+              'of what it was holding — a write that has not ended a line '
+              'keeps back the sequence it could not finish, for the write '
+              'that finishes it, and flush says none is coming',
         );
       });
 

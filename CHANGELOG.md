@@ -138,8 +138,36 @@ Performance:
   came from. Nothing a `Stack` answers has moved: its histories were only ever
   asked what was on top and whether they were empty.
 
+- `flush` on all four printers: it writes out whatever is being held back
+  without ending the line. `Printer` and `StackedPrinter` hold a line until a
+  `writeln` ends it, and until now nothing could make them let go of one --- a
+  `write` with no `writeln` behind it was lost for good. `SinkPrinter` and
+  `StackedSinkPrinter` hold the tail of a write that stopped in the middle of a
+  sequence, and this says that the write which would have finished it is not
+  coming.
+
 Fixed:
 
+- A write to `SinkPrinter` or `StackedSinkPrinter` that stopped in the middle
+  of a sequence corrupted it. Every write is dressed on its own and the
+  dressing opens with a reset, so that reset landed between the halves and the
+  terminal read it followed by the rest of the sequence as text: `\x1B[31m`
+  cut anywhere inside it showed `[31m` and no colour, a hyperlink cut inside
+  its url showed the url, and a surrogate pair cut between its halves came out
+  as two replacement characters. A write is now cut where no sequence is open
+  across it and what is left waits for the write that finishes it, so the same
+  bytes read the same however the writes fall across them. An unterminated
+  control string is part of this: it now waits for the write that goes on with
+  it, where before it went out at once and was ended by the next write's
+  reset --- which made `write('a' + title)` then `write('b')` show a `b` that
+  the same bytes written in one go make part of the title.
+- `ESC 8` with no `ESC 7` in front of it left a non-default `defaultStyle`
+  behind. DECRC without DECSC clears the rendition, taking the terminal to its
+  own defaults rather than to the printer's, and the printer went on believing
+  its default style was still on --- so the transition for the text after it
+  wrote nothing and that text came out bare. The printer's own `Parser` read
+  its own output as saying so. The model now goes where the terminal goes and
+  writes the default style back on.
 - `ESC 7` / `ESC 8` lost their saved rendition, hyperlink and opaque SGR at
   every printer line or sink-write boundary, and a restore with no preceding
   save incorrectly used the previous chunk's seeded state. All four printers

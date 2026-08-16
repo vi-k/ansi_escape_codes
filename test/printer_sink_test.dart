@@ -1,7 +1,99 @@
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:test/test.dart';
 
+/// Holds [got] to be the same output as [want] to read.
+///
+/// Not the same bytes: a write begins with a reset of its own, so a line
+/// handed over in pieces carries more of them than the same line handed over
+/// whole. What has to match is what the output says — the text it shows, and
+/// the style and the link every character of it stands in.
+void expectSameReading(String got, String want, {required String reason}) {
+  final read = Parser(got);
+  final wanted = Parser(want);
+
+  expect(read.removeAll(), wanted.removeAll(), reason: reason);
+  expect(read.length, wanted.length, reason: reason);
+
+  for (var i = 0; i < wanted.length; i++) {
+    expect(read.stateAt(i), wanted.stateAt(i), reason: '$reason, at $i');
+    expect(read.linkAt(i), wanted.linkAt(i), reason: '$reason, at $i');
+  }
+}
+
 void main() {
+  group('a write cut inside a sequence:', () {
+    for (final (what, line) in <(String, String)>[
+      ('an SGR', '${fgRed}red$reset'),
+      ('a truecolour SGR', '${fgRgb(1, 2, 3)}shade$reset'),
+      ('a hyperlink', '${link('https://example.com', text: 'click')} tail'),
+      ('a hyperlink closed by BEL', '${linkBel('https://e.dev', text: 'x')}!'),
+      ('a code that moves the cursor', '${cursorRightN(4)}over'),
+    ]) {
+      test('$what arrives whole however the writes fall', () {
+        final whole = StringBuffer();
+        SinkPrinter(whole)
+          ..write(line)
+          ..writeln();
+
+        for (var cut = 1; cut < line.length; cut++) {
+          final split = StringBuffer();
+          SinkPrinter(split)
+            ..write(line.substring(0, cut))
+            ..write(line.substring(cut))
+            ..writeln();
+
+          expectSameReading(
+            split.toString(),
+            whole.toString(),
+            reason: '$what cut at $cut',
+          );
+        }
+      });
+    }
+
+    test('a surrogate pair cut between two writes stays one character', () {
+      const line = 'a\u{1F600}b';
+
+      final split = StringBuffer();
+      SinkPrinter(split)
+        ..write(line.substring(0, 2))
+        ..write(line.substring(2))
+        ..writeln();
+
+      expect(
+        split.toString().ansiRemoveEscapeCodes(),
+        '$line\n',
+        reason: 'a reset written between the halves makes two broken '
+            'characters of one whole one, and nothing puts it back',
+      );
+      expect(
+        split.toString().runes.contains(0x1F600),
+        isTrue,
+        reason: 'the emoji is still an emoji',
+      );
+    });
+
+    test('a line written one code unit at a time reads the same', () {
+      const line = '${fgRed}red$reset and ${bold}bold$reset';
+
+      final whole = StringBuffer();
+      SinkPrinter(whole)
+        ..write(line)
+        ..writeln();
+
+      final byUnit = StringBuffer();
+      final printer = SinkPrinter(byUnit);
+      line.codeUnits.forEach(printer.writeCharCode);
+      printer.writeln();
+
+      expectSameReading(
+        byUnit.toString(),
+        whole.toString(),
+        reason: 'writeCharCode is a write like any other',
+      );
+    });
+  });
+
   group('a printer as a StringSink:', () {
     test('the one that prints holds the line until it is ended', () {
       final lines = <String>[];
@@ -58,6 +150,65 @@ void main() {
         'ab-cde\n',
         reason: 'the codes the text carried are taken out as well',
       );
+    });
+  });
+
+  group('flush:', () {
+    test('lets go of a line no writeln ever ended', () {
+      final lines = <String>[];
+      final printer = Printer(output: lines.add)..write('half a line');
+
+      expect(lines, isEmpty, reason: 'nothing has ended the line yet');
+
+      printer.flush();
+
+      expect(lines, hasLength(1));
+      expect(Parser(lines.single).removeAll(), 'half a line');
+    });
+
+    test('lets go of the sequence a sink was waiting on', () {
+      const title = '\x1B]0;title';
+      final buf = StringBuffer();
+      final printer = SinkPrinter(buf)..write('a$title');
+
+      expect(buf.toString(), '${reset}a', reason: 'the title is still waiting');
+
+      printer.flush();
+
+      expect(
+        buf.toString(),
+        contains(title),
+        reason: 'and the caller can make it let go without ending the line',
+      );
+      expect(
+        Parser(buf.toString()).removeAll(),
+        'a',
+        reason: 'terminated, so what is printed next is not more of the title',
+      );
+    });
+
+    test('writes nothing where nothing is held', () {
+      final lines = <String>[];
+      Printer(output: lines.add).flush();
+
+      final buf = StringBuffer();
+      SinkPrinter(buf)
+        ..write('plain')
+        ..flush();
+
+      expect(lines, isEmpty, reason: 'an empty buffer is not an empty line');
+      expect(buf.toString(), '${reset}plain', reason: 'nothing was held back');
+    });
+
+    test('a second flush adds nothing to the first', () {
+      final lines = <String>[];
+      final printer = Printer(output: lines.add)
+        ..write('once')
+        ..flush()
+        ..flush();
+
+      expect(lines, ['${reset}once']);
+      expect(printer.lastState, isNotNull);
     });
   });
 

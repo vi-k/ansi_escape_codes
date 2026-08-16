@@ -84,11 +84,16 @@ void main() {
   });
 
   group('a sink terminates where the line really ends', () {
-    test('a write that has not ended the line owes nothing', () {
+    test('a write that has not ended the line holds the title back', () {
+      // The title has no terminator, so what follows it belongs to it — and
+      // what follows it is whatever the next write brings. Sending it now
+      // would settle that question early and wrongly: the next write opens
+      // with a reset of its own, whose `ESC` would end the title where the
+      // caller never did.
       final buf = StringBuffer();
       SinkPrinter(buf).write('a$title');
 
-      expect(buf.toString(), '${reset}a$title');
+      expect(buf.toString(), '${reset}a');
     });
 
     test('a writeln ends the line and owes the terminator', () {
@@ -105,16 +110,16 @@ void main() {
       expect(buf.toString(), '${reset}a$title${ST}word\n${reset}next');
     });
 
-    test('a writeln of nothing is a line end and pays the debt', () {
-      // The write before it was handed the opening and wrote it as it came;
-      // the line ends here, with nothing of its own to write, and the
-      // terminator is owed all the same.
+    test('a writeln of nothing is a line end and lets the title out', () {
+      // The write before it held the title back; the line ends here, so
+      // nothing more can be part of it, and it goes out terminated. It is
+      // dressed as the piece it now is, which is where its reset comes from.
       final buf = StringBuffer();
       SinkPrinter(buf)
         ..write('a$title')
         ..writeln();
 
-      expect(buf.toString(), '${reset}a$title$ST\n');
+      expect(buf.toString(), '${reset}a$reset$title$ST\n');
     });
 
     test('a newline written on its own ends the line the same way', () {
@@ -123,7 +128,7 @@ void main() {
         ..write('a$title')
         ..write('\n');
 
-      expect(buf.toString(), '${reset}a$title$ST\n');
+      expect(buf.toString(), '${reset}a$reset$title$ST\n');
     });
 
     test('a link close at that seam pays for both', () {
@@ -136,20 +141,31 @@ void main() {
 
       expect(
         buf.toString(),
-        '$reset${linkOpen}http://u/$linkTextOpen' 'a$title$linkClose\n',
+        '$reset${linkOpen}http://u/$linkTextOpen' 'a$reset$title$linkClose\n',
       );
     });
 
-    test('a write that ended the opening leaves no debt behind', () {
-      // Every prepared piece opens with a reset, and that `ESC` ends the
-      // title already: the line end after it owes nothing.
+    test('a write after it goes on with the title, not past it', () {
+      // The title was never terminated, so a `b` written behind it is part of
+      // it — which is what the same bytes written in one go say. The reset
+      // this write opens with used to land between them and end the title
+      // early, leaving `b` on the screen and `0;title` in the title bar.
       final buf = StringBuffer();
       SinkPrinter(buf)
         ..write('a$title')
         ..write('b')
         ..writeln();
 
-      expect(buf.toString(), '${reset}a$title${reset}b\n');
+      expect(buf.toString(), '${reset}a$reset$title' 'b$ST\n');
+
+      final whole = StringBuffer();
+      SinkPrinter(whole).writeln('a${title}b');
+
+      expect(
+        Parser(buf.toString()).removeAll(),
+        Parser(whole.toString()).removeAll(),
+        reason: 'and the two agree on what is text and what is title',
+      );
     });
   });
 

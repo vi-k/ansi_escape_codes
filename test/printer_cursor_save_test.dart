@@ -63,6 +63,41 @@ void main() {
         expect(styleAt(output, 'C'), Style.terminalColors);
       });
     }
+
+    for (final defaultStyle in [Styles.bold, Styles.bgGray3]) {
+      test('a restore before any save puts $defaultStyle back on', () {
+        // `ESC 8` with no `ESC 7` in front of it takes the terminal to its
+        // own defaults, not to the printer's: DECRC without DECSC clears the
+        // rendition. The style the printer imposes has to be written again
+        // behind it, or the printer and its own output disagree about what
+        // the text after it is wearing.
+        final lines = <String>[];
+        Printer(output: lines.add, defaultStyle: defaultStyle)
+            .print('a${restoreCursor}b');
+
+        final read = Parser(lines.single);
+
+        expect(
+          [for (var i = 0; i < read.length; i++) read.stateAt(i)],
+          [defaultStyle, defaultStyle],
+          reason: "read back off the printer's own output",
+        );
+      });
+
+      test('and a sink says the same for $defaultStyle', () {
+        final buf = StringBuffer();
+        SinkPrinter(buf, defaultStyle: defaultStyle)
+          ..write('a${restoreCursor}b')
+          ..flush();
+
+        final read = Parser(buf.toString());
+
+        expect(
+          [for (var i = 0; i < read.length; i++) read.stateAt(i)],
+          [defaultStyle, defaultStyle],
+        );
+      });
+    }
   });
 
   group('the save slot is one reusable record:', () {
