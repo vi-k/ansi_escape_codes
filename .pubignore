@@ -27,6 +27,11 @@
 # here. The published README is the English one, and pub.dev renders a single
 # README anyway; the translation is left out by the owner's decision.
 #
+# .vscode/ is the launch configuration, kept in git for whoever works on
+# the package here. It stays out of the archive today only because pub
+# skips hidden directories — a property of the tool rather than a decision
+# of this package, and one that would take the file with it if it changed.
+#
 # coverage/ is what `dart test --coverage` writes — the CI collects it there
 # and a local run puts it in the same place. It is a report about the tests,
 # not a part of the package, and the replacement rule above is why naming it
@@ -41,3 +46,4 @@ benchmark/memory_guard.dart
 benchmark/complexity_guard.dart
 tool/
 coverage/
+.vscode/

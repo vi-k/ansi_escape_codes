@@ -7,3 +7,17 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+
+  # Two of the five pub dependencies are held back on purpose and must not
+  # be bumped here: analyzer 8 asks for an SDK above the ^3.6.0 floor in
+  # pubspec.yaml, and test moves with it because test_core past 0.6.12
+  # wants analyzer 8. A pull request bumping either would take the floor
+  # leg of the CI down. Raising the floor is its own wave, and it is what
+  # lifts these two lines.
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    ignore:
+      - dependency-name: "analyzer"
+      - dependency-name: "test"

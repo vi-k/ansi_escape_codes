@@ -6,23 +6,43 @@
 name: ansi_escape_codes
 
 on:
-  # The wave branches are here so that the gate stands before `main` and not
-  # after it. A wave is verified locally on one SDK; the 3.6.0 leg of the
-  # matrix is the floor the package claims to support and nothing local runs
-  # it, so without this the first time anything sees it is a push to `main` —
-  # and by then a red is already there. Prefixes, not `**`: dependabot
-  # branches arrive with a pull request and would otherwise run twice.
+  # Every branch but dependabot's, so that the gate stands before `main`
+  # and not after it. A wave is verified locally on one SDK; the 3.6.0 leg
+  # of the matrix is the floor the package claims to support and nothing
+  # local runs it, so a branch that reaches `main` unchecked takes a red
+  # there with it.
+  #
+  # A deny-list rather than the allow-list this was: an allow-list opens
+  # outwards. It held `main`, `feat/**`, `fix/**` and `perf/**`, and a
+  # branch named anything else — `docs/`, `chore/`, `test/` — ran no CI at
+  # all and read as if it had. The one exclusion has its own reason:
+  # dependabot's branches arrive with a pull request and would otherwise
+  # be built twice.
   push:
-    branches: [ "main", "feat/**", "fix/**", "perf/**" ]
+    branches-ignore: [ "dependabot/**" ]
   pull_request:
     branches: [ "main" ]
 
 permissions:
   contents: read
 
+concurrency:
+  # A branch that gets two pushes in a minute does not need the first run
+  # finished. `main` is excluded: a run there is checking what is already
+  # merged, and cancelling it leaves the question of whether the merge was
+  # green unanswered.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # The longest job observed over the runs of 2026-08-16 was 5m34s on
+    # stable, against 3m17s on the floor leg. Twenty minutes is over three
+    # times the worst of those — wide enough not to fire on a slow runner,
+    # and far short of the six hours a hung job would otherwise burn.
+    timeout-minutes: 20
 
     strategy:
       fail-fast: false
@@ -47,6 +67,14 @@ jobs:
 
       - name: Analyze project source
         run: dart analyze --fatal-infos
+
+      - name: Check the two readmes still say the same thing
+        # AGENTS.md calls a divergence between README.md and README.ru.md a
+        # defect and asks for both in one commit, and nothing enforced it.
+        # Headings, code blocks, the code under their comments and where
+        # those comments stand are compared; the prose and the text of the
+        # comments are translated and are not.
+        run: dart run tool/check_readme_sync.dart
 
       - name: Check every entry point analyses, closes and matches its snapshot
         # A hand-written list of exports cannot notice what is missing
@@ -101,6 +129,11 @@ jobs:
 
       - name: Collect coverage
         if: matrix.sdk == 'stable'
+        # The suite has already run once on this leg, plainly. This run is
+        # the instrumented one, and the two are kept apart on purpose: a
+        # pass under instrumentation is not the same evidence as a pass
+        # without it, and the gate should stand on the plain run. What this
+        # one produces is a measurement, not a verdict.
         run: dart test --coverage=coverage
 
       - name: Format coverage reports
@@ -111,43 +144,15 @@ jobs:
           dart run coverage:format_coverage \
             --lcov --in=coverage --out=coverage/lcov.gated.info --report-on=lib --ignore-files='**/style_colors.dart'
 
-      - name: Check hand-written lib coverage holds its floor
+      - name: Check the coverage report holds its floor and its files
         if: matrix.sdk == 'stable'
-        # style_colors.dart is generated code. Keep it in the full artifact
-        # for diagnosis, but permanently exclude it from this hand-written
-        # coverage gate.
-        run: |
-          awk -F: -v floor=95.0 '
-            /^LF:/ { found += $2 }
-            /^LH:/ { hit += $2 }
-            /^DA:/ {
-              lineFound++
-              split($2, line, ",")
-              if (line[2] != 0) {
-                lineHit++
-              }
-            }
-            END {
-              if (found == 0) {
-                print "the report counted no lines at all"
-                exit 1
-              }
-              if (found != lineFound || hit != lineHit) {
-                print "the report summaries do not match its line records"
-                exit 1
-              }
-              pct = 100 * hit / found
-              # Three decimals, not one: the boundary is where this gate
-              # does its work, and %.1f prints the same "95.0%" for the
-              # run that passes and the run just under it that does not.
-              printf "coverage of hand-written lib/: %.3f%% (%d of %d lines), floor %.1f%%\n",
-                  pct, hit, found, floor
-              if (pct < floor) {
-                print "the coverage has fallen through the floor"
-                exit 1
-              }
-            }
-          ' coverage/lcov.gated.info
+        # Two answers over the two reports the step above wrote. The floor
+        # is measured over the gated report, which leaves out the generated
+        # style_colors.dart; the file set is measured over the full one,
+        # because a file excluded from the floor still has to be there at
+        # all. format_coverage builds from the hitmap of the run, so a
+        # library nothing loaded leaves no record and no floor can see it.
+        run: dart run tool/check_coverage.dart
 
       - name: Upload coverage
         if: always() && matrix.sdk == 'stable'
