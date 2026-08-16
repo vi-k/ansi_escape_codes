@@ -42,13 +42,14 @@ void main() {
         final sink = StringBuffer();
         SinkPrinter(sink)
           ..write(input)
-          ..writeln();
+          ..flush();
         expect(
           Parser(sink.toString()).removeAll(),
-          '$want\n',
-          reason: 'a sink shows what a line printer shows, once the line is '
-              'ended — a write that has not ended one holds back the sequence '
-              'it could not finish, for the write that finishes it',
+          want,
+          reason: 'a sink shows what a line printer shows, once it has let go '
+              'of what it was holding — a write that has not ended a line '
+              'keeps back the sequence it could not finish, for the write '
+              'that finishes it, and flush says none is coming',
         );
       });
 

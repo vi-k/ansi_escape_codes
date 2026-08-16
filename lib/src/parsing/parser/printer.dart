@@ -193,6 +193,23 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// Prints the given object to the output.
   void print(Object? object) => writeln(object);
 
+  /// Writes out whatever is being held back, without ending the line.
+  ///
+  /// A printer holds back what it cannot write yet: a line that no [writeln]
+  /// has ended, and, in a sink, the tail of a write that stopped in the middle
+  /// of a sequence and waits for the write that finishes it. Both wait on
+  /// something that may never come, and this is how a caller says that it is
+  /// not coming — before leaving the terminal to something else, or before
+  /// exiting.
+  ///
+  /// What goes out is closed off the way the end of a line closes it: a
+  /// control string with no terminator is given one, since what is printed
+  /// after it must not be read as more of it. No newline is written — the line
+  /// has not ended, and a write after this one goes on from where it left off.
+  ///
+  /// Writes nothing where nothing is held back.
+  void flush();
+
   /// Whether a string handed to [prepare] is a whole line, so that a
   /// hyperlink it left open is closed at its end and a control string it left
   /// unterminated is terminated there.
@@ -549,6 +566,18 @@ final class _PrintPrinterBase<S extends State<S>> extends _PrinterBase<S> {
     _writeBuf();
   }
 
+  /// Writes out a line the writes so far have not ended.
+  ///
+  /// The part-line goes out as a line, since that is the only shape this
+  /// printer has to hand it out in. An empty buffer is not an empty line and
+  /// writes nothing.
+  @override
+  void flush() {
+    if (_lineBuf.isNotEmpty) {
+      _writeBuf();
+    }
+  }
+
   /// Flushes the buffer.
   void _writeBuf() {
     final buf = _lineBuf.toString();
@@ -674,6 +703,23 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   void writeln([Object? object = '']) {
     _writeBuf(object.toString(), endsLine: true);
     sink.writeln();
+  }
+
+  /// Writes out the tail of a write that was waiting to be finished.
+  ///
+  /// It is settled the way the end of a line settles it — a control string
+  /// with no terminator gets one — because nothing else is coming to finish
+  /// it. No newline goes with it: the line has not ended, and the write after
+  /// this one goes on from here.
+  @override
+  void flush() {
+    if (_carry.isEmpty) {
+      return;
+    }
+
+    final held = _carry;
+    _carry = '';
+    _writeLine(held, endsLine: true);
   }
 
   /// Flushes the buffer.

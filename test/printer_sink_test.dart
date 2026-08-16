@@ -153,6 +153,65 @@ void main() {
     });
   });
 
+  group('flush:', () {
+    test('lets go of a line no writeln ever ended', () {
+      final lines = <String>[];
+      final printer = Printer(output: lines.add)..write('half a line');
+
+      expect(lines, isEmpty, reason: 'nothing has ended the line yet');
+
+      printer.flush();
+
+      expect(lines, hasLength(1));
+      expect(Parser(lines.single).removeAll(), 'half a line');
+    });
+
+    test('lets go of the sequence a sink was waiting on', () {
+      const title = '\x1B]0;title';
+      final buf = StringBuffer();
+      final printer = SinkPrinter(buf)..write('a$title');
+
+      expect(buf.toString(), '${reset}a', reason: 'the title is still waiting');
+
+      printer.flush();
+
+      expect(
+        buf.toString(),
+        contains(title),
+        reason: 'and the caller can make it let go without ending the line',
+      );
+      expect(
+        Parser(buf.toString()).removeAll(),
+        'a',
+        reason: 'terminated, so what is printed next is not more of the title',
+      );
+    });
+
+    test('writes nothing where nothing is held', () {
+      final lines = <String>[];
+      Printer(output: lines.add).flush();
+
+      final buf = StringBuffer();
+      SinkPrinter(buf)
+        ..write('plain')
+        ..flush();
+
+      expect(lines, isEmpty, reason: 'an empty buffer is not an empty line');
+      expect(buf.toString(), '${reset}plain', reason: 'nothing was held back');
+    });
+
+    test('a second flush adds nothing to the first', () {
+      final lines = <String>[];
+      final printer = Printer(output: lines.add)
+        ..write('once')
+        ..flush()
+        ..flush();
+
+      expect(lines, ['${reset}once']);
+      expect(printer.lastState, isNotNull);
+    });
+  });
+
   group('a piece prepared and not written:', () {
     test('leaves the style where it was', () {
       final buf = StringBuffer();
