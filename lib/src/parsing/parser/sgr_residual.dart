@@ -55,20 +55,28 @@ bool _isFullSgrReset(SgrFunction? function) => switch (function) {
       _ => false,
     };
 
+/// Whether an operation carrying [function] would be kept by
+/// [_advanceSgrResidual], given the [residual] it would extend.
+///
+/// The answer needs nothing but the function and whether a residual is
+/// already open, which is what lets a caller decide before building an
+/// operation it may be about to throw away. Kept as the one authority: it
+/// is the first thing [_advanceSgrResidual] asks, so the guard and the
+/// advance cannot come to disagree.
+bool _residualKeeps(_SgrResidual? residual, SgrFunction? function) =>
+    !_isFullSgrReset(function) &&
+    (residual != null || function == null || _isUnknownSgrFunction(function));
+
 _SgrResidual? _advanceSgrResidual(
   _SgrResidual? residual,
   Style before,
   _SgrOperation operation,
 ) {
-  if (_isFullSgrReset(operation.function)) {
+  if (!_residualKeeps(residual, operation.function)) {
     return null;
   }
 
   if (residual == null) {
-    if (!operation.isUnknown) {
-      return null;
-    }
-
     final root = _SgrResidualRoot(before);
     return _SgrResidual._(root, null, operation, 1);
   }
