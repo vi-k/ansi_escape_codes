@@ -1,3 +1,12 @@
+/// The styles, the state and the parser, without the tables of constants.
+///
+/// A program that reads escape codes rather than writing them has no use for
+/// the several hundred ready-to-use strings the main import also brings, and
+/// this is the same surface without them. The styles and the parser live in
+/// one library, so both come together: writing a style and reading one back
+/// are two halves of the same thing.
+library;
+
 export 'src/parsing/colors/color.dart';
 export 'src/parsing/control_functions/control_functions_c0.dart';
 export 'src/parsing/control_functions/control_functions_c1.dart';
