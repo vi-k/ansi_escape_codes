@@ -313,11 +313,18 @@ sealed class State<S extends State<S>> {
   /// written instead: bold and dim are taken off together by `CSI 22`, so
   /// going from both to bold alone is `CSI 22;1` — the pair off, then the
   /// bold back on.
+  String transitTo(State<void> other) => transitToPart(other);
+
+  /// Half of [transitTo]: [skipReset] leaves out the codes that take
+  /// properties off and [skipSet] the ones that put them on.
   ///
-  /// [skipReset] leaves out the codes that take properties off and
-  /// [skipSet] the ones that put them on — each of use where the far end is
-  /// known to need only the other half.
-  String transitTo(
+  /// Of use where the far end is known to need only the other half — this
+  /// package writes the opening of a style, the tail of a slice and the base
+  /// of a residual that way. It is not part of the public surface: the
+  /// useful case is already [Style.open], and the two halves have edges a
+  /// caller would have to be told about rather than discover.
+  @internal
+  String transitToPart(
     State<void> other, {
     bool skipSet = false,
     bool skipReset = false,
@@ -384,13 +391,13 @@ sealed class State<S extends State<S>> {
         : <String>[
             if (foregroundColor != otherForeground &&
                 otherForeground is ExtendedColor)
-              _color(30, 90, otherForeground),
+              _color(30, otherForeground),
             if (backgroundColor != otherBackground &&
                 otherBackground is ExtendedColor)
-              _color(40, 100, otherBackground),
+              _color(40, otherBackground),
             if (underlineColorValue != otherUnderlineColor &&
                 otherUnderlineColor != null)
-              _color(50, 0, otherUnderlineColor),
+              _color(50, otherUnderlineColor),
           ].join();
 
     // `CSI 22` takes bold and dim off together, so where one of the pair goes
@@ -398,6 +405,10 @@ sealed class State<S extends State<S>> {
     // to the reset rather than being a set of their own, and [skipSet] leaves
     // them standing: with them gone, half of a joint reset would go out and
     // carry off the half of the pair that was meant to survive it.
+    //
+    // Where the reset itself is skipped there is nothing to survive: the
+    // `CSI 22` was not written, so whatever was on is still on, and putting
+    // it back would be a byte saying what the terminal already knows.
     final jointIntensityReset =
         isBold && !other.isBold || isDim && !other.isDim;
 
@@ -408,7 +419,7 @@ sealed class State<S extends State<S>> {
         if (backgroundColor != otherBackground && otherBackground is Color16)
           '${_colorIndex(40, 100, otherBackground)}',
       ],
-      if (jointIntensityReset) ...[
+      if (jointIntensityReset && !skipReset) ...[
         if (other.isBold) '1',
         if (other.isDim) '2',
       ] else if (!skipSet) ...[
@@ -551,8 +562,7 @@ sealed class State<S extends State<S>> {
         null => offset + 9,
       };
 
-  String _color(int offset, int highOffset, ExtendedColor color) =>
-      switch (color) {
+  String _color(int offset, ExtendedColor color) => switch (color) {
         Color256(:final index) => '$CSI${offset + 8};$COLOR_256;$index$SGR',
         ColorRgb(:final r, :final g, :final b) =>
           '$CSI${offset + 8};$COLOR_RGB;$r;$g;$b$SGR',

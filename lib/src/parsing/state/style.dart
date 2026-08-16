@@ -671,7 +671,7 @@ final class Style extends State<Style> {
   /// The codes that take a terminal from its own colours to this style.
   ///
   /// Nothing is taken off first: this only puts on what the style carries.
-  String get open => Style.terminalColors.transitTo(this, skipReset: true);
+  String get open => Style.terminalColors.transitToPart(this, skipReset: true);
 
   /// The code that takes everything off again, which is the reset.
   String get close => sgr.reset;

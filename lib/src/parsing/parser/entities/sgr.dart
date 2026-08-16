@@ -319,14 +319,26 @@ final class _SgrParsingState<S extends State<S>> {
     state = _applyKnownSgrFunction(state, function);
     functions.add(function);
 
-    final rawParameters =
-        _rawParams.sublist(_operationStart, _index + 1).join(';');
-    final operation = _SgrOperation(
-      string: '$CSI$rawParameters$SGR',
-      function: function,
-      state: state.toStyle(),
-    );
-    residual = _advanceSgrResidual(residual, _operationBefore, operation);
+    // The operation is thrown away for every known function while no
+    // residual is open, which is most of what an ordinary string holds. The
+    // string it carries costs a sublist, a join and an interpolation, and
+    // its state costs a whole Style where the parser is a stacked one, so
+    // the question is asked before any of that is built.
+    if (_residualKeeps(residual, function)) {
+      final rawParameters =
+          _rawParams.sublist(_operationStart, _index + 1).join(';');
+      residual = _advanceSgrResidual(
+        residual,
+        _operationBefore,
+        _SgrOperation(
+          string: '$CSI$rawParameters$SGR',
+          function: function,
+          state: state.toStyle(),
+        ),
+      );
+    } else {
+      residual = null;
+    }
 
     _index++;
     _savedIndex = null;

@@ -62,7 +62,7 @@ final class Color16 extends Color {
   }
 
   @override
-  int get hashCode => color.hashCode;
+  int get hashCode => Object.hash(Color16, color);
 
   @override
   bool operator ==(Object other) => other is Color16 && color == other.color;

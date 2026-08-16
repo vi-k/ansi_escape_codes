@@ -312,7 +312,7 @@ final class Color256 extends ExtendedColor {
   int get index => color.index;
 
   @override
-  int get hashCode => color.hashCode;
+  int get hashCode => Object.hash(Color256, color);
 
   @override
   bool operator ==(Object other) => other is Color256 && color == other.color;
