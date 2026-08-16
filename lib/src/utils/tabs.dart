@@ -16,7 +16,8 @@ import '../ready_to_use/csi.dart';
 ///
 /// Every stop advances the cursor, so [defaultTab] and each element of [tabs]
 /// must be greater than `0`, otherwise a [RangeError] is thrown and nothing is
-/// written.
+/// written. A distance reaching past the width sets no stop and ends the run
+/// there, however far past it reaches: what follows it has no room either.
 ///
 /// Nothing is written when [stdout] is not a terminal: there are no stops to
 /// set and no width to fit them into.
@@ -47,15 +48,22 @@ void tabs({
   // Reset tabs.
   stdout.write('\r${CSI}3$TBC');
 
+  // How far along the line the stops have got. Each step is measured against
+  // what is left of the width rather than added on and compared afterwards:
+  // a single stop as wide as the int range takes the total round through the
+  // negatives, and a negative total never reaches a width to stop at. The
+  // loop below then writes until the terminal drowns.
   var pos = 0;
 
   // Set new tabs from list.
   if (tabs != null) {
     for (final tab in tabs) {
-      pos += tab;
-      if (pos >= width) {
+      if (tab >= width - pos) {
+        pos = width;
         break;
       }
+
+      pos += tab;
       stdout
         ..write(cursorRightN(tab))
         ..write(HTS);
@@ -68,11 +76,8 @@ void tabs({
       stdout.write(HTS);
     }
 
-    while (true) {
+    while (defaultTab < width - pos) {
       pos += defaultTab;
-      if (pos >= width) {
-        break;
-      }
       stdout
         ..write(cursorRightN(defaultTab))
         ..write(HTS);
