@@ -29,5 +29,5 @@ dev_dependencies:
   # Never imported: its format_coverage turns a test run into the lcov
   # report the workflow measures its coverage floor against.
   coverage: ^1.11.1
-  lints: ^5.1.1
+  lints: ">=5.1.1 <7.0.0"
   test: ^1.25.15
