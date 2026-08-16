@@ -313,11 +313,18 @@ sealed class State<S extends State<S>> {
   /// written instead: bold and dim are taken off together by `CSI 22`, so
   /// going from both to bold alone is `CSI 22;1` — the pair off, then the
   /// bold back on.
+  String transitTo(State<void> other) => transitToPart(other);
+
+  /// Half of [transitTo]: [skipReset] leaves out the codes that take
+  /// properties off and [skipSet] the ones that put them on.
   ///
-  /// [skipReset] leaves out the codes that take properties off and
-  /// [skipSet] the ones that put them on — each of use where the far end is
-  /// known to need only the other half.
-  String transitTo(
+  /// Of use where the far end is known to need only the other half — this
+  /// package writes the opening of a style, the tail of a slice and the base
+  /// of a residual that way. It is not part of the public surface: the
+  /// useful case is already [Style.open], and the two halves have edges a
+  /// caller would have to be told about rather than discover.
+  @internal
+  String transitToPart(
     State<void> other, {
     bool skipSet = false,
     bool skipReset = false,

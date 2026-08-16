@@ -100,7 +100,7 @@ String _renditionTransit({
   bool skipReset = false,
 }) {
   if (fromResidual == null && toResidual == null) {
-    return from.transitTo(to, skipSet: skipSet, skipReset: skipReset);
+    return from.transitToPart(to, skipSet: skipSet, skipReset: skipReset);
   }
 
   final suffix = fromResidual == null || toResidual == null
@@ -118,7 +118,7 @@ String _renditionTransit({
     final buf = StringBuffer();
     var effective = project(target.root.base);
     buf.write(
-      from.transitTo(
+      from.transitToPart(
         effective,
         skipSet: skipSet,
         skipReset: skipReset,
@@ -138,7 +138,7 @@ String _renditionTransit({
   var effective = Style.terminalColors;
   if (toResidual == null) {
     buf.write(
-      effective.transitTo(
+      effective.transitToPart(
         to,
         skipSet: skipSet,
         skipReset: true,
@@ -149,7 +149,7 @@ String _renditionTransit({
 
   effective = project(toResidual.root.base);
   buf.write(
-    Style.terminalColors.transitTo(
+    Style.terminalColors.transitToPart(
       effective,
       skipSet: skipSet,
       skipReset: true,

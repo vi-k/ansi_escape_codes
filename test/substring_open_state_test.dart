@@ -23,7 +23,7 @@ void main() {
 
       expect(from.transitTo(to), '\x1B[22;1m');
       expect(
-        from.transitTo(to, skipSet: true),
+        from.transitToPart(to, skipSet: true),
         '\x1B[22;1m',
         reason: 'the 1 is the other half of the 22, not a set of its own',
       );
@@ -46,7 +46,7 @@ void main() {
       const to = Style(bold: true);
 
       expect(from.transitTo(to), '\x1B[1m');
-      expect(from.transitTo(to, skipSet: true), '');
+      expect(from.transitToPart(to, skipSet: true), '');
     });
   });
 
