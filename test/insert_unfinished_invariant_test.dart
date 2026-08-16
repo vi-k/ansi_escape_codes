@@ -67,6 +67,7 @@ const _marker = '@';
 
 void main() {
   test('an insertion either lands where it was asked or is refused', () {
+    var accepted = 0;
     for (final input in _inputs) {
       final plain = Parser(input).removeAll();
       for (var pos = 0; pos <= plain.length; pos++) {
@@ -81,6 +82,7 @@ void main() {
             continue;
           }
 
+          accepted++;
           expect(
             Parser(result).removeAll(),
             '${plain.substring(0, pos)}$_marker${plain.substring(pos)}',
@@ -90,9 +92,19 @@ void main() {
         }
       }
     }
+
+    expect(
+      accepted,
+      203,
+      reason: 'every expectation above stands behind a refusal that did not '
+          'happen, so a seam guard grown too careful would empty this test '
+          'out and leave it green. The exact number rather than a floor: a '
+          'floor with slack in it hides exactly the loss it is watching for',
+    );
   });
 
   test('and what it hands back is the input with the text put in', () {
+    var accepted = 0;
     for (final input in _inputs) {
       final plain = Parser(input).removeAll();
       for (var pos = 0; pos <= plain.length; pos++) {
@@ -107,6 +119,7 @@ void main() {
             continue;
           }
 
+          accepted++;
           expect(
             result.replaceFirst(_marker, ''),
             input,
@@ -116,6 +129,15 @@ void main() {
         }
       }
     }
+
+    expect(
+      accepted,
+      203,
+      reason: 'every expectation above stands behind a refusal that did not '
+          'happen, so a seam guard grown too careful would empty this test '
+          'out and leave it green. The exact number rather than a floor: a '
+          'floor with slack in it hides exactly the loss it is watching for',
+    );
   });
 
   test('a position outside the plain text is still a RangeError', () {

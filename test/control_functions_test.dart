@@ -13,13 +13,21 @@ void main() {
           // A code of this kind belongs to no named function, though another
           // function may well answer to the same one.
           expect(byCode, isNot(function), reason: function.name);
-        } else if (byCode != null) {
+        } else {
+          // Not behind an `if (byCode != null)`: a named function the lookup
+          // has stopped answering for is the failure this test is named
+          // after, and skipping it there is how it would go unsaid.
           expect(byCode, function, reason: function.name);
           found++;
         }
       }
 
-      expect(found, greaterThan(90));
+      expect(
+        found,
+        92,
+        reason: 'the exact number, since a floor with slack in it lets the '
+            'named functions go missing two at a time',
+      );
     });
 
     test('a sequence kept for private use is not an unknown one', () {

@@ -32,6 +32,7 @@ const _texts = <String>[
 
 void main() {
   test('an insertion leaves the string ending where it ended', () {
+    var accepted = 0;
     for (final input in _inputs) {
       final before = Parser(input);
       final wasState = before.finalState;
@@ -55,11 +56,20 @@ void main() {
                 'pos $pos, after: $after, '
                 'text ${text.ansiShowEscapeSequences()}';
 
+            accepted++;
             expect(now.finalState, wasState, reason: reason);
             expect(now.finalLink, wasLink, reason: reason);
           }
         }
       }
     }
+
+    expect(
+      accepted,
+      320,
+      reason: 'the two expectations above stand behind a refusal that did '
+          'not happen, and a corpus leaning this far into unfinished codes '
+          'is one a seam guard grown too careful could refuse whole',
+    );
   });
 }
