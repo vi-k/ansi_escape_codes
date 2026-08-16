@@ -101,37 +101,36 @@ Future<(int, int)> currentCursorPos(
     );
   }
 
-  if (report.length < 6) {
+  // CPR = CSI n ; m R, so the numbers lie between the CSI and the final R:
+  // two of them, one semicolon, and nothing else.
+  final fields = String.fromCharCodes(report, 2, report.length - 1).split(';');
+  if (fields.length != 2) {
+    // A reply carrying a third parameter is a reply to something else --- a
+    // DECXCPR names the page as well --- and reading the two on either side
+    // of the first semicolon would hand back a position that looks right
+    // and is not.
     throw UnsupportedError(errorText);
   }
 
-  var row = 0;
-  var col = 0;
-  var isRow = true;
-
-  // CPR = CSI n;m R, so the numbers lie between the CSI and the final R.
-  for (var i = 2; i < report.length - 1; i++) {
-    final char = report[i];
-
-    if (char == 0x3B) {
-      isRow = false;
-    } else if (char >= 0x30 && char <= 0x39) {
-      final digit = char - 0x30;
-      if (isRow) {
-        row = row * 10 + digit;
-      } else {
-        col = col * 10 + digit;
-      }
-    } else {
-      throw UnsupportedError(errorText);
-    }
-  }
-
-  if (isRow) {
+  final row = _position(fields.first);
+  final col = _position(fields.last);
+  if (row == null || col == null) {
     throw UnsupportedError(errorText);
   }
 
   return (row, col);
+}
+
+/// The number [field] carries, where it carries one a terminal could report.
+///
+/// `null` for everything else: an empty parameter, and a number so long that
+/// multiplying it out would wrap around and answer with whatever was left.
+/// The standard counts rows and columns from 1, so a zero is no position
+/// either — it is what a reply of empty parameters used to come back as.
+int? _position(String field) {
+  final value = int.tryParse(field);
+
+  return value == null || value < 1 ? null : value;
 }
 
 /// Asks for the report and waits for it, passing over anything else that

@@ -111,12 +111,15 @@ void main() {
       expect(stdin.echoModeLeft, isTrue, reason: 'and puts the terminal back');
     });
 
-    test('refuses an answer carrying something that is not a number', () async {
+    test('reads no report out of a sequence carrying a letter', () async {
       final stdin = _FakeStdin(Stream.value('${CSI}1;2aR'.codeUnits));
 
       await expectLater(
         currentCursorPos(_FakeStdout(), stdin),
         throwsA(isA<UnsupportedError>()),
+        reason: 'the letter ends the shape of a report, so the search goes '
+            'past this sequence and finds none — the refusal is for an input '
+            'that carried no report, not for a report that carried a letter',
       );
     });
 
@@ -127,6 +130,50 @@ void main() {
         currentCursorPos(_FakeStdout(), stdin),
         throwsA(isA<UnsupportedError>()),
         reason: 'a report without a semicolon is half an answer',
+      );
+    });
+
+    test('refuses a report that names no numbers at all', () async {
+      final stdin = _FakeStdin(Stream.value('$CSI;;;R'.codeUnits));
+
+      await expectLater(
+        currentCursorPos(_FakeStdout(), stdin),
+        throwsA(isA<UnsupportedError>()),
+        reason: 'empty parameters are not a position, and (0, 0) is not one '
+            'either — the standard counts rows and columns from 1',
+      );
+    });
+
+    test('refuses a position the standard cannot report', () async {
+      final stdin = _FakeStdin(Stream.value('${CSI}0;0R'.codeUnits));
+
+      await expectLater(
+        currentCursorPos(_FakeStdout(), stdin),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
+
+    test('refuses a reply carrying a third parameter', () async {
+      final stdin = _FakeStdin(Stream.value('${CSI}1;2;3R'.codeUnits));
+
+      await expectLater(
+        currentCursorPos(_FakeStdout(), stdin),
+        throwsA(isA<UnsupportedError>()),
+        reason: 'a terminal answering with a page number as well is not '
+            'answering this, and gluing its digits onto the column gives a '
+            'position that looks right and is not',
+      );
+    });
+
+    test('refuses a number too large to be a position', () async {
+      final digits = '9' * 30;
+      final stdin = _FakeStdin(Stream.value('$CSI$digits;1R'.codeUnits));
+
+      await expectLater(
+        currentCursorPos(_FakeStdout(), stdin),
+        throwsA(isA<UnsupportedError>()),
+        reason: 'multiplying it out silently wraps around and answers with '
+            'whatever is left',
       );
     });
 
