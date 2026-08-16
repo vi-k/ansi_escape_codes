@@ -18,6 +18,52 @@ void main() {
     });
   });
 
+  group('what a style wraps text in:', () {
+    // Only a `NoStyle` was ever asked, and it answers both with an empty
+    // string --- so the pair a caller actually uses was pinned by nothing,
+    // and `close` in particular had never run.
+    test('open puts on what it carries and takes nothing off', () {
+      expect(Styles.red.bold.open, '$fg256Red$bold');
+      expect(
+        Styles.red.bold.open,
+        isNot(contains(reset)),
+        reason: 'a style opens by adding, so that one can be put inside '
+            'another and hand it back',
+      );
+    });
+
+    test('close takes everything off', () {
+      expect(Styles.red.bold.close, reset);
+      expect(
+        Styles.bgGray3.close,
+        reset,
+        reason: 'whatever the style carried, the same code ends it',
+      );
+    });
+
+    test('and calling it is the two around the text', () {
+      final style = Styles.red.bold;
+
+      expect(style('text'), '$reset${style.open}text${style.close}');
+      expect(
+        style('text'),
+        '$reset$fg256Red${bold}text$reset',
+        reason: 'the leading reset is the printer underneath, clearing what '
+            'the terminal was in before the style is put on',
+      );
+    });
+
+    test('a style that carries nothing opens with nothing', () {
+      expect(Style.terminalColors.open, isEmpty);
+      expect(
+        Style.terminalColors.close,
+        reset,
+        reason: 'it still closes: the text inside it may have opened '
+            'something of its own',
+      );
+    });
+  });
+
   group('the colours a style is chained with:', () {
     test('stand for the same colours the table names', () {
       expect(Styles.black.foregroundColor, Color256.black);
