@@ -159,6 +159,10 @@ Fixed:
   out. They read `sgrPattern`, whose parameter class excluded `<`, `=`, `>`
   and `?` everywhere rather than only in the first place, where alone they
   make a sequence private use. The pattern now says what the parser says.
+- `ansiShowEscapeSequences` wrote a dangling separator where a control string
+  had no terminator to name: `\x1B]0;title` showed as `[OSC 0;title ]`. The
+  separator goes with the name now, so it shows as `[OSC 0;title]` and a
+  terminated one is unchanged.
 - `Parser.substring` refused a `maxLength` too large to add to `start`. Asking
   for everything from anywhere but the beginning --- `substring(1, maxLength:
   <a very large number>)` --- took the sum round through the negatives and came

@@ -179,10 +179,36 @@ void main() {
   });
 
   group('StyleColors, checked at the source — mirrors cannot see it:', () {
-    final source =
+    // Read inside each test rather than while the group is being built: a
+    // run from another directory would otherwise take the whole file down on
+    // load, and the failure would name the wrong thing.
+    String readSource() =>
         File('lib/src/parsing/state/style_colors.dart').readAsStringSync();
 
+    test('the getters do what the source says they do', () {
+      // The source below is checked for shape, which is all a text can be
+      // checked for; this is the shape doing its job. Without it, `foreground`
+      // and `background` could be each other's and every line of that file
+      // would still read correctly.
+      expect(
+        Style.terminalColors.red,
+        const Style(foreground: Color256.red),
+      );
+      expect(
+        Style.terminalColors.bgRed,
+        const Style(background: Color256.red),
+      );
+      expect(Style.terminalColors.gray12.foregroundColor, Color256.gray12);
+      expect(Style.terminalColors.bgGray12.backgroundColor, Color256.gray12);
+      expect(
+        Style.terminalColors.red.bgBlue,
+        const Style(foreground: Color256.red, background: Color256.blue),
+        reason: 'and one does not take the other off',
+      );
+    });
+
     test('each getter hands its own colour to its own slot, once', () {
+      final source = readSource();
       final getters = RegExp(
         r'Style get (\w+) =>\s*(foreground|background)\(Color256\.(\w+)\);',
       ).allMatches(source);
@@ -207,7 +233,7 @@ void main() {
     });
 
     test('no getter fell outside the pattern', () {
-      expect(RegExp('Style get ').allMatches(source), hasLength(512));
+      expect(RegExp('Style get ').allMatches(readSource()), hasLength(512));
     });
   });
 }

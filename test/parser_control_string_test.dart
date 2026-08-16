@@ -347,7 +347,7 @@ void main() {
     });
 
     test('a string without its terminator shows none', () {
-      expect('aa${DCS}pay'.ansiShowEscapeSequences(), 'aa[DCS pay ]');
+      expect('aa${DCS}pay'.ansiShowEscapeSequences(), 'aa[DCS pay]');
     });
 
     test('an empty body is shown the way OSC shows one', () {
@@ -370,7 +370,7 @@ void main() {
         Parser('aa${DCS}pay${ST}bb').showControlFunctions(),
         'aa[DCS pay ST]bb',
       );
-      expect(Parser('aa${DCS}pay').showControlFunctions(), 'aa[DCS pay ]');
+      expect(Parser('aa${DCS}pay').showControlFunctions(), 'aa[DCS pay]');
     });
 
     test('the id of a control string is its name, not its bytes', () {

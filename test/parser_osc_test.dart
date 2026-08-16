@@ -44,10 +44,13 @@ void main() {
       expect(Parser('${OSC}0;title${fgRed}x$reset').removeAll(), 'x');
     });
 
-    test('an unterminated one can still be shown', () {
+    test('an unterminated one is shown without a terminator named', () {
+      expect('${OSC}0;title'.ansiShowEscapeSequences(), '[OSC 0;title]');
       expect(
-        () => '${OSC}0;title'.ansiShowEscapeSequences(),
-        returnsNormally,
+        '${OSC}0;title$ST'.ansiShowEscapeSequences(),
+        '[OSC 0;title ST]',
+        reason: 'and the separator goes with the name rather than standing '
+            'in front of the place one would have been',
       );
     });
   });
