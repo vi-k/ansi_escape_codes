@@ -475,6 +475,11 @@ final class _ParserBase<S extends State<S>> {
   /// [start] and [maxLength] count UTF-16 code units, as [length] does. A
   /// cut can land inside a surrogate pair and split it, as [String.substring]
   /// can.
+  ///
+  /// A negative [start] or [maxLength] is a [RangeError], and so is a [start]
+  /// past the end of the plain text — the position after the last character is
+  /// a slice of nothing rather than a refusal. A [maxLength] reaching past the
+  /// end is the rest of the string, however far past it reaches.
   String substring(
     int start, {
     int? maxLength,
@@ -483,11 +488,17 @@ final class _ParserBase<S extends State<S>> {
     if (start < 0) {
       throw RangeError.range(start, 0, null, 'start');
     }
-
-    final end = maxLength == null ? null : start + maxLength;
-    if (end != null && start > end) {
-      throw RangeError.range(end, start, null, 'end');
+    if (maxLength != null && maxLength < 0) {
+      throw RangeError.range(maxLength, 0, null, 'maxLength');
     }
+
+    // A length reaching past the end of the string is the rest of it, and
+    // that is what it stays where no sum can hold it: added on, a large
+    // enough one takes the total round through the negatives, and a slice
+    // asking for everything was refused for appearing to ask for less than
+    // nothing.
+    final sum = maxLength == null ? null : start + maxLength;
+    final end = sum == null || sum < start ? null : sum;
 
     final buf = StringBuffer();
     var currentState = initialState.toStyle();

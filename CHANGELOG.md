@@ -159,6 +159,12 @@ Fixed:
   out. They read `sgrPattern`, whose parameter class excluded `<`, `=`, `>`
   and `?` everywhere rather than only in the first place, where alone they
   make a sequence private use. The pattern now says what the parser says.
+- `Parser.substring` refused a `maxLength` too large to add to `start`. Asking
+  for everything from anywhere but the beginning --- `substring(1, maxLength:
+  <a very large number>)` --- took the sum round through the negatives and came
+  back a `RangeError` for a slice that was only asking for the rest of the
+  string. A length reaching past the end is the rest of it, and stays so where
+  no sum can hold it.
 - An `SGR` carrying a private byte past the first --- `CSI 1 < m`, `CSI 99 ; < m`
   --- was written to the terminal twice. Only the first byte of a parameter
   string makes a sequence private use, so these are ordinary `CSI ... m` whose
