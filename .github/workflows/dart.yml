@@ -129,6 +129,11 @@ jobs:
 
       - name: Collect coverage
         if: matrix.sdk == 'stable'
+        # The suite has already run once on this leg, plainly. This run is
+        # the instrumented one, and the two are kept apart on purpose: a
+        # pass under instrumentation is not the same evidence as a pass
+        # without it, and the gate should stand on the plain run. What this
+        # one produces is a measurement, not a verdict.
         run: dart test --coverage=coverage
 
       - name: Format coverage reports
