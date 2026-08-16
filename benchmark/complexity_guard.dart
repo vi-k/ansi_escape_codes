@@ -169,9 +169,12 @@ final class _Side {
 
 /// Runs [side] once and answers whether it produced what it must.
 ///
-/// Called before the timing series and again after it. The second call is
-/// not ceremony: a body that does its work once and then answers from a
-/// cache would pass a single check and time almost nothing afterwards.
+/// Called before the timing series and again after it. The second call
+/// catches an answer that decayed along the way: a corpus the series
+/// consumed, a state the runs left somewhere else, a body that stops
+/// producing what its first run did. It does not catch a body that caches
+/// the *right* answer and hands it back for free — that one passes both
+/// calls, and only the ratio has anything left to say about it.
 bool _observed(
   String name,
   _Side side,
@@ -366,9 +369,20 @@ List<String> Function() _sliceRun(int lines) {
       ];
 }
 
-StackedParser Function() _stackRun(int runs) {
+/// The stack side hands back the state it walked to, not only the parser.
+///
+/// [StackedParser] reads lazily and keeps what it read, so a parser alone is
+/// no evidence of a walk: an observation that asked it for `finalState`
+/// would do the walk itself, and a body that had walked nowhere would still
+/// answer correctly — which is how a body measuring six thousand times less
+/// than it should stayed green. The record carries the state out of the
+/// timed call, where only the timed call could have produced it.
+(StackedParser, Stack) Function() _stackRun(int runs) {
   final page = _stackPage(runs);
-  return () => StackedParser(page)..finalState;
+  return () {
+    final parsed = StackedParser(page);
+    return (parsed, parsed.finalState);
+  };
 }
 
 List<String> Function() _insertRun(int lines, {required bool shared}) {
@@ -390,9 +404,12 @@ String _observeStrings(Object produced) {
 }
 
 String _observeStack(Object produced) {
-  final parsed = produced as StackedParser;
+  // The state is read out of the record rather than off the parser: asking
+  // the parser again would let this observation do the walk the timer was
+  // there to measure.
+  final (parsed, finalState) = produced as (StackedParser, Stack);
   final colors = <String>[];
-  var state = parsed.finalState;
+  var state = finalState;
   colors.add('${state.foregroundColor}');
   for (var i = 0; i < 6; i++) {
     state = state.resetForeground;
