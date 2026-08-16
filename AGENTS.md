@@ -70,6 +70,7 @@ Dart-пакет для разбора и печати строк с ANSI-escape-
 dart format --output=none --set-exit-if-changed .
 dart analyze --fatal-infos
 dart run tool/check_entry_points.dart
+dart run tool/check_readme_sync.dart
 dart run tool/generate.dart && git diff --exit-code -- lib/
 dart test
 dart run tool/check_coverage.dart   # когда coverage собран; в CI всегда
@@ -95,6 +96,13 @@ dart pub publish --dry-run   # ожидается 0 предупреждений
 - **`generate.dart`** до первой записи сверяет registry восьми генерируемых
   зон с marker-файлами, найденными рекурсивно в `lib/`. Лишняя, пропущенная,
   повторная или непарная marker-зона красит preflight атомарно.
+- **`check_readme_sync.dart`** сверяет `README.ru.md` с `README.md`:
+  последовательность уровней заголовков, языки блоков кода, код внутри
+  блоков с вырезанными комментариями и позиции комментарных строк. Текст
+  комментария не сравнивается — проза внутри примеров переводится, — но
+  его наличие сравнивается, поэтому пример, у которого показанный вывод
+  поправили с одной стороны, ловится. Чего не ловит ничто: расхождение в
+  тексте самого прозаического комментария.
 - **`check_coverage.dart`** держит собранный отчёт к трём ответам: отчёт
   собран в этом дереве, его `LF`/`LH` сходятся с записями `DA`, и пол
   95.0 % по gated-отчёту. Третий — про то, что `format_coverage` строит

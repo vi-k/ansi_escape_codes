@@ -54,6 +54,14 @@ jobs:
       - name: Analyze project source
         run: dart analyze --fatal-infos
 
+      - name: Check the two readmes still say the same thing
+        # AGENTS.md calls a divergence between README.md and README.ru.md a
+        # defect and asks for both in one commit, and nothing enforced it.
+        # Headings, code blocks, the code under their comments and where
+        # those comments stand are compared; the prose and the text of the
+        # comments are translated and are not.
+        run: dart run tool/check_readme_sync.dart
+
       - name: Check every entry point analyses, closes and matches its snapshot
         # A hand-written list of exports cannot notice what is missing
         # from it; this walks the export namespace of each lib/*.dart and
