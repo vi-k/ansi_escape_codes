@@ -79,10 +79,18 @@ final class StackedPrinter extends _PrintPrinterBase<Stack> {
 /// what is written — and, the text being inside it still, opened again on the
 /// line after, the way the style is.
 ///
-/// The terminator an unterminated control string owes is paid in the same
-/// place: a write the line goes on past owes nothing at its end, and the
-/// piece that really ends the line settles for whatever the writes before it
-/// left open.
+/// A write may end in the middle of a sequence — a chunk taken off a stream
+/// falls where it falls — and what it cannot finish waits here for the write
+/// that does. Every write is dressed on its own and the dressing opens with a
+/// reset, which between the halves of a sequence would end it where the caller
+/// never did: the colour lost, the body of the code on the screen, the title
+/// cut at the byte the chunk happened to stop on. Waiting instead is what
+/// makes the same bytes read the same however the writes fall across them.
+/// The leading half of a surrogate pair waits for the same reason.
+///
+/// The wait ends where the line does — at a [writeln] or a `'\n'` in what is
+/// written — and there an unterminated control string is given its
+/// terminator, since nothing more can belong to it.
 ///
 /// `ESC 7` and `ESC 8` use one save slot for the lifetime of the printer. The
 /// saved rendition, hyperlink and opaque SGR state cross write and line
@@ -560,6 +568,19 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   /// Where the output goes.
   final StringSink sink;
 
+  /// The tail of a write that cannot go out yet.
+  ///
+  /// Every piece is dressed and sent on its own, and the dressing opens with
+  /// a reset. A write ending in the middle of a sequence has already handed
+  /// its first half to the sink, so that reset lands between the halves —
+  /// and what the terminal reads is a reset followed by the rest of the
+  /// sequence as text: the colour lost, the body of the code on the screen.
+  ///
+  /// So a write is cut where no sequence is open across it and what is left
+  /// waits here for the write that finishes it. Nothing waits where the line
+  /// really ends: there the sequence is terminated rather than waited on.
+  String _carry = '';
+
   _SinkPrinterBase(
     this.sink, {
     required super.stateDefaults,
@@ -662,19 +683,78 @@ final class _SinkPrinterBase<S extends State<S>> extends _PrinterBase<S> {
   /// true of a [writeln] and false of a [write], where the line goes on into
   /// the write that follows.
   void _writeBuf(String buf, {bool endsLine = false}) {
+    final all = _carry.isEmpty ? buf : '$_carry$buf';
+    _carry = '';
+
     var pos = 0;
-    var endIndex = buf.indexOf('\n');
+    var endIndex = all.indexOf('\n');
     while (endIndex != -1) {
-      final line = buf.substring(pos, endIndex);
+      final line = all.substring(pos, endIndex);
       _writeLine(line, endsLine: true);
       sink.write('\n');
 
       pos = endIndex + 1;
-      endIndex = buf.indexOf('\n', pos);
+      endIndex = all.indexOf('\n', pos);
     }
 
-    final line = buf.substring(pos);
+    var line = all.substring(pos);
+    if (!endsLine) {
+      final open = _openEnd(line);
+      if (open < line.length) {
+        _carry = line.substring(open);
+        line = line.substring(0, open);
+      }
+    }
+
     _writeLine(line, endsLine: endsLine);
+  }
+
+  /// Where [line] can be handed over without handing over half a sequence.
+  ///
+  /// `line.length` where nothing is open at its end. Everything from the
+  /// answer on is bytes a sequence is still reading — its own, or the text it
+  /// swallows for want of an ending — or the leading half of a surrogate pair
+  /// whose other half is in the write still to come.
+  int _openEnd(String line) {
+    var end = line.length;
+
+    // A NoStyle printer writes nothing of its own between the pieces, so
+    // there is no reset to land in the middle of anything, and nothing to
+    // hold back for.
+    if (line.isEmpty || defaultStyle is NoStyle) {
+      return end;
+    }
+
+    if (line.contains(ESC)) {
+      end = 0;
+      var open = false;
+
+      for (final m in _ParserBase<S>(line, stateDefaults).pieces) {
+        final entity = m.entity;
+
+        if (_unfinished(entity)) {
+          open = true;
+        } else if (entity is Text) {
+          // Text behind a code that never ended is not text: those are the
+          // bytes that code is still reading, and the piece of text they came
+          // back as is what they look like, not what they are.
+          if (!open) {
+            end = m.end;
+          }
+        } else {
+          // A finished code ends whatever was waiting: its own `ESC` is the
+          // byte the waiting sequence was waiting to be broken off by.
+          open = false;
+          end = m.end;
+        }
+      }
+    }
+
+    if (end == line.length && _isHighSurrogate(line.codeUnitAt(end - 1))) {
+      end--;
+    }
+
+    return end;
   }
 
   /// Writes the given line to the sink.
