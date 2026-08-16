@@ -67,4 +67,39 @@ void main() {
       expect(stack.hashCode, style.hashCode);
     });
   });
+
+  group('a colour hashes as itself and not as its neighbour:', () {
+    test('the sixteen and the 256 do not share a hash', () {
+      // Both hold the same `Colors` value, so hashing the field alone put
+      // every one of the 256 pairs in one bucket. Equality told them apart,
+      // which is why nothing misbehaved and nothing noticed.
+      //
+      // Held as `Color` rather than as their own types: comparing the two
+      // directly is what the analyser calls an unrelated type equality
+      // check, and it is right — the point here is that two colours a
+      // caller holds as colours are not each other.
+      const Color sixteen = Color16.red;
+      const Color extended = Color256.red;
+
+      expect(sixteen == extended, isFalse);
+      expect(sixteen.hashCode, isNot(extended.hashCode));
+    });
+
+    test('and the same holds through a style', () {
+      const sixteen = Style(foreground: Color16.red);
+      const extended = Style(foreground: Color256.red);
+
+      expect(sixteen == extended, isFalse);
+      expect(sixteen.hashCode, isNot(extended.hashCode));
+    });
+
+    test('equal colours still hash alike', () {
+      // The half that must not break: hashCode is only allowed to tell
+      // apart what == tells apart.
+      expect(Color16.red, Color16.red);
+      expect(Color16.red.hashCode, Color16.red.hashCode);
+      expect(Color256.red.hashCode, Color256.red.hashCode);
+      expect(ColorRgb(1, 2, 3).hashCode, ColorRgb(1, 2, 3).hashCode);
+    });
+  });
 }

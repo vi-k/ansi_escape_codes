@@ -36,7 +36,7 @@ final class ColorRgb extends ExtendedColor {
   int get b => _value & 0xFF;
 
   @override
-  int get hashCode => _value.hashCode;
+  int get hashCode => Object.hash(ColorRgb, _value);
 
   @override
   bool operator ==(Object other) => other is ColorRgb && _value == other._value;
