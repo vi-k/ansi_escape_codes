@@ -26,9 +26,23 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  # A branch that gets two pushes in a minute does not need the first run
+  # finished. `main` is excluded: a run there is checking what is already
+  # merged, and cancelling it leaves the question of whether the merge was
+  # green unanswered.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # The longest job observed over the runs of 2026-08-16 was 5m34s on
+    # stable, against 3m17s on the floor leg. Twenty minutes is over three
+    # times the worst of those — wide enough not to fire on a slow runner,
+    # and far short of the six hours a hung job would otherwise burn.
+    timeout-minutes: 20
 
     strategy:
       fail-fast: false
