@@ -275,7 +275,10 @@ PairedRatios pairedRatios(List<double> first, List<double> second) {
 
   final ratios = <double>[];
   for (var i = 0; i < first.length; i++) {
-    if (first[i] <= 0 || second[i] <= 0) {
+    if (!first[i].isFinite ||
+        !second[i].isFinite ||
+        first[i] <= 0 ||
+        second[i] <= 0) {
       throw ArgumentError(
         'pair $i holds a sample the timer could not resolve: '
         '${first[i]} and ${second[i]}',
@@ -293,6 +296,8 @@ PairedRatios pairedRatios(List<double> first, List<double> second) {
 }
 
 /// What a scenario's pairs said: the median ratio and the extremes.
+// Unreachable for the same reason as [pairedRatios] above: the caller is a
+// test, and the lint only counts callers inside this executable library.
 // ignore: unreachable_from_main
 typedef PairedRatios = ({double median, double min, double max});
 
