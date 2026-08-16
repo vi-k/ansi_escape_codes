@@ -18,6 +18,10 @@ import '../parsing/control_functions/control_sequences.dart';
 /// [input] is where the answer is read from, [stdin] by default. A [Stdin] can
 /// only be listened to once, so to ask more than once — or to keep reading the
 /// input afterwards — pass a broadcast stream over it here.
+///
+/// Throws an [UnsupportedError] naming what stopped it wherever no report can
+/// be had: the terminal stayed silent for [timeout], what came back was not a
+/// report, or [stdin] is no terminal to ask.
 Future<(int, int)> currentCursorPos(
   Stdout stdout,
   Stdin stdin, {
@@ -74,9 +78,14 @@ Future<(int, int)> currentCursorPos(
         await subscription?.cancel();
       }
     }
-  } on Object catch (_, stacktrace) {
+  } on Object catch (error, stacktrace) {
+    // The reason travels in the message. Everything that can go wrong in
+    // here comes back as the same refusal --- a terminal that will not
+    // answer, a stdin that is not a terminal at all, an input already
+    // listened to somewhere else --- and a refusal naming no reason reads
+    // as the first of those whichever of them it was.
     Error.throwWithStackTrace(
-      UnsupportedError(errorText),
+      UnsupportedError('$errorText: $error'),
       stacktrace,
     );
   }

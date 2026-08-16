@@ -149,6 +149,23 @@ void main() {
       );
     });
 
+    test('says what stopped it from reading a report', () async {
+      final stdin = _FakeStdin(Stream<List<int>>.error(StateError('gone')));
+
+      await expectLater(
+        currentCursorPos(_FakeStdout(), stdin),
+        throwsA(
+          isA<UnsupportedError>().having(
+            (error) => error.message,
+            'message',
+            contains('gone'),
+          ),
+        ),
+        reason: 'a refusal that names no reason reads as a terminal that '
+            'cannot answer, whatever actually went wrong',
+      );
+    });
+
     test('restores the terminal modes when there is no answer', () async {
       final controller = StreamController<List<int>>();
       addTearDown(controller.close);
