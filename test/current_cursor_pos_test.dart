@@ -166,6 +166,28 @@ void main() {
       );
     });
 
+    test('does not ask where the output is no terminal', () async {
+      final stdin = _FakeStdin(const Stream<List<int>>.empty());
+      final stdout = _FakeStdout(hasTerminal: false);
+
+      await expectLater(
+        currentCursorPos(stdout, stdin),
+        throwsA(isA<UnsupportedError>()),
+      );
+      expect(
+        stdout.written,
+        isEmpty,
+        reason: 'a request written into a file or a pipe is noise nothing '
+            'there will answer',
+      );
+      expect(
+        stdin.log,
+        isEmpty,
+        reason: 'and the terminal is left in the modes it was in rather than '
+            'held out of them for the whole timeout',
+      );
+    });
+
     test('restores the terminal modes when there is no answer', () async {
       final controller = StreamController<List<int>>();
       addTearDown(controller.close);
@@ -321,7 +343,12 @@ final class _ClosingSubscription<T> implements StreamSubscription<T> {
 }
 
 final class _FakeStdout implements Stdout {
+  _FakeStdout({this.hasTerminal = true});
+
   final StringBuffer _buf = StringBuffer();
+
+  @override
+  final bool hasTerminal;
 
   String get written => _buf.toString();
 

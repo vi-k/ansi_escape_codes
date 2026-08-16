@@ -129,6 +129,9 @@ final class _NoRawModeStdin implements Stdin {
 
 final class _FakeStdout implements Stdout {
   @override
+  bool get hasTerminal => true;
+
+  @override
   void write(Object? object) {}
 
   @override

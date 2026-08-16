@@ -20,8 +20,10 @@ import '../parsing/control_functions/control_sequences.dart';
 /// input afterwards — pass a broadcast stream over it here.
 ///
 /// Throws an [UnsupportedError] naming what stopped it wherever no report can
-/// be had: the terminal stayed silent for [timeout], what came back was not a
-/// report, or [stdin] is no terminal to ask.
+/// be had: [stdout] is no terminal to ask — a redirected output is asked
+/// nothing at all, rather than sent a request into a file — the terminal
+/// stayed silent for [timeout], what came back was not a report, or [stdin] is
+/// no terminal to read the answer from.
 Future<(int, int)> currentCursorPos(
   Stdout stdout,
   Stdin stdin, {
@@ -30,6 +32,15 @@ Future<(int, int)> currentCursorPos(
 }) async {
   const errorText = 'Device Status Report not supported';
   List<int> report;
+
+  if (!stdout.hasTerminal) {
+    // `tabs` answers this same question by writing nothing; this one owes an
+    // answer back and has nowhere to get one, so it refuses instead. Asking
+    // anyway would put a CSI 6 n into whatever the output really is — a log
+    // file, a pipe — and hold the terminal out of its modes for the whole
+    // timeout, waiting on a reply that has nowhere to come from.
+    throw UnsupportedError('$errorText: the output is not a terminal');
+  }
 
   try {
     final keepEchoMode = stdin.echoMode;
