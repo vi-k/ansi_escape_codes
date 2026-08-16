@@ -26,5 +26,3 @@ export 'src/ready_to_use/sgr/rgb/fg_rgb.dart';
 export 'src/ready_to_use/sgr/rgb/underline_rgb.dart';
 export 'src/ready_to_use/sgr/sgr.dart';
 export 'src/ready_to_use/sgr/standard_colors/standard_colors.dart';
-export 'src/utils/current_cursor_pos.dart';
-export 'src/utils/tabs.dart';

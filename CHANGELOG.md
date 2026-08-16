@@ -54,14 +54,19 @@ Added:
 - The control function types the API returns — `ControlFunctionsSGR`,
   `ControlSequencesFunctions` and the rest — are exported from the main entry
   point.
-- `ansi_escape_codes.dart` brings the `String` extensions and the two terminal
-  utilities as well, so it is now what its name says: one import for all of it
-  but the raw byte tables of `ansi.dart`, which stand apart as they always
-  did — the ready-to-use strings are built from them, and neither import
-  brings the other. `extensions.dart` and `utils.dart` still bring the
-  extensions and the utilities alone, as `style.dart` brings the parser
-  without the tables of constants — the smaller imports are for a smaller
-  namespace, not for reaching something the main one lacks.
+- `ansi_escape_codes.dart` brings the `String` extensions as well, so it is
+  one import for all the string work: the ready-to-use strings, the styles,
+  the parser, the state, the control function tables and the extensions. Two
+  things stand outside it. `ansi.dart` always did — the ready-to-use strings
+  are built from its raw byte tables, and neither import brings the other. And
+  `utils.dart` does, because `tabs` and `currentCursorPos` talk to a terminal
+  in person through `dart:io`, and nothing else in the package touches a
+  platform library: bringing them in through the umbrella would tag the whole
+  package native-only for the sake of two names, and take the web and
+  WebAssembly away from the thousand that run anywhere. A test walks the
+  directives of each entry point and holds that line. `extensions.dart` and
+  `style.dart` still bring their smaller namespaces, which is what they are
+  for — not for reaching something the main import lacks.
 
 Verification:
 
