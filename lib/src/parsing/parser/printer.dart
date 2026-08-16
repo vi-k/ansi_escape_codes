@@ -227,7 +227,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   /// whether the opening has to be written again. It is null again by the time
   /// a whole line has been prepared, and only carries anything between the
   /// writes that make up one line.
-  Link? _writtenLink;
+  OscLink? _writtenLink;
 
   /// The hyperlink open in the text, whether or not it is open in the output,
   /// or null where none is.
@@ -240,7 +240,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
   ///
   /// It survives the close at the end of the line and dies where the text
   /// itself closes the link.
-  Link? _ambientLink;
+  OscLink? _ambientLink;
 
   /// Whether what has been written of the current line ends in a control
   /// string that never got its terminator, with nothing behind it to end it.
@@ -411,7 +411,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       // that opens one and does not close it would make everything printed
       // after it part of the link, so the close is written where the line
       // ends — the way a slice closes the link it opened.
-      if (m.entity case Link()) {
+      if (m.entity case OscLink()) {
         writtenLink = m.link;
       }
 
@@ -424,7 +424,7 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       //
       // An opening the line before never terminated is terminated here: the
       // text of this line follows it now, and would otherwise be read as part
-      // of the url — see [Link._reopening].
+      // of the url — see [OscLink._reopening].
       final entity = m.entity;
 
       var reopening = '';

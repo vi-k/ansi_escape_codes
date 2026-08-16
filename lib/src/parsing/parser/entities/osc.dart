@@ -3,7 +3,7 @@ part of '../parser.dart';
 /// An operating system command: `OSC ... ST`, the escape codes that talk to
 /// the terminal rather than to the screen.
 ///
-/// The one this package names is [Link]; the rest come back [OscUnknown].
+/// The one this package names is [OscLink]; the rest come back [OscUnknown].
 sealed class Osc extends ControlString {
   const Osc._(super.string) : super._();
 
@@ -20,7 +20,7 @@ sealed class Osc extends ControlString {
       // OSC 8 is `8 ; params ; uri`, and the uri may hold semicolons of its
       // own, so everything past the second one belongs to it.
       8 when params.length >= 3 =>
-        Link._(state.string, params.sublist(2).join(';')),
+        OscLink._(state.string, params.sublist(2).join(';')),
       _ => OscUnknown._(state.string),
     };
   }
@@ -165,7 +165,7 @@ String _firstNotEmpty(
 /// a printer starting a new line — is written from [string] and not built
 /// afresh from [url], so the parameters and the form of the terminator travel
 /// with it.
-final class Link extends Osc {
+final class OscLink extends Osc {
   /// The address the link points at, empty where the link is being closed.
   ///
   /// The parameters the sequence carried are not here; see the class doc.
@@ -189,13 +189,13 @@ final class Link extends Osc {
   /// Not `const`, and it cannot be: a `const` initializer admits neither a
   /// function call nor a `contains`, so a url could there be neither encoded
   /// nor so much as checked.
-  factory Link(String address) {
+  factory OscLink(String address) {
     final encoded = encodeControlBytes(address);
 
-    return Link._('${OSC}8;;$encoded$ST', encoded);
+    return OscLink._('${OSC}8;;$encoded$ST', encoded);
   }
 
-  const Link._(super.string, this.url) : super._();
+  const OscLink._(super.string, this.url) : super._();
 
   /// The bytes that open this link again somewhere else.
   ///
@@ -218,5 +218,5 @@ final class Link extends Osc {
   String get id => url.isEmpty ? 'linkClose' : 'link($url)';
 
   @override
-  String toString() => '$Link($url)';
+  String toString() => '$OscLink($url)';
 }

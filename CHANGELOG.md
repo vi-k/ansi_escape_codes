@@ -191,7 +191,7 @@ Fixed:
   clickable again exactly where the save was, and a save made where no link was
   open puts that away as readily — the restore leaves no link behind it, rather
   than the one the string was started inside.
-- An insertion left a hyperlink open. `Link` carries no style, and the closing
+- An insertion left a hyperlink open. `OscLink` carries no style, and the closing
   was worked out from the style alone, so text inserted with an unclosed
   `OSC 8` swallowed everything after it.
 - An unfinished escape sequence in the inserted text swallowed the original
@@ -242,7 +242,7 @@ Fixed:
   other four, so a `DCS` whose body happens to end in one is unterminated still
   — and one left unterminated is held back and given its terminator the way an
   unterminated `OSC` is.
-- `SaveCursor`, `RestoreCursor` and `Link` carried a `reset` as their text, so
+- `SaveCursor`, `RestoreCursor` and `OscLink` carried a `reset` as their text, so
   all three were equal to one another — an `Entity` compares by what it is
   written with — and none of them equalled the same entity read back by the
   parser.
@@ -494,6 +494,13 @@ Renamed:
   would reintroduce the shadowing this removes. A test holds the name open
   from the outside: it uses `dart:core.Match` beside a single import of this
   package, and stops compiling if the name is ever taken back.
+- The hyperlink entity is `OscLink`, not `Link`. `Link` shadowed `dart:io.Link`
+  --- a symbolic link --- and shadowed it the silent way `Match` used to shadow
+  `dart:core.Match`: an explicit import outranks the implicit one, so a
+  command-line tool, which almost always imports `dart:io`, got two errors that
+  named no package. The new name says which sequence it is, the way `EscCommon`
+  and `CsiCommon` do. A test holds `dart:io.Link` open from the outside and
+  stops compiling if the name is ever taken back.
 - `RESERVED` to `RESERVED_5F`, named after its byte rather than claiming a word
   that plain in the namespace this package exports.
 - `toStringAsEscapeSquences` to `toStringAsEscapeSequences`, which was missing
@@ -548,13 +555,14 @@ Breaking changes:
   `Color256.red`, whose index is the same colour, is what it becomes. The
   Fixed list below mentions the change as part of the bug it belongs to; it
   is named here because the compiler will name it first.
-- `Link(url)` is no longer `const`. It percent-escapes a control byte in the
-  address, as `link` does and for the same reason, and a `const` initializer
-  admits neither a function call nor a `contains` — so the address could there
-  be neither encoded nor so much as checked. `const Link('…')` has to lose the
-  keyword; nothing else about it moves. `Link.url` reads back the encoded
+- `OscLink(url)` — `Link(url)` before the rename above — is no longer `const`.
+  It percent-escapes a control byte in the address, as `link` does and for the
+  same reason, and a `const` initializer admits neither a function call nor a
+  `contains` — so the address could there be neither encoded nor so much as
+  checked. A `const Link('…')` has to lose the keyword along with the name;
+  nothing else about it moves. `OscLink.url` reads back the encoded
   address rather than the bytes handed in, so that it agrees with a parse of
-  `Link.string` and with the equality an `Entity` takes from those bytes.
+  `OscLink.string` and with the equality an `Entity` takes from those bytes.
 - The named control sequences print as themselves: `CursorUp(4)`,
   `CursorPos(3, 7)`, `EraseInPage(ErasePart.all)` where `Csi([CSI 4 CUU])` was
   written before. Nothing reads `toString` but a person and a golden test.

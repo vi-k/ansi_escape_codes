@@ -11,7 +11,7 @@ final class _PiecesResult<S extends State<S>> {
   /// Read off the walk at the end of it, the way [finalState] is: a link
   /// closed on the last line is closed, and a string that touched no link at
   /// all ends in the one it was seeded with.
-  final Link? finalLink;
+  final OscLink? finalLink;
 
   _PiecesResult._({
     required List<Piece<S>> pieces,

@@ -20,7 +20,7 @@ final class Piece<S extends State<S>> {
   /// link that code leaves behind it — the same way [state] is read. A link
   /// does not nest: an opening supersedes the one before it, and a close ends
   /// whatever was open.
-  final Link? link;
+  final OscLink? link;
 
   final _SgrResidual? _residual;
 

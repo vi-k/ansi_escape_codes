@@ -2,7 +2,7 @@ import '../ansi/c0.dart';
 import '../ansi/c1.dart';
 import '../internal/strings.dart';
 
-/// Link, in the older form a `BEL` closes.
+/// OscLink, in the older form a `BEL` closes.
 ///
 /// The same as [link] in every other way, terminator apart — see there for
 /// what becomes of [url] and of [text].
@@ -32,7 +32,7 @@ const String linkTextOpen = ST;
 /// See [linkOpen].
 const String linkClose = '${OSC}8;;$ST';
 
-/// Link.
+/// OscLink.
 ///
 /// A control byte in [url] is written as its percent-escape, because the body
 /// of an `OSC 8` cannot carry one: an `ESC` there ends the sequence where it

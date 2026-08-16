@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 import 'package:test/test.dart';
 
@@ -22,6 +24,17 @@ void main() {
       ];
 
       expect(words, ['one', 'two']);
+    });
+
+    test('dart:io Link is what Link means beside a single import', () {
+      // A hyperlink of this package's was called `Link` once, and shadowed
+      // this one the same silent way: a command-line tool almost always
+      // imports `dart:io`, and there `Link` is a symbolic link. Nothing is
+      // created here — a `Link` knows its path without touching the disk.
+      final link = Link('build/latest');
+
+      expect(link.path, 'build/latest');
+      expect(link, isA<FileSystemEntity>());
     });
 
     test('and the parser hands out pieces under a name of its own', () {

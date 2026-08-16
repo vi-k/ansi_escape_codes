@@ -92,7 +92,7 @@ final class Parser extends _ParserBase<Style> {
   /// to hand on — but it has to be reachable to be pinned, and from outside
   /// the package nothing else reaches it.
   @visibleForTesting
-  Parser.debugInsideLink(String input, Link initialLink)
+  Parser.debugInsideLink(String input, OscLink initialLink)
       : super(input, Style.terminalColors, initialLink: initialLink);
 }
 
@@ -115,13 +115,13 @@ final class StackedParser extends _ParserBase<Stack> {
 typedef _Seam<S extends State<S>> = ({
   int cut,
   S state,
-  Link? link,
+  OscLink? link,
   _SgrResidual? residual,
 });
 
 typedef _CursorSave<S extends State<S>> = ({
   S state,
-  Link? link,
+  OscLink? link,
   _SgrResidual? residual,
 });
 
@@ -144,7 +144,7 @@ final class _ParserBase<S extends State<S>> {
   /// line from the link the line before it left open, so that a link cut by a
   /// newline goes on being one link. A [Parser] over a whole string starts
   /// outside every link.
-  final Link? initialLink;
+  final OscLink? initialLink;
 
   Pieces<S>? _pieces;
   String? _plainString;
@@ -220,7 +220,7 @@ final class _ParserBase<S extends State<S>> {
   /// Reads the whole string, as [finalState] does.
   ///
   /// See also [linkAt].
-  Link? get finalLink => pieces._requireParsingResult.finalLink;
+  OscLink? get finalLink => pieces._requireParsingResult.finalLink;
 
   /// String length without ANSI escape codes, in UTF-16 code units.
   ///
@@ -305,7 +305,7 @@ final class _ParserBase<S extends State<S>> {
   /// Going back is allowed and starts the walk over.
   ///
   /// See also [finalLink].
-  Link? linkAt(int pos) {
+  OscLink? linkAt(int pos) {
     final piece = _pieceAt(pos);
 
     // Told apart by the piece, not by the link, the way the iterator's
@@ -507,8 +507,8 @@ final class _ParserBase<S extends State<S>> {
     // than put in a local function. A function over these three would close
     // over them, and closing over a variable that is written to boxes it: one
     // heap cell per slice, links in the string or none.
-    Link? writtenLink;
-    Link? heldLink;
+    OscLink? writtenLink;
+    OscLink? heldLink;
     var heldLinkCodes = '';
 
     // A control string of the slice's own that never terminated — a `DCS` no
@@ -579,7 +579,7 @@ final class _ParserBase<S extends State<S>> {
               // the bytes it was opened with: the text is shown inside that
               // link, and nothing the slice has read opened it. An opening
               // the input never terminated is terminated here, or it would
-              // swallow the text of the slice — see [Link._reopening].
+              // swallow the text of the slice — see [OscLink._reopening].
               final link = m.link;
               var reopening = '';
               if (writtenLink == null && link != null) {
@@ -640,7 +640,7 @@ final class _ParserBase<S extends State<S>> {
           if (!_isStatefulSgr(entity) &&
               pos >= start &&
               (end == null || pos <= end)) {
-            if (entity is Link) {
+            if (entity is OscLink) {
               // Held, and only where it changes what the slice has open: the
               // link the code leaves behind is what the slice is to be left
               // with, and a code saying what is said already — a close with
@@ -994,22 +994,22 @@ final class _ParserBase<S extends State<S>> {
   /// The link code that gives the seam its hyperlink back after the inserted
   /// text, or nothing where the insertion left the seam's link as it found it.
   ///
-  /// A [Link] carries no style, so the state says nothing about it and it has
-  /// to be put right on its own. Links do not nest — an opening supersedes
+  /// An [OscLink] carries no style, so the state says nothing about it and it
+  /// has to be put right on its own. Links do not nest — an opening supersedes
   /// whatever was open — so the seam's own opening is enough to take the tail
   /// back inside it, whether the insertion closed the link or left one of its
   /// own open; only a seam that stood outside every link is given a close.
   ///
   /// The opening is written in the bytes it was written in the first place —
-  /// [Link._reopening], so that the `id=` of it and the form of its
+  /// [OscLink._reopening], so that the `id=` of it and the form of its
   /// terminator are kept. Those same bytes are what tells the two links
   /// apart, the way `substring` tells them apart: an insertion ending inside
   /// the very link it landed in has nothing to give back.
   ///
   /// [seam] is the link the insertion landed in, [left] the one it left open;
-  /// named, because two [Link]s in a row are told apart by nothing but their
+  /// named, because two [OscLink]s in a row are told apart by nothing but their
   /// order.
-  String _linkBack({required Link? seam, required Link? left}) =>
+  String _linkBack({required OscLink? seam, required OscLink? left}) =>
       left == seam ? '' : seam?._reopening ?? linkClose;
 
   /// The place in [input] an insertion at the plain text [pos] goes to, the

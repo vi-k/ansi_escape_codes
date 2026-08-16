@@ -3,7 +3,7 @@ part of '../parser.dart';
 final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
   final Pieces<S> _parent;
   final S _initialState;
-  final Link? _initialLink;
+  final OscLink? _initialLink;
   final _SgrResidual? _initialResidual;
   final _CursorSave<S> _restoreFallback;
 
@@ -45,7 +45,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
   ///
   /// Told apart by the piece, not by the link: a closed link is a `null` of
   /// its own, and falling back to the seed would raise it from the dead.
-  Link? get currentLink {
+  OscLink? get currentLink {
     final current = _current;
 
     return current == null ? _initialLink : current.link;
@@ -189,7 +189,7 @@ final class _ParserIterator<S extends State<S>> implements Iterator<Piece<S>> {
     // on an empty url — leaves nothing open, and every other code leaves the
     // link as it found it.
     var link = switch (entity) {
-      Link(:final url) => url.isEmpty ? null : entity,
+      OscLink(:final url) => url.isEmpty ? null : entity,
       _ => currentLink,
     };
 

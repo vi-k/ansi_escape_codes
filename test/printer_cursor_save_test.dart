@@ -31,7 +31,7 @@ Style styleAt(String output, String marker) {
   return parser.stateAt(parser.indexOf(marker));
 }
 
-Link? linkAt(String output, String marker) {
+OscLink? linkAt(String output, String marker) {
   final parser = Parser(output);
   return parser.linkAt(parser.indexOf(marker));
 }

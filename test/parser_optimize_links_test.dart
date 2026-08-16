@@ -46,7 +46,7 @@ void main() {
     });
 
     test('closes the link the string was seeded inside', () {
-      final parser = Parser.debugInsideLink('abc', Link(url));
+      final parser = Parser.debugInsideLink('abc', OscLink(url));
 
       expect(parser.optimize(), 'abc$linkClose');
     });
