@@ -173,8 +173,10 @@ final class _Side {
 /// catches an answer that decayed along the way: a corpus the series
 /// consumed, a state the runs left somewhere else, a body that stops
 /// producing what its first run did. It does not catch a body that caches
-/// the *right* answer and hands it back for free — that one passes both
-/// calls, and only the ratio has anything left to say about it.
+/// the *right* answer and hands it back for free: that one passes both
+/// calls, and the ratio does not object either, since a body doing nothing
+/// twice lands near 1.00 and every upper band admits it. Only insert, whose
+/// floor runs the other way, would call such a body out.
 bool _observed(
   String name,
   _Side side,
@@ -369,19 +371,28 @@ List<String> Function() _sliceRun(int lines) {
       ];
 }
 
-/// The stack side hands back the state it walked to, not only the parser.
+/// The stack side hands back both halves of its answer, the plain length
+/// and the state it walked to.
 ///
-/// [StackedParser] reads lazily and keeps what it read, so a parser alone is
-/// no evidence of a walk: an observation that asked it for `finalState`
-/// would do the walk itself, and a body that had walked nowhere would still
-/// answer correctly — which is how a body measuring six thousand times less
-/// than it should stayed green. The record carries the state out of the
-/// timed call, where only the timed call could have produced it.
-(StackedParser, Stack) Function() _stackRun(int runs) {
+/// Two things had to leave the observation for this side to prove its work.
+/// [StackedParser] reads lazily and keeps what it read, so a parser is no
+/// evidence of a walk: an observation that asked it for `finalState` would
+/// do the walk itself, and a body that walked nowhere would still answer
+/// correctly. The state is no evidence either — the colour history
+/// saturates within the seven values read below, so a four-run corpus ends
+/// in the same [Stack] as a four-thousand-run one, and a body walking a
+/// decoy of four would still answer correctly.
+///
+/// The length is the one part of the answer that follows the size of the
+/// corpus, so producing it here is what makes this side incompressible: a
+/// body that walks less reports less. It is not paid for either — `length`
+/// forces the same parse `finalState` does, differing only in the buffer it
+/// fills, and measured alone it carries the same ratio.
+(int, Stack) Function() _stackRun(int runs) {
   final page = _stackPage(runs);
   return () {
     final parsed = StackedParser(page);
-    return (parsed, parsed.finalState);
+    return (parsed.length, parsed.finalState);
   };
 }
 
@@ -404,10 +415,10 @@ String _observeStrings(Object produced) {
 }
 
 String _observeStack(Object produced) {
-  // The state is read out of the record rather than off the parser: asking
-  // the parser again would let this observation do the walk the timer was
-  // there to measure.
-  final (parsed, finalState) = produced as (StackedParser, Stack);
+  // Both halves are read out of the record rather than off a parser: asking
+  // a parser anything here would let this observation do the work the timer
+  // was there to measure.
+  final (length, finalState) = produced as (int, Stack);
   final colors = <String>[];
   var state = finalState;
   colors.add('${state.foregroundColor}');
@@ -415,7 +426,7 @@ String _observeStack(Object produced) {
     state = state.resetForeground;
     colors.add('${state.foregroundColor}');
   }
-  return '${parsed.length}|${colors.join(',')}';
+  return '$length|${colors.join(',')}';
 }
 
 String _fnv1a32(Iterable<String> strings) {
