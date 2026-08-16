@@ -161,6 +161,13 @@ Fixed:
   it, where before it went out at once and was ended by the next write's
   reset --- which made `write('a' + title)` then `write('b')` show a `b` that
   the same bytes written in one go make part of the title.
+- `ESC 8` with no `ESC 7` in front of it left a non-default `defaultStyle`
+  behind. DECRC without DECSC clears the rendition, taking the terminal to its
+  own defaults rather than to the printer's, and the printer went on believing
+  its default style was still on --- so the transition for the text after it
+  wrote nothing and that text came out bare. The printer's own `Parser` read
+  its own output as saying so. The model now goes where the terminal goes and
+  writes the default style back on.
 - `ESC 7` / `ESC 8` lost their saved rendition, hyperlink and opaque SGR at
   every printer line or sink-write boundary, and a restore with no preceding
   save incorrectly used the previous chunk's seeded state. All four printers

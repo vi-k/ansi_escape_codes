@@ -393,6 +393,11 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
     // inside the line and again where it ends here.
     var heldOpening = '';
 
+    // Whether an `ESC 7` stands behind the piece being read, in this line or
+    // in one before it. A restore without one takes the terminal somewhere
+    // else than a restore with one — see below.
+    var saveInForce = _savedCursor != null;
+
     for (final m in parser.pieces) {
       // An SGR sequence says what the style is, and the style is written by
       // the transition below instead of being passed on. Everything else —
@@ -466,6 +471,20 @@ sealed class _PrinterBase<S extends State<S>> implements StringSink {
       }
       lastState = newState;
       writtenResidual = m._residual;
+
+      if (entity is SaveCursor) {
+        saveInForce = true;
+      } else if (entity is RestoreCursor && !saveInForce) {
+        // DECRC with no DECSC in front of it does not go where a restore of
+        // a real save goes: it clears the rendition, taking the terminal to
+        // its own defaults rather than to the ones this printer imposes. The
+        // model has to go there with it. Left at the projected state, it
+        // would read as though [defaultStyle] were still on, the transition
+        // for the text after would write nothing, and that text would come
+        // out bare — with the printer and its own output disagreeing about
+        // what it is wearing.
+        lastState = stateDefaults.toStyle();
+      }
     }
 
     // The line is over. What follows the opening held back is the close
