@@ -81,17 +81,14 @@ _SgrResidual? _advanceSgrResidual(
   );
 }
 
-bool _isStatefulSgr(Entity entity) {
-  if (entity is Sgr) {
-    return true;
-  }
-  if (entity is! CsiUnknown) {
-    return false;
-  }
-
-  final match = sgrRe.matchAsPrefix(entity.string);
-  return match != null && match.end == entity.string.length;
-}
+/// Whether the rendition branch writes [entity], rather than the output
+/// copying its bytes over as they came.
+///
+/// The parser answers this where it reads the sequence --- see
+/// [CsiUnknown._opaqueSgr] --- and it is asked here rather than worked out
+/// again, so that the two cannot disagree.
+bool _isStatefulSgr(Entity entity) =>
+    entity is Sgr || (entity is CsiUnknown && entity._opaqueSgr);
 
 String _renditionTransit({
   required Style from,

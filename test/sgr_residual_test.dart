@@ -67,6 +67,39 @@ void main() {
       expect(Parser('\x1B[1 mAB').substring(1), 'B');
     });
 
+    test('an SGR with a private byte past the first is written once', () {
+      // Only the first byte of a parameter string makes a sequence private,
+      // so these are ordinary `CSI ... m` whose parameters cannot be read:
+      // the parser puts them in the opaque branch, exactly as it does the
+      // overflowing number beside them here. An emitter that replays them
+      // from the branch and copies the bytes as well sends the terminal the
+      // same sequence twice, and the sequence is one nobody can vouch is
+      // idempotent.
+      for (final code in [
+        _overflow,
+        '\x1B[1<m',
+        '\x1B[99;<m',
+        '\x1B[31;>m',
+        '\x1B[1=m',
+      ]) {
+        expect(
+          Parser('${code}A').optimize(close: false),
+          '${code}A',
+          reason: code,
+        );
+        expect(
+          Parser('${code}AB').substring(0),
+          '${code}AB$reset',
+          reason: code,
+        );
+        expect(
+          Parser('${code}AB').substring(1),
+          '${code}B$reset',
+          reason: '$code: a slice beginning past it reopens it once',
+        );
+      }
+    });
+
     test('Stack reset reopens the visible lower frame', () {
       const input = '$bold$bold${_unknown}A${resetBoldAndDim}B';
       final output = StackedParser(input).optimize(close: false);

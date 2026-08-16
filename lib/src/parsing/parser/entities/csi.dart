@@ -40,12 +40,13 @@ sealed class Csi extends EscapeCode {
         _ => _named(state.string, function, params)
       };
     } on FormatException {
-      if (function == ControlSequencesFunctions.SGR) {
+      final isSgr = function == ControlSequencesFunctions.SGR;
+      if (isSgr) {
         final before = state.state.toStyle();
         final operation = _SgrOperation.opaque(state.string, before);
         state.residual = _advanceSgrResidual(state.residual, before, operation);
       }
-      return CsiUnknown._(state.string);
+      return CsiUnknown._(state.string, opaqueSgr: isSgr);
     }
   }
 
@@ -236,7 +237,22 @@ final class CsiParamNumbers extends CsiParam {
 /// A control sequence whose final bytes name no function the standard
 /// allots, or whose parameters could not be read as numbers.
 final class CsiUnknown extends Csi with UnrecognizedEscapeCode {
-  const CsiUnknown._(super.string) : super._();
+  const CsiUnknown._(super.string, {bool opaqueSgr = false})
+      : _opaqueSgr = opaqueSgr,
+        super._();
+
+  /// Whether the parser put this sequence into the opaque rendition branch.
+  ///
+  /// True of an `SGR` whose parameters it could not read as numbers: the
+  /// bytes are kept as they came and written again from the branch, so
+  /// whoever writes the output must not copy them as well.
+  ///
+  /// Set where the branch is written to, which is the point of it. The same
+  /// question used to be asked twice --- here by the parser, and there by a
+  /// pattern whose parameter class knew nothing of a private byte past the
+  /// first --- and the two answers could differ, which sent the terminal the
+  /// same sequence twice.
+  final bool _opaqueSgr;
 
   @override
   String toString() => '$Csi(${toStringAsEscapeSequences()})';

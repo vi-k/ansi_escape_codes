@@ -153,6 +153,15 @@ Performance:
 
 Fixed:
 
+- An `SGR` carrying a private byte past the first --- `CSI 1 < m`, `CSI 99 ; < m`
+  --- was written to the terminal twice. Only the first byte of a parameter
+  string makes a sequence private use, so these are ordinary `CSI ... m` whose
+  parameters cannot be read: the parser puts them in the opaque rendition
+  branch and the branch writes them again, while the output also copied their
+  bytes over as they came. Two places were answering "is this a rendition?"
+  --- the parser where it reads the sequence, and a pattern whose parameter
+  class knew nothing of a private byte past the first --- and the answers could
+  differ. Only the parser answers it now.
 - A write to `SinkPrinter` or `StackedSinkPrinter` that stopped in the middle
   of a sequence corrupted it. Every write is dressed on its own and the
   dressing opens with a reset, so that reset landed between the halves and the
