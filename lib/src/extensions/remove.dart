@@ -120,6 +120,16 @@ extension StringRemoveEscapeCodesExtension on String {
 
   /// Returns the length of the string without escape codes.
   ///
+  /// In UTF-16 code units, the unit `String.length` counts — not runes, not
+  /// grapheme clusters, and not columns on a terminal. The three part ways
+  /// on ordinary text: an emoji outside the basic plane answers 2 for one
+  /// rune, a decomposed accent answers 2 for one character the reader sees,
+  /// and `世界` answers 2 while occupying four columns. So this is the width
+  /// to pad a string to only where the text is known to be narrow and
+  /// precomposed; for laying out arbitrary text in a terminal it is the
+  /// wrong measure, and no measure taken from a Dart string alone is the
+  /// right one.
+  ///
   /// The cleaned string is never built: the codes are found by the pattern
   /// [ansiRemoveEscapeCodes] takes them out by, and what they take up is
   /// counted off the length — the answer [ansiRemoveEscapeCodes] would have

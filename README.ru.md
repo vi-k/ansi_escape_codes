@@ -797,6 +797,9 @@ void write(String line) {
 }
 ```
 
+`stdout` и `FileMode` — из `dart:io`, а не из этого пакета; `logFile` — тот
+файл, который открыла сама программа.
+
 А сообщение, пришедшее уже оформленным со стороны, — это тот самый случай,
 ради которого написан [StackedPrinter](#stackedprinter): что бы сообщение ни
 открыло, в конце оно будет закрыто, и следующая строка начнётся в том стиле,
@@ -830,12 +833,12 @@ import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 const text = '$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ';
 final parser = Parser(text);
 parser.pieces.forEach(print);
-// Piece<Style>(start: 0, end: 4, entity: Sgr(bold), state: Style(bold))
-// Piece<Style>(start: 4, end: 10, entity: Text(' Bold '), state: Style(bold))
-// Piece<Style>(start: 10, end: 15, entity: Sgr(fgCyan), state: Style(bold, foreground: Color16.cyan))
-// Piece<Style>(start: 15, end: 26, entity: Text(' Bold+cyan '), state: Style(bold, foreground: Color16.cyan))
-// Piece<Style>(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: Style(foreground: Color16.cyan))
-// Piece<Style>(start: 31, end: 37, entity: Text(' Cyan '), state: Style(foreground: Color16.cyan))
+// Piece<Style>(start: 0, end: 4, entity: Sgr(bold), state: Style(bold), link: null)
+// Piece<Style>(start: 4, end: 10, entity: Text(' Bold '), state: Style(bold), link: null)
+// Piece<Style>(start: 10, end: 15, entity: Sgr(fgCyan), state: Style(bold, foreground: Color16.cyan), link: null)
+// Piece<Style>(start: 15, end: 26, entity: Text(' Bold+cyan '), state: Style(bold, foreground: Color16.cyan), link: null)
+// Piece<Style>(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: Style(foreground: Color16.cyan), link: null)
+// Piece<Style>(start: 31, end: 37, entity: Text(' Cyan '), state: Style(foreground: Color16.cyan), link: null)
 ```
 
 Так можно, например, убрать все escape-коды:
@@ -1434,6 +1437,8 @@ tabs(tabs: [8, 4, 4]); // одна позиция через 8 колонок, �
 ```dart
 final (row, col) = await currentCursorPos(stdout, stdin);
 ```
+
+`stdout` и `stdin` здесь — из `dart:io`, а не из этого пакета.
 
 По умолчанию терминалу даётся 100 миллисекунд на ответ; терминал, который не
 отвечает вовсе, получает `UnsupportedError`. Stdin можно слушать только один

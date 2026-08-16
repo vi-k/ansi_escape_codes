@@ -803,6 +803,9 @@ void write(String line) {
 }
 ```
 
+`stdout` and `FileMode` come from `dart:io`, not from this package; `logFile`
+is whatever file the program opened.
+
 And a message that arrives already styled from elsewhere is the case
 [StackedPrinter](#stackedprinter) was written for: whatever the message opens is
 closed at its end, and the next line starts in the style it should.
@@ -834,12 +837,12 @@ import 'package:ansi_escape_codes/ansi_escape_codes.dart';
 const text = '$bold Bold $fgCyan Bold+cyan $resetBoldAndDim Cyan ';
 final parser = Parser(text);
 parser.pieces.forEach(print);
-// Piece<Style>(start: 0, end: 4, entity: Sgr(bold), state: Style(bold))
-// Piece<Style>(start: 4, end: 10, entity: Text(' Bold '), state: Style(bold))
-// Piece<Style>(start: 10, end: 15, entity: Sgr(fgCyan), state: Style(bold, foreground: Color16.cyan))
-// Piece<Style>(start: 15, end: 26, entity: Text(' Bold+cyan '), state: Style(bold, foreground: Color16.cyan))
-// Piece<Style>(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: Style(foreground: Color16.cyan))
-// Piece<Style>(start: 31, end: 37, entity: Text(' Cyan '), state: Style(foreground: Color16.cyan))
+// Piece<Style>(start: 0, end: 4, entity: Sgr(bold), state: Style(bold), link: null)
+// Piece<Style>(start: 4, end: 10, entity: Text(' Bold '), state: Style(bold), link: null)
+// Piece<Style>(start: 10, end: 15, entity: Sgr(fgCyan), state: Style(bold, foreground: Color16.cyan), link: null)
+// Piece<Style>(start: 15, end: 26, entity: Text(' Bold+cyan '), state: Style(bold, foreground: Color16.cyan), link: null)
+// Piece<Style>(start: 26, end: 31, entity: Sgr(resetBoldAndDim), state: Style(foreground: Color16.cyan), link: null)
+// Piece<Style>(start: 31, end: 37, entity: Text(' Cyan '), state: Style(foreground: Color16.cyan), link: null)
 ```
 
 In this way we can, for example, remove all escape codes:
@@ -1435,6 +1438,8 @@ and ends the run there.
 ```dart
 final (row, col) = await currentCursorPos(stdout, stdin);
 ```
+
+`stdout` and `stdin` here are `dart:io`'s, not this package's.
 
 The terminal is given 100 milliseconds to answer by default; a terminal that
 does not answer at all throws `UnsupportedError`. Stdin can only be listened to

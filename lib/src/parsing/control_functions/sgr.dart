@@ -128,28 +128,28 @@ enum ControlFunctionsSGR {
   resetFg, // 39
 
   /// See [sgr.bgBlack] and [sgr.BG_BLACK].
-  bgBlack, // 30
+  bgBlack, // 40
 
   /// See [sgr.bgRed] and [sgr.BG_RED].
-  bgRed, // 31
+  bgRed, // 41
 
   /// See [sgr.bgGreen] and [sgr.BG_GREEN].
-  bgGreen, // 32
+  bgGreen, // 42
 
   /// See [sgr.bgYellow] and [sgr.BG_YELLOW].
-  bgYellow, // 33
+  bgYellow, // 43
 
   /// See [sgr.bgBlue] and [sgr.BG_BLUE].
-  bgBlue, // 34
+  bgBlue, // 44
 
   /// See [sgr.bgMagenta] and [sgr.BG_MAGENTA].
-  bgMagenta, // 35
+  bgMagenta, // 45
 
   /// See [sgr.bgCyan] and [sgr.BG_CYAN].
-  bgCyan, // 36
+  bgCyan, // 46
 
   /// See [sgr.bgWhite] and [sgr.BG_WHITE].
-  bgWhite, // 37
+  bgWhite, // 47
 
   /// See [sgr.bg256Open], [sgr.bg256Close], [sgr.bg256] and [sgr.BACKGROUND].
   bg, // 48
@@ -324,7 +324,7 @@ enum ControlFunctionsSGR {
   bgHighYellow, // 103
 
   /// See [sgr.bgHighBlue] and [sgr.BG_HIGH_BLUE].
-  bgHighBlue, // 1010
+  bgHighBlue, // 104
 
   /// See [sgr.bgHighMagenta] and [sgr.BG_HIGH_MAGENTA].
   bgHighMagenta, // 105
