@@ -803,6 +803,9 @@ void write(String line) {
 }
 ```
 
+`stdout` and `FileMode` come from `dart:io`, not from this package; `logFile`
+is whatever file the program opened.
+
 And a message that arrives already styled from elsewhere is the case
 [StackedPrinter](#stackedprinter) was written for: whatever the message opens is
 closed at its end, and the next line starts in the style it should.
@@ -1435,6 +1438,8 @@ and ends the run there.
 ```dart
 final (row, col) = await currentCursorPos(stdout, stdin);
 ```
+
+`stdout` and `stdin` here are `dart:io`'s, not this package's.
 
 The terminal is given 100 milliseconds to answer by default; a terminal that
 does not answer at all throws `UnsupportedError`. Stdin can only be listened to
