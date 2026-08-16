@@ -74,6 +74,10 @@ Verification:
   coverage artifact, and runs a separate warmed complexity guard. The ordinary
   complexity assertions in `test/performance_guards_test.dart` remain
   deterministic and timer-free.
+- The complexity guard times the single implementation each scenario side has,
+  checks the work that implementation produced both before and after the timing
+  series, and holds the band against the median of the paired ratios rather
+  than against a ratio of separately sorted medians.
 
 Performance:
 

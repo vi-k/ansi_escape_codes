@@ -97,7 +97,9 @@ dart pub publish --dry-run   # ожидается 0 предупреждений
 - **`memory_guard.dart`** держит удержание памяти в полосе, откалиброванной
   на конкретных машинах; актуальные числа — в `docs/handoff.md`.
 - **`complexity_guard.dart`** отдельно держит wall-clock complexity: это
-  прогретый standalone process с попарными медианами, только для stable SDK.
+  прогретый standalone process, только для stable SDK. Наблюдение
+  произведённой работы он сверяет до серии замеров и после неё, а полосе
+  предъявляет медиану попарных отношений.
   Complexity assertions в `test/performance_guards_test.dart` детерминированы
   и timer-free; нулевой аргумент complexity guard проверяется самостоятельным
   запуском, а не test scheduler.
