@@ -18,6 +18,12 @@ import '../parsing/control_functions/control_sequences.dart';
 /// [input] is where the answer is read from, [stdin] by default. A [Stdin] can
 /// only be listened to once, so to ask more than once — or to keep reading the
 /// input afterwards — pass a broadcast stream over it here.
+///
+/// Throws an [UnsupportedError] naming what stopped it wherever no report can
+/// be had: [stdout] is no terminal to ask — a redirected output is asked
+/// nothing at all, rather than sent a request into a file — the terminal
+/// stayed silent for [timeout], what came back was not a report, or [stdin] is
+/// no terminal to read the answer from.
 Future<(int, int)> currentCursorPos(
   Stdout stdout,
   Stdin stdin, {
@@ -27,11 +33,21 @@ Future<(int, int)> currentCursorPos(
   const errorText = 'Device Status Report not supported';
   List<int> report;
 
+  if (!stdout.hasTerminal) {
+    // `tabs` answers this same question by writing nothing; this one owes an
+    // answer back and has nowhere to get one, so it refuses instead. Asking
+    // anyway would put a CSI 6 n into whatever the output really is — a log
+    // file, a pipe — and hold the terminal out of its modes for the whole
+    // timeout, waiting on a reply that has nowhere to come from.
+    throw UnsupportedError('$errorText: the output is not a terminal');
+  }
+
   try {
     final keepEchoMode = stdin.echoMode;
     final keepLineMode = stdin.lineMode;
     var echoModeOff = false;
     var lineModeOff = false;
+    StreamSubscription<List<int>>? subscription;
 
     try {
       stdin.echoMode = false;
@@ -41,103 +57,124 @@ Future<(int, int)> currentCursorPos(
 
       report = await _readReport(
         input ?? stdin,
+        (taken) => subscription = taken,
         () => stdout.write('${CSI}6$DSR'),
         timeout,
       );
     } finally {
+      // The modes go back before the input is let go of, and that order is
+      // the whole of it: cancelling a subscription to the real stdin closes
+      // the descriptor the modes are set through, so a restore written
+      // behind the cancel throws instead of landing. The caller would be
+      // left at a terminal with no echo and told that the terminal cannot
+      // report its cursor — while it just had.
+      //
       // Line mode first, mirroring the way they were turned off: Windows
       // lets echo come back only once line mode is on. Nested, so a throw
       // restoring one does not keep the other from being restored, and
       // only what actually changed is put back — a stdin that refused a
-      // change is not asked to undo it.
+      // change is not asked to undo it. The cancel is nested outside both,
+      // so the input is let go of even where a restore throws.
       try {
-        if (lineModeOff) {
-          stdin.lineMode = keepLineMode;
+        try {
+          if (lineModeOff) {
+            stdin.lineMode = keepLineMode;
+          }
+        } finally {
+          if (echoModeOff) {
+            stdin.echoMode = keepEchoMode;
+          }
         }
       } finally {
-        if (echoModeOff) {
-          stdin.echoMode = keepEchoMode;
-        }
+        await subscription?.cancel();
       }
     }
-  } on Object catch (_, stacktrace) {
+  } on Object catch (error, stacktrace) {
+    // The reason travels in the message. Everything that can go wrong in
+    // here comes back as the same refusal --- a terminal that will not
+    // answer, a stdin that is not a terminal at all, an input already
+    // listened to somewhere else --- and a refusal naming no reason reads
+    // as the first of those whichever of them it was.
     Error.throwWithStackTrace(
-      UnsupportedError(errorText),
+      UnsupportedError('$errorText: $error'),
       stacktrace,
     );
   }
 
-  if (report.length < 6) {
+  // CPR = CSI n ; m R, so the numbers lie between the CSI and the final R:
+  // two of them, one semicolon, and nothing else.
+  final fields = String.fromCharCodes(report, 2, report.length - 1).split(';');
+  if (fields.length != 2) {
+    // A reply carrying a third parameter is a reply to something else --- a
+    // DECXCPR names the page as well --- and reading the two on either side
+    // of the first semicolon would hand back a position that looks right
+    // and is not.
     throw UnsupportedError(errorText);
   }
 
-  var row = 0;
-  var col = 0;
-  var isRow = true;
-
-  // CPR = CSI n;m R, so the numbers lie between the CSI and the final R.
-  for (var i = 2; i < report.length - 1; i++) {
-    final char = report[i];
-
-    if (char == 0x3B) {
-      isRow = false;
-    } else if (char >= 0x30 && char <= 0x39) {
-      final digit = char - 0x30;
-      if (isRow) {
-        row = row * 10 + digit;
-      } else {
-        col = col * 10 + digit;
-      }
-    } else {
-      throw UnsupportedError(errorText);
-    }
-  }
-
-  if (isRow) {
+  final row = _position(fields.first);
+  final col = _position(fields.last);
+  if (row == null || col == null) {
     throw UnsupportedError(errorText);
   }
 
   return (row, col);
 }
 
+/// The number [field] carries, where it carries one a terminal could report.
+///
+/// `null` for everything else: an empty parameter, and a number so long that
+/// multiplying it out would wrap around and answer with whatever was left.
+/// The standard counts rows and columns from 1, so a zero is no position
+/// either — it is what a reply of empty parameters used to come back as.
+int? _position(String field) {
+  final value = int.tryParse(field);
+
+  return value == null || value < 1 ? null : value;
+}
+
 /// Asks for the report and waits for it, passing over anything else that
 /// arrives — typed characters, and the sequences a pressed key sends.
+///
+/// The subscription is handed to [taking] as soon as it is taken, and letting
+/// it go is the caller's to do rather than this function's: cancelling it
+/// closes the real stdin, and that has to happen behind the caller putting the
+/// terminal modes back, not in front of it.
 Future<List<int>> _readReport(
   Stream<List<int>> input,
+  void Function(StreamSubscription<List<int>> subscription) taking,
   void Function() request,
   Duration timeout,
-) async {
+) {
   final completer = Completer<List<int>>();
   final buf = <int>[];
 
-  final subscription = input.listen(
-    (chunk) {
-      buf.addAll(chunk);
+  taking(
+    input.listen(
+      (chunk) {
+        buf.addAll(chunk);
 
-      final report = _extractReport(buf);
-      if (report != null && !completer.isCompleted) {
-        completer.complete(report);
-      }
-    },
-    onError: (Object error, StackTrace stackTrace) {
-      if (!completer.isCompleted) {
-        completer.completeError(error, stackTrace);
-      }
-    },
-    onDone: () {
-      if (!completer.isCompleted) {
-        completer.completeError(StateError('The input is closed'));
-      }
-    },
+        final report = _extractReport(buf);
+        if (report != null && !completer.isCompleted) {
+          completer.complete(report);
+        }
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        if (!completer.isCompleted) {
+          completer.completeError(error, stackTrace);
+        }
+      },
+      onDone: () {
+        if (!completer.isCompleted) {
+          completer.completeError(StateError('The input is closed'));
+        }
+      },
+    ),
   );
 
-  try {
-    request();
+  request();
 
-    return await completer.future.timeout(timeout);
-  } finally {
-    await subscription.cancel();
-  }
+  return completer.future.timeout(timeout);
 }
 
 /// The Cursor Position Report inside [buf], once all of it has arrived.

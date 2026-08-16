@@ -61,6 +61,49 @@ void main() {
       }
     });
 
+    test('sets no stop past the width, however far past it lies', () {
+      // The largest int there is, spelt out rather than written down:
+      // `avoid_js_rounded_ints` is on, and this is the value the running
+      // total has to survive being added to.
+      final beyond = int.parse('9223372036854775807');
+
+      final calls = <String, void Function(Stdout stdout)>{
+        'tabs: [4, beyond]': (stdout) =>
+            tabs(tabs: [4, beyond], stdout: stdout),
+        'tabs: [4, beyond], defaultTab: 4': (stdout) =>
+            tabs(tabs: [4, beyond], defaultTab: 4, stdout: stdout),
+        'tabs: [beyond], defaultTab: 1': (stdout) =>
+            tabs(tabs: [beyond], defaultTab: 1, stdout: stdout),
+      };
+
+      for (final MapEntry(key: what, value: call) in calls.entries) {
+        final stdout = _FakeStdout(terminalColumns: 20);
+
+        expect(
+          () => call(stdout),
+          returnsNormally,
+          reason: '$what: a total that wraps around goes negative, and a '
+              'negative one never reaches the width to stop at',
+        );
+        expect(
+          stdout.written,
+          isNot(contains('$beyond')),
+          reason: '$what: a stop that far out is no stop this terminal has',
+        );
+      }
+    });
+
+    test('a stop past the width ends the run, as one just past it does', () {
+      final beyond = int.parse('9223372036854775807');
+      final far = _FakeStdout(terminalColumns: 20);
+      final near = _FakeStdout(terminalColumns: 20);
+
+      tabs(tabs: [4, beyond], defaultTab: 4, stdout: far);
+      tabs(tabs: [4, 100], defaultTab: 4, stdout: near);
+
+      expect(far.written, near.written);
+    });
+
     test('rejects a stop that would never advance the cursor', () {
       final stdout = _FakeStdout(terminalColumns: 20);
 
