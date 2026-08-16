@@ -14,6 +14,13 @@ import '../ready_to_use/csi.dart';
 /// keeps setting one every that many columns until the width of the terminal
 /// is reached.
 ///
+/// The numbers are distances rather than column numbers, and the run starts
+/// at the left edge: `tabs: [8, 4, 4]` sets its stops in columns 9, 13 and 17.
+/// [defaultTab] sets one in the first column as well, which [tabs] does not —
+/// a run laid out from the left begins at the left. Forward tabulation never
+/// sees that difference, `HT` going to the first stop right of the cursor;
+/// a backward one does.
+///
 /// Every stop advances the cursor, so [defaultTab] and each element of [tabs]
 /// must be greater than `0`, otherwise a [RangeError] is thrown and nothing is
 /// written. A distance reaching past the width sets no stop and ends the run

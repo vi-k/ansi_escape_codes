@@ -1385,11 +1385,16 @@ bring back the ones it started with:
 
 ```dart
 tabs(defaultTab: 4); // a stop every 4 columns, to the width of the terminal
-tabs(tabs: [8, 4, 4]); // stops at 8, 12 and 16
+tabs(tabs: [8, 4, 4]); // one stop 8 columns along, then two 4 more each
 ```
 
+The numbers are distances, not column numbers, and the run starts at the left
+edge — so `[8, 4, 4]` sets its stops in columns 9, 13 and 17. `defaultTab`
+sets one in the first column as well, which a list does not.
+
 Nothing is written when `stdout` is not a terminal: there are no stops to set
-and no width to fit them into.
+and no width to fit them into. A distance reaching past the width sets no stop
+and ends the run there.
 
 `currentCursorPos` asks the terminal where the cursor is — `CSI 6 n` out, and
 `CSI n ; m R` back through stdin:
