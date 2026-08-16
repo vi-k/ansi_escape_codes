@@ -191,8 +191,13 @@ bool _observed(
     return false;
   }
   if (witness != side.expected) {
+    // An 'after' mismatch says more than a wrong answer: this side answered
+    // correctly before the series and stopped doing so somewhere inside it.
+    final decay =
+        when == 'after' ? '; the work degenerated along the series' : '';
     failures.add(
-      '$name ${side.label} $when: expected ${side.expected}, got $witness',
+      '$name ${side.label} $when: expected ${side.expected}, '
+      'got $witness$decay',
     );
     return false;
   }

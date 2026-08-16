@@ -79,9 +79,11 @@ jobs:
 
       - name: Check parser operations keep their expected complexity
         if: matrix.sdk == 'stable'
-        # Wall-clock ratios need their own warmed process. The stable SDK
-        # only: benchmark/complexity_guard.dart carries the calibrated corpus,
-        # paired medians and bands, which do not describe a different Dart.
+        # Wall-clock ratios need their own warmed process. Each side reads
+        # the work it produced before the timing series and again after it,
+        # and the band is shown the median of the paired ratios. The stable
+        # SDK only: benchmark/complexity_guard.dart carries the calibrated
+        # corpus and bands, which do not describe a different Dart.
         run: dart run benchmark/complexity_guard.dart
 
       - name: Check the docs build

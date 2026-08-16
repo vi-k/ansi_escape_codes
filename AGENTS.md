@@ -46,7 +46,7 @@
 Dart-пакет для разбора и печати строк с ANSI-escape-кодами. Публичных
 входов пять: `lib/ansi_escape_codes.dart`, `lib/ansi.dart`,
 `lib/extensions.dart`, `lib/style.dart`, `lib/utils.dart`; исходники — в
-`lib/src/`, тесты — в `test/` (68 файлов), бенчмарки — в `benchmark/`,
+`lib/src/`, тесты — в `test/` (69 файлов), бенчмарки — в `benchmark/`,
 инструменты — в `tool/`, примеры — в `example/`.
 
 **Как оно устроено внутри — `docs/architecture.md`**: конвейер разбора,
