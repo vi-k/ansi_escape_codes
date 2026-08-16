@@ -405,6 +405,10 @@ sealed class State<S extends State<S>> {
     // to the reset rather than being a set of their own, and [skipSet] leaves
     // them standing: with them gone, half of a joint reset would go out and
     // carry off the half of the pair that was meant to survive it.
+    //
+    // Where the reset itself is skipped there is nothing to survive: the
+    // `CSI 22` was not written, so whatever was on is still on, and putting
+    // it back would be a byte saying what the terminal already knows.
     final jointIntensityReset =
         isBold && !other.isBold || isDim && !other.isDim;
 
@@ -415,7 +419,7 @@ sealed class State<S extends State<S>> {
         if (backgroundColor != otherBackground && otherBackground is Color16)
           '${_colorIndex(40, 100, otherBackground)}',
       ],
-      if (jointIntensityReset) ...[
+      if (jointIntensityReset && !skipReset) ...[
         if (other.isBold) '1',
         if (other.isDim) '2',
       ] else if (!skipSet) ...[

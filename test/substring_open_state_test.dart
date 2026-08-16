@@ -29,6 +29,36 @@ void main() {
       );
     });
 
+    test('but not where the reset it survives was skipped', () {
+      // With skipReset the CSI 22 is not written, so nothing took the
+      // survivor off and nothing has to put it back. Where the property
+      // was not on to begin with the set is still needed.
+      const boldDim = Style(bold: true, dim: true);
+      const boldOnly = Style(bold: true);
+      const dimOnly = Style(dim: true);
+
+      expect(
+        boldDim.transitToPart(boldOnly, skipReset: true),
+        isEmpty,
+        reason: 'bold was on and stayed on',
+      );
+      expect(
+        boldDim.transitToPart(dimOnly, skipReset: true),
+        isEmpty,
+        reason: 'dim was on and stayed on',
+      );
+      expect(
+        boldOnly.transitToPart(dimOnly, skipReset: true),
+        '\x1B[2m',
+        reason: 'dim was not on, so it has to be set',
+      );
+      expect(
+        dimOnly.transitToPart(boldOnly, skipReset: true),
+        '\x1B[1m',
+        reason: 'bold was not on, so it has to be set',
+      );
+    });
+
     test('a slice left open stands where the string stands', () {
       const input = '\x1B[1;2mAB\x1B[22;1m';
       final parser = Parser(input);
