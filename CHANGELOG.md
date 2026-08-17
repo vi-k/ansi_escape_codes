@@ -1,3 +1,15 @@
+## 4.0.1
+
+Changed:
+
+- The `meta` constraint reaches down to 1.15.0 again, so that the package
+  resolves everywhere its own SDK constraint says it does. Flutter pins `meta`
+  to an exact version out of its SDK, and Flutter 3.27 — the line carrying
+  Dart 3.6, this package's floor — pins 1.15.0; against `^1.16.0` that was a
+  version solving failure, which made the real Flutter floor 3.29. Nothing in
+  the API or its behaviour changes: the annotations used are `@immutable`,
+  `@internal` and `@visibleForTesting`, all older than 1.15.0.
+
 ## 4.0.0
 
 Added:

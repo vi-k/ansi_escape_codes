@@ -16,7 +16,15 @@ environment:
   sdk: ^3.6.0
 
 dependencies:
-  meta: ^1.16.0
+  # The floor is 1.15.0 and stays there: Flutter pins meta to an exact
+  # version out of its own SDK, and Flutter 3.27 — the line that carries
+  # Dart 3.6, the floor declared above — pins 1.15.0. A `^1.16.0`
+  # constraint therefore failed version solving on that line and lifted
+  # the real Flutter floor to 3.29, one Dart version above what this
+  # package claims to support. Nothing here needs the newer meta: the
+  # annotations used are `@immutable`, `@internal` and `@visibleForTesting`,
+  # and all three are older than 1.15.0.
+  meta: ^1.15.0
 
 dev_dependencies:
   # Never imported: tool/check_entry_points.dart reads the export
