@@ -4,20 +4,20 @@ Changed:
 
 - The `meta` constraint reaches down to 1.15.0 again, so that the package
   resolves everywhere its own SDK constraint says it does. Flutter pins `meta`
-  to an exact version out of its SDK, and Flutter 3.27 — the line carrying
-  Dart 3.6, this package's floor — pins 1.15.0; against `^1.16.0` that was a
-  version solving failure, which made the real Flutter floor 3.29. Nothing in
-  the API or its behaviour changes: the annotations used are `@immutable`,
-  `@internal` and `@visibleForTesting`, all older than 1.15.0.
+  to an exact version out of its SDK, and Flutter 3.27 — the line carrying Dart
+  3.6, this package's floor — pins 1.15.0; against `^1.16.0` that was a version
+  solving failure, which made the real Flutter floor 3.29. Nothing in the API
+  or its behaviour changes: the annotations used are `@immutable`, `@internal`
+  and `@visibleForTesting`, all older than 1.15.0.
 
 ## 4.0.0
 
 Added:
 
 - `State`, `Style`, `Stack` and `Styles` now model the standard primary and
-  nine alternative fonts, fraktur, curly/dotted/dashed underline,
-  proportional spacing and five ideogram renditions. Existing enum case
-  names and style APIs remain source-compatible.
+  nine alternative fonts, fraktur, curly/dotted/dashed underline, proportional
+  spacing and five ideogram renditions. Existing enum case names and style APIs
+  remain source-compatible.
 - `insertBefore` and `insertAfter` on `Parser` and `StackedParser`, with the
   `ansiInsertBefore` and `ansiInsertAfter` string extensions. Text put into a
   styled string takes the style of the place it lands in and gives it back, so
@@ -66,11 +66,11 @@ Added:
 - The control function types the API returns — `ControlFunctionsSGR`,
   `ControlSequencesFunctions` and the rest — are exported from the main entry
   point.
-- `ansi_escape_codes.dart` brings the `String` extensions as well, so it is
-  one import for all the string work: the ready-to-use strings, the styles,
-  the parser, the state, the control function tables and the extensions. Two
-  things stand outside it. `ansi.dart` always did — the ready-to-use strings
-  are built from its raw byte tables, and neither import brings the other. And
+- `ansi_escape_codes.dart` brings the `String` extensions as well, so it is one
+  import for all the string work: the ready-to-use strings, the styles, the
+  parser, the state, the control function tables and the extensions. Two things
+  stand outside it. `ansi.dart` always did — the ready-to-use strings are built
+  from its raw byte tables, and neither import brings the other. And
   `utils.dart` does, because `tabs` and `currentCursorPos` talk to a terminal
   in person through `dart:io`, and nothing else in the package touches a
   platform library: bringing them in through the umbrella would tag the whole
@@ -98,48 +98,46 @@ Verification:
 
 Performance:
 
-- The scanner finds the next escape code by `indexOf` rather than by the
-  regex engine: text with no escape codes at all is parsed and stripped well
-  over a hundred times faster (about 1 ms down to under 9 µs), a coloured
-  page parses roughly 45-50 % faster across `matches`, `removeAll`,
-  `optimize` and `showControlFunctions`, and a page that is mostly escape
-  codes is not worse — about a fifth faster rather than a wash.
-  `ansiHasEscapeCodes` and friends answer a clean string with
-  `contains(ESC)` outright, without touching a pattern, and
-  `lengthWithoutEscapeCodes` counts without building the cleaned string —
-  the same walk over the same matches, so what is saved is the copy and not
-  the time: a 5 MB page is measured with megabytes less at the peak — some
-  8 to some 20, depending on the page — and takes about as long as it
-  did.
-- `substring` and the insert seams keep their place the way `stateAt`
-  always did, instead of walking from the start each time: slicing a
-  200-line document through one parser is about three times faster (3.95 ms
-  down to 1.33 ms), and the shape of the cost is linear now, not quadratic
-  — the guard that doubles the input and watches the time saw a cost of ×3.73
-  where it now sees ×1.65, a linear cost being ×2.
-- An escape code is told apart by its second byte instead of four named
-  regex groups, a simple SGR function comes from a cached table instead of
-  being rebuilt, and the matched text is read out of the match once: a
-  simpler, more correct hot path, though its own saving lands inside the
-  numbers above rather than as one of its own — isolated, it measures at
-  noise level once the scanner and slicing fixes are in. One visible side
-  effect: two `SgrSimpleFunction`s built for the same code used to be two
-  separate objects, and were never `==` to each other either, since the
-  class defines neither `==` nor `hashCode`; now they are the same cached
-  instance, so both `identical()` and `==` see them as one and the same.
-- A full parse retains the match list once, not twice, and a `Text` piece
-  cuts its own substring out of the input only the first time something
-  reads it, so a piece nobody reads keeps no copy of its own — `stateAt`,
-  which never asks a piece for its `string`, is the concrete beneficiary:
-  a walk that never reads a piece's string leaves tens of megabytes on the
-  table against one that reads every piece, on the benchmark's 5000-line
-  page. A scenario that forces everything to materialize up front, the way
-  `prepare` does, is unaffected — full materialization was never what this
-  bought. The saving is not free of a cost, though: a `Text` kept alive
-  past its `Parser` pins the whole original input in memory for as long as
-  the `Text` itself lives, whether or not its `string` is ever read.
-- What has been read of a string is kept, instead of being read again by
-  every question asked of it. Call `prepare` when there are many.
+- The scanner finds the next escape code by `indexOf` rather than by the regex
+  engine: text with no escape codes at all is parsed and stripped well over a
+  hundred times faster (about 1 ms down to under 9 µs), a coloured page parses
+  roughly 45-50 % faster across `matches`, `removeAll`, `optimize` and
+  `showControlFunctions`, and a page that is mostly escape codes is not worse —
+  about a fifth faster rather than a wash. `ansiHasEscapeCodes` and friends
+  answer a clean string with `contains(ESC)` outright, without touching a
+  pattern, and `lengthWithoutEscapeCodes` counts without building the cleaned
+  string — the same walk over the same matches, so what is saved is the copy
+  and not the time: a 5 MB page is measured with megabytes less at the peak —
+  some 8 to some 20, depending on the page — and takes about as long as it did.
+- `substring` and the insert seams keep their place the way `stateAt` always
+  did, instead of walking from the start each time: slicing a 200-line document
+  through one parser is about three times faster (3.95 ms down to 1.33 ms), and
+  the shape of the cost is linear now, not quadratic — the guard that doubles
+  the input and watches the time saw a cost of ×3.73 where it now sees ×1.65, a
+  linear cost being ×2.
+- An escape code is told apart by its second byte instead of four named regex
+  groups, a simple SGR function comes from a cached table instead of being
+  rebuilt, and the matched text is read out of the match once: a simpler, more
+  correct hot path, though its own saving lands inside the numbers above rather
+  than as one of its own — isolated, it measures at noise level once the
+  scanner and slicing fixes are in. One visible side effect: two
+  `SgrSimpleFunction`s built for the same code used to be two separate objects,
+  and were never `==` to each other either, since the class defines neither
+  `==` nor `hashCode`; now they are the same cached instance, so both
+  `identical()` and `==` see them as one and the same.
+- A full parse retains the match list once, not twice, and a `Text` piece cuts
+  its own substring out of the input only the first time something reads it, so
+  a piece nobody reads keeps no copy of its own — `stateAt`, which never asks a
+  piece for its `string`, is the concrete beneficiary: a walk that never reads
+  a piece's string leaves tens of megabytes on the table against one that reads
+  every piece, on the benchmark's 5000-line page. A scenario that forces
+  everything to materialize up front, the way `prepare` does, is unaffected —
+  full materialization was never what this bought. The saving is not free of a
+  cost, though: a `Text` kept alive past its `Parser` pins the whole original
+  input in memory for as long as the `Text` itself lives, whether or not its
+  `string` is ever read.
+- What has been read of a string is kept, instead of being read again by every
+  question asked of it. Call `prepare` when there are many.
 - A control sequence is looked up in a map rather than by walking the list.
 - A `Stack` keeps its histories as frames with a shared tail rather than as
   lists. Immutable lists had to be copied to be grown — twice, once to build
@@ -151,9 +149,9 @@ Performance:
   `StackedParser`, where `Parser` took 51 ms and nothing above the floor. The
   same string now takes 55 ms, level with `Parser`, and 2.5 MB of that shape
   takes 299 ms. A push and a pop are one small allocation each, and every
-  version of a stack shares the whole of its own tail with the versions it
-  came from. Nothing a `Stack` answers has moved: its histories were only ever
-  asked what was on top and whether they were empty.
+  version of a stack shares the whole of its own tail with the versions it came
+  from. Nothing a `Stack` answers has moved: its histories were only ever asked
+  what was on top and whether they were empty.
 
 - `flush` on all four printers: it writes out whatever is being held back
   without ending the line. `Printer` and `StackedPrinter` hold a line until a
@@ -168,41 +166,41 @@ Fixed:
 - `ansiHasSgr` and `ansiRemoveSgr` disagreed with the parser about the same
   sequences: `'\x1B[1<m'.ansiHasSgr` was false while the parser read it as a
   rendition, and `ansiRemoveSgr` left behind what `ansiRemoveEscapeCodes` took
-  out. They read `sgrPattern`, whose parameter class excluded `<`, `=`, `>`
-  and `?` everywhere rather than only in the first place, where alone they
-  make a sequence private use. The pattern now says what the parser says.
+  out. They read `sgrPattern`, whose parameter class excluded `<`, `=`, `>` and
+  `?` everywhere rather than only in the first place, where alone they make a
+  sequence private use. The pattern now says what the parser says.
 - `ansiShowEscapeSequences` wrote a dangling separator where a control string
   had no terminator to name: `\x1B]0;title` showed as `[OSC 0;title ]`. The
   separator goes with the name now, so it shows as `[OSC 0;title]` and a
   terminated one is unchanged.
 - `Parser.substring` refused a `maxLength` too large to add to `start`. Asking
-  for everything from anywhere but the beginning --- `substring(1, maxLength:
-  <a very large number>)` --- took the sum round through the negatives and came
-  back a `RangeError` for a slice that was only asking for the rest of the
-  string. A length reaching past the end is the rest of it, and stays so where
-  no sum can hold it.
-- An `SGR` carrying a private byte past the first --- `CSI 1 < m`, `CSI 99 ; < m`
-  --- was written to the terminal twice. Only the first byte of a parameter
-  string makes a sequence private use, so these are ordinary `CSI ... m` whose
-  parameters cannot be read: the parser puts them in the opaque rendition
-  branch and the branch writes them again, while the output also copied their
-  bytes over as they came. Two places were answering "is this a rendition?"
-  --- the parser where it reads the sequence, and a pattern whose parameter
-  class knew nothing of a private byte past the first --- and the answers could
-  differ. Only the parser answers it now.
+  for everything from anywhere but the beginning ---
+  `substring(1, maxLength: <a very large number>)` --- took the sum round
+  through the negatives and came back a `RangeError` for a slice that was only
+  asking for the rest of the string. A length reaching past the end is the rest
+  of it, and stays so where no sum can hold it.
+- An `SGR` carrying a private byte past the first --- `CSI 1 < m`,
+  `CSI 99 ; < m` --- was written to the terminal twice. Only the first byte of
+  a parameter string makes a sequence private use, so these are ordinary
+  `CSI ... m` whose parameters cannot be read: the parser puts them in the
+  opaque rendition branch and the branch writes them again, while the output
+  also copied their bytes over as they came. Two places were answering "is this
+  a rendition?" --- the parser where it reads the sequence, and a pattern whose
+  parameter class knew nothing of a private byte past the first --- and the
+  answers could differ. Only the parser answers it now.
 - A write to `SinkPrinter` or `StackedSinkPrinter` that stopped in the middle
   of a sequence corrupted it. Every write is dressed on its own and the
   dressing opens with a reset, so that reset landed between the halves and the
-  terminal read it followed by the rest of the sequence as text: `\x1B[31m`
-  cut anywhere inside it showed `[31m` and no colour, a hyperlink cut inside
-  its url showed the url, and a surrogate pair cut between its halves came out
-  as two replacement characters. A write is now cut where no sequence is open
+  terminal read it followed by the rest of the sequence as text: `\x1B[31m` cut
+  anywhere inside it showed `[31m` and no colour, a hyperlink cut inside its
+  url showed the url, and a surrogate pair cut between its halves came out as
+  two replacement characters. A write is now cut where no sequence is open
   across it and what is left waits for the write that finishes it, so the same
   bytes read the same however the writes fall across them. An unterminated
   control string is part of this: it now waits for the write that goes on with
-  it, where before it went out at once and was ended by the next write's
-  reset --- which made `write('a' + title)` then `write('b')` show a `b` that
-  the same bytes written in one go make part of the title.
+  it, where before it went out at once and was ended by the next write's reset
+  --- which made `write('a' + title)` then `write('b')` show a `b` that the
+  same bytes written in one go make part of the title.
 - `ESC 8` with no `ESC 7` in front of it left a non-default `defaultStyle`
   behind. DECRC without DECSC clears the rendition, taking the terminal to its
   own defaults rather than to the printer's, and the printer went on believing
@@ -233,9 +231,9 @@ Fixed:
   clickable again exactly where the save was, and a save made where no link was
   open puts that away as readily — the restore leaves no link behind it, rather
   than the one the string was started inside.
-- An insertion left a hyperlink open. `OscLink` carries no style, and the closing
-  was worked out from the style alone, so text inserted with an unclosed
-  `OSC 8` swallowed everything after it.
+- An insertion left a hyperlink open. `OscLink` carries no style, and the
+  closing was worked out from the style alone, so text inserted with an
+  unclosed `OSC 8` swallowed everything after it.
 - An unfinished escape sequence in the inserted text swallowed the original
   tail: a truncated `OSC` consumed it whole, while a truncated `CSI` took its
   first byte as the missing final byte. Insertions now preserve the same text
@@ -255,10 +253,10 @@ Fixed:
   hold in `underlineColor`.
 - `faint` stood for `bold` instead of `dim`.
 - An ESC sequence was cut after two characters, and one carrying intermediate
-  bytes was shown without them: `ESC ( B` and `ESC ) B` came out alike. A
-  bare `ESC` at the end of a string was swallowed as text — shown as nothing
-  and counted in the length — and is a code of its own now: it shows as
-  `[ESC]`, and `Parser('abc\x1B').length` says 3 where it said 4.
+  bytes was shown without them: `ESC ( B` and `ESC ) B` came out alike. A bare
+  `ESC` at the end of a string was swallowed as text — shown as nothing and
+  counted in the length — and is a code of its own now: it shows as `[ESC]`,
+  and `Parser('abc\x1B').length` says 3 where it said 4.
 - `optimize` and `substring` dropped every code that was not SGR, and they,
   with `isClosed`, ignored the state the parser started from.
 - The printers dropped them as well: `prepare('${cursorUp}x')` gave back
@@ -281,11 +279,11 @@ Fixed:
   where it said 13, and neither a slice nor an insertion cuts through the body,
   an unfinished code ending the string included. `ST` ends all five; the `BEL`
   that ends an `OSC` is xterm's and not the standard's, and it ends none of the
-  other four, so a `DCS` whose body happens to end in one is unterminated still
-  — and one left unterminated is held back and given its terminator the way an
-  unterminated `OSC` is.
-- `SaveCursor`, `RestoreCursor` and `OscLink` carried a `reset` as their text, so
-  all three were equal to one another — an `Entity` compares by what it is
+  other four, so a `DCS` whose body happens to end in one is unterminated
+  still — and one left unterminated is held back and given its terminator the
+  way an unterminated `OSC` is.
+- `SaveCursor`, `RestoreCursor` and `OscLink` carried a `reset` as their text,
+  so all three were equal to one another — an `Entity` compares by what it is
   written with — and none of them equalled the same entity read back by the
   parser.
 - `ansiHasForeground`, `ansiRemoveForeground` and their background pair only
@@ -307,12 +305,12 @@ Fixed:
   every other pair.
 - `DEL` counted as a control code but was never shown as one.
 - Entities and functions described themselves wrongly in `toString`.
-- On Windows the terminal modes were put back in an order the console
-  refuses — echo first, line mode still off — so `currentCursorPos` threw
-  and left the terminal raw. Line mode now comes back first, and each mode
-  is restored even when the other throws. Turning them off is guarded the
-  same way now: when a stdin refuses one change, the one already made is
-  undone instead of being left behind.
+- On Windows the terminal modes were put back in an order the console refuses —
+  echo first, line mode still off — so `currentCursorPos` threw and left the
+  terminal raw. Line mode now comes back first, and each mode is restored even
+  when the other throws. Turning them off is guarded the same way now: when a
+  stdin refuses one change, the one already made is undone instead of being
+  left behind.
 - `substring` cut a hyperlink in two and kept neither half right: a slice that
   began inside one came out unclickable, the opening having been left behind on
   the other side of the cut, and a slice that ended inside one left it open, so
@@ -362,93 +360,90 @@ Fixed:
   of the sequence. With `close: false` the bytes are left as they came.
   `SinkPrinter` and `StackedSinkPrinter` pay the same debt where the line
   really ends — at a `writeln`, or at a `'\n'` in what is written — and owe
-  nothing at the end of a `write` the line goes on past.
-  An opening written again for a slice or a line that began inside the link
-  carries its terminator whatever follows it.
+  nothing at the end of a `write` the line goes on past. An opening written
+  again for a slice or a line that began inside the link carries its terminator
+  whatever follows it.
 - The insertions reached the same mechanism last. `insertAfter` goes past the
-  codes standing at the seam, and where the string ended inside a sequence
-  that never finished it went past those bytes as well —
+  codes standing at the seam, and where the string ended inside a sequence that
+  never finished it went past those bytes as well —
   `Parser('aa\x1B]0;title').insertAfter(2, 'X')` handed back a string whose
   plain text was still `aa`, the `X` having become part of the window title,
   and a hyperlink opening swallowed it no differently. A bare `ESC` turned the
   insertion into an `SOS` and a `CSI` with no final byte into an `ECH`. Both
   insertions now stand in front of such a sequence rather than inside it, and
   the tail is copied on as it came: no byte of the input is invented, which is
-  why no terminator is supplied here as it is for a slice. A finished code
-  ends the run and is passed along with what stands before it — the run stood
-  in front of is the one reaching the text, not everything unfinished in the
+  why no terminator is supplied here as it is for a slice. A finished code ends
+  the run and is passed along with what stands before it — the run stood in
+  front of is the one reaching the text, not everything unfinished in the
   string.
 
   A sequence still waiting for the byte that ends it hands the bytes it waits
-  through back as text — the parameters of a truncated `CSI` are the case
-  worth naming, but a `LF`, a `DEL` or a letter outside ASCII breaks off the
-  pattern of a bare `ESC` and of an `ESC` on an intermediate byte the same
-  way — and a position among them has no right answer: in front of the
-  sequence is before characters counted in front of it, and where it was
-  asked for is inside the sequence. Both insertions refuse it with an
-  `UnfinishedSequenceException`, which carries the position asked for and the
-  offset of the sequence the text would have been read as part of. Before
-  this the same position quietly ate what stood there:
-  `Parser('aa\x1B[31').insertAfter(3, 'X')` answered a string whose plain
-  text was `aa1`, the `3` having become a parameter. `insertBefore` was no
-  better, though the backlog had it down as safe everywhere.
+  through back as text — the parameters of a truncated `CSI` are the case worth
+  naming, but a `LF`, a `DEL` or a letter outside ASCII breaks off the pattern
+  of a bare `ESC` and of an `ESC` on an intermediate byte the same way — and a
+  position among them has no right answer: in front of the sequence is before
+  characters counted in front of it, and where it was asked for is inside the
+  sequence. Both insertions refuse it with an `UnfinishedSequenceException`,
+  which carries the position asked for and the offset of the sequence the text
+  would have been read as part of. Before this the same position quietly ate
+  what stood there: `Parser('aa\x1B[31').insertAfter(3, 'X')` answered a string
+  whose plain text was `aa1`, the `3` having become a parameter. `insertBefore`
+  was no better, though the backlog had it down as safe everywhere.
 
-  Unfinished codes come in runs, and the seam is in front of a whole run
-  rather than in a gap between two of them — a gap between two of them is the
-  inside of the first. `Parser('aa\x1BPpay\x1B[31').insertAfter(2, 'X')`
-  answers `'aaX\x1BPpay\x1B[31'`, where before it answered
-  `'aa\x1BPpayX\x1B[31'`, whose plain text was `aa31`: the `X` had gone into
-  the body of the `DCS`.
+  Unfinished codes come in runs, and the seam is in front of a whole run rather
+  than in a gap between two of them — a gap between two of them is the inside
+  of the first. `Parser('aa\x1BPpay\x1B[31').insertAfter(2, 'X')` answers
+  `'aaX\x1BPpay\x1B[31'`, where before it answered `'aa\x1BPpayX\x1B[31'`,
+  whose plain text was `aa31`: the `X` had gone into the body of the `DCS`.
 
   Where such a run begins behind a piece of text a sequence in front of it is
-  still reading, the place before the run is where that sequence's ending
-  would be written, so the seam has no end to serve and is refused along with
+  still reading, the place before the run is where that sequence's ending would
+  be written, so the seam has no end to serve and is refused along with
   everything past it. This takes back answers that used to come:
   `Parser('aa\x1B[31\x1BPpay\x1B').insertAfter(4, 'X')` throws where it
-  answered `'aa\x1B[31\x1BPpayX\x1B'` — plain text `aa31`, the `X` swallowed
-  by the body of the `DCS`. A code that stands finished between the text and
-  the run gives the run a seam of its own, and that one is served.
+  answered `'aa\x1B[31\x1BPpayX\x1B'` — plain text `aa31`, the `X` swallowed by
+  the body of the `DCS`. A code that stands finished between the text and the
+  run gives the run a seam of its own, and that one is served.
 - `insertBefore` and `insertAfter` could put text between the halves of a
   surrogate pair and hand back a string that is no longer valid UTF-16. A
-  position inside a pair now shifts to its edge — `insertBefore` to the
-  front, `insertAfter` past it. Positions, `length` and the paddings are
-  UTF-16 code units, as `String` counts them, and the docs now say so
-  instead of promising what is seen.
-- `ansiHasSgr` and `ansiRemoveSgr` counted private control sequences
-  ending in `m` — xterm's modifyOtherKeys, SGR mouse reports — as SGR,
-  and removing styles removed them too. The pattern now takes digits,
-  `;` and `:` only, the way the parser classifies them.
-- `ansiRemoveForeground` and its background and underline siblings ate
-  the parameters after a colour cut short: `\x1B[38;2;1;2m` lost its
-  bold and dim along with the broken colour. A colour missing arguments
-  now gives up only its introducer and kind, the way the parser reads
-  it — and the same goes for a kind the package does not know. It reads
-  the other direction too: the parameter after a bare `38`, `48` or
-  `58` is that colour's kind and goes with it, so `\x1B[38;41m` loses
-  its `41` and `\x1B[38;4:3m` its curly underline where both used to be
-  left standing. The `ansiHas*` answers moved together with the split —
-  `\x1B[38;41m` no longer has a background.
-- Leading zeroes hid a colour from the same functions: removing the
-  colour from `\x1B[38;05;196m` removed everything but it. Parameters
-  are now read as numbers, as ECMA-48 allows them to be written.
-- A style operation with nothing to change built a new object anyway,
-  and a `NoStyle` asked for a pointless reset came back a `Style` that
-  writes: `NoStyle().resetItalic('x')` opened with a reset. Nothing to
-  change now answers itself, as `State` promised all along.
+  position inside a pair now shifts to its edge — `insertBefore` to the front,
+  `insertAfter` past it. Positions, `length` and the paddings are UTF-16 code
+  units, as `String` counts them, and the docs now say so instead of promising
+  what is seen.
+- `ansiHasSgr` and `ansiRemoveSgr` counted private control sequences ending in
+  `m` — xterm's modifyOtherKeys, SGR mouse reports — as SGR, and removing
+  styles removed them too. The pattern now takes digits, `;` and `:` only, the
+  way the parser classifies them.
+- `ansiRemoveForeground` and its background and underline siblings ate the
+  parameters after a colour cut short: `\x1B[38;2;1;2m` lost its bold and dim
+  along with the broken colour. A colour missing arguments now gives up only
+  its introducer and kind, the way the parser reads it — and the same goes for
+  a kind the package does not know. It reads the other direction too: the
+  parameter after a bare `38`, `48` or `58` is that colour's kind and goes with
+  it, so `\x1B[38;41m` loses its `41` and `\x1B[38;4:3m` its curly underline
+  where both used to be left standing. The `ansiHas*` answers moved together
+  with the split — `\x1B[38;41m` no longer has a background.
+- Leading zeroes hid a colour from the same functions: removing the colour from
+  `\x1B[38;05;196m` removed everything but it. Parameters are now read as
+  numbers, as ECMA-48 allows them to be written.
+- A style operation with nothing to change built a new object anyway, and a
+  `NoStyle` asked for a pointless reset came back a `Style` that writes:
+  `NoStyle().resetItalic('x')` opened with a reset. Nothing to change now
+  answers itself, as `State` promised all along.
 - `NoStyle().transitTo(Style.terminalColors)` wrote a reset between two
   surfaces that are both the terminal's own. A transition between equal
   surfaces is empty.
-- A `Printer` given `defaultStyle: NoStyle()` still opened every line
-  with a reset and unwound it at the end. It now imposes nothing: the
-  line goes out as it came, its own codes included —
-  `ansiCodesEnabled: false` remains the way to take those out.
+- A `Printer` given `defaultStyle: NoStyle()` still opened every line with a
+  reset and unwound it at the end. It now imposes nothing: the line goes out as
+  it came, its own codes included — `ansiCodesEnabled: false` remains the way
+  to take those out.
 - The `style` entry point returned types it could not name:
-  `ControlFunctionsSGR` and its four control-function siblings were
-  reachable from the entities but undefined to the importer. The five
-  exports are now part of the point, and every entry point carries an
-  exports test. The `extensions` point had the same gap:
-  `ansiRemoveControlCodes` takes a `Set<ControlFunctionsC0>` its own
-  importer could not name, so the enum is now part of the point.
+  `ControlFunctionsSGR` and its four control-function siblings were reachable
+  from the entities but undefined to the importer. The five exports are now
+  part of the point, and every entry point carries an exports test. The
+  `extensions` point had the same gap: `ansiRemoveControlCodes` takes a
+  `Set<ControlFunctionsC0>` its own importer could not name, so the enum is now
+  part of the point.
 - `prepare` on `SinkPrinter` and `StackedSinkPrinter` coloured the writes that
   came after it. The piece it is asked about never reaches the sink, and the
   link open in the output, the link open in the text and the terminator an
@@ -470,54 +465,53 @@ Fixed:
   Dart strings rather than byte streams, where a genuine eight-bit C1 does not
   survive UTF-8 decoding and terminals emit the seven-bit `ESC [` form anyway.
   `0xA0` and above are not controls and are untouched.
-- `substring(close: false)` took an attribute off that was meant to survive.
-  A slice left open is written by asking `transitTo` for the reset half
-  alone — it unwinds what the string took off by the cut and does not put on
-  what belongs to the character after it. But `CSI 22` takes bold and dim off
+- `substring(close: false)` took an attribute off that was meant to survive. A
+  slice left open is written by asking `transitTo` for the reset half alone —
+  it unwinds what the string took off by the cut and does not put on what
+  belongs to the character after it. But `CSI 22` takes bold and dim off
   together, so `transitTo` writes it wherever one of the pair goes off and
   leans on the other half to bring the survivor back: `CSI 22;1`. That `1`
   belongs to the reset rather than being a set of its own, and going out
   without it left `\x1B[1;2mAB\x1B[22;1m` sliced open at `\x1B[22m` — a slice
   standing in neither its own state nor the string's. `skipSet` leaves it in
-  place now. The four other pairs are unaffected: `24`, `25`, `54` and `75`
-  are written only where the far end carries nothing at all, so a change from
-  one kind to the other is a plain set and an open slice goes on leaving it
-  out.
-- `optimize`, `substring` and the printers swallowed the text behind a code
-  the parser could not finish. All four held a code back only where it was an
-  unterminated control string, while three other shapes wait for a byte just
-  as surely — a bare `ESC`, a `CSI` with no final byte, an `ESC` left on an
+  place now. The four other pairs are unaffected: `24`, `25`, `54` and `75` are
+  written only where the far end carries nothing at all, so a change from one
+  kind to the other is a plain set and an open slice goes on leaving it out.
+- `optimize`, `substring` and the printers swallowed the text behind a code the
+  parser could not finish. All four held a code back only where it was an
+  unterminated control string, while three other shapes wait for a byte just as
+  surely — a bare `ESC`, a `CSI` with no final byte, an `ESC` left on an
   intermediate byte. In the string each of those was ended by the `ESC` of
-  whatever stood behind it, and where that was an `SGR` these loops do not
-  copy it but write it again as a transition — which, for a redundant `SGR`,
-  writes nothing at all. The code then stood against the text and read it as
-  its own: `Parser('\x1B[3\x1B[0m1m!').optimize()` gave `\x1B[31m!`, three
-  characters of text turned into a colour, and a truncated `CSI` went on
-  eating until it found a final byte. A redundant `SGR` is what `optimize`
-  exists to remove, so the defect was the feature working. All four now hold
-  back whatever the parser could not finish and supply an `ST` where what
-  follows would otherwise be swallowed — an `ST` is an `ESC` and a `\`, so
-  its `ESC` breaks off the waiting sequence exactly as the string's own did,
-  and an `ST` that closes nothing does nothing. What `removeAll` calls the
-  text is what comes out of all four; see `docs/records/2026-08-13[6]` for
-  the invariant and for what it costs on a truncated `CSI`, where this
-  package's reading of the input and a terminal's already differed.
-- `link` and `linkBel` wrote the address into the body of an `OSC 8`
-  unchecked. An `ESC` there ends the sequence where it stands, so a url
-  carrying one handed the rest of itself to the terminal as codes of its own:
+  whatever stood behind it, and where that was an `SGR` these loops do not copy
+  it but write it again as a transition — which, for a redundant `SGR`, writes
+  nothing at all. The code then stood against the text and read it as its own:
+  `Parser('\x1B[3\x1B[0m1m!').optimize()` gave `\x1B[31m!`, three characters of
+  text turned into a colour, and a truncated `CSI` went on eating until it
+  found a final byte. A redundant `SGR` is what `optimize` exists to remove, so
+  the defect was the feature working. All four now hold back whatever the
+  parser could not finish and supply an `ST` where what follows would otherwise
+  be swallowed — an `ST` is an `ESC` and a `\`, so its `ESC` breaks off the
+  waiting sequence exactly as the string's own did, and an `ST` that closes
+  nothing does nothing. What `removeAll` calls the text is what comes out of
+  all four; see `docs/records/2026-08-13[6]` for the invariant and for what it
+  costs on a truncated `CSI`, where this package's reading of the input and a
+  terminal's already differed.
+- `link` and `linkBel` wrote the address into the body of an `OSC 8` unchecked.
+  An `ESC` there ends the sequence where it stands, so a url carrying one
+  handed the rest of itself to the terminal as codes of its own:
   `link('https://ok\x1B\\\x1B[2J…')` cleared the screen, and the parser read
   the result as seven entities where three were meant. Urls in a command-line
   tool arrive from git remotes, HTTP answers and registries, so the bytes are
   rarely the caller's. Both functions percent-escape what an `OSC 8` cannot
-  carry — the C0 controls and `DEL` — and nothing else: an address that
-  carries none, which is every address that is one, comes out byte for byte,
-  its own percent-escapes untouched. `Uri.encodeFull`, which the `OSC 8` note
-  asks for, escapes the `%` as well and would turn an already-encoded address
-  into `%2520`. The eight-bit C1 are deliberately not escaped: one of them is
-  a single code unit in a Dart string and two bytes in UTF-8, so a single-byte
+  carry — the C0 controls and `DEL` — and nothing else: an address that carries
+  none, which is every address that is one, comes out byte for byte, its own
+  percent-escapes untouched. `Uri.encodeFull`, which the `OSC 8` note asks for,
+  escapes the `%` as well and would turn an already-encoded address into
+  `%2520`. The eight-bit C1 are deliberately not escaped: one of them is a
+  single code unit in a Dart string and two bytes in UTF-8, so a single-byte
   escape would name the wrong byte, and this package does not read them as
-  control codes anyway. The `text` of a link is written as it came — styling
-  it is what the codes are for — and where none is given the encoded address
+  control codes anyway. The `text` of a link is written as it came — styling it
+  is what the codes are for — and where none is given the encoded address
   stands for it.
 
 Renamed:
@@ -527,24 +521,24 @@ Renamed:
   **silently**: an explicit import outranks the implicit one, so the compiler
   never asked which was meant. Ordinary code written beside this package —
   `for (final Match m in RegExp(r'\w+').allMatches(s))` — failed with two
-  errors that named no package, and the advice this README gave for the
-  Flutter names did not cover it, because the Flutter names do raise the
-  question and this one did not. `Piece` is the word the package already used
-  for the thing: the class dartdoc opened with "one piece of a parsed string",
-  and `_pieceAt`, `nextPiece` and `takePiece` were there before the rename.
-  There is deliberately no `typedef Match<S> = Piece<S>` to ease the move — it
-  would reintroduce the shadowing this removes. A test holds the name open
-  from the outside: it uses `dart:core.Match` beside a single import of this
-  package, and stops compiling if the name is ever taken back.
+  errors that named no package, and the advice this README gave for the Flutter
+  names did not cover it, because the Flutter names do raise the question and
+  this one did not. `Piece` is the word the package already used for the thing:
+  the class dartdoc opened with "one piece of a parsed string", and `_pieceAt`,
+  `nextPiece` and `takePiece` were there before the rename. There is
+  deliberately no `typedef Match<S> = Piece<S>` to ease the move — it would
+  reintroduce the shadowing this removes. A test holds the name open from the
+  outside: it uses `dart:core.Match` beside a single import of this package,
+  and stops compiling if the name is ever taken back.
 - `rgb` and `gray` are `rgb256` and `gray256`. Both answer with an index into
   the 256-colour table --- the 6×6×6 cube and the 24-step grey ramp, taking
   0..5 and 0..23 --- and stood one name away from `fgRgb` and its pair, which
   take a truecolour triple of 0..255 and write it into the sequence itself.
   `fg256(rgb(255, 0, 0))` is the mistake the old names invited, and it throws
   rather than showing the wrong colour, but the new names say which of the two
-  kinds of red is being asked for. They are also two very general words to
-  have been taking out of a caller's namespace. `Color256.rgb` and
-  `Color256.gray` keep their names: a named constructor says whose they are.
+  kinds of red is being asked for. They are also two very general words to have
+  been taking out of a caller's namespace. `Color256.rgb` and `Color256.gray`
+  keep their names: a named constructor says whose they are.
 - The hyperlink entity is `OscLink`, not `Link`. `Link` shadowed `dart:io.Link`
   --- a symbolic link --- and shadowed it the silent way `Match` used to shadow
   `dart:core.Match`: an explicit import outranks the implicit one, so a
@@ -558,7 +552,8 @@ Renamed:
   a letter.
 - The `standart_colors` directory is spelt `standard_colors`.
 
-Removed — every name deprecated in an earlier release, and some that never were:
+Removed — every name deprecated in an earlier release, and some that never
+were:
 
 - The style constants renamed in 2.0.0: `faint`, `resetBoldAndFaint`,
   `italicized`, `resetItalicized`, `singlyUnderlined`, `doublyUnderlined`,
@@ -570,9 +565,9 @@ Removed — every name deprecated in an earlier release, and some that never wer
   `inverse`, `invisible`, `strikethrough`, `frame`, `encircle`, `overline`,
   `superscript`, `subscript` and their `reset…` counterparts.
 - The string extensions without the `ansi` prefix: `hasEscapeCodes`, `hasCsi`,
-  `hasSgr`, `hasForeground`, `hasBackground`, `removeEscapeCodes`,
-  `removeCsi`, `removeSgr`, `removeForeground`, `removeBackground`,
-  `showEscapeCodes` and `showControlCodes`. Use the `ansi…` names.
+  `hasSgr`, `hasForeground`, `hasBackground`, `removeEscapeCodes`, `removeCsi`,
+  `removeSgr`, `removeForeground`, `removeBackground`, `showEscapeCodes` and
+  `showControlCodes`. Use the `ansi…` names.
 - The typedefs left behind by the renaming in 3.0.0: `AnsiParser`,
   `AnsiPrinter`, `SgrState`, `SgrPlainState` and `SgrStackedState`. Use
   `Parser`, `Printer`, `State`, `Style` and `Stack`.
@@ -586,33 +581,32 @@ Removed — every name deprecated in an earlier release, and some that never wer
 - `MatchingState`, `MatchesResult` and `ParserIterator`, which the parser
   passes to and gets back from its own private methods and nothing else could
   reach. `Matches` and `Match` are unchanged.
-- `IntensityStyle` left the public API. It is the element a `Stack`'s
-  intensity history holds; nothing public takes or returns it, and bold
-  and dim — unlike the other pairs — can be on at once, so no getter
-  could honestly answer with one of them.
-- The `parsing` entry point. After 4.0.0 made it byte-identical to
-  `style`, one of the two names had to go: import
-  `package:ansi_escape_codes/style.dart` — the same 81 names — or the
-  umbrella `ansi_escape_codes.dart`.
+- `IntensityStyle` left the public API. It is the element a `Stack`'s intensity
+  history holds; nothing public takes or returns it, and bold and dim — unlike
+  the other pairs — can be on at once, so no getter could honestly answer with
+  one of them.
+- The `parsing` entry point. After 4.0.0 made it byte-identical to `style`, one
+  of the two names had to go: import `package:ansi_escape_codes/style.dart` —
+  the same 81 names — or the umbrella `ansi_escape_codes.dart`.
 
 Breaking changes:
 
 - `Stack.underlineColor` takes an `ExtendedColor` where it took a `Color`.
   `SGR 58` carries a 256-colour index or a truecolour triple and has no
-  16-colour form at all, so a `Color16` was a colour the sequence could not
-  be written with — `Style.underlineColor` had always taken the narrower
-  type, and the two now agree. Narrowing a parameter is source-breaking:
-  `stack.underlineColor(Color16.red)` no longer compiles, and
-  `Color256.red`, whose index is the same colour, is what it becomes. The
-  Fixed list below mentions the change as part of the bug it belongs to; it
-  is named here because the compiler will name it first.
+  16-colour form at all, so a `Color16` was a colour the sequence could not be
+  written with — `Style.underlineColor` had always taken the narrower type, and
+  the two now agree. Narrowing a parameter is source-breaking:
+  `stack.underlineColor(Color16.red)` no longer compiles, and `Color256.red`,
+  whose index is the same colour, is what it becomes. The Fixed list below
+  mentions the change as part of the bug it belongs to; it is named here
+  because the compiler will name it first.
 - `OscLink(url)` — `Link(url)` before the rename above — is no longer `const`.
   It percent-escapes a control byte in the address, as `link` does and for the
   same reason, and a `const` initializer admits neither a function call nor a
   `contains` — so the address could there be neither encoded nor so much as
   checked. A `const Link('…')` has to lose the keyword along with the name;
-  nothing else about it moves. `OscLink.url` reads back the encoded
-  address rather than the bytes handed in, so that it agrees with a parse of
+  nothing else about it moves. `OscLink.url` reads back the encoded address
+  rather than the bytes handed in, so that it agrees with a parse of
   `OscLink.string` and with the equality an `Entity` takes from those bytes.
 - The named control sequences print as themselves: `CursorUp(4)`,
   `CursorPos(3, 7)`, `EraseInPage(ErasePart.all)` where `Csi([CSI 4 CUU])` was
@@ -620,8 +614,8 @@ Breaking changes:
 - `Csi`, `Esc` and `EscapeCode` are sealed, and this release adds types under
   them. A `switch` that covers them exhaustively has to name the new ones. `is`
   checks, casts and the identifiers entities are shown by are unchanged.
-- `Color.withPrefix(String)` is gone, and nothing public stands in its place:
-  a colour is named by the slot of the state it is held in, so
+- `Color.withPrefix(String)` is gone, and nothing public stands in its place: a
+  colour is named by the slot of the state it is held in, so
   `Style(background: c).backgroundColor?.id` is what `c.withPrefix('bg256')`
   was for. The string was a way to be wrong — `withPrefix('bg256')` gave
   `bg256256Gray5` — and it let the name of a target be written out by hand,
@@ -721,8 +715,8 @@ Breaking changes:
 
 Breaking changes:
 - The names of some constants have changed: `italic` to `italicized`,
-  `blinking` to `slowlyBlinking`. All constants of the form `not…` are
-  renamed to `reset…`. `(fg/bg/underline)Bright…` ara renamed to
+  `blinking` to `slowlyBlinking`. All constants of the form `not…` are renamed
+  to `reset…`. `(fg/bg/underline)Bright…` ara renamed to
   `(fg/bg/underline)High…`.
 - Removed methods: `handle…`, `all…`. Use `AnsiParser` instead.
 

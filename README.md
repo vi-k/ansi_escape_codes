@@ -97,7 +97,8 @@ Most likely, this option will only be of interest to specialists in the
 standard.
 
 Every one of them is listed in [the reference](doc/reference.md), and they live
-in [lib/src/ansi](https://github.com/vi-k/ansi_escape_codes/tree/main/lib/src/ansi).
+in
+[lib/src/ansi](https://github.com/vi-k/ansi_escape_codes/tree/main/lib/src/ansi).
 
 #### Maximum performance
 
@@ -142,8 +143,8 @@ ready to use.
 > [styles](#the-power-of-styles) or [StackedPrinter](#stackedprinter).
 
 `bold` and `dim` are the two ends of one property — the intensity — and ANSI
-puts it back to normal with a single code: `resetBoldAndDim`. Both can be on
-at once, and that one code takes off whichever of them are.
+puts it back to normal with a single code: `resetBoldAndDim`. Both can be on at
+once, and that one code takes off whichever of them are.
 
 `reset` returns all settings to default.
 
@@ -259,8 +260,8 @@ constants on `Styles`, so the name most likely to meet one of your own is
 ## Writing
 
 The constants and the styles are the two ways of dressing a string; the
-printers are for dressing everything a program prints, whether it asked to
-be dressed or not.
+printers are for dressing everything a program prints, whether it asked to be
+dressed or not.
 
 ### Constants, and the strings built from them
 
@@ -313,12 +314,11 @@ Standard. Second, in this form they will not prevent you from naming your own
 variables. **Thirdly, and most importantly, most users do not need to use them
 directly.**
 
-Every one of them is listed in
-[the reference](doc/reference.md) — the C0 and C1 sets, the final bytes of the
-control sequences, the independent functions, all the SGR parameters, the
-256-color table and the 24-bit colors — with what each does and the
-ready-to-use name beside it. What follows here is the table that is reached for
-while writing rather than searched.
+Every one of them is listed in [the reference](doc/reference.md) — the C0 and
+C1 sets, the final bytes of the control sequences, the independent functions,
+all the SGR parameters, the 256-color table and the 24-bit colors — with what
+each does and the ready-to-use name beside it. What follows here is the table
+that is reached for while writing rather than searched.
 
 ### Ready-to-use functions and constants
 
@@ -359,11 +359,10 @@ print(cursorUpN(4)); // Not constant!
 ### Styles
 
 `Styles` holds every style that carries one thing, and there are 802 of them:
-the 34 properties — `Styles.bold`, `Styles.italic` — and the 256-colour
-table three times over, `Styles.red` for the colour of the text, `Styles.bgRed`
-for the colour behind it, `Styles.underlineRed` for the colour of the
-underline. Being constants, a style can be held in one:
-`const error = Styles.red`.
+the 34 properties — `Styles.bold`, `Styles.italic` — and the 256-colour table
+three times over, `Styles.red` for the colour of the text, `Styles.bgRed` for
+the colour behind it, `Styles.underlineRed` for the colour of the underline.
+Being constants, a style can be held in one: `const error = Styles.red`.
 
 The state model also keeps the standard font selection, italic/fraktur shape,
 five underline variants, proportional spacing and five ideogram renditions.
@@ -554,8 +553,8 @@ characters) as `<collected>`. And it is easy to exceed the allowed size when
 using escape codes. In the example above, the `text` does not fit in this size
 if RGB colors are used.
 
-And secondly, `log` works only from IDE. Testers who don't use IDE won't
-see anything in the console.
+And secondly, `log` works only from IDE. Testers who don't use IDE won't see
+anything in the console.
 
 So in most cases on iOS, it's left to disable escape codes for the most part:
 
@@ -582,8 +581,8 @@ This is an explicit hierarchical interpretation, not a model of the state a
 terminal reaches from arbitrary ANSI. A terminal's selective reset clears a
 property to its default; `StackedPrinter` reads the same code as one pop. Use
 `Printer` when the terminal meaning of the input must be preserved, and use
-`StackedPrinter` when resets close nested style operations such as the
-template below.
+`StackedPrinter` when resets close nested style operations such as the template
+below.
 
 Imagine that you have a template for text into which you will insert other
 text, that is sent to you externally. But the person who sends you this text
@@ -621,10 +620,10 @@ print(text);
 ```
 
 But the escape codes don't accumulate, double `bold` equals single `bold`. And
-first `resetBoldAndDim` cancels the bold text. And we don't get what we want
-at all. To fix it, we need to return the state of the text after insertion to
-the state it was before insertion. But it makes it much more difficult to use
-the escape codes. `StackedPrinter` helps solve this problem:
+first `resetBoldAndDim` cancels the bold text. And we don't get what we want at
+all. To fix it, we need to return the state of the text after insertion to the
+state it was before insertion. But it makes it much more difficult to use the
+escape codes. `StackedPrinter` helps solve this problem:
 
 ```dart
 final printer = StackedPrinter();
@@ -646,8 +645,8 @@ printer2.print(text); // '[reset][bold] 1  2  3  2  1 [reset]'
 ### Printing to a sink
 
 `Printer` and `StackedPrinter` hand their output to a print function.
-`SinkPrinter` and `StackedSinkPrinter` write it to a `StringSink` instead —
-a `StringBuffer`, a file, `stdout` — and keep the style across the writes:
+`SinkPrinter` and `StackedSinkPrinter` write it to a `StringSink` instead — a
+`StringBuffer`, a file, `stdout` — and keep the style across the writes:
 
 ```dart
 final buf = StringBuffer();
@@ -673,10 +672,10 @@ That is the switch for output that is not a terminal. `NoStyle` is a different
 thing: it stops the printer from putting a style of its own around the text,
 but the codes the text carries still go through.
 
-A write may stop in the middle of a sequence — a chunk taken off a stream
-falls where it falls — and what it cannot finish waits for the write that
-does, so the same bytes read the same however the writes fall across them.
-`flush` says that no such write is coming:
+A write may stop in the middle of a sequence — a chunk taken off a stream falls
+where it falls — and what it cannot finish waits for the write that does, so
+the same bytes read the same however the writes fall across them. `flush` says
+that no such write is coming:
 
 ```dart
 final buf = StringBuffer();
@@ -717,8 +716,8 @@ void main() {
 }
 ```
 
-If you are using [ready-to-use values](#maximum-performance), you can also
-use `runZonedPrinter`. But in this case, all `reset...` functions will return
+If you are using [ready-to-use values](#maximum-performance), you can also use
+`runZonedPrinter`. But in this case, all `reset...` functions will return
 `defaultStyle`:
 
 ```dart
@@ -775,9 +774,9 @@ constants are strings, so coloring a level name needs no help. What does need
 help are the two places where escape codes bite.
 
 The first is width. `String.length` counts the escape codes, so padding a
-colored level name pads it by the wrong amount. `Parser` counts the same
-UTF-16 code units without the codes — `𝄞` is still two, as everywhere in
-Dart, and an insertion never lands inside a surrogate pair:
+colored level name pads it by the wrong amount. `Parser` counts the same UTF-16
+code units without the codes — `𝄞` is still two, as everywhere in Dart, and an
+insertion never lands inside a surrogate pair:
 
 ```dart
 const level = '${fgRed}SEVERE$reset';
@@ -807,8 +806,8 @@ void write(String line) {
 is whatever file the program opened.
 
 And a message that arrives already styled from elsewhere is the case
-[StackedPrinter](#stackedprinter) was written for: whatever the message opens is
-closed at its end, and the next line starts in the style it should.
+[StackedPrinter](#stackedprinter) was written for: whatever the message opens
+is closed at its end, and the next line starts in the style it should.
 
 
 ## Reading
@@ -820,16 +819,16 @@ in force at any point of it, and what every sequence in it means.
 ### Parser
 
 `Parser` allows you to analyze text containing escape codes. There are two of
-them, and everything below holds for both: `Parser` keeps the style in force
-at each point, `StackedParser` keeps the history of how it got there, so that a
+them, and everything below holds for both: `Parser` keeps the style in force at
+each point, `StackedParser` keeps the history of how it got there, so that a
 `resetFg` goes back to the color before the last one rather than to the
 terminal's own. The difference is the one between
 [Printer and StackedPrinter](#stackedprinter), and the state it hands out is a
 `Stack` instead of a `Style`.
 
-That difference is semantic, not only additional bookkeeping. Use `Parser`
-to ask what a terminal shows for arbitrary ANSI; choose `StackedParser` only
-when its resets are meant to close the most recently applied style level.
+That difference is semantic, not only additional bookkeeping. Use `Parser` to
+ask what a terminal shows for arbitrary ANSI; choose `StackedParser` only when
+its resets are meant to close the most recently applied style level.
 
 ```dart
 import 'package:ansi_escape_codes/ansi_escape_codes.dart';
@@ -908,10 +907,10 @@ print(atSeven.foregroundColor?.id); // fgCyan
 print(atSeven.backgroundColor?.id); // null
 ```
 
-The position in `stateAt` is specified in the plaintext range
-(`pos` < `parser.length`) and can also point to the position behind the text
-(`pos` == `parser.length`) to find out the final state. The final state can
-also be obtained using `finalState`.
+The position in `stateAt` is specified in the plaintext range (`pos` <
+`parser.length`) and can also point to the position behind the text (`pos` ==
+`parser.length`) to find out the final state. The final state can also be
+obtained using `finalState`.
 
 ```dart
 print(parser.stateAt(23) == parser.finalState); // true
@@ -933,9 +932,8 @@ parser.finalState; // reads on from there, not from the beginning
 ```
 
 It keeps its place as well as its reading, so asking about position after
-position — which is what laying text out does — costs one walk of the string
-in all rather than one walk each. Going back is allowed and starts the walk
-over.
+position — which is what laying text out does — costs one walk of the string in
+all rather than one walk each. Going back is allowed and starts the walk over.
 
 `prepare` reads the whole string in one go and builds the plain text that
 `length`, `indexOf`, `contains` and the rest of the string methods work on:
@@ -1017,9 +1015,9 @@ print(Parser(inserted).showControlFunctions());
 // [fgRed]Hello [fgGreen]brave [fgRed]world[reset]
 ```
 
-If the inserted text itself ends inside an escape sequence the parser could
-not finish, the sequence is terminated before the original tail follows it.
-This is the other side of the unfinished-input rule below: that rule keeps the
+If the inserted text itself ends inside an escape sequence the parser could not
+finish, the sequence is terminated before the original tail follows it. This is
+the other side of the unfinished-input rule below: that rule keeps the
 insertion out of the input's sequence; this one keeps the input's tail out of
 the insertion's sequence.
 
@@ -1036,11 +1034,11 @@ print(Parser(text).insertAfter(5, '!').ansiShowControlFunctions());
 ```
 
 Neither insertion lands inside a sequence the parser could not finish — a
-control string that never got its terminator, be it an `OSC`, a `DCS`, an `SOS`,
-a `PM` or an `APC`; a bare `ESC`; a `CSI` with no final byte; an `ESC` left on
-an intermediate byte. Whatever is written among the bytes of one is read as part
-of it, so the text goes in front of the sequence and the tail is copied on as it
-came:
+control string that never got its terminator, be it an `OSC`, a `DCS`, an
+`SOS`, a `PM` or an `APC`; a bare `ESC`; a `CSI` with no final byte; an `ESC`
+left on an intermediate byte. Whatever is written among the bytes of one is
+read as part of it, so the text goes in front of the sequence and the tail is
+copied on as it came:
 
 ```dart
 print(Parser('aa\x1B]0;title').insertAfter(2, 'X')); // 'aaX\x1B]0;title'
@@ -1198,10 +1196,9 @@ bytes, `DEL` and the eight-bit C1 — rather than the escape codes; `ESC` is one
 of those bytes, so take the escape codes out first or their bodies are left
 behind as text, and name the ones to keep with
 `exclude: {ControlFunctionsC0.LF}`, which names C0 members and so cannot spare
-an eight-bit C1; `lengthWithoutEscapeCodes` is
-`Parser.length` for a string read once; `ansiShowControlFunctions` and
-`ansiOptimizeControlFunctions` are `Parser.showControlFunctions` and
-`Parser.optimize` for a string read once.
+an eight-bit C1; `lengthWithoutEscapeCodes` is `Parser.length` for a string
+read once; `ansiShowControlFunctions` and `ansiOptimizeControlFunctions` are
+`Parser.showControlFunctions` and `Parser.optimize` for a string read once.
 
 ### Sequence types
 
@@ -1275,12 +1272,12 @@ for (final m in Parser(text).pieces) {
 ### Unknown sequences
 
 The parser never throws on what it cannot name. Whatever it fails to recognize
-comes back as an entity of its own with the raw bytes kept intact: `CsiUnknown`,
-`EscUnknown`, `OscUnknown` and `UnknownEscapeCode` for what has no meaning here,
-`Dcs`, `Sos`, `Pm` and `Apc` for the control strings this package carries
-without reading, and `CsiPrivate` for the private-use sequences, whose meaning
-the standard leaves to the terminal. All of them carry the
-`UnrecognizedEscapeCode` mixin, so a single check covers them:
+comes back as an entity of its own with the raw bytes kept intact:
+`CsiUnknown`, `EscUnknown`, `OscUnknown` and `UnknownEscapeCode` for what has
+no meaning here, `Dcs`, `Sos`, `Pm` and `Apc` for the control strings this
+package carries without reading, and `CsiPrivate` for the private-use
+sequences, whose meaning the standard leaves to the terminal. All of them carry
+the `UnrecognizedEscapeCode` mixin, so a single check covers them:
 
 ```dart
 const text = 'a\x1B[!pb\x1B[?7hc';
@@ -1293,8 +1290,8 @@ for (final m in Parser(text).pieces) {
 // 6..11: CSI ?7 SM
 ```
 
-`start` and `end` are positions in the original string, so a complaint can point
-at the bytes it is about.
+`start` and `end` are positions in the original string, so a complaint can
+point at the bytes it is about.
 
 To put something else in their place, `replaceAll` walks the string once and
 writes back whatever is returned:
@@ -1407,8 +1404,8 @@ about.
 
 ## Utilities
 
-Two things a terminal will only tell or take in person, both in `utils.dart`
-— which is asked for by name, since it is the one entry point that reaches
+Two things a terminal will only tell or take in person, both in `utils.dart` —
+which is asked for by name, since it is the one entry point that reaches
 `dart:io`:
 
 ```dart
@@ -1425,8 +1422,8 @@ tabs(tabs: [8, 4, 4]); // one stop 8 columns along, then two 4 more each
 ```
 
 The numbers are distances, not column numbers, and the run starts at the left
-edge — so `[8, 4, 4]` sets its stops in columns 9, 13 and 17. `defaultTab`
-sets one in the first column as well, which a list does not.
+edge — so `[8, 4, 4]` sets its stops in columns 9, 13 and 17. `defaultTab` sets
+one in the first column as well, which a list does not.
 
 Nothing is written when `stdout` is not a terminal: there are no stops to set
 and no width to fit them into. A distance reaching past the width sets no stop

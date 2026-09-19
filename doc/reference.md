@@ -61,9 +61,9 @@ print('$HT$CR$LF');
 
 ## Control functions ESC Fe (C1 set)
 
-These control functions are represented by 2-character escape sequences
-of the form ESC Fe, where ESC is represented by code 0x1B and Fe is
-represented by codes from 0x40 to 0x5F.
+These control functions are represented by 2-character escape sequences of the
+form ESC Fe, where ESC is represented by code 0x1B and Fe is represented by
+codes from 0x40 to 0x5F.
 
 Some control functions from the C1 set:
 
@@ -96,9 +96,8 @@ print('Go to ${OSC}8;;https://pub.dev/packages/ansi_escape_codes${ST}pub.dev${OS
 
 A control sequence is a string starting with the control function CONTROL
 SEQUENCE INTRODUCER [CSI] followed by one or more bytes representing
-parameters, if any, and by one or more bytes identifying the control
-function. The control function [CSI] itself is an element of the C1
-set.
+parameters, if any, and by one or more bytes identifying the control function.
+The control function [CSI] itself is an element of the C1 set.
 
 Some control functions from this set:
 
